@@ -1,0 +1,29 @@
+#!/bin/sh
+#
+# Nginx Service
+#
+
+NGINX="/usr/data/nginx/sbin/nginx"
+PIDFILE="/var/run/nginx.pid"
+NGINX_ARGS="-c /usr/data/nginx/nginx/nginx.conf"
+
+case "$1" in
+  start)
+	mkdir -p /var/log/nginx /var/tmp/nginx
+	start-stop-daemon -S -p "$PIDFILE" --exec "$NGINX" -- $NGINX_ARGS
+	;;
+  stop)
+	start-stop-daemon -K -x "$NGINX" -p "$PIDFILE" -o
+	;;
+  reload|force-reload)
+	"$NGINX" -s reload
+	;;
+  restart)
+	"$0" stop
+	sleep 1
+	"$0" start
+	;;
+  *)
+	echo "Usage: $0 {start|stop|restart|reload|force-reload}"
+	exit 1
+esac
