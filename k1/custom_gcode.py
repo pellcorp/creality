@@ -42,3 +42,13 @@ gcode:
   SET_PAUSE_AT_LAYER ENABLE=0 LAYER=0
   _TOOLHEAD_PARK_PAUSE_CANCEL {rawparams}
 
+
+# emergency situation calls for drastic
+[gcode_shell_command emergency_factory_reset]
+command: /usr/data/printers/k1/install/wipe.sh "all"
+timeout: 5.
+verbose: True
+
+[gcode_macro EMERGENCY_FACTORY_RESET]
+gcode:
+    RUN_SHELL_COMMAND CMD=emergency_factory_reset
