@@ -45,7 +45,7 @@ gcode:
 
 # emergency situation calls for drastic
 [gcode_shell_command emergency_factory_reset]
-command: /usr/data/printers/k1/install/wipe.sh "all"
+command: /usr/data/pellcorp/k1/wipe.sh "all"
 timeout: 5.
 verbose: True
 
