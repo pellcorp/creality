@@ -3,5 +3,7 @@
 FLAG_FILE="/tmp/udisk/sda1/emergency_factory_reset"
 
 if [ -f "$FLAG_FILE" ]; then
+	# give the wipe data service enough time to start up
+	sleep 5
 	echo "$1" | nc -U /var/run/wipe.sock
 fi
