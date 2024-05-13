@@ -1,0 +1,7 @@
+#!/bin/sh
+
+FLAG_FILE="/tmp/udisk/sda1/emergency_factory_reset"
+
+if [ -f "$FLAG_FILE" ]; then
+	echo "$1" | nc -U /var/run/wipe.sock
+fi

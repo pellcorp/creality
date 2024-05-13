@@ -5,4 +5,3 @@ if [ "$1" = "all" ] || [ "$1" = "partial" ]; then
 else
     echo "Invalid argument"
 fi
-
