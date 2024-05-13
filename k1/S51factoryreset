@@ -9,6 +9,7 @@ FLAG_FILE="/tmp/udisk/sda1/emergency_factory_reset"
 # It needs to run after S12udev is started which is what mounts the usb key
 #
 factory_reset() {
+	echo "Executing factory reset, hang tight!..."
 	/usr/bin/mcu_reset.sh
 	ACTION=stop /usr/bin/auto_uvc.sh
 	/etc/init.d/rcK
