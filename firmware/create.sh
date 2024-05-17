@@ -72,11 +72,8 @@ done
 sed -i "s/img_md5=$orig_rootfs_md5/img_md5=$rootfs_md5/g" /tmp/${version}-pellcorp/$directory/$sub_directory/ota_update.in
 sed -i "s/img_size=$orig_rootfs_size/img_size=$rootfs_size/g" /tmp/${version}-pellcorp/$directory/$sub_directory/ota_update.in
 
-# TODO recreate 7z img file from 
 pushd /tmp/${version}-pellcorp/ > /dev/null
-
 base_filename=$(basename $filename .img)
 7z a $base_filename.7z -p"$password" $directory
-mv $base_filename.7z $base_filename.7z.img
-
+mv $base_filename.7z $base_filename.img
 popd > /dev/null
