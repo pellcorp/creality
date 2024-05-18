@@ -184,3 +184,6 @@ install_klipper
 install_guppyscreen
 setup_probe
 setup_microprobe
+
+echo "Please power cycle your printer to activate updated klipper and perform any nozzle firmware update!"
+exit 0
