@@ -11,6 +11,21 @@ if [ "$MODEL" != "CR-K1" ]; then
     exit 1
 fi
 
+if [ -d /usr/data/helper-script ]; then
+    echo "The Guilouz helper script cannot be installed"
+    exit 1
+fi
+
+if [ -f /usr/data/fluidd.sh ]; then
+    echo "The K1_Series_Annex scripts cannot be installed"
+    exit 1
+fi
+
+if [ -f /usr/data/mainsail.sh ]; then
+    echo "The K1_Series_Annex scripts cannot be installed"
+    exit 1
+fi
+
 # https://stackoverflow.com/a/1638397
 SCRIPT=$(readlink -f "$0")
 SCRIPTPATH=$(dirname "$SCRIPT")
