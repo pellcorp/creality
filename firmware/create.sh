@@ -1,5 +1,14 @@
 #!/bin/bash
 
+commands="7z unsquashfs mksquashfs"
+for command in $commands; do
+    command -v "$command" > /dev/null
+    if [ $? -ne 0 ]; then
+        echo "Command $command not found"
+        exit 1
+    fi
+done
+
 function update_rootfs() {
     pushd /tmp/${version}-pellcorp/ > /dev/null
     sudo unsquashfs orig_rootfs.squashfs 
@@ -60,7 +69,6 @@ cp /tmp/$directory/$sub_directory/xImage.* /tmp/${version}-pellcorp/$directory/$
 pushd /tmp/${version}-pellcorp/$directory/$sub_directory > /dev/null
 split -d -b 1048576 -a 4 /tmp/${version}-pellcorp/rootfs.squashfs rootfs.squashfs.
 popd > /dev/null
-#rm /tmp/${version}-pellcorp/rootfs.squashfs
 
 for i in $(ls /tmp/${version}-pellcorp/$directory/$sub_directory/rootfs.squashfs.*); do
     file=$(basename $i)
