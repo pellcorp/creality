@@ -72,7 +72,7 @@ install_fluidd() {
 
         git clone https://github.com/fluidd-core/fluidd-config.git /usr/data/fluidd-config || exit $?
         ln -sf /usr/data/fluidd-config/fluidd.cfg /usr/data/printer_data/config/fluidd.cfg
-        sed -i 's/\[include gcode_macro\.cfg\]/a \[include fluidd\.cfg\]' /usr/data/printer_data/config/printer.cfg || exit $?
+        sed -i '/\[include gcode_macro\.cfg\]/a \[include fluidd\.cfg\]' /usr/data/printer_data/config/printer.cfg || exit $?
         echo "fluidd" >> /usr/data/pellcorp.cfg
         sync
     fi
@@ -101,9 +101,9 @@ install_klipper() {
         sed -i '/^\[bl24c16f\]/,/^$/d' /usr/data/printer_data/config/printer.cfg || exit $?
         sed -i '/^\[mcu leveling_mcu\]/,/^$/d' /usr/data/printer_data/config/printer.cfg || exit $?
         sed -i '/^\[prtouch_v2\]/,/^$/d' /usr/data/printer_data/config/printer.cfg || exit $?
-        sed -i 's/^square_corner_max_velocity: 200.0$/d' /usr/data/printer_data/config/printer.cfg || exit $?
-        sed -i 's/^\[include gcode_macro\.cfg\]/#\[include gcode_macro\.cfg\]/g' /usr/data/printer_data/config/printer.cfg || exit $?
-        sed -i 's/^\[include printer_params\.cfg\]/#\[include printer_params\.cfg\]/g' /usr/data/printer_data/config/printer.cfg || exit $?
+        sed -i '/^square_corner_max_velocity: 200.0$/d' /usr/data/printer_data/config/printer.cfg || exit $?
+        sed -i '/^\[include gcode_macro\.cfg\]/#\[include gcode_macro\.cfg\]/g' /usr/data/printer_data/config/printer.cfg || exit $?
+        sed -i '/^\[include printer_params\.cfg\]/#\[include printer_params\.cfg\]/g' /usr/data/printer_data/config/printer.cfg || exit $?
         echo "klipper" >> /usr/data/pellcorp.cfg
         sync
     fi
@@ -113,7 +113,7 @@ install_guppyscreen() {
     grep "guppyscreen" /usr/data/pellcorp.cfg > /dev/null
     if [ $? -ne 0 ]; then
         echo "Installing guppyscreen ..."
-        /usr/data/pellcorp/k1/curl -s -L "hhttps://raw.githubusercontent.com/ballaswag/guppyscreen/main/installer.sh" -o /usr/data/guppy-installer.sh
+        /usr/data/pellcorp/k1/curl -s -L "https://raw.githubusercontent.com/ballaswag/guppyscreen/main/installer.sh" -o /usr/data/guppy-installer.sh || exit $?
         chmod 777 /usr/data/guppy-installer.sh
         /usr/data/guppy-installer.sh || exit $?
         rm /usr/data/guppy-installer.sh
