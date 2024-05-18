@@ -21,6 +21,7 @@ fi
 install_moonraker() {
     grep "moonraker" /usr/data/pellcorp.cfg > /dev/null
     if [ $? -ne 0 ]; then
+        echo ""
         echo "Installing moonraker ..."
         git clone https://github.com/Arksine/moonraker /usr/data/moonraker || exit $?
         cp /usr/data/pellcorp/k1/S56moonraker_service /etc/init.d/
@@ -36,6 +37,7 @@ install_moonraker() {
 install_nginx() {
     grep "nginx" /usr/data/pellcorp.cfg > /dev/null
     if [ $? -ne 0 ]; then
+        echo ""
         echo "Installing nginx ..."
         tar -zxf /usr/data/pellcorp/k1/nginx.tar.gz -C /usr/data/ || exit $?
         cp /usr/data/pellcorp/k1/nginx.conf /usr/data/nginx/nginx/
@@ -48,6 +50,7 @@ install_nginx() {
 disable_creality_services() {
     grep "creality" /usr/data/pellcorp.cfg > /dev/null
     if [ $? -ne 0 ]; then
+        echo ""
         echo "Disabling some creality services ..."
         echo "IMPORTANT: If you reboot the printer before installing guppyscreen, the screen will be blank - this is to be expected!"
         mkdir -p /usr/data/backup
@@ -65,6 +68,7 @@ disable_creality_services() {
 install_fluidd() {
     grep "fluidd" /usr/data/pellcorp.cfg > /dev/null
     if [ $? -ne 0 ]; then
+        echo ""
         echo "Installing fluidd ..."
         mkdir -p /usr/data/fluidd 
         /usr/data/pellcorp/k1/curl -s -L "https://github.com/fluidd-core/fluidd/releases/download/v1.30.0/fluidd.zip" -o /usr/data/fluidd.zip || exit $?
@@ -87,6 +91,7 @@ start_moonraker_nginx() {
 install_klipper() {
     grep "klipper" /usr/data/pellcorp.cfg > /dev/null
     if [ $? -ne 0 ]; then
+        echo ""
         echo "Installing klipper ..."
         mkdir -p /usr/data/backup
         git clone https://github.com/pellcorp/klipper.git /usr/data/klipper || exit $?
@@ -103,9 +108,10 @@ install_klipper() {
         sed -i '/^\[mcu leveling_mcu\]/,/^$/d' /usr/data/printer_data/config/printer.cfg || exit $?
         sed -i '/^\[prtouch_v2\]/,/^$/d' /usr/data/printer_data/config/printer.cfg || exit $?
         sed -i '/^square_corner_max_velocity: 200.0$/d' /usr/data/printer_data/config/printer.cfg || exit $?
-        sed -i '/^\[include gcode_macro\.cfg\]/#\[include gcode_macro\.cfg\]/g' /usr/data/printer_data/config/printer.cfg || exit $?
-        sed -i '/^\[include printer_params\.cfg\]/#\[include printer_params\.cfg\]/g' /usr/data/printer_data/config/printer.cfg || exit $?
+        sed -i 's/^\[include gcode_macro\.cfg\]/#\[include gcode_macro\.cfg\]/g' /usr/data/printer_data/config/printer.cfg || exit $?
+        sed -i 's/^\[include printer_params\.cfg\]/#\[include printer_params\.cfg\]/g' /usr/data/printer_data/config/printer.cfg || exit $?
         echo "klipper" >> /usr/data/pellcorp.cfg
+        echo "WARNING: A power cycle is required to properly activate klipper!"
         sync
     fi
 }
@@ -113,6 +119,7 @@ install_klipper() {
 install_guppyscreen() {
     grep "guppyscreen" /usr/data/pellcorp.cfg > /dev/null
     if [ $? -ne 0 ]; then
+        echo ""
         echo "Installing guppyscreen ..."
         
         # guppyscreen won't try and backup anything if this directory already exists, since I already backed everything up
@@ -121,6 +128,7 @@ install_guppyscreen() {
 
         /usr/data/pellcorp/k1/curl -s -L "https://raw.githubusercontent.com/ballaswag/guppyscreen/main/installer.sh" -o /usr/data/guppy-installer.sh || exit $?
         chmod 777 /usr/data/guppy-installer.sh
+
         # bypass confirmation just do your thing 
         sed -i 's/read confirm_decreality/confirm_decreality=n/g' /usr/data/guppy-installer.sh
         sed -i 's/read confirm/confirm=n/g' /usr/data/guppy-installer.sh
@@ -138,6 +146,7 @@ install_guppyscreen() {
 setup_probe() {
     grep "probe" /usr/data/pellcorp.cfg > /dev/null
     if [ $? -ne 0 ]; then
+        echo ""
         echo "Setting up generic probe config ..."
         sed -i '/^\[bed_mesh\]/,/^$/d' /usr/data/printer_data/config/printer.cfg
         sed -i '/\[include gcode_macro\.cfg\]/a \[include bltouch\.cfg\]' /usr/data/printer_data/config/printer.cfg
@@ -156,6 +165,7 @@ setup_probe() {
 setup_bltouch() {
     grep "bltouch" /usr/data/pellcorp.cfg > /dev/null
     if [ $? -ne 0 ]; then
+        echo ""
         echo "Setting up bltouch ..."
         cp /usr/data/pellcorp/k1/bltouch.cfg /usr/data/printer_data/config/
         sed -i '/\[include gcode_macro\.cfg\]/a \[include bltouch\.cfg\]' /usr/data/printer_data/config/printer.cfg
@@ -166,6 +176,7 @@ setup_bltouch() {
 setup_microprobe() {
     grep "microprobe" /usr/data/pellcorp.cfg > /dev/null
     if [ $? -ne 0 ]; then
+        echo ""
         echo "Setting up microprobe ..."
         cp /usr/data/pellcorp/k1/microprobe.cfg /usr/data/printer_data/config/
         sed -i '/\[include gcode_macro\.cfg\]/a \[include microprobe\.cfg\]' /usr/data/printer_data/config/printer.cfg
@@ -179,11 +190,16 @@ install_moonraker
 install_nginx
 disable_creality_services
 install_fluidd
+# we start moonraker and nginx late as the moonraker.conf and nginx.conf both reference fluidd stuff that would 
+# cause moonraker and nginx to fail if they were started any earlier.
 start_moonraker_nginx
 install_klipper
 install_guppyscreen
 setup_probe
+
+# currently this is just for microprobe setup, as that one is safe to use even without skipping first setup
 setup_microprobe
+#setup_bltouch
 
 echo "Please power cycle your printer to activate updated klipper and perform any nozzle firmware update!"
 exit 0
