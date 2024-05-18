@@ -56,6 +56,7 @@ disable_creality_services() {
         mv /etc/init.d/S70cx_ai_middleware /usr/data/backup/
         mv /etc/init.d/S97webrtc /usr/data/backup/
         mv /etc/init.d/S99mdns /usr/data/backup/
+        mv /etc/init.d/S12boot_display /usr/data/backup/
         echo "creality" >> /usr/data/pellcorp.cfg
         sync
     fi
@@ -113,8 +114,17 @@ install_guppyscreen() {
     grep "guppyscreen" /usr/data/pellcorp.cfg > /dev/null
     if [ $? -ne 0 ]; then
         echo "Installing guppyscreen ..."
+        
+        # guppyscreen won't try and backup anything if this directory already exists, since I already backed everything up
+        # already I want guppyscreen installer to skip it.
+        mkdir -p /usr/data/guppyify-backup
+
         /usr/data/pellcorp/k1/curl -s -L "https://raw.githubusercontent.com/ballaswag/guppyscreen/main/installer.sh" -o /usr/data/guppy-installer.sh || exit $?
         chmod 777 /usr/data/guppy-installer.sh
+        # bypass confirmation just do your thing 
+        sed -i 's/read confirm_decreality/confirm_decreality=n/g' /usr/data/guppy-installer.sh
+        sed -i 's/read confirm/confirm=n/g' /usr/data/guppy-installer.sh
+        
         /usr/data/guppy-installer.sh || exit $?
         rm /usr/data/guppy-installer.sh
         
