@@ -213,9 +213,11 @@ install_klipper
 install_guppyscreen
 setup_probe
 
-# currently this is just for microprobe setup, as that one is safe to use even without skipping first setup
-setup_microprobe
-#setup_bltouch
+if [ "$1" = "bltouch" ]; then
+    setup_bltouch
+else
+    setup_microprobe
+fi
 
 echo ""
 echo "Please power cycle your printer to activate updated klipper and perform any nozzle firmware update!"
