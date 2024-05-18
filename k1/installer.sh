@@ -72,7 +72,7 @@ install_fluidd() {
 
         git clone https://github.com/fluidd-core/fluidd-config.git /usr/data/fluidd-config || exit $?
         ln -sf /usr/data/fluidd-config/fluidd.cfg /usr/data/printer_data/config/fluidd.cfg
-        sed -i '/\[include gcode_macro\.cfg\]/a \[include fluidd\.cfg\]' /usr/data/printer_data/config/printer.cfg
+        sed -i 's/\[include gcode_macro\.cfg\]/a \[include fluidd\.cfg\]' /usr/data/printer_data/config/printer.cfg || exit $?
         echo "fluidd" >> /usr/data/pellcorp.cfg
         sync
     fi
@@ -98,12 +98,12 @@ install_klipper() {
         cp /usr/data/pellcorp/k1/S55klipper_service /etc/init.d/
         /usr/share/klippy-env/bin/python3 -m compileall /usr/data/klipper/klippy
 
-        sed -i '/^\[bl24c16f\]/,/^$/d' /usr/data/printer_data/config/printer.cfg
-        sed -i '/^\[include gcode_macro\.cfg\]/#\[include gcode_macro\.cfg\]/g' /usr/data/printer_data/config/printer.cfg
-        sed -i '/^\[include printer_params\.cfg\]/#\[include printer_params\.cfg\]/g' /usr/data/printer_data/config/printer.cfg
-        sed -i '/^\[mcu leveling_mcu\]/,/^$/d' /usr/data/printer_data/config/printer.cfg
-        sed -i '/^\[prtouch_v2\]/,/^$/d' /usr/data/printer_data/config/printer.cfg
-        sed -i '/^square_corner_max_velocity: 200.0$/d' /usr/data/printer_data/config/printer.cfg
+        sed -i '/^\[bl24c16f\]/,/^$/d' /usr/data/printer_data/config/printer.cfg || exit $?
+        sed -i '/^\[mcu leveling_mcu\]/,/^$/d' /usr/data/printer_data/config/printer.cfg || exit $?
+        sed -i '/^\[prtouch_v2\]/,/^$/d' /usr/data/printer_data/config/printer.cfg || exit $?
+        sed -i 's/^square_corner_max_velocity: 200.0$/d' /usr/data/printer_data/config/printer.cfg || exit $?
+        sed -i 's/^\[include gcode_macro\.cfg\]/#\[include gcode_macro\.cfg\]/g' /usr/data/printer_data/config/printer.cfg || exit $?
+        sed -i 's/^\[include printer_params\.cfg\]/#\[include printer_params\.cfg\]/g' /usr/data/printer_data/config/printer.cfg || exit $?
         echo "klipper" >> /usr/data/pellcorp.cfg
         sync
     fi
