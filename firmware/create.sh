@@ -15,6 +15,7 @@ function update_rootfs() {
     #echo "I was here" > /tmp/${version}-pellcorp/squashfs-root/etc/me
     sudo mksquashfs squashfs-root rootfs.squashfs || exit $?
     sudo rm -rf squashfs-root
+    sudo chown $USER rootfs.squashfs 
 }
 
 # if you look hard enough you can find the password on the interwebs in a certain discord
@@ -70,11 +71,17 @@ pushd /tmp/${version}-pellcorp/$directory/$sub_directory > /dev/null
 split -d -b 1048576 -a 4 /tmp/${version}-pellcorp/rootfs.squashfs rootfs.squashfs.
 popd > /dev/null
 
+part_md5=
 for i in $(ls /tmp/${version}-pellcorp/$directory/$sub_directory/rootfs.squashfs.*); do
     file=$(basename $i)
-    id=$(uuidgen | tr -d '-')
+    if [ -z "$part_md5" ]; then
+        id=$rootfs_md5
+    else
+        id=$part_md5
+    fi
     mv "/tmp/${version}-pellcorp/$directory/$sub_directory/$file" "/tmp/${version}-pellcorp/$directory/$sub_directory/${file}.${id}"
-    echo "$id" >> "/tmp/${version}-pellcorp/$directory/$sub_directory/ota_md5_rootfs.squashfs.${rootfs_md5}"
+    part_md5=$(md5sum /tmp/${version}-pellcorp/$directory/$sub_directory/${file}.${id} | awk '{print $1}')
+    echo "$part_md5" >> "/tmp/${version}-pellcorp/$directory/$sub_directory/ota_md5_rootfs.squashfs.${rootfs_md5}"
 done
 
 sed -i "s/img_md5=$orig_rootfs_md5/img_md5=$rootfs_md5/g" /tmp/${version}-pellcorp/$directory/$sub_directory/ota_update.in
