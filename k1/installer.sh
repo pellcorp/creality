@@ -20,8 +20,8 @@ if [ "$SCRIPTPATH" != "/usr/data/pellcorp/k1" ]; then
 fi
 
 if [ ! -f /etc/init.d/S51factoryreset ]; then
-    echo "The emergency factory reset 'service' is not present - aborting"
-    exit 1
+    cp /usr/data/pellcorp/k1/S51factoryreset /etc/init.d
+    sync
 fi
 
 install_moonraker() {
