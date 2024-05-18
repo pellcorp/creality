@@ -19,7 +19,7 @@ for command in $commands; do
 done
 
 old_version=1.3.3.8
-version="5.${old_version}"
+version="6.${old_version}"
 
 function write_ota_info() {
     echo "ota_version=${version}" > /tmp/${version}-pellcorp/ota_info
