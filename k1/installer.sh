@@ -25,6 +25,8 @@ install_moonraker() {
         git clone https://github.com/Arksine/moonraker /usr/data/moonraker || exit $?
         cp /usr/data/pellcorp/k1/S56moonraker_service /etc/init.d/
         cp /usr/data/pellcorp/k1/moonraker.conf /usr/data/printer_data/config/
+        cp /usr/data/pellcorp/k1/notifier.conf /usr/data/printer_data/config/
+        cp /usr/data/pellcorp/k1/moonraker.secrets /usr/data/printer_data/
         tar -zxf /usr/data/pellcorp/k1/moonraker-env.tar.gz -C /usr/data/
         echo "moonraker" >> /usr/data/pellcorp.cfg
         sync

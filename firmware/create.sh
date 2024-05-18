@@ -3,7 +3,6 @@
 CURRENT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd -P)"
 
 # if you look hard enough you can find the password on the interwebs in a certain discord
-
 if [ -z "$K1_FIRMWARE_PASSWORD" ]; then
     echo "Creality K1 firmware password not defined, did you forget to: "
     echo "export K1_FIRMWARE_PASSWORD='the password from a certain discord'"
