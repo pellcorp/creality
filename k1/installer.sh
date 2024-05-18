@@ -64,6 +64,7 @@ disable_creality_services() {
 install_fluidd() {
     grep "fluidd" /usr/data/pellcorp.cfg > /dev/null
     if [ $? -ne 0 ]; then
+        echo "Installing fluidd ..."
         mkdir -p /usr/data/fluidd 
         /usr/data/pellcorp/k1/curl -s -L "https://github.com/fluidd-core/fluidd/releases/download/v1.30.0/fluidd.zip" -o /usr/data/fluidd.zip || exit $?
         unzip -qd /usr/data/fluidd /usr/data/fluidd.zip
@@ -85,6 +86,7 @@ start_moonraker_nginx() {
 install_klipper() {
     grep "klipper" /usr/data/pellcorp.cfg > /dev/null
     if [ $? -ne 0 ]; then
+        echo "Installing klipper ..."
         mkdir -p /usr/data/backup
         git clone https://github.com/pellcorp/klipper.git /usr/data/klipper || exit $?
         cd /usr/data/klipper
@@ -110,6 +112,7 @@ install_klipper() {
 install_guppyscreen() {
     grep "guppyscreen" /usr/data/pellcorp.cfg > /dev/null
     if [ $? -ne 0 ]; then
+        echo "Installing guppyscreen ..."
         /usr/data/pellcorp/k1/curl -s -L "hhttps://raw.githubusercontent.com/ballaswag/guppyscreen/main/installer.sh" -o /usr/data/guppy-installer.sh
         chmod 777 /usr/data/guppy-installer.sh
         /usr/data/guppy-installer.sh || exit $?
@@ -125,6 +128,7 @@ install_guppyscreen() {
 setup_probe() {
     grep "probe" /usr/data/pellcorp.cfg > /dev/null
     if [ $? -ne 0 ]; then
+        echo "Setting up generic probe config ..."
         sed -i '/^\[bed_mesh\]/,/^$/d' /usr/data/printer_data/config/printer.cfg
         sed -i '/\[include gcode_macro\.cfg\]/a \[include bltouch\.cfg\]' /usr/data/printer_data/config/printer.cfg
         sed 's/^endstop_pin: tmc2209_stepper_z:virtual_endstop.*/endstop_pin: probe:z_virtual_endstop/g' printer.cfg
@@ -142,6 +146,7 @@ setup_probe() {
 setup_bltouch() {
     grep "bltouch" /usr/data/pellcorp.cfg > /dev/null
     if [ $? -ne 0 ]; then
+        echo "Setting up bltouch ..."
         cp /usr/data/pellcorp/k1/bltouch.cfg /usr/data/printer_data/config/
         sed -i '/\[include gcode_macro\.cfg\]/a \[include bltouch\.cfg\]' /usr/data/printer_data/config/printer.cfg
         echo "microprobe" >> /usr/data/pellcorp.cfg
@@ -151,6 +156,7 @@ setup_bltouch() {
 setup_microprobe() {
     grep "microprobe" /usr/data/pellcorp.cfg > /dev/null
     if [ $? -ne 0 ]; then
+        echo "Setting up microprobe ..."
         cp /usr/data/pellcorp/k1/microprobe.cfg /usr/data/printer_data/config/
         sed -i '/\[include gcode_macro\.cfg\]/a \[include microprobe\.cfg\]' /usr/data/printer_data/config/printer.cfg
         echo "microprobe" >> /usr/data/pellcorp.cfg
@@ -168,4 +174,3 @@ install_klipper
 install_guppyscreen
 setup_probe
 setup_microprobe
-
