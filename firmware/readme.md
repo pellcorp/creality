@@ -22,11 +22,10 @@ Don't try and create this on windows or MacOs, you could do it on a ubuntu vm no
 
 ## Creating
 
-The create.sh script can be used, you will need to copy the firmware password to the file `~/.k1/firmware.passwd`.
-
 Then you can create a new firmware file, currently without any customations just to test things work with:
 
 ```
+export K1_FIRMWARE_PASSWORD='the password from a certain discord'
 ./create.sh
 ```
 

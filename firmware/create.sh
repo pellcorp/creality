@@ -3,9 +3,10 @@
 CURRENT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd -P)"
 
 # if you look hard enough you can find the password on the interwebs in a certain discord
-password="$(cat ~/.k1/firmware.passwd)"
-if [ -z "$password" ]; then
-    echo "Creality K1 firmware password missing - should be in ~/.k1/firmware.passwd!!!"
+
+if [ -z "$K1_FIRMWARE_PASSWORD" ]; then
+    echo "Creality K1 firmware password not defined, did you forget to: "
+    echo "export K1_FIRMWARE_PASSWORD='the password from a certain discord'"
     exit 1
 fi
 
@@ -61,7 +62,7 @@ if [ -d /tmp/$old_directory ]; then
     rm -rf /tmp/$old_directory
 fi
 
-7z x /tmp/$old_image_name -p"$password" -o/tmp
+7z x /tmp/$old_image_name -p"$K1_FIRMWARE_PASSWORD" -o/tmp
 
 if [ -d /tmp/${version}-pellcorp ]; then
     sudo rm -rf /tmp/${version}-pellcorp
@@ -109,6 +110,6 @@ sed -i "s/img_md5=$orig_rootfs_md5/img_md5=$rootfs_md5/g" /tmp/${version}-pellco
 sed -i "s/img_size=$orig_rootfs_size/img_size=$rootfs_size/g" /tmp/${version}-pellcorp/$directory/$sub_directory/ota_update.in
 
 pushd /tmp/${version}-pellcorp/ > /dev/null
-7z a ${image_name}.7z -p"$password" $directory
+7z a ${image_name}.7z -p"$K1_FIRMWARE_PASSWORD" $directory
 mv ${image_name}.7z ${image_name}
 popd > /dev/null
