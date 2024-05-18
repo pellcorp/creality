@@ -2,6 +2,8 @@
 #
 # Starts dropbear sshd.
 #
+# Note - Creality version of this file puts a # in front of the start!!!
+#
 
 # Allow a few customizations from a config file
 test -r /etc/default/dropbear && . /etc/default/dropbear

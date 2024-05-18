@@ -14,7 +14,7 @@ factory_reset() {
 	ACTION=stop /usr/bin/auto_uvc.sh
 	/etc/init.d/rcK
 	/bin/rm -rf /overlay/upper/*
-	/usr/bin/find /usr/data/ -path '/usr/data/creality' -prune -o -path '/usr/data/machine_production_info' -prune -o -path '/usr/data/' -o -print -exec rm -rf {} \;
+	/usr/bin/find /usr/data/ -path '/usr/data/creality' -prune -o -path '/usr/data/wpa_supplicant.conf' -prune -o -path '/usr/data/machine_production_info' -prune -o -path '/usr/data/' -o -print -exec rm -rf {} \;
 	/bin/sync
 	/sbin/swapoff -a
 	/sbin/reboot -f
