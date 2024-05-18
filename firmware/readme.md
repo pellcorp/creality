@@ -1,9 +1,20 @@
 # Custom Firmware
 
 I have been working on a script to create custom firmware, with the idea of potentially providing 
-firmware for the k1 that has my klipper repo, no creality gcode, all preconfigured.
+firmware for the k1 that has been pre-rooted, ssh-enabled and my emergency sub firmware factory reset
+feature installed.   
 
-** I WILL NOT BE HELD RESPONSIBLE IF YOU BRICK YOUR PRINTER - CREATING AND INSTALLING CUSTOM FIRMWARE IS RISKY **
+**I WILL NOT BE HELD RESPONSIBLE IF YOU BRICK YOUR PRINTER - CREATING AND INSTALLING CUSTOM FIRMWARE IS RISKY**
+
+## Why I did it?
+
+I mostly did this so I could iterate my Simple AF K1 Klipper project, because factory resetting, configuring WIFI,
+ then enabling root takes at least 1 minute.   With my `S51factoryreset` process it leaves the wifi configuration
+ alone.
+
+ I was considering packaging my Simple AF K1 Klipper as a firmware image, but I actually don't think that is such
+ a good idea, as all you can do is create a `/etc/init.d` file that gets triggered on startup to actually
+ do the install, and the user has no idea whether it succeeded or not!
 
 ## Prerequisites
 
