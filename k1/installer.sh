@@ -5,6 +5,12 @@ if [ ! -f /usr/data/printer_data/config/printer.cfg ]; then
   exit 1
 fi
 
+MODEL=$(/usr/bin/get_sn_mac.sh model)
+if [ "$MODEL" != "CR-K1" ]; then
+    echo "Currently this script is only supported for the original K1!"
+    exit 1
+fi
+
 # https://stackoverflow.com/a/1638397
 SCRIPT=$(readlink -f "$0")
 SCRIPTPATH=$(dirname "$SCRIPT")
@@ -116,13 +122,21 @@ install_klipper() {
     fi
 }
 
-
 install_guppyscreen() {
     grep "guppyscreen" /usr/data/pellcorp.cfg > /dev/null
     if [ $? -ne 0 ]; then
         echo ""
         echo "Installing guppyscreen ..."
         
+        echo "Waiting for moonraker ..."
+        while true; do
+            KLIPPER_PATH=$(curl localhost:7125/printer/info 2> /dev/null | jq -r .result.klipper_path)
+            if [ "$KLIPPER_PATH" = "/usr/share/klipper" ]; then
+                break;
+            fi
+            sleep 1
+        done
+
         # guppyscreen won't try and backup anything if this directory already exists, since I already backed everything up
         # already I want guppyscreen installer to skip it.
         mkdir -p /usr/data/guppyify-backup
@@ -203,5 +217,6 @@ setup_probe
 setup_microprobe
 #setup_bltouch
 
+echo ""
 echo "Please power cycle your printer to activate updated klipper and perform any nozzle firmware update!"
 exit 0
