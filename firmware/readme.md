@@ -3,6 +3,8 @@
 I have been working on a script to create custom firmware, with the idea of potentially providing 
 firmware for the k1 that has my klipper repo, no creality gcode, all preconfigured.
 
+** I WILL NOT BE HELD RESPONSIBLE IF YOU BRICK YOUR PRINTER - CREATING AND INSTALLING CUSTOM FIRMWARE IS RISKY **
+
 ## Prerequisites
 
 You will need a linux machine with the following commands available, something like ubuntu or arch is fine:
