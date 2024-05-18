@@ -108,7 +108,10 @@ install_klipper() {
 install_guppyscreen() {
     grep "guppyscreen" /usr/data/pellcorp.cfg > /dev/null
     if [ $? -ne 0 ]; then
-        sh -c "$(wget --no-check-certificate -qO - https://raw.githubusercontent.com/ballaswag/guppyscreen/main/installer.sh)"
+        /usr/data/pellcorp/k1/curl -s -L "hhttps://raw.githubusercontent.com/ballaswag/guppyscreen/main/installer.sh" -o /usr/data/guppy-installer.sh
+        chmod 777 /usr/data/guppy-installer.sh
+        /usr/data/guppy-installer.sh || exit $?
+        rm /usr/data/guppy-installer.sh
         
         # guppyscreen installs some new python stuff so compile that stuff now
         /usr/share/klippy-env/bin/python3 -m compileall /usr/data/klipper/klippy
