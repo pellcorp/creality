@@ -13,7 +13,7 @@ if [ "$SCRIPTPATH" != "/usr/data/pellcorp/k1" ]; then
   >&2 echo "ERROR: This git repo must be cloned to /usr/data/pellcorp"
 fi
 
-if [ -f /etc/init.d/S51factoryreset ]; then
+if [ ! -f /etc/init.d/S51factoryreset ]; then
     echo "The emergency factory reset 'service' is not present - aborting"
     exit 1
 fi
