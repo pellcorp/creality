@@ -149,8 +149,7 @@ setup_probe() {
         echo ""
         echo "Setting up generic probe config ..."
         sed -i '/^\[bed_mesh\]/,/^$/d' /usr/data/printer_data/config/printer.cfg
-        sed -i '/\[include gcode_macro\.cfg\]/a \[include bltouch\.cfg\]' /usr/data/printer_data/config/printer.cfg
-        sed -i 's/^endstop_pin: tmc2209_stepper_z:virtual_endstop.*/endstop_pin: probe:z_virtual_endstop/g' printer.cfg
+        sed -i 's/^endstop_pin: tmc2209_stepper_z:virtual_endstop.*/endstop_pin: probe:z_virtual_endstop/g' /usr/data/printer_data/config/printer.cfg
         sed -i '/^position_endstop: 0/,/^$/d' /usr/data/printer_data/config/printer.cfg
 
         cp /usr/data/pellcorp/k1/fan_control.cfg /usr/data/printer_data/config
@@ -169,7 +168,7 @@ setup_bltouch() {
         echo "Setting up bltouch ..."
         cp /usr/data/pellcorp/k1/bltouch.cfg /usr/data/printer_data/config/
         sed -i '/\[include gcode_macro\.cfg\]/a \[include bltouch\.cfg\]' /usr/data/printer_data/config/printer.cfg
-        echo "microprobe" >> /usr/data/pellcorp.cfg
+        echo "bltouch" >> /usr/data/pellcorp.cfg
     fi
 }
 
