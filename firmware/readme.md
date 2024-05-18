@@ -26,9 +26,13 @@ a new firmware image from the cli rather than relying on the display server
 /etc/ota_bin/local_ota_update.sh /tmp/udisk/sda1/CR4CU220812S11_ota_img_V1.3.3.8.img
 ```
 
-Thanks
+## Thanks
 
 Thanks for destinal from discord for providing information about testing the image and also for providing 
 the password creality uses for generating the image.
 
 https://www.reddit.com/r/crealityk1/comments/15d3b8k/reverting_to_stock_firmware_on_the_k1_or_k1_max/  
+
+
+I also have used a couple of his init.d scripts which I got from 
+https://openk1.org/static/k1/packages/crealityos-root-init-scripts.tar.gz

@@ -1,0 +1,14 @@
+#!/bin/sh
+#
+# Make sure we have agreed to root. This is a prerooted firmware image, after all.
+# -destinal
+case "$1" in
+    start)
+        /bin/touch /usr/data/creality/userdata/user_agree_root
+        ;;
+    *)
+        echo "Usage: $0 {start}"
+        exit 1
+esac
+
+exit $?

@@ -1,5 +1,7 @@
 #!/bin/bash
 
+CURRENT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd -P)"
+
 # if you look hard enough you can find the password on the interwebs in a certain discord
 password="$(cat ~/.k1/firmware.passwd)"
 if [ -z "$password" ]; then
@@ -27,10 +29,15 @@ function write_ota_info() {
     sudo cp /tmp/${version}-pellcorp/ota_info /tmp/${version}-pellcorp/squashfs-root/etc/
 }
 
+function customise_rootfs() {
+    write_ota_info
+    sudo cp $CURRENT_DIR/etc/init.d/* /tmp/${version}-pellcorp/squashfs-root/etc/init.d/
+}
+
 function update_rootfs() {
     pushd /tmp/${version}-pellcorp/ > /dev/null
     sudo unsquashfs orig_rootfs.squashfs 
-    write_ota_info
+    customise_rootfs
     sudo mksquashfs squashfs-root rootfs.squashfs || exit $?
     sudo rm -rf squashfs-root
     sudo chown $USER rootfs.squashfs 
@@ -38,7 +45,6 @@ function update_rootfs() {
 
 download=$(wget -q https://www.creality.com/pages/download-k1-flagship -O- | grep -o  "\"\(.*\)V${old_version}.img\"" | head -1 | tr -d '"')
 old_image_name=$(basename $download)
-# CR4CU220812S11_ota_img_V1.3.3.8
 board_name=$(echo "$old_image_name" | grep -oh "CR[^_\]*")
 old_directory="${board_name}_ota_img_V${old_version}"
 old_sub_directory="ota_v${old_version}"

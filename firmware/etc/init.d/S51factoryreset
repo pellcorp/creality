@@ -1,0 +1,34 @@
+#!/bin/sh
+
+FLAG_FILE="/tmp/udisk/sda1/emergency_factory_reset"
+
+#
+# This script will execute just before klipper starts and it does not rely on wipe data
+# it does the equivalent of  `echo "all" | nc -U /var/run/wipe.sock`
+#
+# It needs to run after S12udev is started which is what mounts the usb key
+#
+factory_reset() {
+	echo "Executing factory reset, hang tight!..."
+	/usr/bin/mcu_reset.sh
+	ACTION=stop /usr/bin/auto_uvc.sh
+	/etc/init.d/rcK
+	/bin/rm -rf /overlay/upper/*
+	/usr/bin/find /usr/data/ -path '/usr/data/creality' -prune -o -path '/usr/data/machine_production_info' -prune -o -path '/usr/data/' -o -print -exec rm -rf {} \;
+	/bin/sync
+	/sbin/swapoff -a
+	/sbin/reboot -f
+}
+
+case "$1" in
+    start)
+		if [ -f "$FLAG_FILE" ]; then
+			factory_reset
+		fi
+        ;;
+    *)
+        echo "Usage: $0 {start}"
+        exit 1
+esac
+
+exit 0
