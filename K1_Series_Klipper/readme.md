@@ -11,5 +11,5 @@ docker run -ti -v $PWD:$PWD pellcorp/k1-klipper-fw-build $PWD/build.sh
 ```
 docker build . -t pellcorp/k1-klipper-fw-build
 docker login
-docker push
+docker push pellcorp/k1-klipper-fw-build
 ```
