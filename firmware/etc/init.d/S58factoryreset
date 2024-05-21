@@ -16,7 +16,14 @@ factory_reset() {
     echo "Info: Factory reset was executed successfully, the printer will restart..."
     /etc/init.d/rcK >/dev/null 2>&1
     /bin/rm -rf /overlay/upper/* >/dev/null 2>&1
+    # first clean up everything except /usr/data/creality
     /usr/bin/find /usr/data/ -path '/usr/data/creality' -prune -o -path '/usr/data/wpa_supplicant.conf' -prune -o -path '/usr/data/machine_production_info' -prune -o -path '/usr/data/' -o -print -exec rm -rf {} \; >/dev/null 2>&1
+    # clean up all of /usr/data/creality except for the user data directory
+    /usr/bin/find /usr/data/creality -path '/usr/data/creality/userdata' -prune -o -path '/usr/data/creality' -o -print -exec rm -rf {} \; >/dev/null 2>&1
+    # now clean up all the files under user data creality except system config and user agree root
+    /usr/bin/find /usr/data/creality/userdata -path '/usr/data/creality/userdata/config/system_config.json' -prune -o -path '/usr/data/creality/userdata/user_agree_root' -prune -o -path '/usr/data/creality/userdata' -o -type d -o -print -exec rm {} \; >/dev/null 2>&1
+    # and finally remove all empty directories, the -depth argument is the secret here
+    find /usr/data/creality/ -depth -print -exec rmdir {} \; >/dev/null 2>&1
     /bin/sync >/dev/null 2>&1
     /sbin/swapoff -a >/dev/null 2>&1
     /sbin/reboot -f >/dev/null 2>&1
