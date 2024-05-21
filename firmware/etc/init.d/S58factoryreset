@@ -1,12 +1,9 @@
 #!/bin/sh
 
 #
-# This script will execute just before klipper starts and it does not rely on wipe data
-# it does the equivalent of  `echo "all" | nc -U /var/run/wipe.sock`
-#
+# This script will execute just after klipper and klipper mcu starts and it does not rely on wipe data
 # It needs to run after S12udev is started which is what mounts the usb key
 #
-
 FLAG_FILE="/tmp/udisk/sda1/factory_reset"
 
 factory_reset() {
