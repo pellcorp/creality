@@ -1,9 +1,6 @@
 #!/bin/sh
 
-#
-# This script does the equivalent of  `echo "all" | nc -U /var/run/wipe.sock`
-#
-FLAG_FILE="/tmp/udisk/sda1/factory_reset"
+FLAG_FILE="/tmp/udisk/sda1/emergency_factory_reset"
 
 factory_reset() {
     mv "$FLAG_FILE" "${FLAG_FILE}.old" >/dev/null 2>&1
