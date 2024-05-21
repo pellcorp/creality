@@ -81,6 +81,8 @@ disable_creality_services() {
         mv /etc/init.d/S97webrtc /usr/data/backup/
         mv /etc/init.d/S99mdns /usr/data/backup/
         mv /etc/init.d/S12boot_display /usr/data/backup/
+        # we have our own factory reset service we dont need this one
+        mv /etc/init.d/S96wipe_data /usr/data/backup/
         echo "creality" >> /usr/data/pellcorp.done
         sync
     fi
