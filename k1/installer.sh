@@ -34,7 +34,11 @@ if [ "$SCRIPTPATH" != "/usr/data/pellcorp/k1" ]; then
   >&2 echo "ERROR: This git repo must be cloned to /usr/data/pellcorp"
 fi
 
-if [ ! -f /etc/init.d/S51factoryreset ] && [ ! -f /etc/init.d/S58factoryreset ]; then
+if [ ! -f /etc/init.d/S58factoryreset ]; then
+    # my root image has out of date S51factoryreset 
+    if [ -f /etc/init.d/S51factoryreset ]; then
+        rm /etc/init.d/S51factoryreset
+    fi
     cp /usr/data/pellcorp/k1/S58factoryreset /etc/init.d
     sync
 fi
