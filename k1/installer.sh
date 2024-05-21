@@ -165,7 +165,7 @@ install_guppyscreen() {
         /usr/data/pellcorp/k1/curl -s -L "https://raw.githubusercontent.com/ballaswag/guppyscreen/main/installer.sh" -o /usr/data/guppy-installer.sh || exit $?
         chmod 777 /usr/data/guppy-installer.sh
 
-        # we have aleady removed the creality services, so we dont need guppy to that for us
+        # we have aleady removed the creality services, so we dont need guppy to do that for us
         sed -i 's/read confirm_decreality/confirm_decreality=n/g' /usr/data/guppy-installer.sh
 
         # so we don't need guppyscreen to restart klipper as we are going to power cycle the printer
