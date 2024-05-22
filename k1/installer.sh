@@ -124,7 +124,10 @@ install_klipper() {
         mkdir -p /usr/data/backup
         git clone https://github.com/pellcorp/klipper.git /usr/data/klipper || exit $?
         cd /usr/data/klipper
-        mv /usr/share/klipper /usr/data/backup/
+        rm -rf /usr/share/klipper
+        # can restore this with (thanks to Guilouz for pointing this out):
+        # rm -rf /overlay/upper/usr/share/klipper
+        # mount -o remount /
         mv /usr/data/printer_data/config/sensorless.cfg /usr/data/backup/
         ln -s /usr/data/klipper /usr/share/
         cp /usr/data/pellcorp/k1/sensorless.cfg /usr/data/printer_data/config/
