@@ -98,7 +98,8 @@ install_fluidd() {
         echo ""
         echo "Installing fluidd ..."
         mkdir -p /usr/data/fluidd 
-        /usr/data/pellcorp/k1/curl -s -L "https://github.com/fluidd-core/fluidd/releases/download/v1.30.0/fluidd.zip" -o /usr/data/fluidd.zip || exit $?
+        # thanks to Guilouz for pointing out the url I can use to get the latest version
+        /usr/data/pellcorp/k1/curl -s -L "https://github.com/fluidd-core/fluidd/releases/latest/download/fluidd.zip" -o /usr/data/fluidd.zip || exit $?
         unzip -qd /usr/data/fluidd /usr/data/fluidd.zip
         rm /usr/data/fluidd.zip
 
