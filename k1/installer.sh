@@ -53,7 +53,7 @@ install_moonraker() {
         cp /usr/data/pellcorp/k1/moonraker.conf /usr/data/printer_data/config/
         cp /usr/data/pellcorp/k1/notifier.conf /usr/data/printer_data/config/
         cp /usr/data/pellcorp/k1/moonraker.secrets /usr/data/printer_data/
-        tar -zxf /usr/data/pellcorp/k1/moonraker-env.tar.gz -C /usr/data/
+        tar -zxf /usr/data/pellcorp/k1/moonraker-env.tar.gz -C /usr/data/ || exit $?
         echo "moonraker" >> /usr/data/pellcorp.done
         sync
     fi
@@ -87,6 +87,7 @@ disable_creality_services() {
         mv /etc/init.d/S12boot_display /usr/data/backup/
         # we have our own factory reset service we dont need this one
         mv /etc/init.d/S96wipe_data /usr/data/backup/
+        cp /usr/data/printer_data/config/printer.cfg /usr/data/backup/
         echo "creality" >> /usr/data/pellcorp.done
         sync
     fi
@@ -100,16 +101,29 @@ install_fluidd() {
         mkdir -p /usr/data/fluidd 
         # thanks to Guilouz for pointing out the url I can use to get the latest version
         /usr/data/pellcorp/k1/curl -s -L "https://github.com/fluidd-core/fluidd/releases/latest/download/fluidd.zip" -o /usr/data/fluidd.zip || exit $?
-        unzip -qd /usr/data/fluidd /usr/data/fluidd.zip
+        unzip -qd /usr/data/fluidd /usr/data/fluidd.zip || exit $?
         rm /usr/data/fluidd.zip
         
-        /usr/data/pellcorp/k1/curl -s -L "https://raw.githubusercontent.com/fluidd-core/fluidd-config/master/client.cfg" -o /usr/data/printer_data/config/fluidd.cfg
+        /usr/data/pellcorp/k1/curl -s -L "https://raw.githubusercontent.com/fluidd-core/fluidd-config/master/client.cfg" -o /usr/data/printer_data/config/fluidd.cfg || exit $?
         # we already define pause resume and virtual sd card in printer.cfg
         sed -i '/^\[pause_resume\]/,/^$/d' /usr/data/printer_data/config/fluidd.cfg || exit $?
         sed -i '/^\[virtual_sdcard\]/,/^$/d' /usr/data/printer_data/config/fluidd.cfg || exit $?
+    
         sed -i '/\[include gcode_macro\.cfg\]/a \[include fluidd\.cfg\]' /usr/data/printer_data/config/printer.cfg || exit $?
-        
+    
         echo "fluidd" >> /usr/data/pellcorp.done
+        sync
+    fi
+}
+
+install_mainsail() {
+    grep "mainsail" /usr/data/pellcorp.done > /dev/null
+    if [ $? -ne 0 ]; then
+        echo ""
+        echo "Installing mainsail ..."
+        mkdir -p /usr/data/mainsail 
+        /usr/data/pellcorp/k1/curl -s -L "https://github.com/mainsail-crew/mainsail/releases/latest/download/mainsail.zip" -o /usr/data/mainsail.zip || exit $?
+        echo "mainsail" >> /usr/data/pellcorp.done
         sync
     fi
 }
@@ -136,14 +150,28 @@ install_klipper() {
         cp /usr/data/pellcorp/k1/sensorless.cfg /usr/data/printer_data/config/
         mv /etc/init.d/S55klipper_service /usr/data/backup/
         cp /usr/data/pellcorp/k1/S55klipper_service /etc/init.d/
-        /usr/share/klippy-env/bin/python3 -m compileall /usr/data/klipper/klippy
+        /usr/share/klippy-env/bin/python3 -m compileall /usr/data/klipper/klippy || exit $?
 
         sed -i '/^\[bl24c16f\]/,/^$/d' /usr/data/printer_data/config/printer.cfg || exit $?
         sed -i '/^\[mcu leveling_mcu\]/,/^$/d' /usr/data/printer_data/config/printer.cfg || exit $?
         sed -i '/^\[prtouch_v2\]/,/^$/d' /usr/data/printer_data/config/printer.cfg || exit $?
         sed -i '/^square_corner_max_velocity: 200.0$/d' /usr/data/printer_data/config/printer.cfg || exit $?
+        sed -i '/^max_accel_to_decel.*/d' /usr/data/printer_data/config/printer.cfg || exit $?
         sed -i 's/^\[include gcode_macro\.cfg\]/#\[include gcode_macro\.cfg\]/g' /usr/data/printer_data/config/printer.cfg || exit $?
         sed -i 's/^\[include printer_params\.cfg\]/#\[include printer_params\.cfg\]/g' /usr/data/printer_data/config/printer.cfg || exit $?
+
+        # proper fan control
+        cp /usr/data/pellcorp/k1/fan_control.cfg /usr/data/printer_data/config
+        sed -i '/\[include gcode_macro\.cfg\]/a \[include fan_control\.cfg\]' /usr/data/printer_data/config/printer.cfg
+        
+        sed -i '/^\[filament_switch_sensor filament_sensor_2\]/,/^$/d' /usr/data/printer_data/config/printer.cfg || exit $?
+        sed -i '/^\[output_pin fan0\]/,/^$/d' /usr/data/printer_data/config/printer.cfg || exit $?
+        sed -i '/^\[output_pin fan1\]/,/^$/d' /usr/data/printer_data/config/printer.cfg || exit $?
+        sed -i '/^\[output_pin fan2\]/,/^$/d' /usr/data/printer_data/config/printer.cfg || exit $?
+
+        cp /usr/data/pellcorp/k1/custom_gcode.cfg /usr/data/printer_data/config
+        sed -i '/\[include gcode_macro\.cfg\]/a \[include custom_gcode\.cfg\]' /usr/data/printer_data/config/printer.cfg || exit $?
+
         echo "klipper" >> /usr/data/pellcorp.done
         echo "WARNING: A power cycle is required to properly activate klipper!"
         sync
@@ -173,10 +201,10 @@ install_guppyscreen() {
         chmod 777 /usr/data/guppy-installer.sh
 
         # we have aleady removed the creality services, so we dont need guppy to do that for us
-        sed -i 's/read confirm_decreality/confirm_decreality=n/g' /usr/data/guppy-installer.sh
+        sed -i 's/read confirm_decreality/confirm_decreality=n/g' /usr/data/guppy-installer.sh || exit $?
 
         # so we don't need guppyscreen to restart klipper as we are going to power cycle the printer
-        sed -i 's/read confirm/confirm=n/g' /usr/data/guppy-installer.sh
+        sed -i 's/read confirm/confirm=n/g' /usr/data/guppy-installer.sh || exit $?
         
         /usr/data/guppy-installer.sh || exit $?
         rm /usr/data/guppy-installer.sh
@@ -195,13 +223,7 @@ setup_probe() {
         echo "Setting up generic probe config ..."
         sed -i '/^\[bed_mesh\]/,/^$/d' /usr/data/printer_data/config/printer.cfg
         sed -i 's/^endstop_pin: tmc2209_stepper_z:virtual_endstop.*/endstop_pin: probe:z_virtual_endstop/g' /usr/data/printer_data/config/printer.cfg
-        sed -i '/^position_endstop: 0/,/^$/d' /usr/data/printer_data/config/printer.cfg
-
-        cp /usr/data/pellcorp/k1/fan_control.cfg /usr/data/printer_data/config
-        sed -i '/\[include gcode_macro\.cfg\]/a \[include fan_control\.cfg\]' /usr/data/printer_data/config/printer.cfg
-        
-        cp /usr/data/pellcorp/k1/custom_gcode.cfg /usr/data/printer_data/config
-        sed -i '/\[include gcode_macro\.cfg\]/a \[include custom_gcode\.cfg\]' /usr/data/printer_data/config/printer.cfg
+        sed -i '/^position_endstop: 0$/d' /usr/data/printer_data/config/printer.cfg
         echo "probe" >> /usr/data/pellcorp.done
     fi
 }
@@ -212,7 +234,7 @@ setup_bltouch() {
         echo ""
         echo "Setting up bltouch ..."
         cp /usr/data/pellcorp/k1/bltouch.cfg /usr/data/printer_data/config/
-        sed -i '/\[include gcode_macro\.cfg\]/a \[include bltouch\.cfg\]' /usr/data/printer_data/config/printer.cfg
+        sed -i '/\[include gcode_macro\.cfg\]/a \[include bltouch\.cfg\]' /usr/data/printer_data/config/printer.cfg || exit $?
         echo "bltouch" >> /usr/data/pellcorp.done
     fi
 }
@@ -223,7 +245,7 @@ setup_microprobe() {
         echo ""
         echo "Setting up microprobe ..."
         cp /usr/data/pellcorp/k1/microprobe.cfg /usr/data/printer_data/config/
-        sed -i '/\[include gcode_macro\.cfg\]/a \[include microprobe\.cfg\]' /usr/data/printer_data/config/printer.cfg
+        sed -i '/\[include gcode_macro\.cfg\]/a \[include microprobe\.cfg\]' /usr/data/printer_data/config/printer.cfg || exit $?
         echo "microprobe" >> /usr/data/pellcorp.done
     fi
 }
