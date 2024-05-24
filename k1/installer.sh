@@ -102,10 +102,13 @@ install_fluidd() {
         /usr/data/pellcorp/k1/curl -s -L "https://github.com/fluidd-core/fluidd/releases/latest/download/fluidd.zip" -o /usr/data/fluidd.zip || exit $?
         unzip -qd /usr/data/fluidd /usr/data/fluidd.zip
         rm /usr/data/fluidd.zip
-
-        git clone https://github.com/fluidd-core/fluidd-config.git /usr/data/fluidd-config || exit $?
-        ln -sf /usr/data/fluidd-config/fluidd.cfg /usr/data/printer_data/config/fluidd.cfg
+        
+        /usr/data/pellcorp/k1/curl -s -L "https://raw.githubusercontent.com/fluidd-core/fluidd-config/master/client.cfg" -o /usr/data/printer_data/config/fluidd.cfg
+        # we already define pause resume and virtual sd card in printer.cfg
+        sed -i '/^\[pause_resume\]/,/^$/d' /usr/data/printer_data/config/fluidd.cfg || exit $?
+        sed -i '/^\[virtual_sdcard\]/,/^$/d' /usr/data/printer_data/config/fluidd.cfg || exit $?
         sed -i '/\[include gcode_macro\.cfg\]/a \[include fluidd\.cfg\]' /usr/data/printer_data/config/printer.cfg || exit $?
+        
         echo "fluidd" >> /usr/data/pellcorp.done
         sync
     fi
