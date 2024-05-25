@@ -9,8 +9,7 @@ The following files were originally from other projects.  Some of these files ar
 - sensorless.cfg -> https://raw.githubusercontent.com/K1-Klipper/installer_script_k1_and_max/main/sensorless.cfg
 - curl -> https://raw.githubusercontent.com/ballaswag/k1-discovery/main/bin/curl
 - S58factoryreset -> https://raw.githubusercontent.com/Guilouz/Creality-Helper-Script/main/files/services/S58factoryreset
-
-## Nginx
+- supervisorctl -> https://raw.githubusercontent.com/Guilouz/Creality-Helper-Script/main/files/fixes/supervisorctl
 
 The nginx binaries originally came from:
 https://github.com/Guilouz/Creality-Helper-Script/raw/main/files/moonraker/moonraker.tar.gz
