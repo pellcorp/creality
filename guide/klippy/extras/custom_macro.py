@@ -8,7 +8,6 @@ class CUSTOM_MACRO:
         self.heater_hot = None
         self.extruder_temp = None
         self.bed_temp = None
-        self.prtouch = None
         self.gcode.register_command("CX_PRINT_LEVELING_CALIBRATION", self.cmd_CX_PRINT_LEVELING_CALIBRATION, desc=self.cmd_CX_PRINT_LEVELING_CALIBRATION_help)
         self.gcode.register_command("CX_CLEAN_CALIBRATION_FLAGS", self.cmd_CX_CLEAN_CALIBRATION_FLAGS, desc=self.cmd_CX_CLEAN_CALIBRATION_FLAGS_help)
         self.gcode.register_command("CX_PRINT_DRAW_ONE_LINE", self.cmd_CX_PRINT_DRAW_ONE_LINE, desc=self.cmd_CX_PRINT_DRAW_ONE_LINE_help)
@@ -44,7 +43,8 @@ class CUSTOM_MACRO:
 
     cmd_ACCURATE_HOME_Z_help = ""
     def cmd_ACCURATE_HOME_Z(self, gcmd):
-        self.leveling_calibration = 0
+        if self.bed_temp:
+            self.gcode.run_script_from_command('M190 S%d' % (self.bed_temp))
         pass
 
     cmd_CX_PRINT_DRAW_ONE_LINE_help = "Draw one line before printing"
@@ -101,7 +101,7 @@ class CUSTOM_MACRO:
         self.gcode.run_script_from_command('G28')
         pass
 
-    cmd_CX_NOZZLE_CLEAR_help = "
+    cmd_CX_NOZZLE_CLEAR_help = ""
     def cmd_CX_NOZZLE_CLEAR(self, gcmd):
         pass
 
