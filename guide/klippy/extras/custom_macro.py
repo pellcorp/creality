@@ -50,7 +50,7 @@ class CUSTOM_MACRO:
 
     cmd_CX_PRINT_DRAW_ONE_LINE_help = "Draw one line before printing"
     def cmd_CX_PRINT_DRAW_ONE_LINE(self, gcmd):
-        self.gcode.run_script_from_command('G28 X Y')
+#        self.gcode.run_script_from_command('G28 X Y')
         self.gcode.run_script_from_command('M83')
         self.gcode.run_script_from_command('G1 X10 Y10 Z2 F6000')
         self.gcode.run_script_from_command('G1 Z0.1 F600')
