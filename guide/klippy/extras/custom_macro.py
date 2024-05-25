@@ -35,6 +35,7 @@ class CUSTOM_MACRO:
 
     cmd_CX_PRINT_LEVELING_CALIBRATION_help = ""
     def cmd_CX_PRINT_LEVELING_CALIBRATION(self, gcmd):
+        self.gcode.run_script_from_command('BED_MESH_PROFILE LOAD=default')
         pass
 
     cmd_CX_CLEAN_CALIBRATION_FLAGS_help = ""
