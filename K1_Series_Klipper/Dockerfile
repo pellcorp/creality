@@ -1,7 +1,12 @@
 from ubuntu:focal
 
+# 
+# docker build . -t pellcorp/k1-klipper-fw-build
+# docker login
+# docker push pellcorp/k1-klipper-fw-build
+#
 RUN apt-get update
-RUN apt-get install -y python3 build-essential gcc-arm-none-eabi sudo srecord wget
+RUN apt-get install -y python3 build-essential gcc-arm-none-eabi sudo srecord wget git curl
 
 RUN adduser --disabled-password --gecos "" developer && \
   usermod -a -G sudo developer && \
