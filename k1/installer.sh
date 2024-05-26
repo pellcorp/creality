@@ -43,11 +43,71 @@ if [ ! -f /etc/init.d/S58factoryreset ]; then
     sync
 fi
 
+disable_creality_services() {
+    grep "creality" /usr/data/pellcorp.done > /dev/null
+    if [ $? -ne 0 ]; then
+        echo ""
+        echo "Disabling some creality services ..."
+
+        echo "IMPORTANT: If you reboot the printer before installing guppyscreen, the screen will be blank - this is to be expected!"
+        /etc/init.d/S99start_app stop
+        mv /etc/init.d/S99start_app /usr/data/backup 2> /dev/null
+        mv /etc/init.d/S70cx_ai_middleware /usr/data/backup/p 2> /dev/null
+        mv /etc/init.d/S97webrtc /usr/data/backup/p 2> /dev/null
+        mv /etc/init.d/S99mdns /usr/data/backup/p 2> /dev/null
+        mv /etc/init.d/S12boot_display /usr/data/backup/p 2> /dev/null
+        # we have our own factory reset service we dont need this one
+        mv /etc/init.d/S96wipe_data /usr/data/backup/p 2> /dev/null
+        
+        echo "creality" >> /usr/data/pellcorp.done
+        sync
+    fi
+}
+
+# not strictly necessary but handy to have backups if we need to 
+# on the spot tweak something, especially if a user has an issue
+# and I am trying diagnose issue over discord
+backup_config() {
+    mkdir -p /usr/data/backup
+    
+    if [ ! -f /usr/data/backup/printer.cfg ]; then
+        cp /usr/data/printer_data/config/printer.cfg /usr/data/backup/
+    fi
+
+    if [ ! -f /usr/data/backup/sensorless.cfg ]; then
+        cp /usr/data/printer_data/config/sensorless.cfg /usr/data/backup/
+    fi
+
+    if [ ! -f /usr/data/backup/gcode_macro.cfg ]; then
+        cp /usr/data/printer_data/config/gcode_macro.cfg /usr/data/backup/
+    fi
+
+    if [ -f /usr/data/printer_data/config/printer_params.cfg ]; then
+        mv /usr/data/printer_data/config/printer_params.cfg /usr/data/backup/
+    fi
+
+    if [ -f /usr/data/printer_data/config/factory_printer.cfg ]; then
+        mv /usr/data/printer_data/config/factory_printer.cfg /usr/data/backup/
+    fi
+
+    if [ ! -f /usr/data/backup/S55klipper_service ]; then
+        cp /etc/init.d/S55klipper_service /usr/data/backup/
+    fi
+}
+
 install_moonraker() {
     grep "moonraker" /usr/data/pellcorp.done > /dev/null
     if [ $? -ne 0 ]; then
         echo ""
         echo "Installing moonraker ..."
+
+        # lets allow reinstalls
+        if [ -d /usr/data/moonraker ]; then
+            rm -rf /usr/data/moonraker
+        fi
+        if [ -d /usr/data/moonraker-env ]; then
+            rm -rf /usr/data/moonraker-env
+        fi
         git clone https://github.com/Arksine/moonraker /usr/data/moonraker || exit $?
         cp /usr/data/pellcorp/k1/S56moonraker_service /etc/init.d/
         cp /usr/data/pellcorp/k1/moonraker.conf /usr/data/printer_data/config/
@@ -64,31 +124,15 @@ install_nginx() {
     if [ $? -ne 0 ]; then
         echo ""
         echo "Installing nginx ..."
+
+        # lets allow reinstalls
+        if [ -d /usr/data/nginx ]; then
+            rm -rf /usr/data/nginx
+        fi
         tar -zxf /usr/data/pellcorp/k1/nginx.tar.gz -C /usr/data/ || exit $?
         cp /usr/data/pellcorp/k1/nginx.conf /usr/data/nginx/nginx/
         cp /usr/data/pellcorp/k1/S50nginx_service /etc/init.d/
         echo "nginx" >> /usr/data/pellcorp.done
-        sync
-    fi
-}
-
-disable_creality_services() {
-    grep "creality" /usr/data/pellcorp.done > /dev/null
-    if [ $? -ne 0 ]; then
-        echo ""
-        echo "Disabling some creality services ..."
-        echo "IMPORTANT: If you reboot the printer before installing guppyscreen, the screen will be blank - this is to be expected!"
-        mkdir -p /usr/data/backup
-        /etc/init.d/S99start_app stop
-        mv /etc/init.d/S99start_app /usr/data/backup
-        mv /etc/init.d/S70cx_ai_middleware /usr/data/backup/
-        mv /etc/init.d/S97webrtc /usr/data/backup/
-        mv /etc/init.d/S99mdns /usr/data/backup/
-        mv /etc/init.d/S12boot_display /usr/data/backup/
-        # we have our own factory reset service we dont need this one
-        mv /etc/init.d/S96wipe_data /usr/data/backup/
-        cp /usr/data/printer_data/config/printer.cfg /usr/data/backup/
-        echo "creality" >> /usr/data/pellcorp.done
         sync
     fi
 }
@@ -98,6 +142,11 @@ install_fluidd() {
     if [ $? -ne 0 ]; then
         echo ""
         echo "Installing fluidd ..."
+
+        # lets allow reinstalls
+        if [ -d /usr/data/fluidd ]; then
+            rm -rf /usr/data/fluidd
+        fi
         mkdir -p /usr/data/fluidd 
         # thanks to Guilouz for pointing out the url I can use to get the latest version
         /usr/data/pellcorp/k1/curl -s -L "https://github.com/fluidd-core/fluidd/releases/latest/download/fluidd.zip" -o /usr/data/fluidd.zip || exit $?
@@ -108,7 +157,8 @@ install_fluidd() {
         # we already define pause resume and virtual sd card in printer.cfg
         sed -i '/^\[pause_resume\]/,/^$/d' /usr/data/printer_data/config/fluidd.cfg || exit $?
         sed -i '/^\[virtual_sdcard\]/,/^$/d' /usr/data/printer_data/config/fluidd.cfg || exit $?
-    
+        sed -i '/^\[display_status\]/,/^$/d' /usr/data/printer_data/config/fluidd.cfg || exit $?
+
         sed -i '/\[include gcode_macro\.cfg\]/a \[include fluidd\.cfg\]' /usr/data/printer_data/config/printer.cfg || exit $?
     
         echo "fluidd" >> /usr/data/pellcorp.done
@@ -121,8 +171,25 @@ install_mainsail() {
     if [ $? -ne 0 ]; then
         echo ""
         echo "Installing mainsail ..."
+
+        # lets allow reinstalls
+        if [ -d /usr/data/mainsail ]; then
+            rm -rf /usr/data/mainsail
+        fi
         mkdir -p /usr/data/mainsail 
         /usr/data/pellcorp/k1/curl -s -L "https://github.com/mainsail-crew/mainsail/releases/latest/download/mainsail.zip" -o /usr/data/mainsail.zip || exit $?
+        unzip -qd /usr/data/mainsail /usr/data/mainsail.zip || exit $?
+        rm /usr/data/mainsail.zip
+
+        /usr/data/pellcorp/k1/curl -s -L "https://github.com/mainsail-crew/mainsail-config/blob/master/client.cfg" -o /usr/data/printer_data/config/mainsail.cfg || exit $?
+        # we already define pause resume, display_status and virtual sd card in printer.cfg
+        sed -i '/^\[pause_resume\]/,/^$/d' /usr/data/printer_data/config/mainsail.cfg || exit $?
+        sed -i '/^\[virtual_sdcard\]/,/^$/d' /usr/data/printer_data/config/mainsail.cfg || exit $?
+        sed -i '/^\[display_status\]/,/^$/d' /usr/data/printer_data/config/mainsail.cfg || exit $?
+
+        # mainsail macros will conflict with fluidd ones
+        # sed -i '/\[include gcode_macro\.cfg\]/a \[include mainsail\.cfg\]' /usr/data/printer_data/config/printer.cfg || exit $?
+
         echo "mainsail" >> /usr/data/pellcorp.done
         sync
     fi
@@ -138,17 +205,24 @@ install_klipper() {
     if [ $? -ne 0 ]; then
         echo ""
         echo "Installing klipper ..."
-        mkdir -p /usr/data/backup
+
+        # lets allow reinstalls
+        if [ -d /usr/data/klipper ]; then
+            rm -rf /usr/data/klipper
+        fi
         git clone https://github.com/pellcorp/klipper.git /usr/data/klipper || exit $?
         cd /usr/data/klipper
-        rm -rf /usr/share/klipper
+
+        # remove existing version of klipper, no need to back it up
         # can restore this with (thanks to Guilouz for pointing this out):
         # rm -rf /overlay/upper/usr/share/klipper
         # mount -o remount /
-        mv /usr/data/printer_data/config/sensorless.cfg /usr/data/backup/
-        ln -s /usr/data/klipper /usr/share/
+        if [ -d /usr/share/klipper ]; then
+            rm -rf /usr/share/klipper
+        fi
+        ln -sf /usr/data/klipper /usr/share/
+
         cp /usr/data/pellcorp/k1/sensorless.cfg /usr/data/printer_data/config/
-        mv /etc/init.d/S55klipper_service /usr/data/backup/
         cp /usr/data/pellcorp/k1/S55klipper_service /etc/init.d/
         /usr/share/klippy-env/bin/python3 -m compileall /usr/data/klipper/klippy || exit $?
 
@@ -157,8 +231,6 @@ install_klipper() {
         sed -i '/^\[prtouch_v2\]/,/^$/d' /usr/data/printer_data/config/printer.cfg || exit $?
         sed -i '/^square_corner_max_velocity: 200.0$/d' /usr/data/printer_data/config/printer.cfg || exit $?
         sed -i '/^max_accel_to_decel.*/d' /usr/data/printer_data/config/printer.cfg || exit $?
-        sed -i 's/^\[include gcode_macro\.cfg\]/#\[include gcode_macro\.cfg\]/g' /usr/data/printer_data/config/printer.cfg || exit $?
-        sed -i 's/^\[include printer_params\.cfg\]/#\[include printer_params\.cfg\]/g' /usr/data/printer_data/config/printer.cfg || exit $?
 
         # proper fan control
         cp /usr/data/pellcorp/k1/fan_control.cfg /usr/data/printer_data/config
@@ -169,8 +241,10 @@ install_klipper() {
         sed -i '/^\[output_pin fan1\]/,/^$/d' /usr/data/printer_data/config/printer.cfg || exit $?
         sed -i '/^\[output_pin fan2\]/,/^$/d' /usr/data/printer_data/config/printer.cfg || exit $?
 
-        cp /usr/data/pellcorp/k1/custom_gcode.cfg /usr/data/printer_data/config
-        sed -i '/\[include gcode_macro\.cfg\]/a \[include custom_gcode\.cfg\]' /usr/data/printer_data/config/printer.cfg || exit $?
+        sed -i '/^\[include printer_params\.cfg\]$/d' /usr/data/printer_data/config/printer.cfg || exit $?
+
+        # replace existing creality gcode_macro.cfg with our own saves having to remove from printer.cfg
+        cp /usr/data/pellcorp/k1/custom_gcode.cfg /usr/data/printer_data/config/gcode_macro.cfg
 
         echo "klipper" >> /usr/data/pellcorp.done
         echo "WARNING: A power cycle is required to properly activate klipper!"
@@ -178,12 +252,14 @@ install_klipper() {
     fi
 }
 
+# guppy screen handles being reinstalled so just let it do its thing
 install_guppyscreen() {
     grep "guppyscreen" /usr/data/pellcorp.done > /dev/null
     if [ $? -ne 0 ]; then
         echo ""
         echo "Installing guppyscreen ..."
         
+        # this is mostly for k1-qemu where moonraker takes a while to start up
         echo "Waiting for moonraker ..."
         while true; do
             KLIPPER_PATH=$(curl localhost:7125/printer/info 2> /dev/null | jq -r .result.klipper_path)
@@ -221,6 +297,7 @@ setup_probe() {
     if [ $? -ne 0 ]; then
         echo ""
         echo "Setting up generic probe config ..."
+
         sed -i '/^\[bed_mesh\]/,/^$/d' /usr/data/printer_data/config/printer.cfg
         sed -i 's/^endstop_pin: tmc2209_stepper_z:virtual_endstop.*/endstop_pin: probe:z_virtual_endstop/g' /usr/data/printer_data/config/printer.cfg
         sed -i '/^position_endstop: 0$/d' /usr/data/printer_data/config/printer.cfg
@@ -233,6 +310,7 @@ setup_bltouch() {
     if [ $? -ne 0 ]; then
         echo ""
         echo "Setting up bltouch ..."
+
         cp /usr/data/pellcorp/k1/bltouch.cfg /usr/data/printer_data/config/
         sed -i '/\[include gcode_macro\.cfg\]/a \[include bltouch\.cfg\]' /usr/data/printer_data/config/printer.cfg || exit $?
         echo "bltouch" >> /usr/data/pellcorp.done
@@ -252,13 +330,21 @@ setup_microprobe() {
 
 touch /usr/data/pellcorp.done
 
+git config --global http.sslVerify false
+# honestly not sure this helps
+git config --global http.postBuffer 100000000
+
+backup_config
+disable_creality_services
 install_moonraker
 install_nginx
-disable_creality_services
 install_fluidd
-# we start moonraker and nginx late as the moonraker.conf and nginx.conf both reference fluidd stuff that would 
+install_mainsail
+
+# we start moonraker and nginx late as the moonraker.conf and nginx.conf both reference fluidd and mainsail stuff that would 
 # cause moonraker and nginx to fail if they were started any earlier.
 start_moonraker_nginx
+
 install_klipper
 install_guppyscreen
 setup_probe
