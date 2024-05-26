@@ -200,6 +200,25 @@ start_moonraker_nginx() {
     /etc/init.d/S50nginx_service start
 }
 
+install_kamp() {
+    grep "KAMP" /usr/data/pellcorp.done > /dev/null
+    if [ $? -ne 0 ]; then
+        echo ""
+        echo "Installing KAMP ..."
+
+        # lets allow reinstalls
+        if [ -d /usr/data/KAMP ]; then
+            rm -rf /usr/data/KAMP
+        fi
+        git clone https://github.com/kyleisah/Klipper-Adaptive-Meshing-Purging.git /usr/data/KAMP
+        ln -s /usr/data/KAMP/Configuration/ /usr/data/printer_data/config/KAMP
+        cp /usr/data/KAMP/Configuration/KAMP_Settings.cfg /usr/data/printer_data/config/
+
+        sed -i '/\[include gcode_macro\.cfg\]/a \[include KAMP_Settings\.cfg\]' /usr/data/printer_data/config/printer.cfg
+        echo "KAMP" >> /usr/data/pellcorp.done
+    fi
+}
+
 install_klipper() {
     grep "klipper" /usr/data/pellcorp.done > /dev/null
     if [ $? -ne 0 ]; then
@@ -340,6 +359,7 @@ install_moonraker
 install_nginx
 install_fluidd
 install_mainsail
+install_kamp
 
 # we start moonraker and nginx late as the moonraker.conf and nginx.conf both reference fluidd and mainsail stuff that would 
 # cause moonraker and nginx to fail if they were started any earlier.
