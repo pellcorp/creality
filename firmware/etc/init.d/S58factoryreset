@@ -34,7 +34,7 @@ case "$1" in
 			echo "Info: Executing factory reset..."
 			factory_reset
 		else
-            echo "Info: No 'factory_reset' file found on the USB drive!"
+            echo "Info: No 'emergency_factory_reset' file found on the USB drive!"
             exit 1
 		fi
         ;;
