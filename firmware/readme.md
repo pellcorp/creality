@@ -1,15 +1,15 @@
 # Custom Firmware
 
-I have been working on a script to create custom firmware, with the idea of potentially providing 
-firmware for the k1 that has been pre-rooted, ssh-enabled and my emergency sub firmware factory reset
-feature installed.   
+A script to create custom firmware providing firmware for the k1 that has been pre-rooted, ssh-enabled and 
+my emergency firmware factory reset feature installed.  This is very minimal changes on top of the default
+firmware it is not to compete with the pre-rooted firmware from Destinal which includes Moonraker, Fluidd, etc
 
 **I WILL NOT BE HELD RESPONSIBLE IF YOU BRICK YOUR PRINTER - CREATING AND INSTALLING CUSTOM FIRMWARE IS RISKY**
 
 ## Why I did it?
 
 I mostly did this so I could iterate my Simple AF K1 Klipper project, because factory resetting, configuring WIFI,
- then enabling root takes at least 1 minute.   With my `S51factoryreset` process it leaves the wifi configuration
+ then enabling root takes at least 1 minute.   With my `S58factoryreset` process it leaves the wifi configuration
  alone.
 
  I was considering packaging my Simple AF K1 Klipper as a firmware image, but I actually don't think that is such

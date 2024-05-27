@@ -1,0 +1,38 @@
+#!/bin/sh
+
+#
+# Nginx Service
+#
+
+NGINX="/usr/data/nginx/sbin/nginx"
+PIDFILE="/var/run/nginx.pid"
+NGINX_ARGS="-c /usr/data/nginx/nginx/nginx.conf"
+
+case "$1" in
+  start)
+	mkdir -p /var/log/nginx /var/tmp/nginx
+	start-stop-daemon -S -p "$PIDFILE" --exec "$NGINX" -- $NGINX_ARGS
+	;;
+  stop)
+	start-stop-daemon -K -x "$NGINX" -p "$PIDFILE" -o
+	;;
+  reload|force-reload)
+	"$NGINX" -s reload
+	;;
+  restart)
+	"$0" stop
+	# this allows a graceful restart of service by actually waiting for it to stop first
+	service_pid="$(cat $PID_FILE 2> /dev/null)"
+	if [ -n "$service_pid" ]; then
+		while true; do
+				if [ ! -d /proc/"$service_pid" ] ; then
+					break
+				fi
+		done
+	fi
+	"$0" start
+	;;
+  *)
+	echo "Usage: $0 {start|stop|restart|reload|force-reload}"
+	exit 1
+esac

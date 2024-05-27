@@ -10,6 +10,9 @@ The following files were originally from other projects.  Some of these files ar
 - curl -> https://raw.githubusercontent.com/ballaswag/k1-discovery/main/bin/curl
 - S58factoryreset -> https://raw.githubusercontent.com/Guilouz/Creality-Helper-Script/main/files/services/S58factoryreset
 - supervisorctl -> https://raw.githubusercontent.com/Guilouz/Creality-Helper-Script/main/files/fixes/supervisorctl
+- mcu_util.py -> https://github.com/cryoz/k1_mcu_flasher/blob/master/mcu_util.py
+- install-entware.sh -> https://raw.githubusercontent.com/Guilouz/Creality-Helper-Script/main/files/entware/generic.sh
+- S13mcu_update -> https://github.com/Guilouz/Creality-K1-Extracted-Firmwares/blob/main/Firmware/etc/init.d/S13mcu_update
 
 The nginx binaries originally came from:
 https://github.com/Guilouz/Creality-Helper-Script/raw/main/files/moonraker/moonraker.tar.gz
@@ -32,11 +35,35 @@ I have updated the env to install the asyncio and updated apprise packages local
 
 ## Klipper
 
-We are using my fork of klipper, which is mainline klipper plus the fw/K1 files from http://github.com/k1-klipper/klipper
-and a time out fix for bltouch, crtouch and microprobe to the mcu.cfg file.
+We are using my fork of klipper, which is mainline klipper, a fix for a temp sensor on the k1 and and a time out fix for bltouch, 
+crtouch and microprobe to the mcu.cfg file.
+
+## MCU Firmware
+
+Currently we have the https://github.com/k1-klipper/fw/K1/noz0_120_G30-noz0_007_000.bin for the nozzle, but I am planning
+to build my own firmware against my k1_series_klipper branch.
 
 ## Factory Reset
 
 Although the latest version of S58factoryreset is copied from Guilouz, the original ideas was mine, and we worked on the
 specifics and testing together, so to avoid any confusion I credited the fact I copied the final version from his repo,
 but the latest code with minor changes came from me originally, just so we are clear :-)
+
+## Entware
+
+I have added a /usr/data/pellcorp/k1/install-entware.sh which can be run and sets up entware on the K1,
+however by default entware is not enabled as part of the installation.
+
+## Pellcorp Python Env
+
+I created an environment with CrealityOS python3.8 running in qemu and installed configupdater in there so that
+I could run the config-helper.py file.
+
+So on my k1-qemu env I run this:
+
+```
+python3 -m virtualenv --no-setuptools --no-wheel --no-pip /usr/data/pellcorp-env
+pip3 install configupdater --target /usr/data/pellcorp-env/lib/python3.8/site-packages/
+cd /usr/data/
+tar -zcf pellcorp-env.tar.gz pellcorp-env/
+```
