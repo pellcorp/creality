@@ -15,6 +15,7 @@ def remove_section_value(updater, section_name, key):
         return True
     return False
 
+
 def replace_section_value(updater, section_name, key, value):
     if updater.has_option(section_name, key):
         section = updater.get_section(section_name, None)
@@ -28,12 +29,14 @@ def replace_section_value(updater, section_name, key, value):
                     return True
     return False
 
+
 # the section is everything in the square brackets
 def remove_section(updater, section):
     if updater.has_section(section):
         updater.remove_section(section)
         return True
     return False
+
 
 # so return the first section which is not a include
 def _first_section(updater):
@@ -52,6 +55,8 @@ def remove_include(updater, include):
     return False
 
 
+# FIXME - trying to figure out if there is a way to avoid adding the newline before
+# each include is added
 def add_include(updater, include):
     if not updater.has_section(f"include {include}"):
         first_section = _first_section(updater)
