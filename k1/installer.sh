@@ -27,6 +27,20 @@ if [ "$(dirname $(readlink -f $0))" != "/usr/data/pellcorp/k1" ]; then
   exit 1
 fi
 
+# special mode to update the repo only
+if [ "$1" = "--update-repo" ]; then
+    cd /usr/data/pellcorp
+    branch_ref=$(git rev-parse --abbrev-ref HEAD)
+    if [ -n "$branch_ref" ]; then
+        git fetch
+        git reset --hard origin/$branch_ref
+        exit 0
+    else
+        echo "Failed to detect current branch"
+        exit 1
+    fi
+fi
+
 # kill pip cache to free up overlayfs
 rm -rf /root/.cache
 
