@@ -62,6 +62,4 @@ chmod 755 /etc/init.d/S50unslung
 
 # by default openbear does not come with sftp support, so this enables it
 /opt/bin/opkg install openssh-sftp-server || exit $?
-ln -s /opt/libexec/sftp-server /usr/libexec/sftp-server
-
-sync
+ln -sf /opt/libexec/sftp-server /usr/libexec/sftp-server

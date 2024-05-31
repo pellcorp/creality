@@ -27,18 +27,30 @@ if [ "$(dirname $(readlink -f $0))" != "/usr/data/pellcorp/k1" ]; then
   exit 1
 fi
 
+update_repo() {
+    local repo_dir=$1
+    
+    if [ -d "${repo_dir}/.git" ]; then
+        cd $repo_dir
+        branch_ref=$(git rev-parse --abbrev-ref HEAD)
+        if [ -n "$branch_ref" ]; then
+            git fetch
+            git reset --hard origin/$branch_ref
+        else
+            echo "Failed to detect current branch"
+            return 1
+        fi
+    else
+        echo "Invalid $repo_dir specified"
+        return 1
+    fi
+    return 0
+}
+
 # special mode to update the repo only
 if [ "$1" = "--update-repo" ]; then
-    cd /usr/data/pellcorp
-    branch_ref=$(git rev-parse --abbrev-ref HEAD)
-    if [ -n "$branch_ref" ]; then
-        git fetch
-        git reset --hard origin/$branch_ref
-        exit 0
-    else
-        echo "Failed to detect current branch"
-        exit 1
-    fi
+    update_repo /usr/data/pellcorp
+    exit $?
 fi
 
 # kill pip cache to free up overlayfs
@@ -50,8 +62,6 @@ sync
 cp /usr/data/pellcorp/k1/services/S50dropbear /etc/init.d/ || exit $?
 sync
 
-# the api of the sh and the py is exactly the same
-#CONFIG_HELPER=/usr/data/pellcorp/k1/config-helper.sh
 CONFIG_HELPER="/usr/data/pellcorp-env/bin/python3 /usr/data/pellcorp/k1/config-helper.py"
 
 # our little pellcorp python environment currently just for the config-helper.py
@@ -80,60 +90,130 @@ disable_creality_services() {
 }
 
 install_moonraker() {
-    if ! grep -q "moonraker" /usr/data/pellcorp.done; then
-        echo ""
-        echo "Installing moonraker ..."
+    local mode=$1
 
-        # lets allow reinstalls
-        [ -d /usr/data/moonraker ] && rm -rf /usr/data/moonraker
-        [ -d /usr/data/moonraker-env ] && rm -rf /usr/data/moonraker-env
+    grep -q "moonraker" /usr/data/pellcorp.done
+    if [ $? -ne 0 ] || [ "$mode" = "update" ]; then
+        echo ""
+        if [ "$mode" = "update" ]; then
+            echo "Updating moonraker ..."
+            
+            update_repo /usr/data/moonraker
+        else
+            echo "Installing moonraker ..."
+
+            if [ -d /usr/data/guppyscreen ]; then
+                if [ -f /etc/init.d/S56moonraker_service ]; then
+                    /etc/init.d/S56moonraker_service stop
+                fi
+                if [ -d /usr/data/printer_data/database/ ]; then
+                    [ -f  /usr/data/moonraker-database.tar.gz ] && rm  /usr/data/moonraker-database.tar.gz
+
+                    # TODO - a reinstall will backup the moonraker database but nothing else
+                    # and there is no way to avoid backing it up at this point, I guess I can 
+                    # add a dock or a command line option to remove the db before the install begins
+                    echo ""
+                    echo "Backing up moonraker database ..."
+                    cd /usr/data/printer_data/
+                    tar -zcf /usr/data/moonraker-database.tar.gz database/
+                    cd
+                fi
+                rm -rf /usr/data/moonraker
+            fi
+            [ -d /usr/data/moonraker-env ] && rm -rf /usr/data/moonraker-env
+
+            echo ""
+            git clone https://github.com/Arksine/moonraker /usr/data/moonraker || exit $?
+
+            if [ -f /usr/data/moonraker-database.tar.gz ]; then
+                echo ""
+                echo "Restoring moonraker database ..."
+                cd /usr/data/printer_data/
+                tar -zxf /usr/data/moonraker-database.tar.gz
+                rm /usr/data/moonraker-database.tar.gz
+                cd
+            fi
+        fi
 
         ln -sf /usr/data/pellcorp/k1/tools/supervisorctl /usr/bin/ || exit $?
+        tar -zxf /usr/data/pellcorp/k1/moonraker-env.tar.gz -C /usr/data/ || exit $?
 
-        git clone https://github.com/Arksine/moonraker /usr/data/moonraker || exit $?
         cp /usr/data/pellcorp/k1/services/S56moonraker_service /etc/init.d/ || exit $?
         cp /usr/data/pellcorp/k1/moonraker.conf /usr/data/printer_data/config/ || exit $?
         cp /usr/data/pellcorp/k1/moonraker.asvc /usr/data/printer_data/ || exit $?
-        cp /usr/data/pellcorp/k1/webcam.conf /usr/data/printer_data/config/ || exit $?
-        cp /usr/data/pellcorp/k1/notifier.conf /usr/data/printer_data/config/ || exit $?
-        cp /usr/data/pellcorp/k1/moonraker.secrets /usr/data/printer_data/ || exit $?
-        tar -zxf /usr/data/pellcorp/k1/moonraker-env.tar.gz -C /usr/data/ || exit $?
         
-        echo "moonraker" >> /usr/data/pellcorp.done
+        if [ "$mode" != "update" ]; then
+            cp /usr/data/pellcorp/k1/webcam.conf /usr/data/printer_data/config/ || exit $?
+            cp /usr/data/pellcorp/k1/notifier.conf /usr/data/printer_data/config/ || exit $?
+            cp /usr/data/pellcorp/k1/moonraker.secrets /usr/data/printer_data/ || exit $?
+
+            echo "moonraker" >> /usr/data/pellcorp.done
+        fi
         sync
+
+        # means nginx and moonraker need to be restarted
+        return 1
     fi
+    return 0
 }
 
 install_nginx() {
-    if ! grep -q "nginx" /usr/data/pellcorp.done; then
-        echo ""
-        echo "Installing nginx ..."
+    local mode=$1
 
-        # lets allow reinstalls
-         [ -d /usr/data/nginx ] && rm -rf /usr/data/nginx
+    grep -q "nginx" /usr/data/pellcorp.done
+    if [ $? -ne 0 ] || [ "$mode" = "update" ]; then
+        echo ""
+        if [ "$mode" = "update" ]; then
+            echo "Updating nginx ..."
+        else
+            echo "Installing nginx ..."
+        fi
+
+        # because the nginx tar ball is local, lets just redo the whole
+        # thing, there should be no user configurable stuff here anyway
+        if [ -d /usr/data/nginx ]; then
+            if [ -f /etc/init.d/S50nginx_service ]; then
+                /etc/init.d/S50nginx_service stop
+            fi
+            rm -rf /usr/data/nginx
+        fi
 
         tar -zxf /usr/data/pellcorp/k1/nginx.tar.gz -C /usr/data/ || exit $?
+
         cp /usr/data/pellcorp/k1/nginx.conf /usr/data/nginx/nginx/ || exit $?
         cp /usr/data/pellcorp/k1/services/S50nginx_service /etc/init.d/ || exit $?
 
-        echo "nginx" >> /usr/data/pellcorp.done
+        if [ "$mode" != "update" ]; then
+            echo "nginx" >> /usr/data/pellcorp.done
+        fi
         sync
+
+        # means nginx needs to be restarted
+        return 1
     fi
+    return 0
 }
 
 install_fluidd() {
-    if ! grep -q "fluidd" /usr/data/pellcorp.done; then
+    local mode=$1
+
+    grep -q "fluidd" /usr/data/pellcorp.done
+    if [ $? -ne 0 ] || [ "$mode" = "update" ]; then
         echo ""
-        echo "Installing fluidd ..."
+        if [ "$mode" = "update" ]; then
+            echo "Updating fluidd ..."
+        else
+            echo "Installing fluidd ..."
 
-        # lets allow reinstalls
-        [ -d /usr/data/fluidd ] && rm -rf /usr/data/fluidd
+            [ -d /usr/data/fluidd ] && rm -rf /usr/data/fluidd
 
-        mkdir -p /usr/data/fluidd || exit $? 
-        /usr/data/pellcorp/k1/tools/curl -L "https://github.com/fluidd-core/fluidd/releases/latest/download/fluidd.zip" -o /usr/data/fluidd.zip || exit $?
-        unzip -qd /usr/data/fluidd /usr/data/fluidd.zip || exit $?
-        rm /usr/data/fluidd.zip
-        
+            mkdir -p /usr/data/fluidd || exit $? 
+            /usr/data/pellcorp/k1/tools/curl -L "https://github.com/fluidd-core/fluidd/releases/latest/download/fluidd.zip" -o /usr/data/fluidd.zip || exit $?
+            unzip -qd /usr/data/fluidd /usr/data/fluidd.zip || exit $?
+            rm /usr/data/fluidd.zip
+        fi
+
+        # just download the updated client macros
         /usr/data/pellcorp/k1/tools/curl -L "https://raw.githubusercontent.com/fluidd-core/fluidd-config/master/client.cfg" -o /usr/data/printer_data/config/fluidd.cfg || exit $?
         
         # we already define pause resume and virtual sd card in printer.cfg
@@ -142,25 +222,38 @@ install_fluidd() {
         $CONFIG_HELPER --file fluidd.cfg --remove-section "display_status" || exit $?
 
         $CONFIG_HELPER --add-include "fluidd.cfg" || exit $?
-    
-        echo "fluidd" >> /usr/data/pellcorp.done
+
+        if [ "$mode" != "update" ]; then
+            echo "fluidd" >> /usr/data/pellcorp.done
+        fi
         sync
+
+        # means nginx needs to be restarted
+        return 1
     fi
+    return 0
 }
 
 install_mainsail() {
-    if ! grep -q "mainsail" /usr/data/pellcorp.done; then
+    local mode=$1
+
+    grep -q "mainsail" /usr/data/pellcorp.done
+    if [ $? -ne 0 ] || [ "$mode" = "update" ]; then
         echo ""
-        echo "Installing mainsail ..."
+        if [ "$mode" = "update" ]; then
+            echo "Updating mainsail ..."
+        else
+            echo "Installing mainsail ..."
 
-        # lets allow reinstalls
-        [ -d /usr/data/mainsail ] && rm -rf /usr/data/mainsail
-        
-        mkdir -p /usr/data/mainsail || exit $?
-        /usr/data/pellcorp/k1/tools/curl -L "https://github.com/mainsail-crew/mainsail/releases/latest/download/mainsail.zip" -o /usr/data/mainsail.zip || exit $?
-        unzip -qd /usr/data/mainsail /usr/data/mainsail.zip || exit $?
-        rm /usr/data/mainsail.zip
+            [ -d /usr/data/mainsail ] && rm -rf /usr/data/mainsail
+            
+            mkdir -p /usr/data/mainsail || exit $?
+            /usr/data/pellcorp/k1/tools/curl -L "https://github.com/mainsail-crew/mainsail/releases/latest/download/mainsail.zip" -o /usr/data/mainsail.zip || exit $?
+            unzip -qd /usr/data/mainsail /usr/data/mainsail.zip || exit $?
+            rm /usr/data/mainsail.zip
+        fi
 
+        # just download the updated client macros
         /usr/data/pellcorp/k1/tools/curl -L "https://raw.githubusercontent.com/mainsail-crew/mainsail-config/master/client.cfg" -o /usr/data/printer_data/config/mainsail.cfg || exit $?
 
         # we already define pause resume, display_status and virtual sd card in printer.cfg
@@ -171,57 +264,87 @@ install_mainsail() {
         # mainsail macros will conflict with fluidd ones
         # $CONFIG_HELPER --add-include "mainsail.cfg" || exit $?
 
-        echo "mainsail" >> /usr/data/pellcorp.done
+        if [ "$mode" != "update" ]; then
+            echo "mainsail" >> /usr/data/pellcorp.done
+        fi
         sync
-    fi
-}
 
-start_moonraker_nginx() {
-    /etc/init.d/S56moonraker_service start
-    /etc/init.d/S50nginx_service start
+        # means nginx needs to be restarted
+        return 1
+    fi
+    return 0
 }
 
 install_kamp() {
-    if ! grep -q "KAMP" /usr/data/pellcorp.done; then
+    local mode=$1
+
+    grep -q "KAMP" /usr/data/pellcorp.done
+    if [ $? -ne 0 ] || [ "$mode" = "update" ]; then
         echo ""
-        echo "Installing KAMP ..."
+        if [ "$mode" = "update" ]; then
+            echo "Updating KAMP ..."
+            
+            update_repo /usr/data/KAMP
+        else
+            echo "Installing KAMP ..."
 
-        # lets allow reinstalls
-        [ -d /usr/data/KAMP ] && rm -rf /usr/data/KAMP
+            # lets allow reinstalls
+            [ -d /usr/data/KAMP ] && rm -rf /usr/data/KAMP
 
-        git clone https://github.com/kyleisah/Klipper-Adaptive-Meshing-Purging.git /usr/data/KAMP || exit $?
-        ln -s /usr/data/KAMP/Configuration/ /usr/data/printer_data/config/KAMP || exit $?
-        cp /usr/data/KAMP/Configuration/KAMP_Settings.cfg /usr/data/printer_data/config/ || exit $?
+            git clone https://github.com/kyleisah/Klipper-Adaptive-Meshing-Purging.git /usr/data/KAMP || exit $?
+        fi
+
+        ln -sf /usr/data/KAMP/Configuration/ /usr/data/printer_data/config/KAMP || exit $?
+
+        if [ "$mode" != "update" ]; then
+            cp /usr/data/KAMP/Configuration/KAMP_Settings.cfg /usr/data/printer_data/config/ || exit $?
+        fi
 
         $CONFIG_HELPER --add-include "KAMP_Settings.cfg" || exit $?
 
-        # enable KAMP line purge
-        # FIXME - config-helper.py support enabling commented out entry maybe???
-        sed -i 's:#\[include ./KAMP/Line_Purge.cfg\]:\[include ./KAMP/Line_Purge.cfg\]:g' /usr/data/printer_data/config/KAMP_Settings.cfg
+        if [ "$mode" != "update" ]; then
+            # enable KAMP line purge
+            # FIXME - config-helper.py support enabling commented out entry maybe???
+            sed -i 's:#\[include ./KAMP/Line_Purge.cfg\]:\[include ./KAMP/Line_Purge.cfg\]:g' /usr/data/printer_data/config/KAMP_Settings.cfg
         
-        echo "KAMP" >> /usr/data/pellcorp.done
+            echo "KAMP" >> /usr/data/pellcorp.done
+        fi
         sync
+
+        # means klipper needs to e restarted
+        return 1
     fi
+    return 0
 }
 
 install_klipper() {
-    if ! grep -q "klipper" /usr/data/pellcorp.done; then
+    local mode=$1
+
+    grep -q "klipper" /usr/data/pellcorp.done
+    if [ $? -ne 0 ] || [ "$mode" = "update" ]; then
         echo ""
-        echo "Installing klipper ..."
+        if [ "$mode" = "update" ]; then
+            echo "Updating klipper ..."
 
-        # lets allow reinstalls
-        [ -d /usr/data/klipper ] && rm -rf /usr/data/klipper
+            update_repo /usr/data/klipper
+        else
+            echo "Installing klipper ..."
+            
+            if [ -d /usr/data/klipper ]; then
+                if [ -f /etc/init.d/S55klipper_service ]; then
+                    /etc/init.d/S55klipper_service stop
+                fi
+                rm -rf /usr/data/klipper
+            fi
 
-        git clone $KLIPPER_REPO /usr/data/klipper || exit $?
-
-        [ -d /usr/share/klipper ] && rm -rf /usr/share/klipper
-        ln -sf /usr/data/klipper /usr/share/ || exit $?
+            git clone $KLIPPER_REPO /usr/data/klipper || exit $?
+            [ -d /usr/share/klipper ] && rm -rf /usr/share/klipper
+        fi
 
         /usr/share/klippy-env/bin/python3 -m compileall /usr/data/klipper/klippy || exit $?
+        ln -sf /usr/data/klipper /usr/share/ || exit $?
         cp /usr/data/pellcorp/k1/services/S55klipper_service /etc/init.d/ || exit $?
-        
-        # we have a local copy of this service which looks for fw in /usr/data/pellcorp/k1/fw instead
-        # of in /usr/share/klipper/fw/K1
+
         cp /usr/data/pellcorp/k1/services/S13mcu_update /etc/init.d/ || exit $?
 
         cp /usr/data/pellcorp/k1/sensorless.cfg /usr/data/printer_data/config/ || exit $?
@@ -259,20 +382,29 @@ install_klipper() {
         $CONFIG_HELPER --remove-section "output_pin fan1" || exit $?
         $CONFIG_HELPER --remove-section "output_pin fan2" || exit $?
 
-        echo "klipper" >> /usr/data/pellcorp.done
+        if [ "$mode" != "update" ]; then
+            echo "klipper" >> /usr/data/pellcorp.done
+        fi
         sync
+
+        # means klipper needs to be restarted
+        return 1
     fi
+    return 0
 }
 
-# originally I was using the guppyscreen installer, but it does a lot of stuff
-# I already do in a slightly different way and it does stuff I really do not want
-# to do, such as restart klipper because its a waste of time.
 install_guppyscreen() {
-    if ! grep -q "guppyscreen" /usr/data/pellcorp.done; then
+    local mode=$1
+
+    grep -q "guppyscreen" /usr/data/pellcorp.done
+    if [ $? -ne 0 ] || [ "$mode" = "update" ]; then
         echo ""
-        echo "Installing guppyscreen ..."
-        
-        # lets allow reinstalls
+        if [ "$mode" = "update" ]; then
+            echo "Updating guppyscreen ..."
+        else
+            echo "Installing guppyscreen ..."
+        fi
+
         if [ -d /usr/data/guppyscreen ]; then
             if [ -f /etc/init.d/S99guppyscreen ]; then
                 /etc/init.d/S99guppyscreen stop &> /dev/null
@@ -281,22 +413,6 @@ install_guppyscreen() {
             
             rm -rf /usr/data/guppyscreen
         fi
-
-        # guppyscreen requires this otherwise the compiled code wont work!!!
-        if [ ! -f /lib/ld-2.29.so ]; then
-            echo "ERROR: ld.so is not the expected version."
-            exit 1
-        fi
-
-        # this is mostly for k1-qemu where moonraker takes a while to start up
-        echo "Waiting for moonraker ..."
-        while true; do
-            KLIPPER_PATH=$(curl localhost:7125/printer/info 2> /dev/null | jq -r .result.klipper_path)
-            if [ "$KLIPPER_PATH" = "/usr/share/klipper" ]; then
-                break;
-            fi
-            sleep 1
-        done
 
         /usr/data/pellcorp/k1/tools/curl -L "https://github.com/ballaswag/guppyscreen/releases/latest/download/guppyscreen.tar.gz" -o /usr/data/guppyscreen.tar.gz || exit $?
         tar xf /usr/data/guppyscreen.tar.gz  -C /usr/data/ || exit $?
@@ -314,9 +430,9 @@ install_guppyscreen() {
         ln -sf /usr/data/guppyscreen/k1_mods/respawn/librc.so.1 /lib/librc.so.1 || exit $?
 
         for file in gcode_shell_command.py guppy_config_helper.py calibrate_shaper_config.py guppy_module_loader.py tmcstatus.py; do
-            ln -sf /usr/data/guppyscreen/k1_mods/$file /usr/share/klipper/klippy/extras/$file || exit $?
-            if ! grep -q "klippy/extras/${file}" "/usr/share/klipper/.git/info/exclude"; then
-                echo "klippy/extras/$file" >> "/usr/share/klipper/.git/info/exclude"
+            ln -sf /usr/data/guppyscreen/k1_mods/$file /usr/data/klipper/klippy/extras/$file || exit $?
+            if ! grep -q "klippy/extras/${file}" "/usr/data/klipper/.git/info/exclude"; then
+                echo "klippy/extras/$file" >> "/usr/data/klipper/.git/info/exclude"
             fi
         done
 
@@ -328,30 +444,65 @@ install_guppyscreen() {
         
         /usr/share/klippy-env/bin/python3 -m compileall /usr/data/klipper/klippy || exit $?
 
-        echo "guppyscreen" >> /usr/data/pellcorp.done
+        if [ "$mode" != "update" ]; then
+            echo "guppyscreen" >> /usr/data/pellcorp.done
+        fi
         sync
+
+        # means klipper needs to be restarted
+        return 1
     fi
+    return 0
 }
 
-# generic probe stuff
+# this is only called for an install or reinstall
 setup_probe() {
-    if ! grep -q "probe" /usr/data/pellcorp.done; then
+    grep -q "probe" /usr/data/pellcorp.done
+    if [ $? -ne 0 ]; then
         echo ""
         echo "Setting up generic probe config ..."
 
         $CONFIG_HELPER --remove-section "bed_mesh" || exit $?
         $CONFIG_HELPER --remove-section-entry "stepper_z" "position_endstop" || exit $?
         $CONFIG_HELPER --replace-section-entry "stepper_z" "endstop_pin" "probe:z_virtual_endstop" || exit $?
+
         echo "probe" >> /usr/data/pellcorp.done
+        sync
+
+        # means klipper needs to be restarted
+        return 1
+    fi
+    return 0
+}
+
+# allows easy switch of probes
+cleanup_probe() {
+    local probe=$1
+
+    [ -f /usr/data/pellcorp/k1/$probe.cfg ] &&  rm /usr/data/pellcorp/k1/$probe.cfg
+    $CONFIG_HELPER --remove-include "$probe.cfg" || exit $?
+
+    if [ "$MODEL" = "CR-K1" ] || [ "$MODEL" = "K1C" ]; then
+        [ -f /usr/data/pellcorp/k1/$probe-k1.cfg ] &&  rm /usr/data/pellcorp/k1/$probe-k1.cfg
+        $CONFIG_HELPER --remove-include "$probe-k1.cfg" || exit $?
+    elif [ "$MODEL" = "CR-K1 Max" ]; then
+        # in case switching from a $probe
+        [ -f /usr/data/pellcorp/k1/$probe-k1m.cfg ] &&  rm /usr/data/pellcorp/k1/$probe-k1m.cfg
+        $CONFIG_HELPER --remove-include "$probe-k1m.cfg" || exit $?
     fi
 }
 
+# this is only called for an install or reinstall
 setup_bltouch() {
-    if ! grep -q "bltouch" /usr/data/pellcorp.done; then
+    grep -q "bltouch" /usr/data/pellcorp.done
+    if [ $? -ne 0 ]; then
         echo ""
         echo "Setting up bltouch ..."
 
+        cleanup_probe microprobe
+
         cp /usr/data/pellcorp/k1/bltouch.cfg /usr/data/printer_data/config/
+
         $CONFIG_HELPER --add-include "bltouch.cfg" || exit $?
 
         if [ "$MODEL" = "CR-K1" ] || [ "$MODEL" = "K1C" ]; then
@@ -361,14 +512,24 @@ setup_bltouch() {
             cp /usr/data/pellcorp/k1/bltouch-k1m.cfg /usr/data/printer_data/config/
             $CONFIG_HELPER --add-include "bltouch-k1m.cfg" || exit $?
         fi
+
         echo "bltouch" >> /usr/data/pellcorp.done
+        sync
+
+        # means klipper needs to be restarted
+        return 1
     fi
+    return 0
 }
 
+# this is only called for an install or reinstall
 setup_microprobe() {
-    if ! grep -q "microprobe" /usr/data/pellcorp.done; then
+    grep -q "microprobe" /usr/data/pellcorp.done
+    if [ $? -ne 0 ]; then
         echo ""
         echo "Setting up microprobe ..."
+
+        cleanup_probe bltouch
 
         cp /usr/data/pellcorp/k1/microprobe.cfg /usr/data/printer_data/config/
         $CONFIG_HELPER --add-include "microprobe.cfg" || exit $?
@@ -380,8 +541,14 @@ setup_microprobe() {
             cp /usr/data/pellcorp/k1/microprobe-k1m.cfg /usr/data/printer_data/config/
             $CONFIG_HELPER --add-include "microprobe-k1m.cfg" || exit $?
         fi
+        
         echo "microprobe" >> /usr/data/pellcorp.done
+        sync
+
+        # means klipper needs to be restarted
+        return 1
     fi
+    return 0
 }
 
 # entware is handy for installing additional stuff, I see no harm in getting it setup ootb
@@ -389,37 +556,107 @@ install_entware() {
     if ! grep -q "entware" /usr/data/pellcorp.done; then
         echo ""
         echo "Installing entware ..."
-        /usr/data/pellcorp/k1/install-entware.sh || exit $?
+        /usr/data/pellcorp/k1/entware-install.sh || exit $?
 
         echo "entware" >> /usr/data/pellcorp.done
+        sync
     fi
 }
 
-touch /usr/data/pellcorp.done
-
-disable_creality_services
-install_moonraker
-install_nginx
-install_fluidd
-install_mainsail
-install_kamp
-
-# we start moonraker and nginx late as the moonraker.conf and nginx.conf both reference fluidd and mainsail stuff that would 
-# cause moonraker and nginx to fail if they were started any earlier.
-start_moonraker_nginx
-
-install_klipper
-install_guppyscreen
-setup_probe
-
-if [ "$1" = "bltouch" ]; then
-    setup_bltouch
-else
-    setup_microprobe
+probe=microprobe
+mode=install
+if [ "$1" = "--reinstall" ]; then
+    # just in case they do not pass the probe argument figure out
+    # what they already have
+    if [ -f /usr/data/printer_data/config/bltouch.cfg ]; then
+        probe=bltouch
+    fi
+    
+    rm /usr/data/pellcorp.done
+    mode=reinstall
+    shift
+elif [ "$1" = "--update" ]; then
+    mode=update
+    shift
 fi
+
+if [ "$1" = "microprobe" ] || [ "$1" = "bltouch" ]; then
+    probe=$1
+fi
+
+touch /usr/data/pellcorp.done
 install_entware
 
-echo ""
-echo "You MUST power cycle your printer to upgrade MCU firmware!"
-exit 0
+disable_creality_services
 
+install_moonraker $mode
+install_moonraker=$?
+
+install_nginx $mode
+install_nginx=$?
+
+install_fluidd $mode
+install_fluidd=$?
+
+install_mainsail $mode
+install_mainsail=$?
+
+# KAMP is in the moonraker.conf file so it must be installed before moonraker is first started
+install_kamp $mode
+install_kamp=$?
+
+if [ $install_moonraker -ne 0 ]; then
+    echo "Restarting Moonraker ..."
+    /etc/init.d/S56moonraker_service restart
+
+    # this is mostly for k1-qemu where Moonraker takes a while to start up
+    echo "Waiting for Moonraker ..."
+    while true; do
+        KLIPPER_PATH=$(curl localhost:7125/printer/info 2> /dev/null | jq -r .result.klipper_path)
+        # not sure why, but moonraker will start reporting the location of klipper as /usr/data/klipper
+        # when using a soft link
+        if [ "$KLIPPER_PATH" = "/usr/share/klipper" ] || [ "$KLIPPER_PATH" = "/usr/data/klipper" ]; then
+            break;
+        fi
+        sleep 1
+    done
+fi
+
+if [ $install_moonraker -ne 0 ] || [ $install_nginx -ne 0 ] || [ $install_fluidd -ne 0 ] || [ $install_mainsail -ne 0 ]; then
+    echo "Restarting Nginx ..."
+    /etc/init.d/S50nginx_service restart
+fi
+
+install_klipper $mode
+install_klipper=$?
+
+install_guppyscreen $mode
+install_guppyscreen=$?
+
+setup_probe
+setup_probe=$?
+
+if [ "$probe" = "bltouch" ]; then
+    setup_bltouch
+    setup_probe_specific=$?
+else
+    setup_microprobe
+    setup_probe_specific=$?
+fi
+
+if [ $install_kamp -ne 0 ] || [ $install_klipper -ne 0 ] || [ $install_guppyscreen -ne 0 ] || [ $setup_probe -ne 0 ] || [ $setup_probe_specific -ne 0 ]; then
+    echo "Restarting Klipper ..."
+
+    /etc/init.d/S55klipper_service restart
+fi
+
+if [ $install_guppyscreen -ne 0 ]; then
+    /etc/init.d/S99guppyscreen restart
+fi
+
+if [ "$mode" != "update" ]; then
+    echo ""
+    echo "You MUST power cycle your printer to upgrade MCU firmware!"
+fi
+
+exit 0
