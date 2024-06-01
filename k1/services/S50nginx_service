@@ -5,16 +5,16 @@
 #
 
 NGINX="/usr/data/nginx/sbin/nginx"
-PIDFILE="/var/run/nginx.pid"
+PID_FILE="/var/run/nginx.pid"
 NGINX_ARGS="-c /usr/data/nginx/nginx/nginx.conf"
 
 case "$1" in
   start)
 	mkdir -p /var/log/nginx /var/tmp/nginx
-	start-stop-daemon -S -p "$PIDFILE" --exec "$NGINX" -- $NGINX_ARGS
+	start-stop-daemon -S -p "$PID_FILE" --exec "$NGINX" -- $NGINX_ARGS
 	;;
   stop)
-	start-stop-daemon -K -x "$NGINX" -p "$PIDFILE" -o
+	start-stop-daemon -K -x "$NGINX" -p "$PID_FILE" -o
 	;;
   reload|force-reload)
 	"$NGINX" -s reload
