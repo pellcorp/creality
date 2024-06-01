@@ -17,7 +17,7 @@ The following files were originally from other projects.  Some of these files ar
 The nginx binaries originally came from:
 https://github.com/Guilouz/Creality-Helper-Script/raw/main/files/moonraker/moonraker.tar.gz
 
-Use the `recreate-nginx.sh` script to extract the nginx directory from:
+Use the `scripts/recreate-nginx.sh` script to extract the nginx directory from:
 https://github.com/Guilouz/Creality-Helper-Script/raw/main/files/moonraker/moonraker.tar.gz
 
 The install/nginx.conf is originally from moonraker.tar.gz:nginx/nginx/nginx.conf, but I modified it locally to already
@@ -28,7 +28,7 @@ listen on port 80.
 The moonraker-env originally came from:
 https://github.com/Guilouz/Creality-Helper-Script/raw/main/files/moonraker/moonraker.tar.gz
 
-Use the `recreate-moonraker-env.sh` script to extract the moonraker/moonraker-env directory from:
+Use the `scripts/recreate-moonraker-env.sh` script to extract the moonraker/moonraker-env directory from:
 https://github.com/Guilouz/Creality-Helper-Script/raw/main/files/moonraker/moonraker.tar.gz
 
 I have updated the env to install the asyncio and updated apprise packages locally to avoid doing that at installation time.
@@ -36,7 +36,7 @@ I have updated the env to install the asyncio and updated apprise packages local
 ## Klipper
 
 We are using my fork of klipper, which is mainline klipper, a fix for a temp sensor on the k1 and and a time out fix for bltouch, 
-crtouch and microprobe to the mcu.cfg file.
+crtouch and microprobe to the mcu.py file.
 
 ## MCU Firmware
 
