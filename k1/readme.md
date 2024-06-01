@@ -49,15 +49,9 @@ Although the latest version of S58factoryreset is copied from Guilouz, the origi
 specifics and testing together, so to avoid any confusion I credited the fact I copied the final version from his repo,
 but the latest code with minor changes came from me originally, just so we are clear :-)
 
-## Entware
-
-I have added a /usr/data/pellcorp/k1/install-entware.sh which can be run and sets up entware on the K1,
-however by default entware is not enabled as part of the installation.
-
 ## Pellcorp Python Env
 
-I created an environment with CrealityOS python3.8 running in qemu and installed configupdater in there so that
-I could run the config-helper.py file.
+I created an environment with CrealityOS python3.8 running in qemu and installed configupdater in there so that I could run the config-helper.py file.
 
 So on my k1-qemu env I run this:
 
