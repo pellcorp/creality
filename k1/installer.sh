@@ -142,10 +142,15 @@ install_moonraker() {
         cp /usr/data/pellcorp/k1/moonraker.conf /usr/data/printer_data/config/ || exit $?
         cp /usr/data/pellcorp/k1/moonraker.asvc /usr/data/printer_data/ || exit $?
         
+        # after an initial install do not overwrite notifier.conf or moonraker.secrets
+        for file in notifier.conf moonraker.secrets; do
+            if [ ! -f /usr/data/printer_data/config/$file ]; then
+                 cp /usr/data/pellcorp/k1/$file /usr/data/printer_data/config/
+            fi
+        done
+
         if [ "$mode" != "update" ]; then
             cp /usr/data/pellcorp/k1/webcam.conf /usr/data/printer_data/config/ || exit $?
-            cp /usr/data/pellcorp/k1/notifier.conf /usr/data/printer_data/config/ || exit $?
-            cp /usr/data/pellcorp/k1/moonraker.secrets /usr/data/printer_data/ || exit $?
 
             echo "moonraker" >> /usr/data/pellcorp.done
         fi
@@ -302,11 +307,13 @@ install_kamp() {
 
         $CONFIG_HELPER --add-include "KAMP_Settings.cfg" || exit $?
 
+        # LINE_PURGE
+        sed -i 's:#\[include ./KAMP/Line_Purge.cfg\]:\[include ./KAMP/Line_Purge.cfg\]:g' /usr/data/printer_data/config/KAMP_Settings.cfg
+
+        # SMART_PARK
+        sed -i 's:#\[include ./KAMP/Smart_Park.cfg\]:\[include ./KAMP/Smart_Park.cfg\]:g' /usr/data/printer_data/config/KAMP_Settings.cfg
+
         if [ "$mode" != "update" ]; then
-            # enable KAMP line purge
-            # FIXME - config-helper.py support enabling commented out entry maybe???
-            sed -i 's:#\[include ./KAMP/Line_Purge.cfg\]:\[include ./KAMP/Line_Purge.cfg\]:g' /usr/data/printer_data/config/KAMP_Settings.cfg
-        
             echo "KAMP" >> /usr/data/pellcorp.done
         fi
         sync
@@ -606,6 +613,7 @@ install_kamp $mode
 install_kamp=$?
 
 if [ $install_moonraker -ne 0 ]; then
+    echo ""
     echo "Restarting Moonraker ..."
     /etc/init.d/S56moonraker_service restart
 
@@ -623,6 +631,7 @@ if [ $install_moonraker -ne 0 ]; then
 fi
 
 if [ $install_moonraker -ne 0 ] || [ $install_nginx -ne 0 ] || [ $install_fluidd -ne 0 ] || [ $install_mainsail -ne 0 ]; then
+    echo ""
     echo "Restarting Nginx ..."
     /etc/init.d/S50nginx_service restart
 fi
@@ -646,11 +655,11 @@ fi
 
 if [ $install_kamp -ne 0 ] || [ $install_klipper -ne 0 ] || [ $install_guppyscreen -ne 0 ] || [ $setup_probe -ne 0 ] || [ $setup_probe_specific -ne 0 ]; then
     echo "Restarting Klipper ..."
-
     /etc/init.d/S55klipper_service restart
 fi
 
 if [ $install_guppyscreen -ne 0 ]; then
+    echo "Restarting Guppyscreen ..."
     /etc/init.d/S99guppyscreen restart
 fi
 
