@@ -324,6 +324,16 @@ install_kamp() {
     return 0
 }
 
+install_klipper_mcu() {
+    diff -q /usr/data/pellcorp/k1/fw/K1/klipper_mcu /usr/bin/klipper_mcu > /dev/null
+    if [ $? -ne 0 ]; then
+        echo "Updating Klipper MCU ..."
+        cp /usr/data/pellcorp/k1/fw/K1/klipper_mcu /usr/bin/klipper_mcu
+        return 1
+    fi
+    return 0
+}
+
 install_klipper() {
     local mode=$1
 
@@ -357,7 +367,6 @@ install_klipper() {
         cp /usr/data/pellcorp/k1/sensorless.cfg /usr/data/printer_data/config/ || exit $?
 
         $CONFIG_HELPER --remove-section "bl24c16f" || exit $?
-        $CONFIG_HELPER --remove-section "mcu leveling_mcu" || exit $?
         $CONFIG_HELPER --remove-section "prtouch_v2" || exit $?
         $CONFIG_HELPER --remove-section-entry "printer" "square_corner_max_velocity" || exit $?
         $CONFIG_HELPER --remove-section-entry "printer" "max_accel_to_decel" || exit $?
@@ -639,6 +648,9 @@ fi
 install_klipper $mode
 install_klipper=$?
 
+install_klipper_mcu
+install_klipper_mcu=$?
+
 install_guppyscreen $mode
 install_guppyscreen=$?
 
@@ -653,7 +665,12 @@ else
     setup_probe_specific=$?
 fi
 
-if [ $install_kamp -ne 0 ] || [ $install_klipper -ne 0 ] || [ $install_guppyscreen -ne 0 ] || [ $setup_probe -ne 0 ] || [ $setup_probe_specific -ne 0 ]; then
+if [ $install_klipper_mcu - ne 0 ]; then
+    echo "Restarting MCU Klipper ..."
+    /etc/init.d/S57klipper_mcu restart
+fi
+
+if [ $install_kamp -ne 0 ] || [ $install_klipper_mcu -ne 0 ] || [ $install_klipper -ne 0 ] || [ $install_guppyscreen -ne 0 ] || [ $setup_probe -ne 0 ] || [ $setup_probe_specific -ne 0 ]; then
     echo "Restarting Klipper ..."
     /etc/init.d/S55klipper_service restart
 fi
