@@ -49,15 +49,11 @@ Although the latest version of S58factoryreset is copied from Guilouz, the origi
 specifics and testing together, so to avoid any confusion I credited the fact I copied the final version from his repo,
 but the latest code with minor changes came from me originally, just so we are clear :-)
 
+## MCU Util
+
+In the future I hope to use the mcu_util.py to do firmware updates, this relies on pyserial which is preinstalled on the k1.
+
 ## Pellcorp Python Env
 
-I created an environment with CrealityOS python3.8 running in qemu and installed configupdater in there so that I could run the config-helper.py file.
-
-So on my k1-qemu env I run this:
-
-```
-python3 -m virtualenv --no-setuptools --no-wheel --no-pip /usr/data/pellcorp-env
-pip3 install configupdater --target /usr/data/pellcorp-env/lib/python3.8/site-packages/
-cd /usr/data/
-tar -zcf pellcorp-env.tar.gz pellcorp-env/
-```
+scripts/recreate-pellcorp-env.sh is run on my k1-qemu environment and then I scp it back and merge it, 
+less than ideal but I only need configupdater.

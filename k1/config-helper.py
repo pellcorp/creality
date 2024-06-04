@@ -101,7 +101,7 @@ def main():
     elif options.add_include:
         updated = add_include(updater, options.add_include)
     else:
-        print(f"Invalid action: {options.action} {str(args)}")
+        print(f"Invalid action")
 
     if updated:
         if options.output:
