@@ -447,7 +447,10 @@ install_guppyscreen() {
             fi
         done
 
+        # creality specific macros do not exist
         sed -i '/LOAD_MATERIAL_RESTORE_FAN2/d' /usr/data/printer_data/config/GuppyScreen/guppy_cmd.cfg
+        sed -i '/LOAD_MATERIAL_CLOSE_FAN2/d' /usr/data/printer_data/config/GuppyScreen/guppy_cmd.cfg
+        
         mkdir -p /usr/data/printer_data/config/GuppyScreen/scripts/ || exit $?
         cp /usr/data/guppyscreen/scripts/*.cfg /usr/data/printer_data/config/GuppyScreen/ || exit $?
         ln -sf /usr/data/guppyscreen/scripts/*.py /usr/data/printer_data/config/GuppyScreen/scripts/ || exit $?
