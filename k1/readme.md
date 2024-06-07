@@ -57,3 +57,11 @@ In the future I hope to use the mcu_util.py to do firmware updates, this relies 
 
 scripts/recreate-pellcorp-env.sh is run on my k1-qemu environment and then I scp it back and merge it, 
 less than ideal but I only need configupdater.
+
+## Original Bootloader
+
+I got a copy of the original nozzle bootloader from zarboz from discord, I have saved it here for reference.   Can be used
+to restore a bricked MCU with stlink.
+
+Refer to bootloader/Bootloader_GD32_ToolheadNozzle_Creality.bin
+
