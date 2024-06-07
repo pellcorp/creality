@@ -1,7 +1,5 @@
 #!/bin/sh
 
-KLIPPER_REPO=https://github.com/pellcorp/klipper.git
-
 # this is really just for my k1-qemu environment
 if [ ! -f /usr/data/printer_data/config/printer.cfg ]; then
   >&2 echo "ERROR: Printer data not setup"
@@ -354,7 +352,8 @@ install_klipper() {
                 rm -rf /usr/data/klipper
             fi
 
-            git clone $KLIPPER_REPO /usr/data/klipper || exit $?
+            # klipper is so big, we only want the one branch
+            git clone --branch master https://github.com/pellcorp/klipper.git /usr/data/klipper || exit $?
             [ -d /usr/share/klipper ] && rm -rf /usr/share/klipper
         fi
 
@@ -433,18 +432,14 @@ install_guppyscreen() {
         /usr/data/pellcorp/k1/tools/curl -L "https://github.com/ballaswag/guppyscreen/releases/latest/download/guppyscreen.tar.gz" -o /usr/data/guppyscreen.tar.gz || exit $?
         tar xf /usr/data/guppyscreen.tar.gz  -C /usr/data/ || exit $?
         rm /usr/data/guppyscreen.tar.gz 
-        cp /usr/data/guppyscreen/k1_mods/S99guppyscreen /etc/init.d/S99guppyscreen || exit $?
+        cp /usr/data/pellcorp/k1/services/S99guppyscreen /etc/init.d/ || exit $?
 
         if [ ! -d "/usr/lib/python3.8/site-packages/matplotlib-2.2.3-py3.8.egg-info" ]; then
             echo "WARNING: Not replacing mathplotlib ft2font module. PSD graphs might not work!"
         else
             cp /usr/data/guppyscreen/k1_mods/ft2font.cpython-38-mipsel-linux-gnu.so /usr/lib/python3.8/site-packages/matplotlib/ || exit $?
         fi
-
-        # for respawn command
-        ln -sf /usr/data/guppyscreen/k1_mods/respawn/libeinfo.so.1 /lib/libeinfo.so.1 || exit $?
-        ln -sf /usr/data/guppyscreen/k1_mods/respawn/librc.so.1 /lib/librc.so.1 || exit $?
-
+        
         for file in gcode_shell_command.py guppy_config_helper.py calibrate_shaper_config.py guppy_module_loader.py tmcstatus.py; do
             ln -sf /usr/data/guppyscreen/k1_mods/$file /usr/data/klipper/klippy/extras/$file || exit $?
             if ! grep -q "klippy/extras/${file}" "/usr/data/klipper/.git/info/exclude"; then
@@ -665,7 +660,7 @@ else
     setup_probe_specific=$?
 fi
 
-if [ $install_klipper_mcu - ne 0 ]; then
+if [ $install_klipper_mcu -ne 0 ]; then
     echo "Restarting MCU Klipper ..."
     /etc/init.d/S57klipper_mcu restart
 fi

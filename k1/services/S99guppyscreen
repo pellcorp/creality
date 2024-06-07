@@ -1,0 +1,42 @@
+#!/bin/sh
+
+GUPPYSCREEN=/usr/data/guppyscreen/guppyscreen
+PID_FILE="/var/run/guppyscreen.pid"
+
+start_server() {
+    export HOME=/root
+    sync && echo 3 > /proc/sys/vm/drop_caches
+    start-stop-daemon -S -b -m -p $PID_FILE --exec $GUPPYSCREEN
+}
+
+stop_server() {
+    start-stop-daemon -K -q -p $PID_FILE
+}
+
+case "$1" in
+    start)
+        start_server
+        ;;
+    stop)
+        stop_server
+        ;;
+    restart|reload)
+        stop_server
+        # this allows a graceful restart of service by actually waiting for it to stop first
+        service_pid="$(cat $PID_FILE 2> /dev/null)"
+        if [ -n "$service_pid" ]; then
+            while true; do
+                    if [ ! -d /proc/"$service_pid" ] ; then
+                        break
+                    fi
+            done
+        fi
+        start_server
+        ;;
+    *)
+        echo "Usage:"
+        echo "    $0 {start|stop|restart}"
+        exit 1
+esac
+
+exit $?
