@@ -5,8 +5,11 @@ from ubuntu:focal
 # docker login
 # docker push pellcorp/k1-klipper-fw-build
 #
+
+ADD 2004-sources.list /etc/apt/sources.list
+
 RUN apt-get update
-RUN apt-get install -y python3 build-essential gcc-arm-none-eabi sudo srecord wget git curl
+RUN apt-get install -y python3 build-essential gcc-arm-none-eabi sudo srecord wget git curl cpio unzip rsync bc
 
 RUN adduser --disabled-password --gecos "" developer && \
   usermod -a -G sudo developer && \
@@ -21,3 +24,4 @@ ENV PATH=/opt/toolchains/mips-gcc720-glibc229/bin:/usr/local/sbin:/usr/local/bin
 
 USER developer
 WORKDIR /home/developer
+
