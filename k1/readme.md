@@ -40,8 +40,7 @@ crtouch and microprobe to the mcu.py file.
 
 ## MCU Firmware
 
-Currently we have the https://github.com/k1-klipper/fw/K1/noz0_120_G30-noz0_007_000.bin for the nozzle, but I am planning
-to build my own firmware against my k1_series_klipper branch.
+the fw/K! firmware is built from my Klipper fork.
 
 ## Factory Reset
 
