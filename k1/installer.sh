@@ -325,6 +325,7 @@ install_kamp() {
 install_klipper_mcu() {
     diff -q /usr/data/pellcorp/k1/fw/K1/klipper_mcu /usr/bin/klipper_mcu > /dev/null
     if [ $? -ne 0 ]; then
+        echo ""
         echo "Updating Klipper MCU ..."
         cp /usr/data/pellcorp/k1/fw/K1/klipper_mcu /usr/bin/klipper_mcu
         return 1
