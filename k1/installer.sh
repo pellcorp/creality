@@ -352,9 +352,8 @@ install_klipper() {
                 fi
                 rm -rf /usr/data/klipper
             fi
-
-            # klipper is so big, we only want the one branch
-            git clone --branch master https://github.com/pellcorp/klipper.git /usr/data/klipper || exit $?
+            
+            git clone https://github.com/pellcorp/klipper.git /usr/data/klipper || exit $?
             [ -d /usr/share/klipper ] && rm -rf /usr/share/klipper
         fi
 
