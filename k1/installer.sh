@@ -678,7 +678,7 @@ probe=
 # just in case they do not pass the probe argument figure out probe is setup
 if [ -f /usr/data/printer_data/config/bltouch.cfg ]; then
     probe=bltouch
-elif [ -f /usr/data/printer_data/config/cartographer_macro.cfg ]; then
+elif [ -f /usr/data/printer_data/config/cartographer.cfg ]; then
     probe=cartographer
 elif [ -f /usr/data/printer_data/config/microprobe.cfg ]; then
     probe=microprobe
