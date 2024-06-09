@@ -14,6 +14,8 @@ The following files were originally from other projects.  Some of these files ar
 - install-entware.sh -> https://raw.githubusercontent.com/Guilouz/Creality-Helper-Script/main/files/entware/generic.sh
 - services/S13mcu_update -> https://github.com/Guilouz/Creality-K1-Extracted-Firmwares/blob/main/Firmware/etc/init.d/S13mcu_update
 - services/S50webcam -> http://openk1.org/static/k1/scripts/multi-non-creality-webcams.sh
+- cartographer/cartographer.py -> https://raw.githubusercontent.com/Cartographer3D/cartographer-klipper/master/cartographer.py
+- cartographer/cartographer_macro.cfg -> https://raw.githubusercontent.com/K1-Klipper/cartographer-klipper/master/cartographer_macro.cfg
 
 The nginx binaries originally came from:
 https://github.com/Guilouz/Creality-Helper-Script/raw/main/files/moonraker/moonraker.tar.gz
@@ -65,3 +67,7 @@ to restore a bricked MCU with stlink.
 
 Refer to bootloader/Bootloader_GD32_ToolheadNozzle_Creality.bin
 
+## Cartographer
+
+I don't have a cartogropher, so I am making a best effort to introduce basic support for it, not really knowing exactly
+what is required.

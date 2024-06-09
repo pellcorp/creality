@@ -342,7 +342,7 @@ install_kamp() {
         fi
         sync
 
-        # means klipper needs to e restarted
+        # means klipper needs to be restarted
         return 1
     fi
     return 0
@@ -353,7 +353,7 @@ install_klipper_mcu() {
     if [ $? -ne 0 ]; then
         echo ""
         echo "Updating Klipper MCU ..."
-        cp /usr/data/pellcorp/k1/fw/K1/klipper_mcu /usr/bin/klipper_mcu
+        cp /usr/data/pellcorp/k1/fw/K1/klipper_mcu /usr/bin/klipper_mcu || exit $?
         return 1
     fi
     return 0
@@ -519,41 +519,55 @@ setup_probe() {
 cleanup_probe() {
     local probe=$1
 
-    [ -f /usr/data/pellcorp/k1/$probe.cfg ] &&  rm /usr/data/pellcorp/k1/$probe.cfg
+    if [ "$probe" = "cartographer" ]; then
+        # without the probe it serves no purpose
+        [ -f /usr/data/klipper/klippy/extras/cartographer.py ] &&  rm /usr/data/klipper/klippy/extras/cartographer.py
+        
+        [ -f /usr/data/printer_data/config/cartographer_macro.cfg ] &&  rm /usr/data/printer_data/config/cartographer_macro.cfg
+        $CONFIG_HELPER --remove-include "cartographer_macro.cfg" || exit $?
+
+        # re-enable the default config
+        $CONFIG_HELPER --add-include "sensorless.cfg" || exit $?
+    fi
+
+    [ -f /usr/data/printer_data/config/$probe.cfg ] &&  rm /usr/data/printer_data/config/$probe.cfg
     $CONFIG_HELPER --remove-include "$probe.cfg" || exit $?
 
     if [ "$MODEL" = "CR-K1" ] || [ "$MODEL" = "K1C" ]; then
-        [ -f /usr/data/pellcorp/k1/$probe-k1.cfg ] &&  rm /usr/data/pellcorp/k1/$probe-k1.cfg
+        [ -f /usr/data/printer_data/config/$probe-k1.cfg ] && rm /usr/data/printer_data/config/$probe-k1.cfg
         $CONFIG_HELPER --remove-include "$probe-k1.cfg" || exit $?
     elif [ "$MODEL" = "CR-K1 Max" ]; then
-        # in case switching from a $probe
-        [ -f /usr/data/pellcorp/k1/$probe-k1m.cfg ] &&  rm /usr/data/pellcorp/k1/$probe-k1m.cfg
+        [ -f /usr/data/printer_data/config/$probe-k1m.cfg ] && rm /usr/data/printer_data/config/$probe-k1m.cfg
         $CONFIG_HELPER --remove-include "$probe-k1m.cfg" || exit $?
     fi
 }
 
 # this is only called for an install or reinstall
 setup_bltouch() {
+    local mode=$1
+
     grep -q "bltouch" /usr/data/pellcorp.done
-    if [ $? -ne 0 ]; then
+    if [ $? -ne 0 ] || [ "$mode" = "update" ]; then
         echo ""
         echo "Setting up bltouch ..."
 
+        cleanup_probe cartographer
         cleanup_probe microprobe
 
-        cp /usr/data/pellcorp/k1/bltouch.cfg /usr/data/printer_data/config/
-
+        cp /usr/data/pellcorp/k1/bltouch.cfg /usr/data/printer_data/config/ || exit $?
         $CONFIG_HELPER --add-include "bltouch.cfg" || exit $?
 
         if [ "$MODEL" = "CR-K1" ] || [ "$MODEL" = "K1C" ]; then
-            cp /usr/data/pellcorp/k1/bltouch-k1.cfg /usr/data/printer_data/config/
+            cp /usr/data/pellcorp/k1/bltouch-k1.cfg /usr/data/printer_data/config/ || exit $?
             $CONFIG_HELPER --add-include "bltouch-k1.cfg" || exit $?
         elif [ "$MODEL" = "CR-K1 Max" ]; then
-            cp /usr/data/pellcorp/k1/bltouch-k1m.cfg /usr/data/printer_data/config/
+            cp /usr/data/pellcorp/k1/bltouch-k1m.cfg /usr/data/printer_data/config/ || exit $?
             $CONFIG_HELPER --add-include "bltouch-k1m.cfg" || exit $?
         fi
 
-        echo "bltouch" >> /usr/data/pellcorp.done
+        if [ "$mode" != "update" ]; then
+            echo "bltouch" >> /usr/data/pellcorp.done
+        fi
         sync
 
         # means klipper needs to be restarted
@@ -564,28 +578,74 @@ setup_bltouch() {
 
 # this is only called for an install or reinstall
 setup_microprobe() {
+    local mode=$1
+
     grep -q "microprobe" /usr/data/pellcorp.done
-    if [ $? -ne 0 ]; then
+    if [ $? -ne 0 ] || [ "$mode" = "update" ]; then
         echo ""
         echo "Setting up microprobe ..."
 
+        cleanup_probe cartographer
         cleanup_probe bltouch
 
-        cp /usr/data/pellcorp/k1/microprobe.cfg /usr/data/printer_data/config/
+        cp /usr/data/pellcorp/k1/microprobe.cfg /usr/data/printer_data/config/ || exit $?
         $CONFIG_HELPER --add-include "microprobe.cfg" || exit $?
 
         if [ "$MODEL" = "CR-K1" ] || [ "$MODEL" = "K1C" ]; then
-            cp /usr/data/pellcorp/k1/microprobe-k1.cfg /usr/data/printer_data/config/
+            cp /usr/data/pellcorp/k1/microprobe-k1.cfg /usr/data/printer_data/config/ || exit $?
             $CONFIG_HELPER --add-include "microprobe-k1.cfg" || exit $?
         elif [ "$MODEL" = "CR-K1 Max" ]; then
-            cp /usr/data/pellcorp/k1/microprobe-k1m.cfg /usr/data/printer_data/config/
+            cp /usr/data/pellcorp/k1/microprobe-k1m.cfg /usr/data/printer_data/config/ || exit $?
             $CONFIG_HELPER --add-include "microprobe-k1m.cfg" || exit $?
         fi
         
-        echo "microprobe" >> /usr/data/pellcorp.done
+        if [ "$mode" != "update" ]; then
+            echo "microprobe" >> /usr/data/pellcorp.done
+        fi
         sync
 
         # means klipper needs to be restarted
+        return 1
+    fi
+    return 0
+}
+
+# guppyscreen installs the gcode_shell_command so we don't have to :-)
+setup_cartographer() {
+    local mode=$1
+
+    grep -q "cartographer" /usr/data/pellcorp.done
+    if [ $? -ne 0 ] || [ "$mode" = "update" ]; then
+        echo ""
+        echo "Setting up cartographer ..."
+
+        cleanup_probe bltouch
+        cleanup_probe microprobe
+
+        cp /usr/data/pellcorp/k1/cartographer/cartographer.py /usr/data/klipper/klippy/extras/cartographer.py || exit $?
+        /usr/share/klippy-env/bin/python3 -m compileall /usr/data/klipper/klippy || exit $?
+
+        cp /usr/data/pellcorp/k1/cartographer/cartographer_macro.cfg /usr/data/printer_data/config/ || exit $?
+        $CONFIG_HELPER --add-include "cartographer_macro.cfg" || exit $?
+
+        # FIXME - automate this step???
+        #CARTO_ID=$(ls /dev/serial/by-id/usb-Cartographer* | tail -1)
+        # sed -i "s/%REPLACE_ME%/$CARTO_ID/g" /usr/data/printer_data/config/cartographer.cfg
+        cp /usr/data/pellcorp/k1/cartographer.cfg /usr/data/printer_data/config/ || exit $?
+        $CONFIG_HELPER --add-include "cartographer.cfg" || exit $?
+
+        if [ "$MODEL" = "CR-K1" ] || [ "$MODEL" = "K1C" ]; then
+            cp /usr/data/pellcorp/k1/cartographer-k1.cfg /usr/data/printer_data/config/ || exit $?
+            $CONFIG_HELPER --add-include "cartographer-k1.cfg" || exit $?
+        elif [ "$MODEL" = "CR-K1 Max" ]; then
+            cp /usr/data/pellcorp/k1/cartographer-k1m.cfg /usr/data/printer_data/config/ || exit $?
+            $CONFIG_HELPER --add-include "cartographer-k1m.cfg" || exit $?
+        fi
+
+        if [ "$mode" != "update" ]; then
+            echo "cartographer" >> /usr/data/pellcorp.done
+        fi
+        sync
         return 1
     fi
     return 0
@@ -603,15 +663,8 @@ install_entware() {
     fi
 }
 
-probe=microprobe
 mode=install
 if [ "$1" = "--reinstall" ]; then
-    # just in case they do not pass the probe argument figure out
-    # what they already have
-    if [ -f /usr/data/printer_data/config/bltouch.cfg ]; then
-        probe=bltouch
-    fi
-    
     rm /usr/data/pellcorp.done
     mode=reinstall
     shift
@@ -620,8 +673,24 @@ elif [ "$1" = "--update" ]; then
     shift
 fi
 
-if [ "$1" = "microprobe" ] || [ "$1" = "bltouch" ]; then
+# lets figure out if there is an existing probe
+probe=
+# just in case they do not pass the probe argument figure out probe is setup
+if [ -f /usr/data/printer_data/config/bltouch.cfg ]; then
+    probe=bltouch
+elif [ -f /usr/data/printer_data/config/cartographer_macro.cfg ]; then
+    probe=cartographer
+elif [ -f /usr/data/printer_data/config/microprobe.cfg ]; then
+    probe=microprobe
+fi
+
+if [ "$1" = "microprobe" ] || [ "$1" = "bltouch" ] || [ "$1" = "cartographer" ]; then
+    if [ "$1" != "$probe" ]; then
+        echo "WARNING: About to switch from $probe to $1!"
+    fi
     probe=$1
+else
+    probe=microprobe
 fi
 
 touch /usr/data/pellcorp.done
@@ -645,6 +714,7 @@ install_mainsail=$?
 install_kamp $mode
 install_kamp=$?
 
+# if moonraker was installed or updated
 if [ $install_moonraker -ne 0 ]; then
     echo ""
     echo "Restarting Moonraker ..."
@@ -684,11 +754,14 @@ install_guppyscreen=$?
 setup_probe
 setup_probe=$?
 
-if [ "$probe" = "bltouch" ]; then
-    setup_bltouch
+if [ "$probe" = "cartographer" ]; then
+    setup_cartographer $mode
     setup_probe_specific=$?
-else
-    setup_microprobe
+elif [ "$probe" = "bltouch" ]; then
+    setup_bltouch $mode
+    setup_probe_specific=$?
+else # microprobe
+    setup_microprobe $mode
     setup_probe_specific=$?
 fi
 
@@ -698,11 +771,13 @@ if [ $install_klipper_mcu -ne 0 ]; then
 fi
 
 if [ $install_kamp -ne 0 ] || [ $install_klipper_mcu -ne 0 ] || [ $install_klipper -ne 0 ] || [ $install_guppyscreen -ne 0 ] || [ $setup_probe -ne 0 ] || [ $setup_probe_specific -ne 0 ]; then
+    echo ""
     echo "Restarting Klipper ..."
     /etc/init.d/S55klipper_service restart
 fi
 
 if [ $install_guppyscreen -ne 0 ]; then
+    echo ""
     echo "Restarting Guppyscreen ..."
     /etc/init.d/S99guppyscreen restart
 fi
