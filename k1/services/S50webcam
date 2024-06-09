@@ -1,0 +1,27 @@
+#!/bin/sh
+
+case "$1" in
+  start)
+    V4L_DEVICE=$(v4l2-ctl --list-devices|grep -A1 usb|sed 's/^[[:space:]]*//g'|grep '^/dev' | head -1)
+    if [ "x$V4L_DEVICE" = "x" ]; then
+      echo "No webcams found!"
+      exit 1
+    fi
+
+    /opt/bin/mjpg_streamer -b -i "/opt/lib/mjpg-streamer/input_uvc.so -d $V4L_DEVICE -r 1280x720 -f 15" -o "/opt/lib/mjpg-streamer/output_http.so -p 8080"
+    ;;
+  stop)
+    killall mjpg_streamer
+    ;;
+
+  restart|reload)
+    "$0" stop
+    "$0" start
+    ;;
+  *)
+    echo "Usage:"
+    echo "    $0 {start|stop|restart}"
+    exit 1
+esac
+
+exit $?
