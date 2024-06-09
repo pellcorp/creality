@@ -87,6 +87,32 @@ disable_creality_services() {
     fi
 }
 
+install_webcam() {
+    grep -q "webcam" /usr/data/pellcorp.done
+    if [ $? -ne 0 ]; then
+        echo ""
+        echo "Installing web camera streamer ..."
+        /opt/bin/opkg install mjpg-streamer mjpg-streamer-input-http mjpg-streamer-input-uvc mjpg-streamer-output-http mjpg-streamer-www || exit $?
+
+        # kill the existing creality services so that we can use the app right away without a restart
+        pidof cam_app &>/dev/null && killall -TERM cam_app
+        pidof mjpg_streamer &>/dev/null && killall -TERM mjpg_streamer
+
+        # auto_uvc.sh is responsible for starting the web cam_app
+        [ -f /usr/bin/auto_uvc.sh ] && rm /usr/bin/auto_uvc.sh
+        # create an empty script to avoid udev getting upset
+        touch /usr/bin/auto_uvc.sh
+        chmod 777 /usr/bin/auto_uvc.sh
+
+        cp /usr/data/pellcorp/k1/services/S50webcam /etc/init.d/
+        /etc/init.d/S50webcam start
+        echo "webcam" >> /usr/data/pellcorp.done
+        sync
+        return 0
+    fi
+    return 0
+}
+
 install_moonraker() {
     local mode=$1
 
@@ -642,6 +668,9 @@ if [ $install_moonraker -ne 0 ] || [ $install_nginx -ne 0 ] || [ $install_fluidd
     echo "Restarting Nginx ..."
     /etc/init.d/S50nginx_service restart
 fi
+
+install_webcam
+install_webcam=$?
 
 install_klipper $mode
 install_klipper=$?
