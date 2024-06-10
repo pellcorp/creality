@@ -526,8 +526,7 @@ cleanup_probe() {
         [ -f /usr/data/printer_data/config/cartographer_macro.cfg ] &&  rm /usr/data/printer_data/config/cartographer_macro.cfg
         $CONFIG_HELPER --remove-include "cartographer_macro.cfg" || exit $?
 
-        # re-enable the default config
-        $CONFIG_HELPER --add-include "sensorless.cfg" || exit $?
+        $CONFIG_HELPER --remove-section-entry "stepper_z" "homing_retract_dist" || exit $?
     fi
 
     [ -f /usr/data/printer_data/config/$probe.cfg ] &&  rm /usr/data/printer_data/config/$probe.cfg
@@ -628,10 +627,17 @@ setup_cartographer() {
         cp /usr/data/pellcorp/k1/cartographer/cartographer_macro.cfg /usr/data/printer_data/config/ || exit $?
         $CONFIG_HELPER --add-include "cartographer_macro.cfg" || exit $?
 
-        # FIXME - automate this step???
-        #CARTO_ID=$(ls /dev/serial/by-id/usb-Cartographer* | tail -1)
-        # sed -i "s/%REPLACE_ME%/$CARTO_ID/g" /usr/data/printer_data/config/cartographer.cfg
+        $CONFIG_HELPER --replace-section-entry "stepper_z" "homing_retract_dist" "0" || exit $?
+
         cp /usr/data/pellcorp/k1/cartographer.cfg /usr/data/printer_data/config/ || exit $?
+
+        CARTO_SERIAL_ID=$(ls /dev/serial/by-id/usb-Cartographer* | head -1)
+        if [ "x$CARTO_SERIAL_ID" != "x" ]; then
+            sed -i "s/%CARTO_SERIAL_ID%/$CARTO_SERIAL_ID/g" /usr/data/printer_data/config/cartographer.cfg
+        else
+            echo "WARNING: There does not seem to be a cartographer attached - skipping auto configuration"
+        fi
+
         $CONFIG_HELPER --add-include "cartographer.cfg" || exit $?
 
         if [ "$MODEL" = "CR-K1" ] || [ "$MODEL" = "K1C" ]; then
@@ -685,12 +691,16 @@ elif [ -f /usr/data/printer_data/config/microprobe.cfg ]; then
 fi
 
 if [ "$1" = "microprobe" ] || [ "$1" = "bltouch" ] || [ "$1" = "cartographer" ]; then
-    if [ "$1" != "$probe" ]; then
+    if [ "x$probe" != "x" ] && [ "$1" != "$probe" ]; then
+        echo ""
         echo "WARNING: About to switch from $probe to $1!"
     fi
     probe=$1
-else
-    probe=microprobe
+elif [ "x$probe" = "x" ]; then
+    echo ""
+    echo "ERROR: You must specify a probe you want to configure"
+    echo "One of: [microprobe, bltouch, cartographer]"
+    exit 1
 fi
 
 touch /usr/data/pellcorp.done

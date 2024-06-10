@@ -17,7 +17,7 @@ def remove_section_value(updater, section_name, key):
 
 
 def replace_section_value(updater, section_name, key, value):
-    if updater.has_option(section_name, key):
+    if updater.has_section(section_name):
         section = updater.get_section(section_name, None)
         if section:
             current_value = section.get(key, None)
@@ -27,6 +27,9 @@ def replace_section_value(updater, section_name, key, value):
                     # be the general format of the creality printer config files
                     section[key] = f' {value.strip()}'
                     return True
+            else:
+                section.last_block.add_before.option(key, f' {value.strip()}')
+                return True
     return False
 
 
@@ -43,7 +46,7 @@ def _first_section(updater):
     first_section=None
     for section in updater.sections():
         if not section.startswith("include "):
-            first_section=section
+            first_section = section
             break
     return first_section
 
@@ -55,8 +58,6 @@ def remove_include(updater, include):
     return False
 
 
-# FIXME - trying to figure out if there is a way to avoid adding the newline before
-# each include is added
 def add_include(updater, include):
     if not updater.has_section(f"include {include}"):
         first_section = _first_section(updater)
@@ -85,7 +86,7 @@ def main():
     else:
         raise Exception(f"Config File {options.config_file} not found")
 
-    updater = ConfigUpdater(strict = False, allow_no_value = True, space_around_delimiters = False)
+    updater = ConfigUpdater(strict = False, allow_no_value = True, space_around_delimiters = False, delimiters = ':')
     with open(config_file, 'r') as file:
         updater.read_file(file)
 
