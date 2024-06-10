@@ -745,8 +745,8 @@ install_webcam=$?
 install_klipper $mode
 install_klipper=$?
 
-install_klipper_mcu
-install_klipper_mcu=$?
+#install_klipper_mcu
+#install_klipper_mcu=$?
 
 install_guppyscreen $mode
 install_guppyscreen=$?
@@ -765,10 +765,10 @@ else # microprobe
     setup_probe_specific=$?
 fi
 
-if [ $install_klipper_mcu -ne 0 ]; then
-    echo "Restarting MCU Klipper ..."
-    /etc/init.d/S57klipper_mcu restart
-fi
+#if [ $install_klipper_mcu -ne 0 ]; then
+#    echo "Restarting MCU Klipper ..."
+#    /etc/init.d/S57klipper_mcu restart
+#fi
 
 if [ $install_kamp -ne 0 ] || [ $install_klipper_mcu -ne 0 ] || [ $install_klipper -ne 0 ] || [ $install_guppyscreen -ne 0 ] || [ $setup_probe -ne 0 ] || [ $setup_probe_specific -ne 0 ]; then
     echo ""
