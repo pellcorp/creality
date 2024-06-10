@@ -423,11 +423,6 @@ install_klipper() {
         $CONFIG_HELPER --remove-section "output_pin fan1" || exit $?
         $CONFIG_HELPER --remove-section "output_pin fan2" || exit $?
 
-        # the firmware does not support controlling the MCU fan based on the temp of the extruder
-        $CONFIG_HELPER --remove-section "multi_pin heater_fans" || exit $?
-        $CONFIG_HELPER --remove-section "static_digital_output my_fan_output_pins" || exit $?
-        $CONFIG_HELPER --replace-section-entry "heater_fan hotend_fan" "pin" "nozzle_mcu:PB5" || exit $?
-
         if [ "$mode" != "update" ]; then
             echo "klipper" >> /usr/data/pellcorp.done
         fi
