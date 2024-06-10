@@ -425,7 +425,6 @@ install_klipper() {
 
         # the firmware does not support controlling the MCU fan based on the temp of the extruder
         $CONFIG_HELPER --remove-section "multi_pin heater_fans" || exit $?
-        $CONFIG_HELPER --remove-section "static_digital_output my_fan_output_pins" || exit $?
         $CONFIG_HELPER --replace-section-entry "heater_fan hotend_fan" "pin" "nozzle_mcu:PB5" || exit $?
 
         if [ "$mode" != "update" ]; then
