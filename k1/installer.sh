@@ -422,10 +422,10 @@ install_klipper() {
         $CONFIG_HELPER --remove-section "output_pin fan0" || exit $?
         $CONFIG_HELPER --remove-section "output_pin fan1" || exit $?
         $CONFIG_HELPER --remove-section "output_pin fan2" || exit $?
-
-        # for having the MCU fan start as soon as it his 38c, refer to fan_control.cfg 
-        # for the new [temperature_fan mcu_fan] section
-        $CONFIG_HELPER --remove-section "temperature_sensor mcu_temp" || exit $?
+        
+        # duplicate pin can only be assigned once, so we remove it from printer.cfg so we can
+        # configure it in fan_control.cfg
+        $CONFIG_HELPER --remove-section "duplicate_pin_override" || exit $?
 
         # just in case anyone manually has added this to printer.cfg
         $CONFIG_HELPER --remove-section "[temperature_fan mcu_fan]" || exit $?
