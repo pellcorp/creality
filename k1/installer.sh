@@ -423,6 +423,17 @@ install_klipper() {
         $CONFIG_HELPER --remove-section "output_pin fan1" || exit $?
         $CONFIG_HELPER --remove-section "output_pin fan2" || exit $?
 
+        # for having the MCU fan start as soon as it his 38c, refer to fan_control.cfg 
+        # for the new [temperature_fan mcu_fan] section
+        $CONFIG_HELPER --remove-section "temperature_sensor mcu_temp" || exit $?
+
+        # just in case anyone manually has added this to printer.cfg
+        $CONFIG_HELPER --remove-section "[temperature_fan mcu_fan]" || exit $?
+
+        # the nozzle should not trigger the MCU anymore        
+        $CONFIG_HELPER --remove-section "multi_pin heater_fans" || exit $?
+        $CONFIG_HELPER --replace-section-entry "heater_fan hotend_fan" "pin" "nozzle_mcu:PB5" || exit $?
+
         if [ "$mode" != "update" ]; then
             echo "klipper" >> /usr/data/pellcorp.done
         fi
