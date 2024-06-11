@@ -235,7 +235,7 @@ install_fluidd() {
             if [ -d /usr/data/fluidd-config ]; then
                 update_repo /usr/data/fluidd-config
             else
-                git clone https://github.com/fluidd-core/fluidd-config.git /usr/data/fluidd-config
+                git clone https://github.com/fluidd-core/fluidd-config.git /usr/data/fluidd-config || exit $?
             fi
         else
             echo "Installing fluidd ..."
@@ -254,6 +254,9 @@ install_fluidd() {
         [ -f /usr/data/printer_data/config/fluidd.cfg ] && rm /usr/data/printer_data/config/fluidd.cfg
 
         ln -sf /usr/data/fluidd-config/client.cfg /usr/data/printer_data/config/fluidd.cfg
+
+        # for moonraker to be able to use moonraker fluidd client.cfg out of the box need to
+        ln -sf /usr/data/printer_data/ /root
 
         # these are already defined in fluidd config so get rid of them from printer.cfg
         $CONFIG_HELPER --remove-section "pause_resume" || exit $?
@@ -510,6 +513,40 @@ install_guppyscreen() {
     return 0
 }
 
+# regardless of probe choice just install the repo
+install_cartographer_klipper() {
+    grep -q "cartographer-klipper" /usr/data/pellcorp.done
+    if [ $? -ne 0 ] || [ "$mode" = "update" ]; then
+        echo ""
+        if [ "$mode" = "update" ]; then
+            if [ -d /usr/data/cartographer-klipper ]; then
+                update_repo /usr/data/cartographer-klipper
+            else
+                git clone https://github.com/pellcorp/cartographer-klipper.git /usr/data/cartographer-klipper || exit $?
+            fi
+        else
+            echo "Installing cartographer-klipper ..."
+            
+            if [ -d /usr/data/cartographer-klipper ]; then
+                rm -rf /usr/data/cartographer-klipper
+            fi
+            
+            git clone https://github.com/pellcorp/cartographer-klipper.git /usr/data/cartographer-klipper || exit $?
+        fi
+
+        echo "Running cartographer-klipper installer ..."
+        /usr/data/cartographer-klipper/install.sh || exit $?
+        /usr/share/klippy-env/bin/python3 -m compileall /usr/data/klipper/klippy || exit $?
+
+        if [ "$mode" != "update" ]; then
+            echo "cartographer-klipper" >> /usr/data/pellcorp.done
+        fi
+        sync
+        return 1
+    fi
+    return 0
+}
+
 # this is only called for an install or reinstall
 setup_probe() {
     grep -q "probe" /usr/data/pellcorp.done
@@ -535,9 +572,6 @@ cleanup_probe() {
     local probe=$1
 
     if [ "$probe" = "cartographer" ]; then
-        # without the probe it serves no purpose
-        [ -f /usr/data/klipper/klippy/extras/cartographer.py ] &&  rm /usr/data/klipper/klippy/extras/cartographer.py
-        
         [ -f /usr/data/printer_data/config/cartographer_macro.cfg ] &&  rm /usr/data/printer_data/config/cartographer_macro.cfg
         $CONFIG_HELPER --remove-include "cartographer_macro.cfg" || exit $?
 
@@ -598,7 +632,7 @@ setup_microprobe() {
     if [ $? -ne 0 ] || [ "$mode" = "update" ]; then
         echo ""
         echo "Setting up microprobe ..."
-
+        
         cleanup_probe cartographer
         cleanup_probe bltouch
 
@@ -635,9 +669,6 @@ setup_cartographer() {
 
         cleanup_probe bltouch
         cleanup_probe microprobe
-
-        cp /usr/data/pellcorp/k1/cartographer/cartographer.py /usr/data/klipper/klippy/extras/cartographer.py || exit $?
-        /usr/share/klippy-env/bin/python3 -m compileall /usr/data/klipper/klippy || exit $?
 
         cp /usr/data/pellcorp/k1/cartographer/cartographer_macro.cfg /usr/data/printer_data/config/ || exit $?
         $CONFIG_HELPER --add-include "cartographer_macro.cfg" || exit $?
@@ -682,6 +713,24 @@ install_entware() {
         echo "entware" >> /usr/data/pellcorp.done
         sync
     fi
+}
+
+restart_moonraker() {
+    echo ""
+    echo "Restarting Moonraker ..."
+    /etc/init.d/S56moonraker_service restart
+
+    # this is mostly for k1-qemu where Moonraker takes a while to start up
+    echo "Waiting for Moonraker ..."
+    while true; do
+        KLIPPER_PATH=$(curl localhost:7125/printer/info 2> /dev/null | jq -r .result.klipper_path)
+        # not sure why, but moonraker will start reporting the location of klipper as /usr/data/klipper
+        # when using a soft link
+        if [ "$KLIPPER_PATH" = "/usr/share/klipper" ] || [ "$KLIPPER_PATH" = "/usr/data/klipper" ]; then
+            break;
+        fi
+        sleep 1
+    done
 }
 
 mode=install
@@ -741,29 +790,15 @@ install_mainsail=$?
 install_kamp $mode
 install_kamp=$?
 
-# for moonraker to be able to use moonraker fluidd client.cfg out of the box need to
-ln -s /usr/data/printer_data/ /root
+install_cartographer_klipper
+install_cartographer_klipper=$?
 
 # if moonraker was installed or updated
 if [ $install_moonraker -ne 0 ]; then
-    echo ""
-    echo "Restarting Moonraker ..."
-    /etc/init.d/S56moonraker_service restart
-
-    # this is mostly for k1-qemu where Moonraker takes a while to start up
-    echo "Waiting for Moonraker ..."
-    while true; do
-        KLIPPER_PATH=$(curl localhost:7125/printer/info 2> /dev/null | jq -r .result.klipper_path)
-        # not sure why, but moonraker will start reporting the location of klipper as /usr/data/klipper
-        # when using a soft link
-        if [ "$KLIPPER_PATH" = "/usr/share/klipper" ] || [ "$KLIPPER_PATH" = "/usr/data/klipper" ]; then
-            break;
-        fi
-        sleep 1
-    done
+    restart_moonraker
 fi
 
-if [ $install_moonraker -ne 0 ] || [ $install_nginx -ne 0 ] || [ $install_fluidd -ne 0 ] || [ $install_mainsail -ne 0 ]; then
+if [ $install_moonraker -ne 0 ] || [ $install_nginx -ne 0 ] || [ $install_fluidd -ne 0 ] || [ $install_mainsail -ne 0 ] || [ $install_cartographer_klipper -ne 0 ]; then
     echo ""
     echo "Restarting Nginx ..."
     /etc/init.d/S50nginx_service restart
@@ -781,6 +816,7 @@ install_guppyscreen=$?
 setup_probe
 setup_probe=$?
 
+# installing carto must come after installing klipper
 if [ "$probe" = "cartographer" ]; then
     setup_cartographer $mode
     setup_probe_specific=$?
@@ -792,11 +828,14 @@ else # microprobe
     setup_probe_specific=$?
 fi
 
-if [ $install_klipper_mcu -ne 0 ] || [ $install_kamp -ne 0 ] || [ $install_klipper_mcu -ne 0 ] || [ $install_klipper -ne 0 ] || [ $install_guppyscreen -ne 0 ] || [ $setup_probe -ne 0 ] || [ $setup_probe_specific -ne 0 ]; then
+if [ $install_klipper_mcu -ne 0 ]; then
     echo ""
     echo "Restarting MCU Klipper ..."
     /etc/init.d/S57klipper_mcu restart
-    
+fi
+
+if [ $install_cartographer_klipper -ne 0 ] || [ $install_kamp -ne 0 ] || [ $install_klipper_mcu -ne 0 ] || [ $install_klipper -ne 0 ] || [ $install_guppyscreen -ne 0 ] || [ $setup_probe -ne 0 ] || [ $setup_probe_specific -ne 0 ]; then
+    echo ""
     echo "Restarting Klipper ..."
     /etc/init.d/S55klipper_service restart
 fi
