@@ -15,6 +15,7 @@ The following files were originally from other projects.  Some of these files ar
 - services/S13mcu_update -> https://github.com/Guilouz/Creality-K1-Extracted-Firmwares/blob/main/Firmware/etc/init.d/S13mcu_update
 - services/S50webcam -> http://openk1.org/static/k1/scripts/multi-non-creality-webcams.sh
 - cartographer/cartographer_macro.cfg -> https://raw.githubusercontent.com/K1-Klipper/cartographer-klipper/master/cartographer_macro.cfg
+- guppyscreen/guppyscreen.cfg -> https://github.com/ballaswag/guppyscreen/blob/main/k1/scripts/guppy_cmd.cfg
 
 The nginx binaries originally came from:
 https://github.com/Guilouz/Creality-Helper-Script/raw/main/files/moonraker/moonraker.tar.gz
@@ -39,6 +40,21 @@ I have updated the env to install the asyncio and updated apprise packages local
 
 We are using my fork of klipper, which is mainline klipper, a fix for a temp sensor on the k1 and and a time out fix for bltouch, 
 crtouch and microprobe to the mcu.py file.
+
+### Klipper Deploy Key
+
+I have issues with my internet and wifi in my workshop so often I get a timeout cloning the klipper repo, but there is
+a way to use git ssh clone urls, its not ideal because moonraker can't use them but its just for testing, I generated the
+ssh/identity key with:
+
+```
+dropbearkey -t ecdsa -f ~/.ssh/identity -s 256
+```
+
+I discovered how to do this from https://forum.archive.openwrt.org/viewtopic.php?id=47551
+
+This mode is activated by prefixing the call to the installer with `KLIPPER_GIT_CLONE=ssh`, its not for normal use as
+cloning via ssh is much slower than via curl but it does not seem to timeout.
 
 ## MCU Firmware
 

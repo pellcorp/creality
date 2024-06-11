@@ -148,8 +148,7 @@ install_moonraker() {
                     cd /usr/data/printer_data/
                     tar -zcf /usr/data/moonraker-database.tar.gz database/
                     cd
-                fi
-                
+                fi               
             fi
             [ -d /usr/data/moonraker ] && rm -rf /usr/data/moonraker
             [ -d /usr/data/moonraker-env ] && rm -rf /usr/data/moonraker-env
@@ -392,10 +391,12 @@ install_klipper() {
                 rm -rf /usr/data/klipper
             fi
             
-            # this is only for testing with crappy internet, moonraker will not be happy
+            # this is only for testing with crappy internet
             if [ "$KLIPPER_GIT_CLONE" = "ssh" ]; then
                 export GIT_SSH=$HOME/.git-ssh.sh
                 git clone git@github.com:pellcorp/klipper.git /usr/data/klipper || exit $?
+                # reset the origin url to make moonraker happy
+                cd /usr/data/klipper && git remote set-url origin https://github.com/pellcorp/klipper.git && cd - > /dev/null
             else
                 git clone https://github.com/pellcorp/klipper.git /usr/data/klipper || exit $?
             fi
@@ -449,8 +450,13 @@ install_klipper() {
         # moving the heater_fan to fan_control.cfg
         $CONFIG_HELPER --remove-section "heater_fan hotend_fan" || exit $?
 
+        # all the fans and temp sensors are going to fan control now
+        $CONFIG_HELPER --remove-section "temperature_sensor mcu_temp" || exit $?
+        $CONFIG_HELPER --remove-section "temperature_sensor chamber_temp" || exit $?
+        $CONFIG_HELPER --remove-section "temperature_fan chamber_fan" || exit $?
+
         # just in case anyone manually has added this to printer.cfg
-        $CONFIG_HELPER --remove-section "[temperature_fan mcu_fan]" || exit $?
+        $CONFIG_HELPER --remove-section "temperature_fan mcu_fan" || exit $?
 
         # the nozzle should not trigger the MCU anymore        
         $CONFIG_HELPER --remove-section "multi_pin heater_fans" || exit $?
@@ -491,6 +497,7 @@ install_guppyscreen() {
         tar xf /usr/data/guppyscreen.tar.gz  -C /usr/data/ || exit $?
         rm /usr/data/guppyscreen.tar.gz 
         cp /usr/data/pellcorp/k1/services/S99guppyscreen /etc/init.d/ || exit $?
+        cp /usr/data/pellcorp/k1/guppyscreen/guppyconfig.json /usr/data/guppyscreen || exit $?
 
         if [ ! -d "/usr/lib/python3.8/site-packages/matplotlib-2.2.3-py3.8.egg-info" ]; then
             echo "WARNING: Not replacing mathplotlib ft2font module. PSD graphs might not work!"
@@ -504,17 +511,16 @@ install_guppyscreen() {
                 echo "klippy/extras/$file" >> "/usr/data/klipper/.git/info/exclude"
             fi
         done
-        mkdir -p /usr/data/printer_data/config/GuppyScreen/scripts/ || exit $?
-        cp /usr/data/guppyscreen/scripts/*.cfg /usr/data/printer_data/config/GuppyScreen/ || exit $?
-        ln -sf /usr/data/guppyscreen/scripts/*.py /usr/data/printer_data/config/GuppyScreen/scripts/ || exit $?
-
-        # creality specific macros do not exist
-        sed -i '/LOAD_MATERIAL_RESTORE_FAN2/d' /usr/data/printer_data/config/GuppyScreen/guppy_cmd.cfg
-        sed -i '/LOAD_MATERIAL_CLOSE_FAN2/d' /usr/data/printer_data/config/GuppyScreen/guppy_cmd.cfg
-
-        $CONFIG_HELPER --add-include "GuppyScreen/*.cfg" || exit $?
-        
         /usr/share/klippy-env/bin/python3 -m compileall /usr/data/klipper/klippy || exit $?
+        
+        # get rid of the old guppyscreen config
+        [ -d /usr/data/printer_data/config/GuppyScreen ] && rm -rf /usr/data/printer_data/config/GuppyScreen
+
+        cp /usr/data/pellcorp/k1/guppyscreen/guppyscreen.cfg /usr/data/printer_data/config/ || exit $?
+
+        # a single local guppyscreen.cfg which references the python files from /usr/data/guppyscreen instead
+        $CONFIG_HELPER --remove-include "GuppyScreen/*.cfg" || exit $?
+        $CONFIG_HELPER --add-include "guppyscreen.cfg" || exit $?
 
         if [ "$mode" != "update" ]; then
             echo "guppyscreen" >> /usr/data/pellcorp.done
