@@ -427,12 +427,14 @@ install_klipper() {
         # configure it in fan_control.cfg
         $CONFIG_HELPER --remove-section "duplicate_pin_override" || exit $?
 
+        # moving the heater_fan to fan_control.cfg
+        $CONFIG_HELPER --remove-section "heater_fan hotend_fan" || exit $?
+
         # just in case anyone manually has added this to printer.cfg
         $CONFIG_HELPER --remove-section "[temperature_fan mcu_fan]" || exit $?
 
         # the nozzle should not trigger the MCU anymore        
         $CONFIG_HELPER --remove-section "multi_pin heater_fans" || exit $?
-        $CONFIG_HELPER --replace-section-entry "heater_fan hotend_fan" "pin" "nozzle_mcu:PB5" || exit $?
 
         if [ "$mode" != "update" ]; then
             echo "klipper" >> /usr/data/pellcorp.done
