@@ -644,7 +644,7 @@ setup_cartographer() {
 
         CARTO_SERIAL_ID=$(ls /dev/serial/by-id/usb-Cartographer* | head -1)
         if [ "x$CARTO_SERIAL_ID" != "x" ]; then
-            sed -i "s/%CARTO_SERIAL_ID%/$CARTO_SERIAL_ID/g" /usr/data/printer_data/config/cartographer.cfg
+            $CONFIG_HELPER --file cartographer.cfg --replace-section-entry "cartographer" "serial" "$CARTO_SERIAL_ID" || exit $?
         else
             echo "WARNING: There does not seem to be a cartographer attached - skipping auto configuration"
         fi
