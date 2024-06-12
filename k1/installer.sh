@@ -719,6 +719,8 @@ fi
 touch /usr/data/pellcorp.done
 install_entware
 
+install_webcam
+
 disable_creality_services
 
 install_moonraker $mode
@@ -761,9 +763,6 @@ if [ $install_moonraker -ne 0 ] || [ $install_nginx -ne 0 ] || [ $install_fluidd
     echo "Restarting Nginx ..."
     /etc/init.d/S50nginx_service restart
 fi
-
-install_webcam
-install_webcam=$?
 
 install_klipper $mode
 install_klipper=$?
