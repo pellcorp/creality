@@ -231,6 +231,12 @@ install_fluidd() {
         echo ""
         if [ "$mode" = "update" ]; then
             echo "Updating fluidd ..."
+
+            if [ -d /usr/data/fluidd-config ]; then
+                update_repo /usr/data/fluidd-config
+            else
+                git clone https://github.com/fluidd-core/fluidd-config.git /usr/data/fluidd-config
+            fi
         else
             echo "Installing fluidd ..."
 
@@ -240,16 +246,20 @@ install_fluidd() {
             /usr/data/pellcorp/k1/tools/curl -L "https://github.com/fluidd-core/fluidd/releases/latest/download/fluidd.zip" -o /usr/data/fluidd.zip || exit $?
             unzip -qd /usr/data/fluidd /usr/data/fluidd.zip || exit $?
             rm /usr/data/fluidd.zip
+
+            [ -d /usr/data/fluidd-config ] && rm -rf /usr/data/fluidd-config
+            git clone https://github.com/fluidd-core/fluidd-config.git /usr/data/fluidd-config
         fi
 
-        # just download the updated client macros
-        /usr/data/pellcorp/k1/tools/curl -L "https://raw.githubusercontent.com/fluidd-core/fluidd-config/master/client.cfg" -o /usr/data/printer_data/config/fluidd.cfg || exit $?
-        
-        # we already define pause resume and virtual sd card in printer.cfg
-        $CONFIG_HELPER --file fluidd.cfg --remove-section "pause_resume" || exit $?
-        $CONFIG_HELPER --file fluidd.cfg --remove-section "virtual_sdcard" || exit $?
-        $CONFIG_HELPER --file fluidd.cfg --remove-section "display_status" || exit $?
+        [ -f /usr/data/printer_data/config/fluidd.cfg ] && rm /usr/data/printer_data/config/fluidd.cfg
 
+        ln -sf /usr/data/fluidd-config/client.cfg /usr/data/printer_data/config/fluidd.cfg
+
+        # these are already defined in fluidd config so get rid of them from printer.cfg
+        $CONFIG_HELPER --remove-section "pause_resume" || exit $?
+        $CONFIG_HELPER --remove-section "display_status" || exit $?
+        $CONFIG_HELPER --remove-section "virtual_sdcard" || exit $?
+        
         $CONFIG_HELPER --add-include "fluidd.cfg" || exit $?
 
         if [ "$mode" != "update" ]; then
@@ -280,18 +290,10 @@ install_mainsail() {
             /usr/data/pellcorp/k1/tools/curl -L "https://github.com/mainsail-crew/mainsail/releases/latest/download/mainsail.zip" -o /usr/data/mainsail.zip || exit $?
             unzip -qd /usr/data/mainsail /usr/data/mainsail.zip || exit $?
             rm /usr/data/mainsail.zip
+
+            # the mainsail and fluidd client.cfg are exactly the same
+            [ -f /usr/data/printer_data/config/mainsail.cfg ] && rm /usr/data/printer_data/config/mainsail.cfg
         fi
-
-        # just download the updated client macros
-        /usr/data/pellcorp/k1/tools/curl -L "https://raw.githubusercontent.com/mainsail-crew/mainsail-config/master/client.cfg" -o /usr/data/printer_data/config/mainsail.cfg || exit $?
-
-        # we already define pause resume, display_status and virtual sd card in printer.cfg
-        $CONFIG_HELPER --file mainsail.cfg --remove-section "pause_resume" || exit $?
-        $CONFIG_HELPER --file mainsail.cfg --remove-section "virtual_sdcard" || exit $?
-        $CONFIG_HELPER --file mainsail.cfg --remove-section "display_status" || exit $?
-
-        # mainsail macros will conflict with fluidd ones
-        # $CONFIG_HELPER --add-include "mainsail.cfg" || exit $?
 
         if [ "$mode" != "update" ]; then
             echo "mainsail" >> /usr/data/pellcorp.done
