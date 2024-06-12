@@ -9,7 +9,7 @@ from ubuntu:focal
 ADD 2004-sources.list /etc/apt/sources.list
 
 RUN apt-get update
-RUN apt-get install -y python3 build-essential gcc-arm-none-eabi sudo srecord wget git curl cpio unzip rsync bc
+RUN apt-get install -y python3 build-essential gcc-arm-none-eabi sudo srecord wget git curl cpio unzip rsync bc 
 
 RUN adduser --disabled-password --gecos "" developer && \
   usermod -a -G sudo developer && \
@@ -20,8 +20,8 @@ RUN mkdir /opt/toolchains && \
     tar -zxf /tmp/mips-gcc720-glibc229.tar.gz -C /opt/toolchains && \
     rm /tmp/mips-gcc720-glibc229.tar.gz
 
+RUN apt-get install -y libncurses-dev
 ENV PATH=/opt/toolchains/mips-gcc720-glibc229/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
 
 USER developer
 WORKDIR /home/developer
-
