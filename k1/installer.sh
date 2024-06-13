@@ -741,6 +741,9 @@ install_mainsail=$?
 install_kamp $mode
 install_kamp=$?
 
+# for moonraker to be able to use moonraker fluidd client.cfg out of the box need to
+ln -s /usr/data/printer_data/ /root
+
 # if moonraker was installed or updated
 if [ $install_moonraker -ne 0 ]; then
     echo ""
@@ -789,13 +792,11 @@ else # microprobe
     setup_probe_specific=$?
 fi
 
-if [ $install_klipper_mcu -ne 0 ]; then
+if [ $install_klipper_mcu -ne 0 ] || [ $install_kamp -ne 0 ] || [ $install_klipper_mcu -ne 0 ] || [ $install_klipper -ne 0 ] || [ $install_guppyscreen -ne 0 ] || [ $setup_probe -ne 0 ] || [ $setup_probe_specific -ne 0 ]; then
+    echo ""
     echo "Restarting MCU Klipper ..."
     /etc/init.d/S57klipper_mcu restart
-fi
-
-if [ $install_kamp -ne 0 ] || [ $install_klipper_mcu -ne 0 ] || [ $install_klipper -ne 0 ] || [ $install_guppyscreen -ne 0 ] || [ $setup_probe -ne 0 ] || [ $setup_probe_specific -ne 0 ]; then
-    echo ""
+    
     echo "Restarting Klipper ..."
     /etc/init.d/S55klipper_service restart
 fi
