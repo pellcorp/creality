@@ -293,10 +293,10 @@ install_mainsail() {
             /usr/data/pellcorp/k1/tools/curl -L "https://github.com/mainsail-crew/mainsail/releases/latest/download/mainsail.zip" -o /usr/data/mainsail.zip || exit $?
             unzip -qd /usr/data/mainsail /usr/data/mainsail.zip || exit $?
             rm /usr/data/mainsail.zip
-
-            # the mainsail and fluidd client.cfg are exactly the same
-            [ -f /usr/data/printer_data/config/mainsail.cfg ] && rm /usr/data/printer_data/config/mainsail.cfg
         fi
+
+        # the mainsail and fluidd client.cfg are exactly the same
+        [ -f /usr/data/printer_data/config/mainsail.cfg ] && rm /usr/data/printer_data/config/mainsail.cfg
 
         if [ "$mode" != "update" ]; then
             echo "mainsail" >> /usr/data/pellcorp.done
