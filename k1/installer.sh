@@ -547,7 +547,6 @@ install_cartographer_klipper() {
     return 0
 }
 
-# this is only called for an install or reinstall
 setup_probe() {
     grep -q "probe" /usr/data/pellcorp.done
     if [ $? -ne 0 ]; then
@@ -567,7 +566,6 @@ setup_probe() {
     return 0
 }
 
-# allows easy switch of probes
 cleanup_probe() {
     local probe=$1
 
@@ -590,7 +588,6 @@ cleanup_probe() {
     fi
 }
 
-# this is only called for an install or reinstall
 setup_bltouch() {
     local mode=$1
 
@@ -624,7 +621,6 @@ setup_bltouch() {
     return 0
 }
 
-# this is only called for an install or reinstall
 setup_microprobe() {
     local mode=$1
 
@@ -658,7 +654,6 @@ setup_microprobe() {
     return 0
 }
 
-# guppyscreen installs the gcode_shell_command so we don't have to :-)
 setup_cartographer() {
     local mode=$1
 
@@ -703,7 +698,6 @@ setup_cartographer() {
     return 0
 }
 
-# entware is handy for installing additional stuff, I see no harm in getting it setup ootb
 install_entware() {
     if ! grep -q "entware" /usr/data/pellcorp.done; then
         echo ""
@@ -743,9 +737,7 @@ elif [ "$1" = "--update" ]; then
     shift
 fi
 
-# lets figure out if there is an existing probe
 probe=
-# just in case they do not pass the probe argument figure out probe is setup
 if [ -f /usr/data/printer_data/config/bltouch.cfg ]; then
     probe=bltouch
 elif [ -f /usr/data/printer_data/config/cartographer.cfg ]; then
@@ -761,7 +753,6 @@ if [ "$1" = "microprobe" ] || [ "$1" = "bltouch" ] || [ "$1" = "cartographer" ];
     fi
     probe=$1
 elif [ "x$probe" = "x" ]; then
-    echo ""
     echo "ERROR: You must specify a probe you want to configure"
     echo "One of: [microprobe, bltouch, cartographer]"
     exit 1
