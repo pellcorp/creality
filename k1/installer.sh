@@ -760,7 +760,7 @@ fi
 
 touch /usr/data/pellcorp.done
 
-cp /usr/data/printer_data/config/printer.cfg cp /usr/data/printer_data/config/printer.cfg.bkp
+cp /usr/data/printer_data/config/printer.cfg /usr/data/printer_data/config/printer.cfg.bkp
 
 install_entware
 
