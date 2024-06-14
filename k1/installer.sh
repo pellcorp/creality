@@ -759,6 +759,9 @@ elif [ "x$probe" = "x" ]; then
 fi
 
 touch /usr/data/pellcorp.done
+
+cp /usr/data/printer_data/config/printer.cfg cp /usr/data/printer_data/config/printer.cfg.bkp
+
 install_entware
 
 install_webcam
