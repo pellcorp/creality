@@ -781,6 +781,9 @@ install_mainsail=$?
 install_kamp $mode
 install_kamp=$?
 
+install_klipper $mode
+install_klipper=$?
+
 install_cartographer_klipper
 install_cartographer_klipper=$?
 
@@ -789,14 +792,11 @@ if [ $install_moonraker -ne 0 ]; then
     restart_moonraker
 fi
 
-if [ $install_moonraker -ne 0 ] || [ $install_nginx -ne 0 ] || [ $install_fluidd -ne 0 ] || [ $install_mainsail -ne 0 ] || [ $install_cartographer_klipper -ne 0 ]; then
+if [ $install_klipper -ne 0 ] || [ $install_moonraker -ne 0 ] || [ $install_nginx -ne 0 ] || [ $install_fluidd -ne 0 ] || [ $install_mainsail -ne 0 ] || [ $install_cartographer_klipper -ne 0 ]; then
     echo ""
     echo "Restarting Nginx ..."
     /etc/init.d/S50nginx_service restart
 fi
-
-install_klipper $mode
-install_klipper=$?
 
 install_klipper_mcu
 install_klipper_mcu=$?
