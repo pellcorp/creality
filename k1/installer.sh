@@ -68,6 +68,13 @@ if [ ! -d /usr/data/pellcorp-env ]; then
     sync
 fi
 
+setup_git_ssh() {
+    mkdir -p /root/.ssh
+    # this currently only supports klipper git clone via ssh as you can use a deploy key once
+    cp /usr/data/pellcorp/k1/ssh/klipper-identity /root/.ssh/
+    cp /usr/data/pellcorp/k1/ssh/git-ssh.sh /root/.git-ssh.sh
+}
+
 disable_creality_services() {
     if [ -f /etc/init.d/S99start_app ]; then
         echo ""
@@ -142,8 +149,9 @@ install_moonraker() {
                     tar -zcf /usr/data/moonraker-database.tar.gz database/
                     cd
                 fi
-                rm -rf /usr/data/moonraker
+                
             fi
+            [ -d /usr/data/moonraker ] && rm -rf /usr/data/moonraker
             [ -d /usr/data/moonraker-env ] && rm -rf /usr/data/moonraker-env
 
             echo ""
@@ -384,7 +392,13 @@ install_klipper() {
                 rm -rf /usr/data/klipper
             fi
             
-            git clone https://github.com/pellcorp/klipper.git /usr/data/klipper || exit $?
+            # this is only for testing with crappy internet, moonraker will not be happy
+            if [ "$KLIPPER_GIT_CLONE" = "ssh" ]; then
+                export GIT_SSH=$HOME/.git-ssh.sh
+                git clone git@github.com:pellcorp/klipper.git /usr/data/klipper || exit $?
+            else
+                git clone https://github.com/pellcorp/klipper.git /usr/data/klipper || exit $?
+            fi
             [ -d /usr/share/klipper ] && rm -rf /usr/share/klipper
         fi
 
@@ -762,6 +776,7 @@ touch /usr/data/pellcorp.done
 
 cp /usr/data/printer_data/config/printer.cfg /usr/data/printer_data/config/printer.cfg.bkp
 
+setup_git_ssh
 install_entware
 
 install_webcam
