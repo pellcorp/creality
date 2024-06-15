@@ -16,6 +16,16 @@ def remove_section_value(updater, section_name, key):
     return False
 
 
+def get_section_value(updater, section_name, key):
+    if updater.has_section(section_name):
+        section = updater.get_section(section_name, None)
+        if section:
+            current_value = section.get(key, None)
+            if current_value:
+                return current_value.value
+    return None
+
+
 def replace_section_value(updater, section_name, key, value):
     if updater.has_section(section_name):
         section = updater.get_section(section_name, None)
@@ -72,6 +82,7 @@ def main():
     opts.add_option("", "--output", dest="output")
     opts.add_option("", "--remove-section", dest="remove_section", nargs=1, type="string")
     opts.add_option("", "--remove-section-entry", dest="remove_section_entry", nargs=2, type="string")
+    opts.add_option("", "--get-section-entry", dest="get_section_entry", nargs=2, type="string")
     opts.add_option("", "--replace-section-entry", dest="replace_section_entry", nargs=3, type="string")
     opts.add_option("", "--remove-include", dest="remove_include", nargs=1, type="string")
     opts.add_option("", "--add-include", dest="add_include", nargs=1, type="string")
@@ -95,6 +106,10 @@ def main():
         updated = remove_section(updater, options.remove_section)
     elif options.remove_section_entry:
         updated = remove_section_value(updater, options.remove_section_entry[0], options.remove_section_entry[1])
+    elif options.get_section_entry:
+        value = get_section_value(updater, options.get_section_entry[0], options.get_section_entry[1])
+        if value:
+            print(value)
     elif options.replace_section_entry:
         updated = replace_section_value(updater, options.replace_section_entry[0], options.replace_section_entry[1], options.replace_section_entry[2])
     elif options.remove_include:
