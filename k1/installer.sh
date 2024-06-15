@@ -393,6 +393,7 @@ install_klipper() {
             
             # this is only for testing with crappy internet
             if [ "$KLIPPER_GIT_CLONE" = "ssh" ]; then
+                export GIT_SSH_IDENTITY=klipper
                 export GIT_SSH=$HOME/.git-ssh.sh
                 git clone git@github.com:pellcorp/klipper.git /usr/data/klipper || exit $?
                 # reset the origin url to make moonraker happy
