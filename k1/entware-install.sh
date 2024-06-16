@@ -22,7 +22,7 @@ secondary_URL="http://www.openk1.org/static/entware/mipselsf-k3.4/installer"
 download_files() {
   local url="$1"
   local output_file="$2"
-  /usr/data/pellcorp/k1/tools/curl -L "$url" -o "$output_file"
+  curl -L "$url" -o "$output_file"
   return $?
 }
 

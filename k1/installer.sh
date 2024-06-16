@@ -9,7 +9,7 @@ fi
 MODEL=$(/usr/bin/get_sn_mac.sh model)
 
 if [ "$MODEL" != "CR-K1" ] && [ "$MODEL" != "K1C" ] && [ "$MODEL" != "CR-K1 Max" ]; then
-    echo "This script is only supported for the K1, K1C and CR-K1 Max!"
+    echo "ERROR: This script is only supported for the K1, K1C and CR-K1 Max!"
     exit 1
 fi
 
@@ -60,6 +60,10 @@ sync
 cp /usr/data/pellcorp/k1/services/S50dropbear /etc/init.d/ || exit $?
 sync
 
+# for k1 the installed curl does not do ssl, so we replace it first
+# and we can then make use of it going forward
+cp /usr/data/pellcorp/k1/tools/curl /usr/bin/curl
+
 CONFIG_HELPER="/usr/data/pellcorp-env/bin/python3 /usr/data/pellcorp/k1/config-helper.py"
 
 # our little pellcorp python environment currently just for the config-helper.py
@@ -68,11 +72,22 @@ if [ ! -d /usr/data/pellcorp-env ]; then
     sync
 fi
 
-setup_git_ssh() {
-    mkdir -p /root/.ssh
-    # this currently only supports klipper git clone via ssh as you can use a deploy key once
-    cp /usr/data/pellcorp/k1/ssh/klipper-identity /root/.ssh/
-    cp /usr/data/pellcorp/k1/ssh/git-ssh.sh /root/.git-ssh.sh
+clone_repo() {
+    local github_owner=$1
+    local github_repo=$2
+    local destination=$3
+
+    [ -d $destination ] && rm -rf $destination
+    if [ "$OVERRIDE_GIT_CLONE" = "ssh" ] && [ "$github_owner" = "pellcorp" ] && [ -f /usr/data/pellcorp/k1/ssh/${github_repo}-identity ]; then
+        echo "INFO: Using SSH to clone ${github_owner}/${github_repo} ..."
+        export GIT_SSH_IDENTITY=$github_repo
+        export GIT_SSH=/usr/data/pellcorp/k1/ssh/git-ssh.sh
+        git clone git@github.com:${github_owner}/${github_repo}.git $destination || exit $?
+        # reset the origin url to make moonraker happy
+        cd $destination && git remote set-url origin https://github.com/${github_owner}/${github_repo}.git && cd - > /dev/null
+    else
+        git clone https://github.com/${github_owner}/${github_repo}.git $destination || exit $?
+    fi
 }
 
 disable_creality_services() {
@@ -215,7 +230,6 @@ install_nginx() {
         fi
 
         tar -zxf /usr/data/pellcorp/k1/nginx.tar.gz -C /usr/data/ || exit $?
-
         cp /usr/data/pellcorp/k1/nginx.conf /usr/data/nginx/nginx/ || exit $?
         cp /usr/data/pellcorp/k1/services/S50nginx_service /etc/init.d/ || exit $?
 
@@ -250,7 +264,7 @@ install_fluidd() {
             [ -d /usr/data/fluidd ] && rm -rf /usr/data/fluidd
 
             mkdir -p /usr/data/fluidd || exit $? 
-            /usr/data/pellcorp/k1/tools/curl -L "https://github.com/fluidd-core/fluidd/releases/latest/download/fluidd.zip" -o /usr/data/fluidd.zip || exit $?
+            curl -L "https://github.com/fluidd-core/fluidd/releases/latest/download/fluidd.zip" -o /usr/data/fluidd.zip || exit $?
             unzip -qd /usr/data/fluidd /usr/data/fluidd.zip || exit $?
             rm /usr/data/fluidd.zip
 
@@ -297,7 +311,7 @@ install_mainsail() {
             [ -d /usr/data/mainsail ] && rm -rf /usr/data/mainsail
             
             mkdir -p /usr/data/mainsail || exit $?
-            /usr/data/pellcorp/k1/tools/curl -L "https://github.com/mainsail-crew/mainsail/releases/latest/download/mainsail.zip" -o /usr/data/mainsail.zip || exit $?
+            curl -L "https://github.com/mainsail-crew/mainsail/releases/latest/download/mainsail.zip" -o /usr/data/mainsail.zip || exit $?
             unzip -qd /usr/data/mainsail /usr/data/mainsail.zip || exit $?
             rm /usr/data/mainsail.zip
         fi
@@ -331,7 +345,6 @@ install_kamp() {
 
             # lets allow reinstalls
             [ -d /usr/data/KAMP ] && rm -rf /usr/data/KAMP
-
             git clone https://github.com/kyleisah/Klipper-Adaptive-Meshing-Purging.git /usr/data/KAMP || exit $?
         fi
 
@@ -391,21 +404,12 @@ install_klipper() {
                 rm -rf /usr/data/klipper
             fi
             
-            # this is only for testing with crappy internet
-            if [ "$KLIPPER_GIT_CLONE" = "ssh" ]; then
-                export GIT_SSH_IDENTITY=klipper
-                export GIT_SSH=$HOME/.git-ssh.sh
-                git clone git@github.com:pellcorp/klipper.git /usr/data/klipper || exit $?
-                # reset the origin url to make moonraker happy
-                cd /usr/data/klipper && git remote set-url origin https://github.com/pellcorp/klipper.git && cd - > /dev/null
-            else
-                git clone https://github.com/pellcorp/klipper.git /usr/data/klipper || exit $?
-            fi
+            clone_repo pellcorp klipper /usr/data/klipper || exit $?
             [ -d /usr/share/klipper ] && rm -rf /usr/share/klipper
+            ln -sf /usr/data/klipper /usr/share/ || exit $?
         fi
 
         /usr/share/klippy-env/bin/python3 -m compileall /usr/data/klipper/klippy || exit $?
-        ln -sf /usr/data/klipper /usr/share/ || exit $?
         cp /usr/data/pellcorp/k1/services/S55klipper_service /etc/init.d/ || exit $?
 
         cp /usr/data/pellcorp/k1/services/S13mcu_update /etc/init.d/ || exit $?
@@ -493,7 +497,7 @@ install_guppyscreen() {
             rm -rf /usr/data/guppyscreen
         fi
 
-        /usr/data/pellcorp/k1/tools/curl -L "https://github.com/ballaswag/guppyscreen/releases/latest/download/guppyscreen.tar.gz" -o /usr/data/guppyscreen.tar.gz || exit $?
+        curl -L "https://github.com/ballaswag/guppyscreen/releases/latest/download/guppyscreen.tar.gz" -o /usr/data/guppyscreen.tar.gz || exit $?
         tar xf /usr/data/guppyscreen.tar.gz  -C /usr/data/ || exit $?
         rm /usr/data/guppyscreen.tar.gz 
         cp /usr/data/pellcorp/k1/services/S99guppyscreen /etc/init.d/ || exit $?
@@ -610,6 +614,7 @@ cleanup_probe() {
 
 setup_bltouch() {
     local mode=$1
+
     grep -q "bltouch-probe" /usr/data/pellcorp.done
     if [ $? -ne 0 ] || [ "$mode" = "update" ]; then
         echo ""
@@ -733,6 +738,9 @@ restart_moonraker() {
     echo "Restarting Moonraker ..."
     /etc/init.d/S56moonraker_service restart
 
+    timeout=60
+    start_time=$(date +%s)
+
     # this is mostly for k1-qemu where Moonraker takes a while to start up
     echo "Waiting for Moonraker ..."
     while true; do
@@ -740,6 +748,13 @@ restart_moonraker() {
         # not sure why, but moonraker will start reporting the location of klipper as /usr/data/klipper
         # when using a soft link
         if [ "$KLIPPER_PATH" = "/usr/share/klipper" ] || [ "$KLIPPER_PATH" = "/usr/data/klipper" ]; then
+            break;
+        fi
+
+        current_time=$(date +%s)
+        elapsed_time=$((current_time - start_time))
+        if [ $elapsed_time -ge $timeout ]; then
+            echo "Timeout reached. Moonraker failed to start within $timeout seconds."
             break;
         fi
         sleep 1
@@ -781,7 +796,6 @@ touch /usr/data/pellcorp.done
 
 cp /usr/data/printer_data/config/printer.cfg /usr/data/printer_data/config/printer.cfg.bkp
 
-setup_git_ssh
 install_entware
 
 install_webcam
@@ -807,6 +821,7 @@ install_kamp=$?
 install_klipper $mode
 install_klipper=$?
 
+# installing cartographer-klipper must come after installing klipper
 install_cartographer_klipper
 install_cartographer_klipper=$?
 
@@ -830,7 +845,6 @@ install_guppyscreen=$?
 setup_probe
 setup_probe=$?
 
-# installing carto must come after installing klipper
 if [ "$probe" = "cartographer" ]; then
     setup_cartographer $mode
     setup_probe_specific=$?
