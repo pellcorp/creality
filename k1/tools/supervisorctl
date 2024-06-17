@@ -13,11 +13,10 @@ fi
 
 get_services() {
   moonraker_pid="$(cat /var/run/moonraker.pid)"
-  # if moonraker is running, get its config directory from its command line
   if [ -f /usr/data/printer_data/moonraker.asvc ] ; then
     cat /usr/data/printer_data/moonraker.asvc | tr '\n' ' '
   else
-    echo "Error: Invalid or missing PID file /var/run/moonraker.pid" >&2
+    echo "Error: No /usr/data/printer_data/moonraker.asvc" >&2
     exit 1
   fi
 }
