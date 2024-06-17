@@ -608,11 +608,10 @@ cleanup_probe() {
         $CONFIG_HELPER --remove-include "$probe-k1m.cfg" || exit $?
     fi
 }
+jason@jason-desktop:~/Development/creality [main]
 
-setup_bltouch() {
-    local mode=$1
 
-    grep -q "bltouch" /usr/data/pellcorp.done
+    grep -q "bltouch-probe" /usr/data/pellcorp.done
     if [ $? -ne 0 ] || [ "$mode" = "update" ]; then
         echo ""
         echo "Setting up bltouch ..."
@@ -632,7 +631,7 @@ setup_bltouch() {
         fi
 
         if [ "$mode" != "update" ]; then
-            echo "bltouch" >> /usr/data/pellcorp.done
+            echo "bltouch-probe" >> /usr/data/pellcorp.done
         fi
         sync
 
@@ -645,7 +644,7 @@ setup_bltouch() {
 setup_microprobe() {
     local mode=$1
 
-    grep -q "microprobe" /usr/data/pellcorp.done
+    grep -q "microprobe-probe" /usr/data/pellcorp.done
     if [ $? -ne 0 ] || [ "$mode" = "update" ]; then
         echo ""
         echo "Setting up microprobe ..."
@@ -665,7 +664,7 @@ setup_microprobe() {
         fi
         
         if [ "$mode" != "update" ]; then
-            echo "microprobe" >> /usr/data/pellcorp.done
+            echo "microprobe-probe" >> /usr/data/pellcorp.done
         fi
         sync
 
@@ -678,7 +677,7 @@ setup_microprobe() {
 setup_cartographer() {
     local mode=$1
 
-    grep -q "cartographer" /usr/data/pellcorp.done
+    grep -q "cartographer-probe" /usr/data/pellcorp.done
     if [ $? -ne 0 ] || [ "$mode" = "update" ]; then
         echo ""
         echo "Setting up cartographer ..."
@@ -711,7 +710,7 @@ setup_cartographer() {
         fi
 
         if [ "$mode" != "update" ]; then
-            echo "cartographer" >> /usr/data/pellcorp.done
+            echo "cartographer-probe" >> /usr/data/pellcorp.done
         fi
         sync
         return 1
