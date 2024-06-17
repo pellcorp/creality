@@ -608,9 +608,9 @@ cleanup_probe() {
         $CONFIG_HELPER --remove-include "$probe-k1m.cfg" || exit $?
     fi
 }
-jason@jason-desktop:~/Development/creality [main]
 
-
+setup_bltouch() {
+    local mode=$1
     grep -q "bltouch-probe" /usr/data/pellcorp.done
     if [ $? -ne 0 ] || [ "$mode" = "update" ]; then
         echo ""
