@@ -20,9 +20,6 @@ RUN mkdir /opt/toolchains && \
     tar -zxf /tmp/mips-gcc720-glibc229.tar.gz -C /opt/toolchains && \
     rm /tmp/mips-gcc720-glibc229.tar.gz
 
-RUN apt-get update
-RUN DEBIAN_FRONTEND=noninteractive apt-get install -y pkg-config libncurses-dev asciidoc w3m
-
 ENV PATH=/opt/toolchains/mips-gcc720-glibc229/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
 
 USER developer
