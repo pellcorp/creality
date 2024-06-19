@@ -64,13 +64,7 @@ sync
 # and we can then make use of it going forward
 cp /usr/data/pellcorp/k1/tools/curl /usr/bin/curl
 
-CONFIG_HELPER="/usr/data/pellcorp-env/bin/python3 /usr/data/pellcorp/k1/config-helper.py"
-
-# our little pellcorp python environment currently just for the config-helper.py
-if [ ! -d /usr/data/pellcorp-env ]; then
-    tar -zxf /usr/data/pellcorp/k1/pellcorp-env.tar.gz -C /usr/data/
-    sync
-fi
+CONFIG_HELPER="/ops/usr/bin/python3 /usr/data/pellcorp/k1/config-helper.py"
 
 clone_repo() {
     local github_owner=$1
@@ -152,6 +146,10 @@ install_moonraker() {
                 if [ -f /etc/init.d/S56moonraker_service ]; then
                     /etc/init.d/S56moonraker_service stop
                 fi
+                if [ -f /etc/init.d/S56moonraker ]; then
+                    /etc/init.d/S56moonraker stop
+                fi
+
                 if [ -d /usr/data/printer_data/database/ ]; then
                     [ -f  /usr/data/moonraker-database.tar.gz ] && rm  /usr/data/moonraker-database.tar.gz
 
@@ -166,7 +164,6 @@ install_moonraker() {
                 fi               
             fi
             [ -d /usr/data/moonraker ] && rm -rf /usr/data/moonraker
-            [ -d /usr/data/moonraker-env ] && rm -rf /usr/data/moonraker-env
 
             echo ""
             git clone https://github.com/Arksine/moonraker /usr/data/moonraker || exit $?
@@ -182,9 +179,11 @@ install_moonraker() {
         fi
 
         ln -sf /usr/data/pellcorp/k1/tools/supervisorctl /usr/bin/ || exit $?
-        tar -zxf /usr/data/pellcorp/k1/moonraker-env.tar.gz -C /usr/data/ || exit $?
 
-        cp /usr/data/pellcorp/k1/services/S56moonraker_service /etc/init.d/ || exit $?
+        # cleanup of names _service is superfluous
+        [ -f /etc/init.d/S56moonraker_service ] && rm /etc/init.d/S56moonraker_service
+
+        cp /usr/data/pellcorp/k1/services/S56moonraker /etc/init.d/ || exit $?
         cp /usr/data/pellcorp/k1/moonraker.conf /usr/data/printer_data/config/ || exit $?
         cp /usr/data/pellcorp/k1/moonraker.asvc /usr/data/printer_data/ || exit $?
         
@@ -220,18 +219,19 @@ install_nginx() {
             echo "Installing nginx ..."
         fi
 
-        # because the nginx tar ball is local, lets just redo the whole
-        # thing, there should be no user configurable stuff here anyway
-        if [ -d /usr/data/nginx ]; then
-            if [ -f /etc/init.d/S50nginx_service ]; then
-                /etc/init.d/S50nginx_service stop
-            fi
-            rm -rf /usr/data/nginx
+        if [ -f /etc/init.d/S50nginx_service ]; then
+            /etc/init.d/S50nginx_service stop
         fi
+        if [ -f /etc/init.d/S50nginx ]; then
+            /etc/init.d/S50nginx stop
+        fi
+        
+        [ -d /usr/data/nginx ] && rm -rf /usr/data/nginx
 
-        tar -zxf /usr/data/pellcorp/k1/nginx.tar.gz -C /usr/data/ || exit $?
-        cp /usr/data/pellcorp/k1/nginx.conf /usr/data/nginx/nginx/ || exit $?
-        cp /usr/data/pellcorp/k1/services/S50nginx_service /etc/init.d/ || exit $?
+        cp /usr/data/pellcorp/k1/nginx.conf /opt/etc/nginx/ || exit $?
+        # a bit of cleanup, no need for _service suffix
+        [ -f /etc/init.d/S50nginx_service ] && rm /etc/init.d/S50nginx_service
+        cp /usr/data/pellcorp/k1/services/S50nginx /etc/init.d/ || exit $?
 
         if [ "$mode" != "update" ]; then
             echo "nginx" >> /usr/data/pellcorp.done
@@ -401,16 +401,26 @@ install_klipper() {
                 if [ -f /etc/init.d/S55klipper_service ]; then
                     /etc/init.d/S55klipper_service stop
                 fi
+                if [ -f /etc/init.d/S55klipper ]; then
+                    /etc/init.d/S55klipper stop
+                fi
                 rm -rf /usr/data/klipper
             fi
             
             clone_repo pellcorp klipper /usr/data/klipper || exit $?
-            [ -d /usr/share/klipper ] && rm -rf /usr/share/klipper
-            ln -sf /usr/data/klipper /usr/share/ || exit $?
+            
+            # delete dir or soft link dont need it
+            [ -e /usr/share/klipper ] && rm -rf /usr/share/klipper
         fi
 
-        /usr/share/klippy-env/bin/python3 -m compileall /usr/data/klipper/klippy || exit $?
-        cp /usr/data/pellcorp/k1/services/S55klipper_service /etc/init.d/ || exit $?
+        # delete old klippy-env
+        [ -d /usr/share/klipper-env ] && rm -rf /usr/share/klipper-env
+
+        /usr/data/klippy-env/bin/python3 -m compileall /usr/data/klipper/klippy || exit $?
+        
+        # cleanup of names _service is superfluous
+        [ -f /etc/init.d/S55klipper_service ] && rm /etc/init.d/S55klipper_service
+        cp /usr/data/pellcorp/k1/services/S55klipper /etc/init.d/ || exit $?
 
         cp /usr/data/pellcorp/k1/services/S13mcu_update /etc/init.d/ || exit $?
 
@@ -503,11 +513,7 @@ install_guppyscreen() {
         cp /usr/data/pellcorp/k1/services/S99guppyscreen /etc/init.d/ || exit $?
         cp /usr/data/pellcorp/k1/guppyscreen/guppyconfig.json /usr/data/guppyscreen || exit $?
 
-        if [ ! -d "/usr/lib/python3.8/site-packages/matplotlib-2.2.3-py3.8.egg-info" ]; then
-            echo "WARNING: Not replacing mathplotlib ft2font module. PSD graphs might not work!"
-        else
-            cp /usr/data/guppyscreen/k1_mods/ft2font.cpython-38-mipsel-linux-gnu.so /usr/lib/python3.8/site-packages/matplotlib/ || exit $?
-        fi
+        [ -f /usr/data/guppyscreen/k1_mods/ft2font.cpython-38-mipsel-linux-gnu.so] && rm /usr/data/guppyscreen/k1_mods/ft2font.cpython-38-mipsel-linux-gnu.so
         
         for file in gcode_shell_command.py guppy_config_helper.py calibrate_shaper_config.py guppy_module_loader.py tmcstatus.py; do
             ln -sf /usr/data/guppyscreen/k1_mods/$file /usr/data/klipper/klippy/extras/$file || exit $?
@@ -515,7 +521,7 @@ install_guppyscreen() {
                 echo "klippy/extras/$file" >> "/usr/data/klipper/.git/info/exclude"
             fi
         done
-        /usr/share/klippy-env/bin/python3 -m compileall /usr/data/klipper/klippy || exit $?
+        /usr/data/klippy-env/bin/python3 -m compileall /usr/data/klipper/klippy || exit $?
         
         # get rid of the old guppyscreen config
         [ -d /usr/data/printer_data/config/GuppyScreen ] && rm -rf /usr/data/printer_data/config/GuppyScreen
@@ -722,15 +728,26 @@ setup_cartographer() {
     return 0
 }
 
-install_entware() {
-    if ! grep -q "entware" /usr/data/pellcorp.done; then
-        echo ""
-        echo "Installing entware ..."
-        /usr/data/pellcorp/k1/entware-install.sh || exit $?
+install_pellcorp_buildroot() {
+    curl -L "https://github.com/pellcorp/k1_buildroot/releases/latest/download/rootfs.tar.xz" -o /usr/data/buildroot-rootfs.tar.xz || exit $?
+    m -rf /opt
+    rm -rf /usr/data/opt
+    mkdir -p /usr/data/opt
+    ln -nsf /usr/data/opt /opt
 
-        echo "entware" >> /usr/data/pellcorp.done
-        sync
-    fi
+    xz -dkc /usr/data/buildroot-rootfs.tar.xz | tar -x -C /usr/data/opt/ || exit $?
+    rm /usr/data/buildroot-rootfs.tar.xz
+    
+    [ -f /usr/bin/python ] && rm /usr/bin/python
+    cp /usr/data/pellcorp/k1/python /usr/bin/
+    
+    [ -f /usr/bin/python ] && rm /usr/bin/python3
+    cp /usr/data/pellcorp/k1/python3 /usr/bin/
+
+    ln -sf /opt/usr/libexec/sftp-server /usr/libexec/
+
+    ln -sf /opt/usr/share/klippy-env /usr/data
+    ln -sf /opt/usr/share/moonraker-env /usr/data
 }
 
 restart_moonraker() {
@@ -745,9 +762,7 @@ restart_moonraker() {
     echo "Waiting for Moonraker ..."
     while true; do
         KLIPPER_PATH=$(curl localhost:7125/printer/info 2> /dev/null | jq -r .result.klipper_path)
-        # not sure why, but moonraker will start reporting the location of klipper as /usr/data/klipper
-        # when using a soft link
-        if [ "$KLIPPER_PATH" = "/usr/share/klipper" ] || [ "$KLIPPER_PATH" = "/usr/data/klipper" ]; then
+        if [ "$KLIPPER_PATH" = "/usr/data/klipper" ]; then
             break;
         fi
 
@@ -796,7 +811,7 @@ touch /usr/data/pellcorp.done
 
 cp /usr/data/printer_data/config/printer.cfg /usr/data/printer_data/config/printer.cfg.bkp
 
-install_entware
+install_pellcorp_buildroot
 
 install_webcam
 

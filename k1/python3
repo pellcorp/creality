@@ -1,0 +1,3 @@
+#!/bin/ash
+
+LD_LIBRARY_PATH=/opt/lib:/opt/usr/lib /opt/usr/bin/python3 $@

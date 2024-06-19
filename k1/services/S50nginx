@@ -1,0 +1,36 @@
+#!/bin/sh
+
+# nginx did not like me using set-rpath but its ok with LD_LIBRARY_PATH
+NGINX="/opt/usr/sbin/nginx"
+PID_FILE="/var/run/nginx.pid"
+NGINX_ARGS="-p /opt/usr -c /opt/etc/nginx/nginx.conf"
+export LD_LIBRARY_PATH=/opt/lib:/opt/usr/lib
+
+case "$1" in
+  start)
+	mkdir -p /var/log/nginx /var/tmp/nginx
+	LD_LIBRARY_PATH=/opt/lib:/opt/usr/lib start-stop-daemon -S -p "$PID_FILE" --exec "$NGINX" -- $NGINX_ARGS
+	;;
+  stop)
+	start-stop-daemon -K -p "$PID_FILE" -o
+	;;
+  reload|force-reload)
+	"$NGINX" -s reload
+	;;
+  restart)
+	"$0" stop
+	# this allows a graceful restart of service by actually waiting for it to stop first
+	service_pid="$(cat $PID_FILE 2> /dev/null)"
+	if [ -n "$service_pid" ]; then
+		while true; do
+				if [ ! -d /proc/"$service_pid" ] ; then
+					break
+				fi
+		done
+	fi
+	"$0" start
+	;;
+  *)
+	echo "Usage: $0 {start|stop|restart|reload|force-reload}"
+	exit 1
+esac
