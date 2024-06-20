@@ -439,7 +439,6 @@ install_klipper() {
         cp /usr/data/pellcorp/k1/fan_control.cfg /usr/data/printer_data/config || exit $?
         $CONFIG_HELPER --add-include "fan_control.cfg" || exit $?
 
-        $CONFIG_HELPER --remove-section "filament_switch_sensor filament_sensor_2" || exit $?
         $CONFIG_HELPER --remove-section "output_pin fan0" || exit $?
         $CONFIG_HELPER --remove-section "output_pin fan1" || exit $?
         $CONFIG_HELPER --remove-section "output_pin fan2" || exit $?
