@@ -14,7 +14,7 @@ case "$1" in
 	start-stop-daemon -S -p "$PID_FILE" --exec "$NGINX" -- $NGINX_ARGS
 	;;
   stop)
-	start-stop-daemon -K -x "$NGINX" -p "$PID_FILE" -o
+	start-stop-daemon -K -q -p "$PID_FILE" -o
 	;;
   reload|force-reload)
 	"$NGINX" -s reload
