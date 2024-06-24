@@ -736,42 +736,40 @@ install_entware() {
 
 function apply_overrides() {
     return_status=0
-    if [ -f /usr/data/pellcorp-overrides.cfg ]; then
-        grep -q "overrides" /usr/data/pellcorp.done
-        if [ $? -ne 0 ] || [ "$mode" = "update" ]; then
+    grep -q "overrides" /usr/data/pellcorp.done
+    if [ $? -ne 0 ] || [ "$mode" = "update" ]; then
+        if [ -f /usr/data/pellcorp-overrides.cfg ] || [ -d /usr/data/pellcorp-overrides ]; then
             echo ""
             echo "Applying overrides ..."
 
-            mkdir /tmp/overrides.$$
-            file=
-            
-            while IFS= read -r line; do
-                echo "$line" | grep -q "\--"
-                if [ $? -eq 0 ]; then
-                    if [ -n "$file" ] && [ -f /tmp/overrides.$$/$file ]; then
-                        echo "Applying overrides for $file"
-                        # backup the file before overriding
-                        cp /usr/data/printer_data/config/$file /usr/data/printer_data/config/${file}.override.bkp
-                        $CONFIG_HELPER --file $file --overrides /tmp/overrides.$$/$file
-                        # fixme - we currently have no way to know if the file was updated assume if we got here it was
-                        return_status=1
+            overrides_dir=/usr/data/pellcorp-overrides
+            if [ -f /usr/data/pellcorp-overrides.cfg ]; then
+                overrides_dir=/tmp/overrides.$$
+                mkdir $overrides_dir
+                file=
+                while IFS= read -r line; do
+                    echo "$line" | grep -q "\--"
+                    if [ $? -eq 0 ]; then
+                        file=$(echo $line | sed 's/-- //g')
+                        touch $overrides_dir/$file
+                    elif [ -n "$file" ] && [ -f $overrides_dir/$file ]; then
+                        echo "$line" >> $overrides_dir/$file
                     fi
-                    file=$(echo $line | sed 's/-- //g')
-                    touch /tmp/overrides.$$/$file
-                elif [ -n "$file" ] && [ -f /tmp/overrides.$$/$file ]; then
-                    echo "$line" >> /tmp/overrides.$$/$file
-                fi
-            done < "/usr/data/pellcorp-overrides.cfg"
+                done < "/usr/data/pellcorp-overrides.cfg"
+            fi
 
-            if [ -n "$file" ] && [ -f /tmp/overrides.$$/$file ]; then
+            files=$(ls $overrides_dir)
+            for file in $files; do
                 echo "Applying overrides for $file"
-                # backup the file before overriding
                 cp /usr/data/printer_data/config/$file /usr/data/printer_data/config/${file}.override.bkp
-                $CONFIG_HELPER --file $file --overrides /tmp/overrides.$$/$file
+                $CONFIG_HELPER --file $file --overrides $overrides_dir/$file
                 # fixme - we currently have no way to know if the file was updated assume if we got here it was
                 return_status=1
+            done
+
+            if [ -d /tmp/overrides.$$ ]; then
+                rm -rf /tmp/overrides.$$
             fi
-            #rm -rf /tmp/overrides.$$
 
             if [ "$mode" != "update" ]; then
                 echo "overrides" >> /usr/data/pellcorp.done

@@ -24,6 +24,7 @@ factory_reset() {
         -path '/usr/data/creality' -prune -o \
         -path '/usr/data/wpa_supplicant.conf' -prune -o \
         -path '/usr/data/pellcorp-overrides.cfg' -prune -o \
+        -path '/usr/data/pellcorp-overrides' -prune -o \
         -path '/usr/data/machine_production_info' -prune -o \
         -path '/usr/data/' -o -print \
         -exec rm -rf {} \; >/dev/null 2>&1
