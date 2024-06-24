@@ -146,7 +146,12 @@ install_moonraker() {
                     echo ""
                     echo "Backing up moonraker database ..."
                     cd /usr/data/printer_data/
-                    tar -zcf /usr/data/moonraker-database.tar.gz database/
+
+                    # an existing bug where the moonraker secrets was not correctly copied
+                    if [ ! -f moonraker.secrets ]; then
+                        cp /usr/data/pellcorp/k1/moonraker.secrets .
+                    fi
+                    tar -zcf /usr/data/moonraker-database.tar.gz database/ moonraker.secrets
                     cd
                 fi               
             fi
@@ -174,11 +179,12 @@ install_moonraker() {
         cp /usr/data/pellcorp/k1/moonraker.asvc /usr/data/printer_data/ || exit $?
         
         # after an initial install do not overwrite notifier.conf or moonraker.secrets
-        for file in notifier.conf moonraker.secrets; do
-            if [ ! -f /usr/data/printer_data/config/$file ]; then
-                 cp /usr/data/pellcorp/k1/$file /usr/data/printer_data/config/
-            fi
-        done
+        if [ ! -f /usr/data/printer_data/config/notifier.conf ]; then
+            cp /usr/data/pellcorp/k1/notifier.conf /usr/data/printer_data/config/
+        fi
+        if [ ! -f /usr/data/printer_data/moonraker.secrets ]; then
+            cp /usr/data/pellcorp/k1/moonraker.secrets /usr/data/printer_data/
+        fi
 
         if [ "$mode" != "update" ]; then
             cp /usr/data/pellcorp/k1/webcam.conf /usr/data/printer_data/config/ || exit $?
@@ -728,6 +734,54 @@ install_entware() {
     fi
 }
 
+function apply_overrides() {
+    return_status=0
+    if [ -f /usr/data/pellcorp-overrides.cfg ]; then
+        grep -q "overrides" /usr/data/pellcorp.done
+        if [ $? -ne 0 ] || [ "$mode" = "update" ]; then
+            echo ""
+            echo "Applying overrides ..."
+
+            mkdir /tmp/overrides.$$
+            file=
+            
+            while IFS= read -r line; do
+                echo "$line" | grep -q "\--"
+                if [ $? -eq 0 ]; then
+                    if [ -n "$file" ] && [ -f /tmp/overrides.$$/$file ]; then
+                        echo "Applying overrides for $file"
+                        # backup the file before overriding
+                        cp /usr/data/printer_data/config/$file /usr/data/printer_data/config/${file}.override.bkp
+                        $CONFIG_HELPER --file $file --overrides /tmp/overrides.$$/$file
+                        # fixme - we currently have no way to know if the file was updated assume if we got here it was
+                        return_status=1
+                    fi
+                    file=$(echo $line | sed 's/-- //g')
+                    touch /tmp/overrides.$$/$file
+                elif [ -n "$file" ] && [ -f /tmp/overrides.$$/$file ]; then
+                    echo "$line" >> /tmp/overrides.$$/$file
+                fi
+            done < "/usr/data/pellcorp-overrides.cfg"
+
+            if [ -n "$file" ] && [ -f /tmp/overrides.$$/$file ]; then
+                echo "Applying overrides for $file"
+                # backup the file before overriding
+                cp /usr/data/printer_data/config/$file /usr/data/printer_data/config/${file}.override.bkp
+                $CONFIG_HELPER --file $file --overrides /tmp/overrides.$$/$file
+                # fixme - we currently have no way to know if the file was updated assume if we got here it was
+                return_status=1
+            fi
+            #rm -rf /tmp/overrides.$$
+
+            if [ "$mode" != "update" ]; then
+                echo "overrides" >> /usr/data/pellcorp.done
+            fi
+            sync
+        fi
+    fi
+    return $return_status
+}
+
 restart_moonraker() {
     echo ""
     echo "Restarting Moonraker ..."
@@ -842,13 +896,16 @@ else # microprobe
     setup_probe_specific=$?
 fi
 
+apply_overrides $mode
+apply_overrides=$?
+
 if [ $install_klipper_mcu -ne 0 ]; then
     echo ""
     echo "Restarting MCU Klipper ..."
     /etc/init.d/S57klipper_mcu restart
 fi
 
-if [ $install_cartographer_klipper -ne 0 ] || [ $install_kamp -ne 0 ] || [ $install_klipper_mcu -ne 0 ] || [ $install_klipper -ne 0 ] || [ $install_guppyscreen -ne 0 ] || [ $setup_probe -ne 0 ] || [ $setup_probe_specific -ne 0 ]; then
+if [ $apply_overrides -ne 0 ] || [ $install_cartographer_klipper -ne 0 ] || [ $install_kamp -ne 0 ] || [ $install_klipper_mcu -ne 0 ] || [ $install_klipper -ne 0 ] || [ $install_guppyscreen -ne 0 ] || [ $setup_probe -ne 0 ] || [ $setup_probe_specific -ne 0 ]; then
     echo ""
     echo "Restarting Klipper ..."
     /etc/init.d/S55klipper_service restart
