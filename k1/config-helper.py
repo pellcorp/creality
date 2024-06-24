@@ -93,20 +93,20 @@ def override_cfg(updater, override_cfg_file):
     with open(override_cfg_file, 'r') as file:
         overrides.read_file(file)
         for section_name in overrides.sections():
-            if updater.has_section(section_name):
-                section = overrides.get_section(section_name, None)
-                section_action = section.get('__action__', None)
-                if section_action and section_action.value == 'DELETED':
+            section = overrides.get_section(section_name, None)
+            section_action = section.get('__action__', None)
+            if section_action and section_action.value == 'DELETED':
+                if updater.has_section(section_name):
                     if remove_section(updater, section_name):
                         updated = True
-                else:
-                    for entry in section:
-                        value = section.get(entry, None)
-                        if value and value.value == '__DELETED__':
-                            if remove_section_value(updater, section_name, entry):
-                                updated = True
-                        elif value and value.value and replace_section_value(updater, section_name, entry, value.value):
+            elif updater.has_section(section_name):
+                for entry in section:
+                    value = section.get(entry, None)
+                    if value and value.value == '__DELETED__':
+                        if remove_section_value(updater, section_name, entry):
                             updated = True
+                    elif value and value.value and replace_section_value(updater, section_name, entry, value.value):
+                        updated = True
             else: # new section
                 new_section = overrides.get_section(section_name, None)
                 if new_section:
