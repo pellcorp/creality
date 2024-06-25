@@ -223,6 +223,10 @@ install_nginx() {
         tar -zxf /usr/data/pellcorp/k1/nginx.tar.gz -C /usr/data/ || exit $?
 
         cp /usr/data/pellcorp/k1/nginx.conf /usr/data/nginx/nginx/ || exit $?
+        mkdir -p /usr/data/nginx/nginx/sites/
+        cp /usr/data/pellcorp/k1/nginx/fluidd /usr/data/nginx/nginx/sites/ || exit $?
+        cp /usr/data/pellcorp/k1/nginx/mainsail /usr/data/nginx/nginx/sites/ || exit $?
+
         cp /usr/data/pellcorp/k1/services/S50nginx_service /etc/init.d/ || exit $?
 
         if [ "$mode" != "update" ]; then
@@ -511,7 +515,7 @@ install_guppyscreen() {
             cp /usr/data/guppyscreen/k1_mods/ft2font.cpython-38-mipsel-linux-gnu.so /usr/lib/python3.8/site-packages/matplotlib/ || exit $?
         fi
         
-        for file in gcode_shell_command.py guppy_config_helper.py calibrate_shaper_config.py guppy_module_loader.py tmcstatus.py; do
+        for file in guppy_config_helper.py calibrate_shaper_config.py guppy_module_loader.py tmcstatus.py; do
             ln -sf /usr/data/guppyscreen/k1_mods/$file /usr/data/klipper/klippy/extras/$file || exit $?
             if ! grep -q "klippy/extras/${file}" "/usr/data/klipper/.git/info/exclude"; then
                 echo "klippy/extras/$file" >> "/usr/data/klipper/.git/info/exclude"
