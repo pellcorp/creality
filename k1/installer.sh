@@ -438,6 +438,10 @@ install_klipper() {
             [ -d /usr/share/klipper ] && rm -rf /usr/share/klipper
         fi
 
+        if grep -q "klippy/extras/gcode_shell_command.py" "/usr/data/klipper/.git/info/exclude"; then
+            sed -i "/klippy\/extras\/gcode_shell_command.py$/d" "/usr/data/klipper/.git/info/exclude"
+        fi
+
         /usr/share/klippy-env/bin/python3 -m compileall /usr/data/klipper/klippy || exit $?
         ln -sf /usr/data/klipper /usr/share/ || exit $?
         cp /usr/data/pellcorp/k1/services/S55klipper_service /etc/init.d/ || exit $?
@@ -453,6 +457,9 @@ install_klipper() {
         $CONFIG_HELPER --remove-section "prtouch_v2" || exit $?
         $CONFIG_HELPER --remove-section-entry "printer" "square_corner_max_velocity" || exit $?
         $CONFIG_HELPER --remove-section-entry "printer" "max_accel_to_decel" || exit $?
+        
+        # required to use SET_INPUT_SHAPER macro
+        $CONFIG_HELPER --add-section "input_shaper" || exit $?
 
         $CONFIG_HELPER --remove-include "printer_params.cfg" || exit $?
         $CONFIG_HELPER --remove-include "gcode_macro.cfg" || exit $?
@@ -543,20 +550,20 @@ install_guppyscreen() {
             cp /usr/data/guppyscreen/k1_mods/ft2font.cpython-38-mipsel-linux-gnu.so /usr/lib/python3.8/site-packages/matplotlib/ || exit $?
         fi
         
-        # previously guppyscreen provided gcode_shell_macro.py now its provided by my klipper fork so
-        # remove the exclusion if its still there
-        if grep -q "klippy/extras/gcode_shell_command.py" "/usr/data/klipper/.git/info/exclude"; then
-            sed -i "/klippy\/extras\/gcode_shell_command.py$/d" "/usr/data/klipper/.git/info/exclude"
-        fi
+        # remove various stuff from guppyscreen that are not needed
+        rm -rf /usr/data/guppyscreen/k1_mods/
+        rm -rf /usr/data/guppyscreen/scripts/guppy_cmd.cfg
 
-        for file in guppy_config_helper.py calibrate_shaper_config.py guppy_module_loader.py tmcstatus.py; do
-            ln -sf /usr/data/guppyscreen/k1_mods/$file /usr/data/klipper/klippy/extras/$file || exit $?
-            if ! grep -q "klippy/extras/${file}" "/usr/data/klipper/.git/info/exclude"; then
-                echo "klippy/extras/$file" >> "/usr/data/klipper/.git/info/exclude"
+        # we are not going to install any of the guppyscreen modules any more        
+        for file in guppy_config_helper calibrate_shaper_config guppy_module_loader tmcstatus; do
+            rm /usr/data/klipper/klippy/extras/${file}.py 2> /dev/null
+            rm /usr/data/klipper/klippy/extras/${file}.pyc 2> /dev/null
+
+            if grep -q "klippy/extras/${file}.py" "/usr/data/klipper/.git/info/exclude"; then
+                sed -i "/klippy\/extras\/${file}.py$/d" "/usr/data/klipper/.git/info/exclude"
             fi
         done
-        /usr/share/klippy-env/bin/python3 -m compileall /usr/data/klipper/klippy || exit $?
-        
+
         # get rid of the old guppyscreen config
         [ -d /usr/data/printer_data/config/GuppyScreen ] && rm -rf /usr/data/printer_data/config/GuppyScreen
 
