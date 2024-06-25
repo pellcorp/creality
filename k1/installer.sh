@@ -133,7 +133,7 @@ install_moonraker() {
         else
             echo "Installing moonraker ..."
 
-            if [ -d /usr/data/guppyscreen ]; then
+            if [ -d /usr/data/moonraker ]; then
                 if [ -f /etc/init.d/S56moonraker_service ]; then
                     /etc/init.d/S56moonraker_service stop
                 fi
