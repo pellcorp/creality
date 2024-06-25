@@ -761,8 +761,13 @@ function apply_overrides() {
             files=$(ls $overrides_dir)
             for file in $files; do
                 echo "Applying overrides for $file"
-                cp /usr/data/printer_data/config/$file /usr/data/printer_data/config/${file}.override.bkp
-                $CONFIG_HELPER --file $file --overrides $overrides_dir/$file
+                # special case for moonraker.secrets
+                if [ "$file" = "moonraker.secrets" ]; then
+                    cp $overrides_dir/$file /usr/data/printer_data/
+                else
+                    cp /usr/data/printer_data/config/$file /usr/data/printer_data/config/${file}.override.bkp
+                    $CONFIG_HELPER --file $file --overrides $overrides_dir/$file
+                fi
                 # fixme - we currently have no way to know if the file was updated assume if we got here it was
                 return_status=1
             done
@@ -897,10 +902,9 @@ fi
 apply_overrides $mode
 apply_overrides=$?
 
-if [ $install_klipper_mcu -ne 0 ]; then
-    echo ""
-    echo "Restarting MCU Klipper ..."
-    /etc/init.d/S57klipper_mcu restart
+# just restart moonraker in case any overrides were applied
+if [ $apply_overrides -ne 0 ]; then
+    restart_moonraker
 fi
 
 if [ $apply_overrides -ne 0 ] || [ $install_cartographer_klipper -ne 0 ] || [ $install_kamp -ne 0 ] || [ $install_klipper_mcu -ne 0 ] || [ $install_klipper -ne 0 ] || [ $install_guppyscreen -ne 0 ] || [ $setup_probe -ne 0 ] || [ $setup_probe_specific -ne 0 ]; then
