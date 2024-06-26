@@ -1,9 +1,5 @@
 #!/bin/sh
 
-#
-# Moonraker Service
-#
-
 USER_DATA=/usr/data
 PROG=/usr/data/moonraker-env/bin/python3
 # the moonraker server is actually underneath the embedded moonraker directory in the moonraker repo

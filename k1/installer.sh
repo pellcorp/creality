@@ -370,30 +370,27 @@ install_kamp() {
     return 0
 }
 
-install_klipper_mcu() {
-    diff -q /usr/data/pellcorp/k1/fw/K1/klipper_mcu /usr/bin/klipper_mcu > /dev/null
-    if [ $? -ne 0 ]; then
-        echo ""
-        echo "Updating Klipper MCU ..."
-        cp /usr/data/pellcorp/k1/fw/K1/klipper_mcu /usr/bin/klipper_mcu || exit $?
-        return 1
-    fi
-    return 0
-}
-
 install_klipper() {
     local mode=$1
 
     grep -q "klipper" /usr/data/pellcorp.done
     if [ $? -ne 0 ] || [ "$mode" = "update" ]; then
         echo ""
+
+        if [ -f /etc/init.d/S57klipper_mcu ]; then
+            /etc/init.d/S55klipper_service stop
+            /etc/init.d/S57klipper_mcu stop
+            rm /etc/init.d/S57klipper_mcu
+            /etc/init.d/S55klipper_service start
+        fi
+
         if [ "$mode" = "update" ]; then
             echo "Updating klipper ..."
 
             update_repo /usr/data/klipper
         else
             echo "Installing klipper ..."
-            
+
             if [ -d /usr/data/klipper ]; then
                 if [ -f /etc/init.d/S55klipper_service ]; then
                     /etc/init.d/S55klipper_service stop
@@ -421,6 +418,9 @@ install_klipper() {
         cp /usr/data/pellcorp/k1/services/S13mcu_update /etc/init.d/ || exit $?
 
         cp /usr/data/pellcorp/k1/sensorless.cfg /usr/data/printer_data/config/ || exit $?
+
+        # the klipper_mcu is not even used, so just get rid of it
+        $CONFIG_HELPER --remove-section "mcu rpi" || exit $?
 
         $CONFIG_HELPER --remove-section "bl24c16f" || exit $?
         $CONFIG_HELPER --remove-section "prtouch_v2" || exit $?
@@ -474,6 +474,7 @@ install_klipper() {
         if [ "$mode" != "update" ]; then
             echo "klipper" >> /usr/data/pellcorp.done
         fi
+
         sync
 
         # means klipper needs to be restarted
@@ -502,7 +503,7 @@ install_guppyscreen() {
             
             rm -rf /usr/data/guppyscreen
         fi
-
+    
         /usr/data/pellcorp/k1/tools/curl -L "https://github.com/ballaswag/guppyscreen/releases/latest/download/guppyscreen.tar.gz" -o /usr/data/guppyscreen.tar.gz || exit $?
         tar xf /usr/data/guppyscreen.tar.gz  -C /usr/data/ || exit $?
         rm /usr/data/guppyscreen.tar.gz 
@@ -789,10 +790,14 @@ function apply_overrides() {
     return $return_status
 }
 
+# thanks to @Nestaa51 for the timeout changes to not wait forever for moonraker
 restart_moonraker() {
     echo ""
     echo "Restarting Moonraker ..."
     /etc/init.d/S56moonraker_service restart
+
+    timeout=60
+    start_time=$(date +%s)
 
     # this is mostly for k1-qemu where Moonraker takes a while to start up
     echo "Waiting for Moonraker ..."
@@ -801,6 +806,14 @@ restart_moonraker() {
         # not sure why, but moonraker will start reporting the location of klipper as /usr/data/klipper
         # when using a soft link
         if [ "$KLIPPER_PATH" = "/usr/share/klipper" ] || [ "$KLIPPER_PATH" = "/usr/data/klipper" ]; then
+            break;
+        fi
+
+        current_time=$(date +%s)
+        elapsed_time=$((current_time - start_time))
+        
+        if [ $elapsed_time -ge $timeout ]; then
+            echo "Timeout reached. Moonraker failed to start within $timeout seconds."
             break;
         fi
         sleep 1
@@ -882,9 +895,6 @@ if [ $install_klipper -ne 0 ] || [ $install_moonraker -ne 0 ] || [ $install_ngin
     /etc/init.d/S50nginx_service restart
 fi
 
-install_klipper_mcu
-install_klipper_mcu=$?
-
 install_guppyscreen $mode
 install_guppyscreen=$?
 
@@ -911,7 +921,7 @@ if [ $apply_overrides -ne 0 ]; then
     restart_moonraker
 fi
 
-if [ $apply_overrides -ne 0 ] || [ $install_cartographer_klipper -ne 0 ] || [ $install_kamp -ne 0 ] || [ $install_klipper_mcu -ne 0 ] || [ $install_klipper -ne 0 ] || [ $install_guppyscreen -ne 0 ] || [ $setup_probe -ne 0 ] || [ $setup_probe_specific -ne 0 ]; then
+if [ $apply_overrides -ne 0 ] || [ $install_cartographer_klipper -ne 0 ] || [ $install_kamp -ne 0 ] || [ $install_klipper -ne 0 ] || [ $install_guppyscreen -ne 0 ] || [ $setup_probe -ne 0 ] || [ $setup_probe_specific -ne 0 ]; then
     echo ""
     echo "Restarting Klipper ..."
     /etc/init.d/S55klipper_service restart
