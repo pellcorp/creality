@@ -60,6 +60,10 @@ sync
 cp /usr/data/pellcorp/k1/services/S50dropbear /etc/init.d/ || exit $?
 sync
 
+# for k1 the installed curl does not do ssl, so we replace it first
+# and we can then make use of it going forward
+cp /usr/data/pellcorp/k1/tools/curl /usr/bin/curl
+
 CONFIG_HELPER="/usr/data/pellcorp-env/bin/python3 /usr/data/pellcorp/k1/config-helper.py"
 
 # our little pellcorp python environment currently just for the config-helper.py
@@ -95,15 +99,25 @@ disable_creality_services() {
 }
 
 install_webcam() {
+    local mode=$1
+
     grep -q "webcam" /usr/data/pellcorp.done
-    if [ $? -ne 0 ]; then
+    if [ $? -ne 0 ] || [ "$mode" = "update" ]; then
         echo ""
-        echo "Installing web camera streamer ..."
+        if [ "$mode" = "update" ]; then
+            echo "Updating mjpg streamer ..."
+        else
+            echo "Installing mjpg streamer ..."
+        fi
         /opt/bin/opkg install mjpg-streamer mjpg-streamer-input-http mjpg-streamer-input-uvc mjpg-streamer-output-http mjpg-streamer-www || exit $?
 
         # kill the existing creality services so that we can use the app right away without a restart
         pidof cam_app &>/dev/null && killall -TERM cam_app
         pidof mjpg_streamer &>/dev/null && killall -TERM mjpg_streamer
+
+        if [ -f /etc/init.d/S50webcam ]; then
+            /etc/init.d/S50webcam stop
+        fi
 
         # auto_uvc.sh is responsible for starting the web cam_app
         [ -f /usr/bin/auto_uvc.sh ] && rm /usr/bin/auto_uvc.sh
@@ -113,7 +127,9 @@ install_webcam() {
 
         cp /usr/data/pellcorp/k1/services/S50webcam /etc/init.d/
         /etc/init.d/S50webcam start
-        echo "webcam" >> /usr/data/pellcorp.done
+        if [ "$mode" != "update" ]; then
+            echo "webcam" >> /usr/data/pellcorp.done
+        fi
         sync
         return 0
     fi
@@ -260,7 +276,7 @@ install_fluidd() {
             [ -d /usr/data/fluidd ] && rm -rf /usr/data/fluidd
 
             mkdir -p /usr/data/fluidd || exit $? 
-            /usr/data/pellcorp/k1/tools/curl -L "https://github.com/fluidd-core/fluidd/releases/latest/download/fluidd.zip" -o /usr/data/fluidd.zip || exit $?
+            curl -L "https://github.com/fluidd-core/fluidd/releases/latest/download/fluidd.zip" -o /usr/data/fluidd.zip || exit $?
             unzip -qd /usr/data/fluidd /usr/data/fluidd.zip || exit $?
             rm /usr/data/fluidd.zip
 
@@ -307,7 +323,7 @@ install_mainsail() {
             [ -d /usr/data/mainsail ] && rm -rf /usr/data/mainsail
             
             mkdir -p /usr/data/mainsail || exit $?
-            /usr/data/pellcorp/k1/tools/curl -L "https://github.com/mainsail-crew/mainsail/releases/latest/download/mainsail.zip" -o /usr/data/mainsail.zip || exit $?
+            curl -L "https://github.com/mainsail-crew/mainsail/releases/latest/download/mainsail.zip" -o /usr/data/mainsail.zip || exit $?
             unzip -qd /usr/data/mainsail /usr/data/mainsail.zip || exit $?
             rm /usr/data/mainsail.zip
         fi
@@ -504,7 +520,7 @@ install_guppyscreen() {
             rm -rf /usr/data/guppyscreen
         fi
     
-        /usr/data/pellcorp/k1/tools/curl -L "https://github.com/ballaswag/guppyscreen/releases/latest/download/guppyscreen.tar.gz" -o /usr/data/guppyscreen.tar.gz || exit $?
+        curl -L "https://github.com/ballaswag/guppyscreen/releases/latest/download/guppyscreen.tar.gz" -o /usr/data/guppyscreen.tar.gz || exit $?
         tar xf /usr/data/guppyscreen.tar.gz  -C /usr/data/ || exit $?
         rm /usr/data/guppyscreen.tar.gz 
         cp /usr/data/pellcorp/k1/services/S99guppyscreen /etc/init.d/ || exit $?
@@ -516,6 +532,12 @@ install_guppyscreen() {
             cp /usr/data/guppyscreen/k1_mods/ft2font.cpython-38-mipsel-linux-gnu.so /usr/lib/python3.8/site-packages/matplotlib/ || exit $?
         fi
         
+        # previously guppyscreen provided gcode_shell_macro.py now its provided by my klipper fork so
+        # remove the exclusion if its still there
+        if grep -q "klippy/extras/gcode_shell_command.py" "/usr/data/klipper/.git/info/exclude"; then
+            sed -i "/klippy\/extras\/gcode_shell_command.py$/d" "/usr/data/klipper/.git/info/exclude"
+        fi
+
         for file in guppy_config_helper.py calibrate_shaper_config.py guppy_module_loader.py tmcstatus.py; do
             ln -sf /usr/data/guppyscreen/k1_mods/$file /usr/data/klipper/klippy/extras/$file || exit $?
             if ! grep -q "klippy/extras/${file}" "/usr/data/klipper/.git/info/exclude"; then
@@ -858,7 +880,7 @@ cp /usr/data/printer_data/config/printer.cfg /usr/data/printer_data/config/print
 setup_git_ssh
 install_entware
 
-install_webcam
+install_webcam $mode
 
 disable_creality_services
 
