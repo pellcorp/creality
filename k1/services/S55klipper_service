@@ -1,9 +1,5 @@
 #!/bin/sh
 
-#
-# Klipper service
-#
-
 USER_DATA=/usr/data
 PROG=/usr/share/klippy-env/bin/python
 PY_SCRIPT=/usr/share/klipper/klippy/klippy.py
@@ -13,13 +9,7 @@ PRINTER_LOGS_DIR=$PRINTER_DATA_DIR/logs
 GCODE_FILES_DIR=$PRINTER_DATA_DIR/gcodes
 PID_FILE=/var/run/klippy.pid
 
-mcu_reset() {
-      [ -z $(pidof klipper_mcu) ] || /etc/init.d/S57klipper_mcu restart
-}
-
 start() {
-      mcu_reset
-
       [ -d $PRINTER_DATA_DIR ] || mkdir -p $PRINTER_DATA_DIR
       [ -d $PRINTER_CONFIG_DIR ] || mkdir -p $PRINTER_CONFIG_DIR
       [ -d $PRINTER_LOGS_DIR ] || mkdir -p $PRINTER_LOGS_DIR
@@ -31,9 +21,11 @@ start() {
             -l $PRINTER_LOGS_DIR/klippy.log \
             -a /tmp/klippy_uds
 }
+
 stop() {
       start-stop-daemon -K -q -p $PID_FILE
 }
+
 restart() {
       stop
       # this allows a graceful restart of service by actually waiting for it to stop first
