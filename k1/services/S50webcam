@@ -14,7 +14,6 @@ case "$1" in
     ;;
   stop)
     start-stop-daemon -K -p $PID_FILE
-    [ $? = 0 ] && echo "OK" || echo "FAIL"
     ;;
 
   restart|reload)

@@ -16,6 +16,7 @@ The following files were originally from other projects.  Some of these files ar
 - services/S50webcam -> http://openk1.org/static/k1/scripts/multi-non-creality-webcams.sh
 - cartographer/cartographer_macro.cfg -> https://raw.githubusercontent.com/K1-Klipper/cartographer-klipper/master/cartographer_macro.cfg
 - guppyscreen/guppyscreen.cfg -> https://github.com/ballaswag/guppyscreen/blob/main/k1/scripts/guppy_cmd.cfg
+- gcode_shell_command.py -> https://github.com/dw-0/kiauh/blob/master/resources/gcode_shell_command.py
 
 The nginx binaries originally came from:
 https://github.com/Guilouz/Creality-Helper-Script/raw/main/files/moonraker/moonraker.tar.gz
