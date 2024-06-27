@@ -6,7 +6,7 @@
 PROG=/usr/bin/mcu_util
 VERSION_FILE=/tmp/.mcu_version
 LOG_FILE=/tmp/mcu_update.log
-FW_ROOT_DIR=/usr/data/pellcorp/k1/fw
+FW_ROOT_DIR=/usr/data/klipper/fw
 
 RET_SUCCESS=0
 RET_TIMEOUT=1
