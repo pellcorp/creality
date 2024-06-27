@@ -853,9 +853,19 @@ restart_moonraker() {
     done
 }
 
+mkdir -p /usr/data/pellcorp-backups
+# so if the installer has never been run we should grab a backup of the printer.cfg
+if [ ! -f /usr/data/pellcorp.done ] && [ ! -f /usr/data/pellcorp-backups/printer.factory.cfg ]; then
+    cp /usr/data/printer_data/config/printer.cfg /usr/data/pellcorp-backups/printer.factory.cfg
+fi
+
 mode=install
 if [ "$1" = "--reinstall" ]; then
     rm /usr/data/pellcorp.done
+    # if we took a post factory reset backup for a reinstall restore it now
+    if [ -f /usr/data/pellcorp-backups/printer.factory.cfg ]; then
+        cp /usr/data/pellcorp-backups/printer.factory.cfg /usr/data/printer_data/config/printer.cfg
+    fi
     mode=reinstall
     shift
 elif [ "$1" = "--update" ]; then
@@ -885,7 +895,6 @@ elif [ "x$probe" = "x" ]; then
 fi
 
 touch /usr/data/pellcorp.done
-
 cp /usr/data/printer_data/config/printer.cfg /usr/data/printer_data/config/.printer.cfg.bkp
 
 setup_git_ssh
@@ -946,9 +955,10 @@ else # microprobe
     setup_probe_specific=$?
 fi
 
-# make a backup of the printer.cfg before overrides are applied we will use this in future
-# to automatically generate pellcorp-overrides
-cp /usr/data/printer_data/config/printer.cfg /usr/data/printer_data/config/.printer.cfg.pellcorp
+# there will be no support for generating pellcorp-overrides unless you have done a factory reset
+if [ ! -f /usr/data/pellcorp-backups/printer.pellcorp.cfg ] && [ -f /usr/data/pellcorp-backups/printer.factory.cfg ]; then
+    cp /usr/data/printer_data/config/printer.cfg /usr/data/pellcorp-backups/printer.pellcorp.cfg
+fi
 
 apply_overrides $mode
 apply_overrides=$?
