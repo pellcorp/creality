@@ -865,6 +865,10 @@ if [ "$1" = "--reinstall" ]; then
     # if we took a post factory reset backup for a reinstall restore it now
     if [ -f /usr/data/pellcorp-backups/printer.factory.cfg ]; then
         cp /usr/data/pellcorp-backups/printer.factory.cfg /usr/data/printer_data/config/printer.cfg
+        # for a reinstall need to trash that file
+        if [ -f /usr/data/pellcorp-backups/printer.pellcorp.cfg ]; then
+            rm /usr/data/pellcorp-backups/printer.pellcorp.cfg
+        fi
     fi
     mode=reinstall
     shift
