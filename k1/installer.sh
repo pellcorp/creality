@@ -66,6 +66,11 @@ cp /usr/data/pellcorp/k1/tools/curl /usr/bin/curl
 
 CONFIG_HELPER="/usr/data/pellcorp/k1/config-helper.py"
 
+# old pellcorp-env not required anymore
+if [ -d /usr/data/pellcorp-env/ ]; then
+    rm -rf /usr/data/pellcorp-env/
+fi
+
 python3 -c 'from configupdater import ConfigUpdater' 2> /dev/null
 if [ $? -ne 0 ]; then
     echo "Installing configupdater python package ..."
