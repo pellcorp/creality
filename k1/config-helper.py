@@ -87,6 +87,16 @@ def add_include(updater, include):
     return False
 
 
+def add_section(updater, section_name):
+    if not updater.has_section(section_name):
+        last_section = _last_section(updater)
+        if last_section:
+            updater[last_section].add_after.space().section(section_name)
+        else: # file is basically empty
+            updater.add_section(section_name)
+    return True
+
+
 def override_cfg(updater, override_cfg_file):
     overrides = ConfigUpdater(strict = False, allow_no_value = True, space_around_delimiters = False, delimiters = ':')
     updated = False
@@ -129,6 +139,7 @@ def main():
     opts.add_option("", "--replace-section-entry", dest="replace_section_entry", nargs=3, type="string")
     opts.add_option("", "--remove-include", dest="remove_include", nargs=1, type="string")
     opts.add_option("", "--add-include", dest="add_include", nargs=1, type="string")
+    opts.add_option("", "--add-section", dest="add_section", nargs=1, type="string")
     opts.add_option("", "--overrides", dest="overrides", nargs=1, type="string")
     options, _ = opts.parse_args()
 
@@ -160,6 +171,8 @@ def main():
         updated = remove_include(updater, options.remove_include)
     elif options.add_include:
         updated = add_include(updater, options.add_include)
+    elif options.add_section:
+        updated = add_section(updater, options.add_section)
     elif options.overrides:
         if os.path.exists(options.overrides):
             updated = override_cfg(updater, options.overrides)

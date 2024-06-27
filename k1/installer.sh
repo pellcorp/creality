@@ -64,12 +64,18 @@ sync
 # and we can then make use of it going forward
 cp /usr/data/pellcorp/k1/tools/curl /usr/bin/curl
 
-CONFIG_HELPER="/usr/data/pellcorp-env/bin/python3 /usr/data/pellcorp/k1/config-helper.py"
+CONFIG_HELPER="/usr/data/pellcorp/k1/config-helper.py"
 
-# our little pellcorp python environment currently just for the config-helper.py
-if [ ! -d /usr/data/pellcorp-env ]; then
-    tar -zxf /usr/data/pellcorp/k1/pellcorp-env.tar.gz -C /usr/data/
-    sync
+python3 -c 'from configupdater import ConfigUpdater' 2> /dev/null
+if [ $? -ne 0 ]; then
+    echo "Installing configupdater python package ..."
+    pip3 install configupdater==3.2
+
+    python3 -c 'from configupdater import ConfigUpdater' 2> /dev/null
+    if [ $? -ne 0 ]; then
+        echo "ERROR: Something bad happened, can't continue"
+        exit 1
+    fi
 fi
 
 setup_git_ssh() {
@@ -875,7 +881,7 @@ fi
 
 touch /usr/data/pellcorp.done
 
-cp /usr/data/printer_data/config/printer.cfg /usr/data/printer_data/config/printer.cfg.bkp
+cp /usr/data/printer_data/config/printer.cfg /usr/data/printer_data/config/.printer.cfg.bkp
 
 setup_git_ssh
 install_entware
@@ -934,6 +940,10 @@ else # microprobe
     setup_microprobe $mode
     setup_probe_specific=$?
 fi
+
+# make a backup of the printer.cfg before overrides are applied we will use this in future
+# to automatically generate pellcorp-overrides
+cp /usr/data/printer_data/config/printer.cfg /usr/data/printer_data/config/.printer.cfg.pellcorp
 
 apply_overrides $mode
 apply_overrides=$?
