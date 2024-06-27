@@ -49,6 +49,11 @@ update_repo() {
 if [ "$1" = "--update-repo" ]; then
     update_repo /usr/data/pellcorp
     exit $?
+elif [ "$1" = "--switch-branch" ] && [ -n "$2" ]; then # convenience for testing new features
+    update_repo /usr/data/pellcorp || exit $?
+    cd /usr/data/pellcorp && git switch $2 && cd - > /dev/null
+    update_repo /usr/data/pellcorp
+    exit $?
 fi
 
 # kill pip cache to free up overlayfs
