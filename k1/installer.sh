@@ -854,7 +854,5 @@ if [ $install_guppyscreen -ne 0 ]; then
     /etc/init.d/S99guppyscreen restart
 fi
 
-echo ""
-echo "You MUST power cycle your printer to upgrade MCU firmware!"
-
+/usr/data/pellcorp/k1/check-firmware.sh
 exit 0
