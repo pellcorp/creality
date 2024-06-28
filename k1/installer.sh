@@ -379,6 +379,9 @@ install_klipper() {
         cp /usr/data/pellcorp/k1/services/S13mcu_update /etc/init.d/ || exit $?
 
         cp /usr/data/pellcorp/k1/sensorless.cfg /usr/data/printer_data/config/ || exit $?
+        
+        cp /usr/data/pellcorp/k1/useful_macros.cfg /usr/data/printer_data/config/ || exit $?
+        $CONFIG_HELPER --add-include "useful_macros.cfg" || exit $?
 
         # the klipper_mcu is not even used, so just get rid of it
         $CONFIG_HELPER --remove-section "mcu rpi" || exit $?
@@ -390,6 +393,11 @@ install_klipper() {
 
         $CONFIG_HELPER --remove-include "printer_params.cfg" || exit $?
         $CONFIG_HELPER --remove-include "gcode_macro.cfg" || exit $?
+        $CONFIG_HELPER --remove-include "custom_gcode.cfg" || exit $?
+
+        if [ -f /usr/data/printer_data/config/custom_gcode.cfg ]; then
+            rm /usr/data/printer_data/config/custom_gcode.cfg
+        fi
 
         if [ -f /usr/data/printer_data/config/gcode_macro.cfg ]; then
             rm /usr/data/printer_data/config/gcode_macro.cfg
@@ -403,10 +411,9 @@ install_klipper() {
             rm /usr/data/printer_data/config/factory_printer.cfg
         fi
 
-        cp /usr/data/pellcorp/k1/custom_gcode.cfg /usr/data/printer_data/config/custom_gcode.cfg || exit $?
-        $CONFIG_HELPER --add-include "custom_gcode.cfg" || exit $?
+        cp /usr/data/pellcorp/k1/start_end.cfg /usr/data/printer_data/config/ || exit $?
+        $CONFIG_HELPER --add-include "start_end.cfg" || exit $?
 
-        # proper fan control
         cp /usr/data/pellcorp/k1/fan_control.cfg /usr/data/printer_data/config || exit $?
         $CONFIG_HELPER --add-include "fan_control.cfg" || exit $?
 
