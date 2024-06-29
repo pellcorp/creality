@@ -37,7 +37,7 @@ override_file() {
 mkdir -p /usr/data/pellcorp-overrides
 # remove existing override config files with -f
 if [ "$1" = "-f" ]; then
-    rm /usr/data/pellcorp-overrides/*
+    rm /usr/data/pellcorp-overrides/* 2> /dev/null
 fi
 
 # special case for moonraker.secrets
