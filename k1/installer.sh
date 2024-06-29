@@ -156,9 +156,6 @@ install_moonraker() {
             if [ -d /usr/data/printer_data/database/ ]; then
                 [ -f  /usr/data/moonraker-database.tar.gz ] && rm  /usr/data/moonraker-database.tar.gz
 
-                # TODO - a reinstall will backup the moonraker database but nothing else
-                # and there is no way to avoid backing it up at this point, I guess I can 
-                # add a dock or a command line option to remove the db before the install begins
                 echo ""
                 echo "Backing up moonraker database ..."
                 cd /usr/data/printer_data/
@@ -186,20 +183,34 @@ install_moonraker() {
             cd
         fi
 
+        echo "Upgrading ffmpeg for moonraker timelapse ..."
+        /opt/bin/opkg install ffmpeg || exit $?
+
         ln -sf /usr/data/pellcorp/k1/tools/supervisorctl /usr/bin/ || exit $?
         tar -zxf /usr/data/pellcorp/k1/moonraker-env.tar.gz -C /usr/data/ || exit $?
 
         cp /usr/data/pellcorp/k1/services/S56moonraker_service /etc/init.d/ || exit $?
         cp /usr/data/pellcorp/k1/moonraker.conf /usr/data/printer_data/config/ || exit $?
-        cp /usr/data/pellcorp/k1/moonraker.asvc /usr/data/printer_data/ || exit $?
+        ln -sf /usr/data/pellcorp/k1/moonraker.asvc /usr/data/printer_data/ || exit $?
         cp /usr/data/pellcorp/k1/webcam.conf /usr/data/printer_data/config/ || exit $?
-        
+
+        [ -d /usr/data/moonraker-timelapse ] && rm -rf /usr/data/moonraker-timelapse
+        git clone https://github.com/mainsail-crew/moonraker-timelapse.git /usr/data/moonraker-timelapse/ || exit $?
+        ln -sf /usr/data/moonraker-timelapse/component/timelapse.py /usr/data/moonraker/moonraker/components/ || exit $?
+        if ! grep -q "moonraker/components/timelapse.py" "/usr/data/moonraker/.git/info/exclude"; then
+            echo "moonraker/components/timelapse.py" >> "/usr/data/moonraker/.git/info/exclude"
+        fi
+        ln -sf /usr/data/moonraker-timelapse/klipper_macro/timelapse.cfg /usr/data/printer_data/config/ || exit $?
+        cp /usr/data/pellcorp/k1/timelapse.conf /usr/data/printer_data/config/ || exit $?
+
+        $CONFIG_HELPER --add-include "timelapse.cfg" || exit $?
+
         # after an initial install do not overwrite notifier.conf or moonraker.secrets
         if [ ! -f /usr/data/printer_data/config/notifier.conf ]; then
-            cp /usr/data/pellcorp/k1/notifier.conf /usr/data/printer_data/config/
+            cp /usr/data/pellcorp/k1/notifier.conf /usr/data/printer_data/config/ || exit $?
         fi
         if [ ! -f /usr/data/printer_data/moonraker.secrets ]; then
-            cp /usr/data/pellcorp/k1/moonraker.secrets /usr/data/printer_data/
+            cp /usr/data/pellcorp/k1/moonraker.secrets /usr/data/printer_data/ || exit $?
         fi
         
         echo "moonraker" >> /usr/data/pellcorp.done
@@ -716,7 +727,6 @@ restart_moonraker() {
         elapsed_time=$((current_time - start_time))
         
         if [ $elapsed_time -ge $timeout ]; then
-            echo "Timeout reached. Moonraker failed to start within $timeout seconds."
             break;
         fi
         sleep 1
