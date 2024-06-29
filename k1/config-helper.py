@@ -119,7 +119,11 @@ def override_cfg(updater, override_cfg_file):
                                 updated = True
                         elif value and value.value and replace_section_value(updater, section_name, entry, value.value):
                             updated = True
-                else: # new section
+                elif 'include ' in section_name: # handle an include being added
+                    include = section_name.replace('include ', '')
+                    if add_include(updater, include):
+                        updated = True
+                else:
                     new_section = overrides.get_section(section_name, None)
                     if new_section:
                         last_section = _last_section(updater)
