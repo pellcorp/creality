@@ -26,15 +26,19 @@ function apply_overrides() {
 
         files=$(ls $overrides_dir)
         for file in $files; do
-            
             # special case for moonraker.secrets
             if [ "$file" = "moonraker.secrets" ]; then
-                echo "Restoring $file ..."
+                echo "Restoring /usr/data/printer_data/$file ..."
                 cp $overrides_dir/$file /usr/data/printer_data/
-            else
-                echo "Applying overrides for $file ..."
+            elif [ -L /usr/data/printer_data/config/$file ] || [ "$file" = "KAMP_Settings.cfg" ] || [ "$file" = "sensorless.cfg" ]|| [ "$file" = "useful_macros.cfg" ] || [ "$file" = "start_end.cfg" ]; then
+                echo "Ignoring $file ..."
+            elif [ "$file" = "printer.cfg" ] || [ -f "/usr/data/pellcorp/k1/$file" ]; then
+                echo "Applying overrides for /usr/data/printer_data/config/$file ..."
                 cp /usr/data/printer_data/config/$file /usr/data/printer_data/config/${file}.override.bkp
                 $CONFIG_HELPER --file $file --overrides $overrides_dir/$file || exit $?
+            else
+                echo "Restoring /usr/data/printer_data/config/$file ..."
+                cp $overrides_dir/$file /usr/data/printer_data/config/
             fi
             # fixme - we currently have no way to know if the file was updated assume if we got here it was
             return_status=1
