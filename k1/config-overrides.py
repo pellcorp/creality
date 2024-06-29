@@ -91,7 +91,7 @@ def main():
 
                     
     if update_overrides:
-        print(f"Saving overrides to {options.overrides} ...")
+        print(f"Saving overrides for {options.original} ...")
         with open(options.overrides, 'w') as file:
             overrides.write(file)
             

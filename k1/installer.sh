@@ -49,7 +49,7 @@ update_repo() {
 if [ "$1" = "--update-repo" ]; then
     update_repo /usr/data/pellcorp
     exit $?
-elif [ "$1" = "--switch-branch" ] && [ -n "$2" ]; then # convenience for testing new features
+elif [ "$1" = "--branch" ] && [ -n "$2" ]; then # convenience for testing new features
     update_repo /usr/data/pellcorp || exit $?
     cd /usr/data/pellcorp && git switch $2 && cd - > /dev/null
     update_repo /usr/data/pellcorp
@@ -467,7 +467,7 @@ install_guppyscreen() {
         tar xf /usr/data/guppyscreen.tar.gz  -C /usr/data/ || exit $?
         rm /usr/data/guppyscreen.tar.gz 
         cp /usr/data/pellcorp/k1/services/S99guppyscreen /etc/init.d/ || exit $?
-        cp /usr/data/pellcorp/k1/guppyscreen/guppyconfig.json /usr/data/guppyscreen || exit $?
+        cp /usr/data/pellcorp/k1/guppyconfig.json /usr/data/guppyscreen || exit $?
 
         if [ ! -d "/usr/lib/python3.8/site-packages/matplotlib-2.2.3-py3.8.egg-info" ]; then
             echo "WARNING: Not replacing mathplotlib ft2font module. PSD graphs might not work!"
@@ -492,7 +492,7 @@ install_guppyscreen() {
         # get rid of the old guppyscreen config
         [ -d /usr/data/printer_data/config/GuppyScreen ] && rm -rf /usr/data/printer_data/config/GuppyScreen
 
-        cp /usr/data/pellcorp/k1/guppyscreen/guppyscreen.cfg /usr/data/printer_data/config/ || exit $?
+        cp /usr/data/pellcorp/k1/guppyscreen.cfg /usr/data/printer_data/config/ || exit $?
 
         # a single local guppyscreen.cfg which references the python files from /usr/data/guppyscreen instead
         $CONFIG_HELPER --remove-include "GuppyScreen/*.cfg" || exit $?
@@ -639,7 +639,7 @@ setup_cartographer() {
         cleanup_probe bltouch
         cleanup_probe microprobe
 
-        cp /usr/data/pellcorp/k1/cartographer/cartographer_macro.cfg /usr/data/printer_data/config/ || exit $?
+        cp /usr/data/pellcorp/k1/cartographer_macro.cfg /usr/data/printer_data/config/ || exit $?
         $CONFIG_HELPER --add-include "cartographer_macro.cfg" || exit $?
 
         $CONFIG_HELPER --replace-section-entry "stepper_z" "homing_retract_dist" "0" || exit $?
