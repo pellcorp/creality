@@ -26,7 +26,7 @@ override_file() {
     
     if [ "$file" = "printer.cfg" ] && [ -f "/usr/data/pellcorp-backups/printer.pellcorp.cfg" ]; then
         original_file="/usr/data/pellcorp-backups/printer.pellcorp.cfg"
-    elif [ "$file" = "sensorless.cfg" ] || [ "$file" = "custom_gcode.cfg" ] || [ ! -f "/usr/data/pellcorp/k1/$file" ]; then
+    elif [ "$file" = "sensorless.cfg" ]|| [ "$file" = "useful_macros.cfg" ] || [ "$file" = "start_end.cfg" ] || [ ! -f "/usr/data/pellcorp/k1/$file" ]; then
         echo "INFO: Overrides not supported for $file"
         return 0
     fi
