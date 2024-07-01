@@ -144,43 +144,52 @@ install_webcam() {
 }
 
 install_moonraker() {
+    local mode=$1
+
     grep -q "moonraker" /usr/data/pellcorp.done
     if [ $? -ne 0 ]; then
         echo ""
-        echo "Installing moonraker ..."
+        if [ "$mode" = "update" ]; then
+            echo "Updating moonraker ..."
 
-        if [ -d /usr/data/moonraker ]; then
-            if [ -f /etc/init.d/S56moonraker_service ]; then
-                /etc/init.d/S56moonraker_service stop
-            fi
-            if [ -d /usr/data/printer_data/database/ ]; then
-                [ -f  /usr/data/moonraker-database.tar.gz ] && rm  /usr/data/moonraker-database.tar.gz
-
-                echo ""
-                echo "Backing up moonraker database ..."
-                cd /usr/data/printer_data/
-
-                # an existing bug where the moonraker secrets was not correctly copied
-                if [ ! -f moonraker.secrets ]; then
-                    cp /usr/data/pellcorp/k1/moonraker.secrets .
+            update_repo /usr/data/moonraker
+        else
+            echo "Installing moonraker ..."
+        
+            if [ -d /usr/data/moonraker ]; then
+                if [ -f /etc/init.d/S56moonraker_service ]; then
+                    /etc/init.d/S56moonraker_service stop
                 fi
-                tar -zcf /usr/data/moonraker-database.tar.gz database/ moonraker.secrets
-                cd
-            fi               
-        fi
-        [ -d /usr/data/moonraker ] && rm -rf /usr/data/moonraker
-        [ -d /usr/data/moonraker-env ] && rm -rf /usr/data/moonraker-env
+                if [ -d /usr/data/printer_data/database/ ]; then
+                    [ -f  /usr/data/moonraker-database.tar.gz ] && rm /usr/data/moonraker-database.tar.gz
 
-        echo ""
-        git clone https://github.com/Arksine/moonraker /usr/data/moonraker || exit $?
+                    echo ""
+                    echo "Backing up moonraker database ..."
+                    cd /usr/data/printer_data/
 
-        if [ -f /usr/data/moonraker-database.tar.gz ]; then
+                    tar -zcf /usr/data/moonraker-database.tar.gz database/
+                    cd
+                fi               
+            fi
+            [ -d /usr/data/moonraker ] && rm -rf /usr/data/moonraker
+            [ -d /usr/data/moonraker-env ] && rm -rf /usr/data/moonraker-env
+
             echo ""
-            echo "Restoring moonraker database ..."
-            cd /usr/data/printer_data/
-            tar -zxf /usr/data/moonraker-database.tar.gz
-            rm /usr/data/moonraker-database.tar.gz
-            cd
+            git clone https://github.com/Arksine/moonraker /usr/data/moonraker || exit $?
+
+            if [ -f /usr/data/moonraker-database.tar.gz ]; then
+                echo ""
+                echo "Restoring moonraker database ..."
+                cd /usr/data/printer_data/
+                tar -zxf /usr/data/moonraker-database.tar.gz
+                rm /usr/data/moonraker-database.tar.gz
+                cd
+            fi
+        fi
+
+        # an existing bug where the moonraker secrets was not correctly copied
+        if [ ! -f /usr/data/printer_data/moonraker.secrets ]; then
+            cp /usr/data/pellcorp/k1/moonraker.secrets /usr/data/printer_data/
         fi
 
         echo "Upgrading ffmpeg for moonraker timelapse ..."
@@ -351,6 +360,8 @@ install_kamp() {
 }
 
 install_klipper() {
+    local mode=$1
+
     grep -q "klipper" /usr/data/pellcorp.done
     if [ $? -ne 0 ]; then
         echo ""
@@ -362,26 +373,32 @@ install_klipper() {
             /etc/init.d/S55klipper_service start > /dev/null
         fi
 
-        echo "Installing klipper ..."
+        if [ "$mode" = "update" ]; then
+            echo "Updating klipper ..."
 
-        if [ -d /usr/data/klipper ]; then
-            if [ -f /etc/init.d/S55klipper_service ]; then
-                /etc/init.d/S55klipper_service stop
-            fi
-            rm -rf /usr/data/klipper
-        fi
-        
-        # this is only for testing with crappy internet
-        if [ "$KLIPPER_GIT_CLONE" = "ssh" ]; then
-            export GIT_SSH_IDENTITY=klipper
-            export GIT_SSH=$HOME/.git-ssh.sh
-            git clone git@github.com:pellcorp/klipper.git /usr/data/klipper || exit $?
-            # reset the origin url to make moonraker happy
-            cd /usr/data/klipper && git remote set-url origin https://github.com/pellcorp/klipper.git && cd - > /dev/null
+            update_repo /usr/data/klipper
         else
-            git clone https://github.com/pellcorp/klipper.git /usr/data/klipper || exit $?
+            echo "Installing klipper ..."
+
+            if [ -d /usr/data/klipper ]; then
+                if [ -f /etc/init.d/S55klipper_service ]; then
+                    /etc/init.d/S55klipper_service stop
+                fi
+                rm -rf /usr/data/klipper
+            fi
+            
+            # this is only for testing with crappy internet
+            if [ "$KLIPPER_GIT_CLONE" = "ssh" ]; then
+                export GIT_SSH_IDENTITY=klipper
+                export GIT_SSH=$HOME/.git-ssh.sh
+                git clone git@github.com:pellcorp/klipper.git /usr/data/klipper || exit $?
+                # reset the origin url to make moonraker happy
+                cd /usr/data/klipper && git remote set-url origin https://github.com/pellcorp/klipper.git && cd - > /dev/null
+            else
+                git clone https://github.com/pellcorp/klipper.git /usr/data/klipper || exit $?
+            fi
+            [ -d /usr/share/klipper ] && rm -rf /usr/share/klipper
         fi
-        [ -d /usr/share/klipper ] && rm -rf /usr/share/klipper
 
         /usr/share/klippy-env/bin/python3 -m compileall /usr/data/klipper/klippy || exit $?
         ln -sf /usr/data/klipper /usr/share/ || exit $?
@@ -740,7 +757,7 @@ if [ ! -f /usr/data/pellcorp.done ] && [ ! -f /usr/data/pellcorp-backups/printer
 fi
 
 mode=install
-if [ "$1" = "--reinstall" ]; then
+if [ "$1" = "--reinstall" ] || [ "$1" = "--update" ]; then
     rm /usr/data/pellcorp.done
     # if we took a post factory reset backup for a reinstall restore it now
     if [ -f /usr/data/pellcorp-backups/printer.factory.cfg ]; then
@@ -749,12 +766,12 @@ if [ "$1" = "--reinstall" ]; then
         if [ -f /usr/data/pellcorp-backups/printer.pellcorp.cfg ]; then
             rm /usr/data/pellcorp-backups/printer.pellcorp.cfg
         fi
+    elif [ "$1" = "--update" ]; then
+        echo "ERROR: Update mode is not available to users who have not done a factory reset since 27th of June 2024"
+        exit 1
     fi
-    mode=reinstall
+    mode=$(echo $1 | sed 's/--//g')
     shift
-elif [ "$1" = "--update" ]; then
-    echo "ERROR: Mode --update is no longer supported"
-    exit 1
 fi
 
 probe=
@@ -788,7 +805,7 @@ install_webcam
 
 disable_creality_services
 
-install_moonraker
+install_moonraker $mode
 install_moonraker=$?
 
 install_nginx
@@ -804,7 +821,7 @@ install_mainsail=$?
 install_kamp
 install_kamp=$?
 
-install_klipper
+install_klipper $mode
 install_klipper=$?
 
 install_cartographer_klipper
