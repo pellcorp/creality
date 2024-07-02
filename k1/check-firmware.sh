@@ -54,5 +54,7 @@ if [ -f $VERSION_FILE ] && [ -d $FW_DIR ]; then
 fi
 
 if [ "$firmware_upgrade_required" = "true" ]; then
-    echo "You MUST power cycle your printer to upgrade MCU firmware!"
+    echo "MCU Firmware updates are pending you need to power cycle your printer!"
+else
+    echo "Your MCU Firmware is up to date!"
 fi
