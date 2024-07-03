@@ -4,33 +4,31 @@
 # https://github.com/pyscaffold/configupdater
 #
 
-import optparse, io, os
+import io, os
 from configupdater import ConfigUpdater
-
+import argparse
 
 def main():
-    opts = optparse.OptionParser("Config Helper")
-    opts.add_option("", "--original", dest="original")
-    opts.add_option("", "--updated", dest="updated")
-    opts.add_option("", "--overrides", dest="overrides")
-    options, _ = opts.parse_args()
+    parser = argparse.ArgumentParser(description='Pellcorp Config Overrides')
+    parser.add_argument("-o", "--original", type=str, required=True)
+    parser.add_argument("-u", "--updated", type=str, required=True)
+    parser.add_argument("-v", "--overrides", type=str, required=True)
+    args = parser.parse_args()
 
-    if not os.path.exists(options.original):
-        raise Exception(f"Config File {options.original} not found")
-    if not os.path.exists(options.updated):
-       raise Exception(f"Config File {options.updated} not found")
-    if os.path.exists(options.overrides):
-        raise Exception(f"Config File {options.overrides} exists")
+    if not os.path.exists(args.original):
+        raise Exception(f"Config File {args.original} not found")
+    if not os.path.exists(args.updated):
+       raise Exception(f"Config File {args.updated} not found")
 
-    original = ConfigUpdater(strict = False, allow_no_value = True, space_around_delimiters = False, delimiters = ':')
-    with open(options.original, 'r') as file:
+    original = ConfigUpdater(strict = False, allow_no_value = True, space_around_delimiters = False, delimiters = (":", "="))
+    with open(args.original, 'r') as file:
         original.read_file(file)
     
-    updated = ConfigUpdater(strict = False, allow_no_value = True, space_around_delimiters = False, delimiters = ':')
-    with open(options.updated, 'r') as file:
+    updated = ConfigUpdater(strict = False, allow_no_value = True, space_around_delimiters = False, delimiters = (":", "="))
+    with open(args.updated, 'r') as file:
        updated.read_file(file)
 
-    overrides = ConfigUpdater(strict = False, allow_no_value = True, space_around_delimiters = False, delimiters = ':')
+    overrides = ConfigUpdater(strict = False, allow_no_value = True, space_around_delimiters = False, delimiters = (":", "="))
     
     update_overrides = False
 
@@ -80,7 +78,7 @@ def main():
                     original_value = original_section.get(key, None)
                     updated_value = updated_section.get(key, None)
 
-                    if (not original_value and updated_value) or (original_value and updated_value and original_value.value != updated_value.value):
+                    if (not original_value and updated_value and updated_value.value) or (original_value and original_value.value and updated_value and updated_value.value and original_value.value != updated_value.value):
                         if not overrides.has_section(section_name):
                             if len(overrides.sections()) > 0:
                                 overrides[overrides.sections()[-1]].add_after.space().section(section_name)
@@ -89,10 +87,10 @@ def main():
                         overrides[section_name][key] = f' {updated_value.value.strip()}'
                         update_overrides = True
 
-                    
+
     if update_overrides:
-        print(f"Saving overrides for {options.original} ...")
-        with open(options.overrides, 'w') as file:
+        print(f"Saving overrides to {args.overrides} ...")
+        with open(args.overrides, 'w') as file:
             overrides.write(file)
             
 

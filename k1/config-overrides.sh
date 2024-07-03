@@ -21,17 +21,12 @@ override_file() {
     fi
 
     overrides_file="/usr/data/pellcorp-overrides/$file"
-    if [ -f "$overrides_file" ]; then
-        echo "ERROR: Override File $overrides_file already exists!"
-        exit 1
-    fi
-
     original_file="/usr/data/pellcorp/k1/$file"
     updated_file="/usr/data/printer_data/config/$file"
     
     if [ "$file" = "printer.cfg" ] && [ -f "/usr/data/pellcorp-backups/printer.pellcorp.cfg" ]; then
         original_file="/usr/data/pellcorp-backups/printer.pellcorp.cfg"
-    elif [ "$file" = "KAMP_Settings.cfg" ] || [ "$file" = "sensorless.cfg" ]|| [ "$file" = "useful_macros.cfg" ] || [ "$file" = "start_end.cfg" ]; then
+    elif [ "$file" = "KAMP_Settings.cfg" ] || [ "$file" = "sensorless.cfg" ] || [ "$file" = "useful_macros.cfg" ] || [ "$file" = "start_end.cfg" ]; then
         echo "INFO: Overrides not supported for $file"
         return 0
     elif [ ! -f "/usr/data/pellcorp/k1/$file" ]; then
@@ -44,10 +39,6 @@ override_file() {
 }
 
 mkdir -p /usr/data/pellcorp-overrides
-# remove existing override config files with -f
-if [ "$1" = "-f" ]; then
-    rm /usr/data/pellcorp-overrides/* 2> /dev/null
-fi
 
 # special case for moonraker.secrets
 if [ -f /usr/data/printer_data/config/KAMP_Settings.cfg ] && [ -f /usr/data/pellcorp/k1/moonraker.secrets ]; then
