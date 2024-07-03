@@ -30,13 +30,24 @@ function apply_overrides() {
             if [ "$file" = "moonraker.secrets" ]; then
                 echo "Restoring /usr/data/printer_data/$file ..."
                 cp $overrides_dir/$file /usr/data/printer_data/
-            elif [ -L /usr/data/printer_data/config/$file ] || [ "$file" = "KAMP_Settings.cfg" ] || [ "$file" = "sensorless.cfg" ]|| [ "$file" = "useful_macros.cfg" ] || [ "$file" = "start_end.cfg" ]; then
+            elif [ -L /usr/data/printer_data/config/$file ] || [ "$file" = "KAMP_Settings.cfg" ]; then
                 echo "Ignoring $file ..."
             elif [ "$file" = "printer.cfg" ] || [ -f "/usr/data/pellcorp/k1/$file" ]; then
-                echo "Applying overrides for /usr/data/printer_data/config/$file ..."
-                cp /usr/data/printer_data/config/$file /usr/data/printer_data/config/${file}.override.bkp
-                $CONFIG_HELPER --file $file --overrides $overrides_dir/$file || exit $?
-            else
+              echo "Applying overrides for /usr/data/printer_data/config/$file ..."
+              cp /usr/data/printer_data/config/$file /usr/data/printer_data/config/${file}.override.bkp
+              $CONFIG_HELPER --file $file --overrides $overrides_dir/$file || exit $?
+
+              if [ "$file" = "printer.cfg" ] && [ -f $overrides_dir/printer.cfg.save_config ]; then
+                # if the printer.cfg already has SAVE_CONFIG skip applying it again
+                if ! grep -q "#*# <---------------------- SAVE_CONFIG ---------------------->" /usr/data/printer_data/config/printer.cfg ; then
+                  echo "Applying SAVE_CONFIG state to /usr/data/printer_data/config/printer.cfg"
+                  echo "" >> /usr/data/printer_data/config/printer.cfg
+                  cat $overrides_dir/printer.cfg.save_config >> /usr/data/printer_data/config/printer.cfg
+                else
+                  echo "Skipped applying SAVE_CONFIG state to /usr/data/printer_data/config/printer.cfg"
+                fi
+              fi
+            elif [ "$file" != "printer.cfg.save_config" ]; then
                 echo "Restoring /usr/data/printer_data/config/$file ..."
                 cp $overrides_dir/$file /usr/data/printer_data/config/
             fi
