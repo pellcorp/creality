@@ -9,6 +9,7 @@ PRINTER_CONFIG_DIR = "/usr/data/printer_data/config/"
 import optparse, io, os
 from configupdater import ConfigUpdater
 
+
 def remove_section_value(updater, section_name, key):
     if updater.has_option(section_name, key):
         updater.remove_option(section_name, key)
@@ -24,6 +25,22 @@ def get_section_value(updater, section_name, key):
             if current_value:
                 return current_value.value
     return None
+
+
+# currently we do not support adding a whole new mulitline value
+def replace_section_multiline_value(updater, section_name, key, lines):
+    if updater.has_section(section_name):
+        section = updater.get_section(section_name, None)
+        if section:
+            current_value = section.get(key, None)
+            if current_value:
+                if key in section:
+                    if current_value.lines != lines:
+                        lines[0] = '\n'
+                        section[key] = ''
+                        section[key].set_values(lines, indent='', separator='')
+                        return True
+    return False
 
 
 def replace_section_value(updater, section_name, key, value):
@@ -49,6 +66,7 @@ def remove_section(updater, section):
         updater.remove_section(section)
         return True
     return False
+
 
 # special case currently for fan_control.cfg to add additional
 # config sections before the gcode
@@ -91,7 +109,7 @@ def add_section(updater, section_name):
     if not updater.has_section(section_name):
         last_section = _last_section(updater)
         if last_section:
-            updater[last_section].add_after.space().section(section_name)
+            updater[last_section].add_before.section(section_name).space()
         else: # file is basically empty
             updater.add_section(section_name)
     return True
@@ -103,35 +121,34 @@ def override_cfg(updater, override_cfg_file):
     with open(override_cfg_file, 'r') as file:
         overrides.read_file(file)
         for section_name in overrides.sections():
-            # trying to handle gcode macros is problematic will just skip them for now
-            if 'gcode_macro' not in section_name:
-                section = overrides.get_section(section_name, None)
-                section_action = section.get('__action__', None)
-                if section_action and section_action.value == 'DELETED':
-                    if updater.has_section(section_name):
-                        if remove_section(updater, section_name):
-                            updated = True
-                elif updater.has_section(section_name):
-                    for entry in section:
-                        value = section.get(entry, None)
-                        if value and value.value == '__DELETED__':
-                            if remove_section_value(updater, section_name, entry):
-                                updated = True
-                        elif value and value.value and replace_section_value(updater, section_name, entry, value.value):
-                            updated = True
-                elif 'include ' in section_name: # handle an include being added
-                    include = section_name.replace('include ', '')
-                    if add_include(updater, include):
+            section = overrides.get_section(section_name, None)
+            section_action = section.get('__action__', None)
+            if section_action and section_action.value == 'DELETED':
+                if updater.has_section(section_name):
+                    if remove_section(updater, section_name):
                         updated = True
-                else:
-                    new_section = overrides.get_section(section_name, None)
-                    if new_section:
-                        last_section = _last_section(updater)
-                        if last_section:
-                            updater[last_section].add_after.space().section(new_section.detach())
-                        else: # file is basically empty
-                            updater.add_section(new_section.detach())
+            elif updater.has_section(section_name):
+                for entry in section:
+                    value = section.get(entry, None)
+                    if value and value.value == '__DELETED__' and remove_section_value(updater, section_name, entry):
                         updated = True
+                    elif value and len(value.lines) > 1 and replace_section_multiline_value(updater, section_name, entry, value.lines):
+                        updated = True
+                    elif value and len(value.lines) == 1 and replace_section_value(updater, section_name, entry, value.value):
+                        updated = True
+            elif 'include ' in section_name: # handle an include being added
+                include = section_name.replace('include ', '')
+                if add_include(updater, include):
+                    updated = True
+            elif 'gcode_macro' not in section_name: # no new gcode macros
+                new_section = overrides.get_section(section_name, None)
+                if new_section:
+                    last_section = _last_section(updater)
+                    if last_section:
+                        updater[last_section].add_before.section(new_section.detach()).space()
+                    else: # file is basically empty
+                        updater.add_section(new_section.detach())
+                    updated = True
     return updated
 
 
@@ -158,7 +175,7 @@ def main():
     else:
         raise Exception(f"Config File {options.config_file} not found")
 
-    updater = ConfigUpdater(strict = False, allow_no_value = True, space_around_delimiters = False, delimiters = (":", "="))
+    updater = ConfigUpdater(strict=False, allow_no_value=True, space_around_delimiters=False, delimiters=(":", "="))
     with open(config_file, 'r') as file:
         updater.read_file(file)
 

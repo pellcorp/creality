@@ -26,7 +26,7 @@ override_file() {
     
     if [ "$file" = "printer.cfg" ] && [ -f "/usr/data/pellcorp-backups/printer.pellcorp.cfg" ]; then
         original_file="/usr/data/pellcorp-backups/printer.pellcorp.cfg"
-    elif [ "$file" = "KAMP_Settings.cfg" ] || [ "$file" = "sensorless.cfg" ] || [ "$file" = "useful_macros.cfg" ] || [ "$file" = "start_end.cfg" ]; then
+    elif [ "$file" = "KAMP_Settings.cfg" ]; then
         echo "INFO: Overrides not supported for $file"
         return 0
     elif [ ! -f "/usr/data/pellcorp/k1/$file" ]; then
@@ -35,19 +35,35 @@ override_file() {
         return 0
     fi
 
+    if [ -f $overrides_file ]; then
+      rm $overrides_file
+    fi
     $CONFIG_OVERRIDES --original "$original_file" --updated "$updated_file" --overrides "$overrides_file" || exit $?
+
+    if [ "$file" = "printer.cfg" ]; then
+      if [ -f /usr/data/pellcorp-overrides/printer.cfg.save_config ]; then
+        rm /usr/data/pellcorp-overrides/printer.cfg.save_config
+      fi
+      saves=false
+      while IFS= read -r line; do
+          if [ "$line" = "#*# <---------------------- SAVE_CONFIG ---------------------->" ]; then
+            saves=true
+            echo "" > /usr/data/pellcorp-overrides/printer.cfg.save_config
+            echo "Saving SAVE_CONFIG state to /usr/data/pellcorp-overrides/printer.cfg.save_config"
+          fi
+          if [ "$saves" = "true" ]; then
+            echo "$line" >> /usr/data/pellcorp-overrides/printer.cfg.save_config
+          fi
+        done < "$updated_file"
+    fi
 }
 
 mkdir -p /usr/data/pellcorp-overrides
 
 # special case for moonraker.secrets
-if [ -f /usr/data/printer_data/config/KAMP_Settings.cfg ] && [ -f /usr/data/pellcorp/k1/moonraker.secrets ]; then
+if [ -f /usr/data/printer_data/moonraker.secrets ] && [ -f /usr/data/pellcorp/k1/moonraker.secrets ]; then
     diff /usr/data/printer_data/moonraker.secrets /usr/data/pellcorp/k1/moonraker.secrets > /dev/null
     if [ $? -ne 0 ]; then
-        if [ -f /usr/data/pellcorp-overrides/moonraker.secrets ]; then
-            echo "ERROR: Backup File /usr/data/pellcorp-overrides/moonraker.secrets already exists!"
-            exit 1
-        fi
         echo "Backing up /usr/data/printer_data/moonraker.secrets..."
         cp  /usr/data/printer_data/moonraker.secrets /usr/data/pellcorp-overrides/
     fi
