@@ -158,7 +158,7 @@ def main():
     else:
         raise Exception(f"Config File {options.config_file} not found")
 
-    updater = ConfigUpdater(strict = False, allow_no_value = True, space_around_delimiters = False, delimiters = ':')
+    updater = ConfigUpdater(strict = False, allow_no_value = True, space_around_delimiters = False, delimiters = (":", "="))
     with open(config_file, 'r') as file:
         updater.read_file(file)
 
