@@ -87,8 +87,12 @@ override_file() {
     fi
 }
 
-if [ "$1" = "--repo" ]; then
+if [ "$1" = "--repo" ] || [ "$1" = "--clean-repo" ]; then
   if [ -n "$GITHUB_USERNAME" ] && [ -n "$EMAIL_ADDRESS" ] && [ -n "$GITHUB_TOKEN" ] && [ -n "$GITHUB_REPO" ]; then
+        if [ "$1" = "--clean-repo" ] && [ -d /usr/data/pellcorp-overrides ]; then
+          echo "INFO: Deleting existing /usr/data/pellcorp-overrides"
+          rm -rf /usr/data/pellcorp-overrides
+        fi
         setup_git_repo
     else
         echo "You must define these environment variables:"
