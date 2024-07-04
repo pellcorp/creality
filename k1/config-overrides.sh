@@ -2,16 +2,6 @@
 
 CONFIG_OVERRIDES="/usr/data/pellcorp/k1/config-overrides.py"
 
-if [ ! -f /usr/data/pellcorp-backups/printer.pellcorp.cfg ]; then
-    echo "ERROR: /usr/data/pellcorp-backups/printer.pellcorp.cfg missing"
-    exit 1
-fi
-
-if [ -f /usr/data/pellcorp-overrides.cfg ]; then
-    echo "ERROR: /usr/data/pellcorp-overrides.cfg exists!"
-    exit 1
-fi
-
 setup_git_repo() {
     if [ -d /usr/data/pellcorp-overrides ]; then
         cd /usr/data/pellcorp-overrides
@@ -108,6 +98,16 @@ if [ "$1" = "--repo" ] || [ "$1" = "--clean-repo" ]; then
         exit 1
     fi
 else
+  if [ ! -f /usr/data/pellcorp-backups/printer.pellcorp.cfg ]; then
+      echo "ERROR: /usr/data/pellcorp-backups/printer.pellcorp.cfg missing"
+      exit 1
+  fi
+
+  if [ -f /usr/data/pellcorp-overrides.cfg ]; then
+      echo "ERROR: /usr/data/pellcorp-overrides.cfg exists!"
+      exit 1
+  fi
+
   mkdir -p /usr/data/pellcorp-overrides
 
   # in case we changed config and no longer need an override file, we should delete all
