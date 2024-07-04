@@ -87,6 +87,9 @@ override_file() {
     fi
 }
 
+# make sure we are outside of the /usr/data/pellcorp-overrides directory
+cd /root/
+
 if [ "$1" = "--repo" ] || [ "$1" = "--clean-repo" ]; then
   if [ -n "$GITHUB_USERNAME" ] && [ -n "$EMAIL_ADDRESS" ] && [ -n "$GITHUB_TOKEN" ] && [ -n "$GITHUB_REPO" ]; then
         if [ "$1" = "--clean-repo" ] && [ -d /usr/data/pellcorp-overrides ]; then
