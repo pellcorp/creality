@@ -6,6 +6,14 @@ if [ ! -f /usr/data/printer_data/config/printer.cfg ]; then
   exit 1
 fi
 
+# 6. prefix is the prefix I use for pre-rooted firmware
+ota_version=$(cat /etc/ota_info | grep ota_version | awk -F '=' '{print $2}' | sed 's/^6.//g' | tr -d '.')
+if [ -z "$ota_version" ] || [ $ota_version -lt 1335 ]; then
+  echo "ERROR: Firmware is too old, you must update to at least version 1.3.3.5 of Creality OS"
+  echo "https://www.creality.com/pages/download-k1-flagship"
+  exit 1
+fi
+
 MODEL=$(/usr/bin/get_sn_mac.sh model)
 
 if [ "$MODEL" != "CR-K1" ] && [ "$MODEL" != "K1C" ] && [ "$MODEL" != "CR-K1 Max" ]; then
