@@ -129,19 +129,6 @@ else
           cp /usr/data/printer_data/moonraker.secrets /usr/data/pellcorp-overrides/
       fi
 
-      # special case for moonraker.secrets
-      if [ -f /usr/data/printer_data/config/KAMP_Settings.cfg ] && [ -f /usr/data/pellcorp/k1/moonraker.secrets ]; then
-          diff /usr/data/printer_data/moonraker.secrets /usr/data/pellcorp/k1/moonraker.secrets > /dev/null
-          if [ $? -ne 0 ]; then
-              if [ -f /usr/data/pellcorp-overrides/moonraker.secrets ]; then
-                  echo "ERROR: Backup File /usr/data/pellcorp-overrides/moonraker.secrets already exists!"
-                  exit 1
-              fi
-              echo "INFO: Backing up /usr/data/printer_data/moonraker.secrets..."
-              cp  /usr/data/printer_data/moonraker.secrets /usr/data/pellcorp-overrides/
-          fi
-      fi
-
       cfg_files=$(ls /usr/data/printer_data/config/*.cfg)
       for file in $cfg_files; do
           file=$(basename $file)
