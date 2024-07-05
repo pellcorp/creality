@@ -27,19 +27,26 @@ def get_section_value(updater, section_name, key):
     return None
 
 
-# currently we do not support adding a whole new mulitline value
+# ignore the first element in the array
+def __lines_differ(current_lines, new_lines):
+    if len(current_lines) != len(new_lines):
+        return False
+    for index, line in enumerate(current_lines):
+        if index > 0 and line != new_lines[index]:
+            return False
+    return True
+
+
 def replace_section_multiline_value(updater, section_name, key, lines):
     if updater.has_section(section_name):
         section = updater.get_section(section_name, None)
         if section:
             current_value = section.get(key, None)
-            if current_value:
-                if key in section:
-                    if current_value.lines != lines:
-                        lines[0] = '\n'
-                        section[key] = ''
-                        section[key].set_values(lines, indent='', separator='')
-                        return True
+            if not current_value or not __lines_differ(current_value.lines, lines):
+                lines[0] = '\n'
+                section[key] = ''
+                section[key].set_values(lines, indent='', separator='', prepend_newline=False)
+                return True
     return False
 
 
@@ -116,7 +123,7 @@ def add_section(updater, section_name):
 
 
 def override_cfg(updater, override_cfg_file):
-    overrides = ConfigUpdater(strict = False, allow_no_value = True, space_around_delimiters = False, delimiters = ':')
+    overrides = ConfigUpdater(strict=False, allow_no_value=True, space_around_delimiters=False, delimiters=(':'))
     updated = False
     with open(override_cfg_file, 'r') as file:
         overrides.read_file(file)
