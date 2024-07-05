@@ -30,11 +30,11 @@ def get_section_value(updater, section_name, key):
 # ignore the first element in the array
 def __lines_differ(current_lines, new_lines):
     if len(current_lines) != len(new_lines):
-        return False
+        return True
     for index, line in enumerate(current_lines):
         if index > 0 and line != new_lines[index]:
-            return False
-    return True
+            return True
+    return False
 
 
 def replace_section_multiline_value(updater, section_name, key, lines):
@@ -42,9 +42,11 @@ def replace_section_multiline_value(updater, section_name, key, lines):
         section = updater.get_section(section_name, None)
         if section:
             current_value = section.get(key, None)
-            if not current_value or not __lines_differ(current_value.lines, lines):
+            if not current_value or __lines_differ(current_value.lines, lines):
                 lines[0] = '\n'
-                section[key] = ''
+                lines[-1] = lines[-1].rstrip()
+                if key not in section:
+                    section.last_block.add_before.option(key, '')
                 section[key].set_values(lines, indent='', separator='', prepend_newline=False)
                 return True
     return False
