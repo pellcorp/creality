@@ -92,7 +92,6 @@ def main():
                         overrides[section_name][key] = f' {updated_value.value.strip()}'
                     update_overrides = True
 
-
     if update_overrides:
         print(f"Saving overrides to {args.overrides} ...")
         with open(args.overrides, 'w') as file:
