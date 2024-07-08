@@ -6,7 +6,7 @@
 
 PRINTER_CONFIG_DIR = "/usr/data/printer_data/config/"
 
-import optparse, io, os
+import optparse, io, os, sys
 from configupdater import ConfigUpdater
 
 
@@ -162,6 +162,7 @@ def override_cfg(updater, override_cfg_file):
 
 
 def main():
+    exit_code = 0
     opts = optparse.OptionParser("Config Helper")
     opts.add_option("", "--file", dest="config_file", default=f'{PRINTER_CONFIG_DIR}/printer.cfg')
     opts.add_option("", "--output", dest="output")
@@ -171,6 +172,8 @@ def main():
     opts.add_option("", "--replace-section-entry", dest="replace_section_entry", nargs=3, type="string")
     opts.add_option("", "--remove-include", dest="remove_include", nargs=1, type="string")
     opts.add_option("", "--add-include", dest="add_include", nargs=1, type="string")
+    opts.add_option("", "--include-exists", dest="include_exists", nargs=1, type="string")
+    opts.add_option("", "--section-exists", dest="section_exists", nargs=1, type="string")
     opts.add_option("", "--add-section", dest="add_section", nargs=1, type="string")
     opts.add_option("", "--overrides", dest="overrides", nargs=1, type="string")
     options, _ = opts.parse_args()
@@ -188,7 +191,7 @@ def main():
     with open(config_file, 'r') as file:
         updater.read_file(file)
 
-    updated=False
+    updated = False
     if options.remove_section:
         updated = remove_section(updater, options.remove_section)
     elif options.remove_section_entry:
@@ -197,6 +200,18 @@ def main():
         value = get_section_value(updater, options.get_section_entry[0], options.get_section_entry[1])
         if value:
             print(value)
+        else:
+            exit_code = 1
+    elif options.include_exists:
+        if updater.has_section(f"include {options.include_exists}"):
+            exit_code = 0
+        else:
+            exit_code = 1
+    elif options.section_exists:
+        if updater.has_section(options.section_exists):
+            exit_code = 0
+        else:
+            exit_code = 1
     elif options.replace_section_entry:
         updated = replace_section_value(updater, options.replace_section_entry[0], options.replace_section_entry[1], options.replace_section_entry[2])
     elif options.remove_include:
@@ -223,7 +238,9 @@ def main():
     elif options.output:
         with open(options.output, 'w') as file:
                 updater.write(file)
-        
+
+    sys.exit(exit_code)
+
 
 if __name__ == '__main__':
     main()

@@ -617,8 +617,11 @@ setup_bltouch() {
         cleanup_probe cartographer
         cleanup_probe microprobe
 
-        cp /usr/data/pellcorp/k1/bltouch.cfg /usr/data/printer_data/config/ || exit $?
-        $CONFIG_HELPER --add-include "bltouch.cfg" || exit $?
+        if [ -f /usr/data/printer_data/config/bltouch.cfg ]; then
+          rm /usr/data/printer_data/config/bltouch.cfg
+        fi
+        $CONFIG_HELPER --remove-include "bltouch.cfg" || exit $?
+        $CONFIG_HELPER --overrides "/usr/data/pellcorp/k1/bltouch.cfg" || exit $?
 
         if [ "$MODEL" = "CR-K1" ] || [ "$MODEL" = "K1C" ]; then
             cp /usr/data/pellcorp/k1/bltouch-k1.cfg /usr/data/printer_data/config/ || exit $?
@@ -646,8 +649,11 @@ setup_microprobe() {
         cleanup_probe cartographer
         cleanup_probe bltouch
 
-        cp /usr/data/pellcorp/k1/microprobe.cfg /usr/data/printer_data/config/ || exit $?
-        $CONFIG_HELPER --add-include "microprobe.cfg" || exit $?
+        if [ -f /usr/data/printer_data/config/microprobe.cfg ]; then
+          rm /usr/data/printer_data/config/microprobe.cfg
+        fi
+        $CONFIG_HELPER --remove-include "microprobe.cfg" || exit $?
+        $CONFIG_HELPER --overrides "/usr/data/pellcorp/k1/microprobe.cfg" || exit $?
 
         if [ "$MODEL" = "CR-K1" ] || [ "$MODEL" = "K1C" ]; then
             cp /usr/data/pellcorp/k1/microprobe-k1.cfg /usr/data/printer_data/config/ || exit $?
@@ -764,8 +770,17 @@ if [ ! -f /usr/data/pellcorp.done ] && [ ! -f /usr/data/pellcorp-backups/printer
     cp /usr/data/printer_data/config/printer.cfg /usr/data/pellcorp-backups/printer.factory.cfg
 fi
 
+probe=
 mode=install
 if [ "$1" = "--reinstall" ] || [ "$1" = "--update" ]; then
+    if [ -f /usr/data/printer_data/config/bltouch-k1.cfg ] || [ -f /usr/data/printer_data/config/bltouch-k1m.cfg ]; then
+        probe=bltouch
+    elif [ -f /usr/data/printer_data/config/cartographer-k1.cfg ] || [ -f /usr/data/printer_data/config/cartographer-k1m.cfg ]; then
+        probe=cartographer
+    elif [ -f /usr/data/printer_data/config/microprobe-k1.cfg ] || [ -f /usr/data/printer_data/config/microprobe-k1m.cfg ]; then
+        probe=microprobe
+    fi
+
     rm /usr/data/pellcorp.done
     # if we took a post factory reset backup for a reinstall restore it now
     if [ -f /usr/data/pellcorp-backups/printer.factory.cfg ]; then
@@ -780,15 +795,6 @@ if [ "$1" = "--reinstall" ] || [ "$1" = "--update" ]; then
     fi
     mode=$(echo $1 | sed 's/--//g')
     shift
-fi
-
-probe=
-if [ -f /usr/data/printer_data/config/bltouch.cfg ]; then
-    probe=bltouch
-elif [ -f /usr/data/printer_data/config/cartographer.cfg ]; then
-    probe=cartographer
-elif [ -f /usr/data/printer_data/config/microprobe.cfg ]; then
-    probe=microprobe
 fi
 
 if [ "$1" = "microprobe" ] || [ "$1" = "bltouch" ] || [ "$1" = "cartographer" ]; then
