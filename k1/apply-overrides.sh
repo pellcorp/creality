@@ -24,7 +24,7 @@ function apply_overrides() {
             done < "/usr/data/pellcorp-overrides.cfg"
         fi
 
-        files=$(find $overrides_dir ! -name 'printer-*.cfg' -a -name "*.cfg" -o -name "*.conf")
+        files=$(find $overrides_dir ! -name 'printer-*.cfg' -a -name "*.cfg" -o -name "*.conf" -o -name "printer.cfg.save_config")
         for file in $files; do
             file=$(basename $file)
             # special case for moonraker.secrets
@@ -37,17 +37,6 @@ function apply_overrides() {
               echo "Applying overrides for /usr/data/printer_data/config/$file ..."
               cp /usr/data/printer_data/config/$file /usr/data/printer_data/config/${file}.override.bkp
               $CONFIG_HELPER --file $file --overrides $overrides_dir/$file || exit $?
-
-              if [ "$file" = "printer.cfg" ] && [ -f $overrides_dir/printer.cfg.save_config ]; then
-                # if the printer.cfg already has SAVE_CONFIG skip applying it again
-                if ! grep -q "#*# <---------------------- SAVE_CONFIG ---------------------->" /usr/data/printer_data/config/printer.cfg ; then
-                  echo "Applying SAVE_CONFIG state to /usr/data/printer_data/config/printer.cfg"
-                  echo "" >> /usr/data/printer_data/config/printer.cfg
-                  cat $overrides_dir/printer.cfg.save_config >> /usr/data/printer_data/config/printer.cfg
-                else
-                  echo "Skipped applying SAVE_CONFIG state to /usr/data/printer_data/config/printer.cfg"
-                fi
-              fi
             elif [ "$file" != "printer.cfg.save_config" ]; then
                 echo "Restoring /usr/data/printer_data/config/$file ..."
                 cp $overrides_dir/$file /usr/data/printer_data/config/
@@ -55,6 +44,18 @@ function apply_overrides() {
             # fixme - we currently have no way to know if the file was updated assume if we got here it was
             return_status=1
         done
+
+        # we want to apply the save config last
+        if [ -f $overrides_dir/printer.cfg.save_config ]; then
+          # if the printer.cfg already has SAVE_CONFIG skip applying it again
+          if ! grep -q "#*# <---------------------- SAVE_CONFIG ---------------------->" /usr/data/printer_data/config/printer.cfg ; then
+            echo "Applying SAVE_CONFIG state to /usr/data/printer_data/config/printer.cfg"
+            echo "" >> /usr/data/printer_data/config/printer.cfg
+            cat $overrides_dir/printer.cfg.save_config >> /usr/data/printer_data/config/printer.cfg
+          else
+            echo "Skipped applying SAVE_CONFIG state to /usr/data/printer_data/config/printer.cfg"
+          fi
+        fi
 
         if [ -d /tmp/overrides.$$ ]; then
             rm -rf /tmp/overrides.$$
