@@ -12,7 +12,6 @@ factory_reset() {
     
     /usr/bin/mcu_reset.sh >/dev/null 2>&1
     ACTION=stop /usr/bin/auto_uvc.sh >/dev/null 2>&1
-    echo "Info: Factory reset was executed successfully, the printer will restart..."
     /etc/init.d/rcK >/dev/null 2>&1
     /usr/bin/find /overlay/upper/ \
         -path '/overlay/upper/etc/dropbear' -prune -o \
@@ -40,6 +39,7 @@ factory_reset() {
         -exec rmdir {} \; >/dev/null 2>&1
     /bin/sync >/dev/null 2>&1
     /sbin/swapoff -a >/dev/null 2>&1
+    echo "Info: Factory reset was executed successfully, the printer will restart..."
     /sbin/reboot -f >/dev/null 2>&1
 }
 
