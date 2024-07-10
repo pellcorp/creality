@@ -129,16 +129,10 @@ else
           cp /usr/data/printer_data/moonraker.secrets /usr/data/pellcorp-overrides/
       fi
 
-      cfg_files=$(ls /usr/data/printer_data/config/*.cfg)
-      for file in $cfg_files; do
-          file=$(basename $file)
-          override_file $file
-      done
-
-      conf_files=$(ls /usr/data/printer_data/config/*.conf)
-      for file in $conf_files; do
-          file=$(basename $file)
-          override_file $file
+      files=$(find /usr/data/printer_data/config/ ! -name 'printer-*.cfg' -a -name "*.cfg" -o -name "*.conf")
+      for file in $files; do
+        file=$(basename $file)
+        override_file $file
       done
   fi
 fi
