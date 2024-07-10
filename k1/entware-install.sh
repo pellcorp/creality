@@ -6,8 +6,10 @@ unset LD_PRELOAD
 LOADER=ld.so.1
 GLIBC=2.27
 
-rm -rf /opt
-rm -rf /usr/data/opt
+if [ "$1" = "reinstall" ]; then
+  rm -rf /opt
+  rm -rf /usr/data/opt
+fi
 
 mkdir -p /usr/data/opt
 ln -nsf /usr/data/opt /opt
@@ -54,7 +56,7 @@ done
 
 [ -f /etc/localtime ] && ln -sf /etc/localtime /opt/etc/localtime
 
-echo 'export PATH="/opt/bin:/opt/sbin:$PATH"' > /etc/profile.d/entware.sh
+echo 'export PATH="$PATH:/opt/bin:/opt/sbin"' > /etc/profile.d/entware.sh
 
 # this is required so that any services installed by opkg get started
 echo '#!/bin/sh\n/opt/etc/init.d/rc.unslung "$1"' > /etc/init.d/S50unslung
