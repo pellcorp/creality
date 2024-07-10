@@ -773,9 +773,20 @@ fi
 
 probe=
 mode=install
-if [ "$1" = "--reinstall" ] || [ "$1" = "--update" ]; then
+skip_overrides=false
+if [ -n "$1" ]; then
     mode=$(echo $1 | sed 's/--//g')
     shift
+    if [ "$mode" = "clean-install" ] || [ "$mode" = "clean-reinstall" ] || [ "$mode" = "clean-update" ]; then
+        skip_overrides=true
+        mode=$(echo $mode | sed 's/clean-//g')
+    fi
+fi
+
+if [ "$mode" = "reinstall" ] || [ "$mode" = "update" ]; then
+    if [ "$skip_overrides" != "true" ]; then
+        /usr/data/pellcorp/k1/config-overrides.sh
+    fi
 
     if [ -f /usr/data/printer_data/config/bltouch-k1.cfg ] || [ -f /usr/data/printer_data/config/bltouch-k1m.cfg ]; then
         probe=bltouch
@@ -877,12 +888,14 @@ if [ ! -f /usr/data/pellcorp-backups/printer.pellcorp.cfg ] && [ -f /usr/data/pe
     cp /usr/data/printer_data/config/printer.cfg /usr/data/pellcorp-backups/printer.pellcorp.cfg
 fi
 
-apply_overrides
-apply_overrides=$?
+if [ "$skip_overrides" != "true" ]; then
+    apply_overrides
+    apply_overrides=$?
 
-# just restart moonraker in case any overrides were applied
-if [ $apply_overrides -ne 0 ]; then
-    restart_moonraker
+    # just restart moonraker in case any overrides were applied
+    if [ $apply_overrides -ne 0 ]; then
+        restart_moonraker
+    fi
 fi
 
 if [ $apply_overrides -ne 0 ] || [ $install_cartographer_klipper -ne 0 ] || [ $install_kamp -ne 0 ] || [ $install_klipper -ne 0 ] || [ $install_guppyscreen -ne 0 ] || [ $setup_probe -ne 0 ] || [ $setup_probe_specific -ne 0 ]; then
