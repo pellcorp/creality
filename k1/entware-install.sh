@@ -6,7 +6,7 @@ unset LD_PRELOAD
 LOADER=ld.so.1
 GLIBC=2.27
 
-if [ "$1" = "reinstall" ]; then
+if [ "$1" = "reinstall" ] || [ ! -f /opt/bin/opkg ]; then
   rm -rf /opt
   rm -rf /usr/data/opt
 fi
