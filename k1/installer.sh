@@ -713,10 +713,11 @@ setup_cartographer() {
 }
 
 install_entware() {
+    local mode=$1
     if ! grep -q "entware" /usr/data/pellcorp.done; then
         echo ""
         echo "Installing entware ..."
-        /usr/data/pellcorp/k1/entware-install.sh || exit $?
+        /usr/data/pellcorp/k1/entware-install.sh "$mode" || exit $?
 
         echo "entware" >> /usr/data/pellcorp.done
         sync
@@ -773,6 +774,9 @@ fi
 probe=
 mode=install
 if [ "$1" = "--reinstall" ] || [ "$1" = "--update" ]; then
+    mode=$(echo $1 | sed 's/--//g')
+    shift
+
     if [ -f /usr/data/printer_data/config/bltouch-k1.cfg ] || [ -f /usr/data/printer_data/config/bltouch-k1m.cfg ]; then
         probe=bltouch
     elif [ -f /usr/data/printer_data/config/cartographer-k1.cfg ] || [ -f /usr/data/printer_data/config/cartographer-k1m.cfg ]; then
@@ -789,12 +793,10 @@ if [ "$1" = "--reinstall" ] || [ "$1" = "--update" ]; then
         if [ -f /usr/data/pellcorp-backups/printer.pellcorp.cfg ]; then
             rm /usr/data/pellcorp-backups/printer.pellcorp.cfg
         fi
-    elif [ "$1" = "--update" ]; then
+    elif [ "$mode" = "update" ]; then
         echo "ERROR: Update mode is not available to users who have not done a factory reset since 27th of June 2024"
         exit 1
     fi
-    mode=$(echo $1 | sed 's/--//g')
-    shift
 fi
 
 if [ "$1" = "microprobe" ] || [ "$1" = "bltouch" ] || [ "$1" = "cartographer" ]; then
@@ -813,7 +815,7 @@ touch /usr/data/pellcorp.done
 cp /usr/data/printer_data/config/printer.cfg /usr/data/printer_data/config/.printer.cfg.bkp
 
 setup_git_ssh
-install_entware
+install_entware $mode
 
 install_webcam
 
