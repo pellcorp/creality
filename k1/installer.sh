@@ -888,6 +888,7 @@ if [ ! -f /usr/data/pellcorp-backups/printer.pellcorp.cfg ] && [ -f /usr/data/pe
     cp /usr/data/printer_data/config/printer.cfg /usr/data/pellcorp-backups/printer.pellcorp.cfg
 fi
 
+apply_overrides=0
 if [ "$skip_overrides" != "true" ]; then
     apply_overrides
     apply_overrides=$?
