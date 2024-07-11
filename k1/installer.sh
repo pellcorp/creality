@@ -79,22 +79,24 @@ cp /usr/data/pellcorp/k1/tools/curl /usr/bin/curl
 
 CONFIG_HELPER="/usr/data/pellcorp/k1/config-helper.py"
 
-# old pellcorp-env not required anymore
-if [ -d /usr/data/pellcorp-env/ ]; then
-    rm -rf /usr/data/pellcorp-env/
-fi
-
-python3 -c 'from configupdater import ConfigUpdater' 2> /dev/null
-if [ $? -ne 0 ]; then
-    echo "Installing configupdater python package ..."
-    pip3 install configupdater==3.2
-
+install_config_updater() {
     python3 -c 'from configupdater import ConfigUpdater' 2> /dev/null
     if [ $? -ne 0 ]; then
-        echo "ERROR: Something bad happened, can't continue"
-        exit 1
+        echo "Installing configupdater python package ..."
+        pip3 install configupdater==3.2
+
+        python3 -c 'from configupdater import ConfigUpdater' 2> /dev/null
+        if [ $? -ne 0 ]; then
+            echo "ERROR: Something bad happened, can't continue"
+            exit 1
+        fi
     fi
-fi
+
+    # old pellcorp-env not required anymore
+    if [ -d /usr/data/pellcorp-env/ ]; then
+        rm -rf /usr/data/pellcorp-env/
+    fi
+}
 
 setup_git_ssh() {
     mkdir -p /root/.ssh
@@ -771,20 +773,22 @@ if [ ! -f /usr/data/pellcorp.done ] && [ ! -f /usr/data/pellcorp-backups/printer
     cp /usr/data/printer_data/config/printer.cfg /usr/data/pellcorp-backups/printer.factory.cfg
 fi
 
-probe=
 mode=install
 skip_overrides=false
-if [ -n "$1" ]; then
+if [ "$1" = "--install" ] || [ "$1" = "--update" ] || [ "$1" = "--reinstall" ] || [ "$1" = "--clean-install" ] || [ "$1" = "--clean-update" ] || [ "$1" = "--clean-reinstall" ]; then
     mode=$(echo $1 | sed 's/--//g')
     shift
+
     if [ "$mode" = "clean-install" ] || [ "$mode" = "clean-reinstall" ] || [ "$mode" = "clean-update" ]; then
         skip_overrides=true
+        echo "INFO: Configuration overrides will not be saved or applied"
         mode=$(echo $mode | sed 's/clean-//g')
     fi
 fi
 
+probe=
 if [ "$mode" = "reinstall" ] || [ "$mode" = "update" ]; then
-    if [ "$skip_overrides" != "true" ]; then
+    if [ "$skip_overrides" != "true" ] && [ -f /usr/data/pellcorp-backups/printer.pellcorp.cfg ]; then
         /usr/data/pellcorp/k1/config-overrides.sh
     fi
 
@@ -796,7 +800,10 @@ if [ "$mode" = "reinstall" ] || [ "$mode" = "update" ]; then
         probe=microprobe
     fi
 
-    rm /usr/data/pellcorp.done
+    if [ -f /usr/data/pellcorp.done ]; then
+      rm /usr/data/pellcorp.done
+    fi
+
     # if we took a post factory reset backup for a reinstall restore it now
     if [ -f /usr/data/pellcorp-backups/printer.factory.cfg ]; then
         cp /usr/data/pellcorp-backups/printer.factory.cfg /usr/data/printer_data/config/printer.cfg
@@ -822,10 +829,18 @@ elif [ "x$probe" = "x" ]; then
     exit 1
 fi
 
+# this is just something to make it easier for me to test various command line arguments
+if [ "$SIMPLE_AF_MODE" = "test" ]; then
+  echo "Mode: $mode"
+  echo "Probe: $probe"
+  exit 1
+fi
+
 touch /usr/data/pellcorp.done
 cp /usr/data/printer_data/config/printer.cfg /usr/data/printer_data/config/.printer.cfg.bkp
 
 setup_git_ssh
+install_config_updater
 install_entware $mode
 
 install_webcam
