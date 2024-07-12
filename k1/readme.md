@@ -13,8 +13,8 @@ The following files were originally from other projects.  Some of these files ar
 - install-entware.sh -> https://raw.githubusercontent.com/Guilouz/Creality-Helper-Script/main/files/entware/generic.sh
 - services/S13mcu_update -> https://github.com/Guilouz/Creality-K1-Extracted-Firmwares/blob/main/Firmware/etc/init.d/S13mcu_update
 - services/S50webcam -> http://openk1.org/static/k1/scripts/multi-non-creality-webcams.sh
-- cartographer/cartographer_macro.cfg -> https://raw.githubusercontent.com/K1-Klipper/cartographer-klipper/master/cartographer_macro.cfg
-- guppyscreen/guppyscreen.cfg -> https://github.com/ballaswag/guppyscreen/blob/main/k1/scripts/guppy_cmd.cfg
+- cartographer_macro.cfg -> https://raw.githubusercontent.com/K1-Klipper/cartographer-klipper/master/cartographer_macro.cfg
+- guppyscreen.cfg -> https://github.com/ballaswag/guppyscreen/blob/main/k1/scripts/guppy_cmd.cfg
 - gcode_shell_command.py -> https://github.com/dw-0/kiauh/blob/master/resources/gcode_shell_command.py
 
 The nginx binaries originally came from:
@@ -48,7 +48,7 @@ I have taken advantage of the fact helper script is open source to migrate some 
 We are using my fork of klipper, which is mainline klipper, a fix for a temp sensor on the k1 and and a time out fix for bltouch, 
 crtouch and microprobe to the mcu.py file.
 
-### Klipper Deploy Key
+### SSH Deploy Keys
 
 I have issues with my internet and wifi in my workshop so often I get a timeout cloning the klipper repo, but there is
 a way to use git ssh clone urls, its not ideal because moonraker can't use them but its just for testing, I generated the
@@ -63,22 +63,6 @@ I discovered how to do this from https://forum.archive.openwrt.org/viewtopic.php
 This mode is activated by prefixing the call to the installer with `KLIPPER_GIT_CLONE=ssh`, its not for normal use as
 cloning via ssh is much slower than via curl but it does not seem to timeout.
 
-## MCU Firmware
-
-the fw/K1 firmware is built from my Klipper fork.
-
 ## MCU Util
 
 In the future I hope to use the mcu_util.py to do firmware updates, this relies on pyserial which is preinstalled on the k1.
-
-## Pellcorp Python Env
-
-scripts/recreate-pellcorp-env.sh is run on my k1-qemu environment and then I scp it back and merge it, 
-less than ideal but I only need configupdater.
-
-## Original Bootloader
-
-I got a copy of the original nozzle bootloader from zarboz from discord, I have saved it here for reference.   Can be used
-to restore a bricked MCU with stlink.
-
-Refer to bootloader/Bootloader_GD32_ToolheadNozzle_Creality.bin
