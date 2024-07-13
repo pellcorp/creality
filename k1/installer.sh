@@ -62,6 +62,11 @@ elif [ "$1" = "--branch" ] && [ -n "$2" ]; then # convenience for testing new fe
     cd /usr/data/pellcorp && git switch $2 && cd - > /dev/null
     update_repo /usr/data/pellcorp
     exit $?
+elif [ "$1" = "--klipper-branch" ] && [ -n "$2" ]; then # convenience for testing new features
+    update_repo /usr/data/klipper || exit $?
+    cd /usr/data/klipper && git switch $2 && cd - > /dev/null
+    update_repo /usr/data/klipper
+    exit $?
 fi
 
 # kill pip cache to free up overlayfs
