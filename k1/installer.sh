@@ -360,6 +360,8 @@ install_kamp() {
         # SMART_PARK
         sed -i 's:#\[include ./KAMP/Smart_Park.cfg\]:\[include ./KAMP/Smart_Park.cfg\]:g' /usr/data/printer_data/config/KAMP_Settings.cfg
 
+        cp /usr/data/printer_data/config/KAMP_Settings.cfg /usr/data/pellcorp-backups/
+
         echo "KAMP" >> /usr/data/pellcorp.done
         sync
 
