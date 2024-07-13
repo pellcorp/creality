@@ -55,6 +55,8 @@ override_file() {
     elif [ "$file" = "bltouch.cfg" ] || [ "$file" = "microprobe.cfg" ]; then
         echo "INFO: Overrides not supported for $file"
         return 0
+    elif [ -f /usr/data/pellcorp-backups/$file ]; then
+        original_file="/usr/data/pellcorp-backups/$file"
     elif [ ! -f "/usr/data/pellcorp/k1/$file" ]; then
         echo "INFO: Backing up /usr/data/printer_data/config/$file ..."
         cp  /usr/data/printer_data/config/$file /usr/data/pellcorp-overrides/
@@ -128,13 +130,13 @@ else
           echo "INFO: Backing up /usr/data/printer_data/moonraker.secrets..."
           cp /usr/data/printer_data/moonraker.secrets /usr/data/pellcorp-overrides/
       fi
-
-      files=$(find /usr/data/printer_data/config/ ! -name 'printer-*.cfg' -a -name "*.cfg" -o -name "*.conf")
-      for file in $files; do
-        file=$(basename $file)
-        override_file $file
-      done
   fi
+
+  files=$(find /usr/data/printer_data/config/ ! -name 'printer-*.cfg' -a -name "*.cfg" -o -name "*.conf")
+  for file in $files; do
+    file=$(basename $file)
+    override_file $file
+  done
 fi
 
 cd /usr/data/pellcorp-overrides
