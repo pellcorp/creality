@@ -42,6 +42,7 @@ update_repo() {
         if [ -n "$branch_ref" ]; then
             git fetch
             git reset --hard origin/$branch_ref
+            sync
         else
             echo "Failed to detect current branch"
             return 1
