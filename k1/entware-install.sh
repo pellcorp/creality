@@ -59,10 +59,9 @@ done
 echo 'export PATH="$PATH:/opt/bin:/opt/sbin"' > /etc/profile.d/entware.sh
 
 # this is required so that any services installed by opkg get started
-echo '#!/bin/sh\n/opt/etc/init.d/rc.unslung "$1"' > /etc/init.d/S50unslung
-chmod 755 /etc/init.d/S50unslung
+cp /usr/data/pellcorp/k1/services/S50unslung /etc/init.d/
 
-# by default openbear does not come with sftp support, so this enables it
+# by default dropbear does not come with sftp support, so this enables it
 /opt/bin/opkg install openssh-sftp-server || exit $?
 ln -sf /opt/libexec/sftp-server /usr/libexec/sftp-server
 
