@@ -34,7 +34,7 @@ get_version() {
 
     local version=$($PROG -i $tty_path -g)
     local ret=$?
-    if [ $ret != $RET_SUCCESS ]; then
+    if [ $ret -ne $RET_SUCCESS ]; then
         write_log "$version"
         write_log "get_version $tty_path fail, ret=$ret"
         echo "unknown"
