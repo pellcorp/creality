@@ -39,8 +39,16 @@ get_version() {
         write_log "get_version $tty_path fail, ret=$ret"
         echo "unknown"
     else
-        write_log "get_version $version"
-        echo "$version"
+        # not sure why, but if the MCU is not even connected mcu_util returns 0 exit code
+        # so we need to have a hack to look for dodgy version string
+        if echo "$version" | grep -q "usart_rec_Process"; then
+          write_log "$version"
+          write_log "get_version $tty_path fail"
+          echo "unknown"
+        else
+          write_log "get_version $version"
+          echo "$version"
+        fi
     fi
 }
 
