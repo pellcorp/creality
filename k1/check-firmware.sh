@@ -33,20 +33,20 @@ firmware_upgrade_required=true
 if [ -f $VERSION_FILE ] && [ -d $FW_DIR ]; then
     firmware_upgrade_required=false
     fw_mcu_version=$(cat $VERSION_FILE | grep "mcu_version" | awk -F '=' ' {print $2}')
-    fw_bed_version=$(cat $VERSION_FILE | grep "bed_version" | awk -F '=' ' {print $2}')
+    #fw_bed_version=$(cat $VERSION_FILE | grep "bed_version" | awk -F '=' ' {print $2}')
     fw_noz_version=$(cat $VERSION_FILE | grep "noz_version" | awk -F '=' ' {print $2}')
 
     file_mcu_version=$(basename $(ls $FW_DIR/mcu*) .bin)
-    file_bed_version=$(basename $(ls $FW_DIR/bed*) .bin)
+    #file_bed_version=$(basename $(ls $FW_DIR/bed*) .bin)
     file_noz_version=$(basename $(ls $FW_DIR/noz*) .bin)
 
     if [ "x$fw_mcu_version" = "x" ] || [ "$fw_mcu_version" != "$file_mcu_version" ]; then
         firmware_upgrade_required=true
     fi
 
-    if [ "x$fw_bed_version" = "x" ] || [ "$fw_bed_version" != "$file_bed_version" ]; then
-        firmware_upgrade_required=true
-    fi
+    #if [ "x$fw_bed_version" = "x" ] || [ "$fw_bed_version" != "$file_bed_version" ]; then
+    #    firmware_upgrade_required=true
+    #fi
 
     if [ "x$fw_noz_version" = "x" ] || [ "$fw_noz_version" != "$file_noz_version" ]; then
         firmware_upgrade_required=true
