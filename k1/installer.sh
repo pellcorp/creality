@@ -637,9 +637,11 @@ setup_bltouch() {
         if [ "$MODEL" = "CR-K1" ] || [ "$MODEL" = "K1C" ]; then
             cp /usr/data/pellcorp/k1/bltouch-k1.cfg /usr/data/printer_data/config/ || exit $?
             $CONFIG_HELPER --add-include "bltouch-k1.cfg" || exit $?
+            $CONFIG_HELPER --replace-section-entry "stepper_y" "position_max" "209" || exit $?
         elif [ "$MODEL" = "CR-K1 Max" ]; then
             cp /usr/data/pellcorp/k1/bltouch-k1m.cfg /usr/data/printer_data/config/ || exit $?
             $CONFIG_HELPER --add-include "bltouch-k1m.cfg" || exit $?
+            $CONFIG_HELPER --replace-section-entry "stepper_y" "position_max" "280" || exit $?
         fi
 
         echo "bltouch-probe" >> /usr/data/pellcorp.done
@@ -711,9 +713,11 @@ setup_cartographer() {
         if [ "$MODEL" = "CR-K1" ] || [ "$MODEL" = "K1C" ]; then
             cp /usr/data/pellcorp/k1/cartographer-k1.cfg /usr/data/printer_data/config/ || exit $?
             $CONFIG_HELPER --add-include "cartographer-k1.cfg" || exit $?
+            $CONFIG_HELPER --replace-section-entry "stepper_y" "position_max" "210" || exit $?
         elif [ "$MODEL" = "CR-K1 Max" ]; then
             cp /usr/data/pellcorp/k1/cartographer-k1m.cfg /usr/data/printer_data/config/ || exit $?
             $CONFIG_HELPER --add-include "cartographer-k1m.cfg" || exit $?
+            $CONFIG_HELPER --replace-section-entry "stepper_y" "position_max" "280" || exit $?
         fi
 
         echo "cartographer-probe" >> /usr/data/pellcorp.done
