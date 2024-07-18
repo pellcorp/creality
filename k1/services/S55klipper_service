@@ -1,8 +1,8 @@
 #!/bin/sh
 
 USER_DATA=/usr/data
-PROG=/usr/share/klippy-env/bin/python
-PY_SCRIPT=/usr/share/klipper/klippy/klippy.py
+PROG=/usr/data/klippy-venv/bin/python
+PY_SCRIPT=/usr/data/klipper/klippy/klippy.py
 PRINTER_DATA_DIR=$USER_DATA/printer_data
 PRINTER_CONFIG_DIR=$PRINTER_DATA_DIR/config
 PRINTER_LOGS_DIR=$PRINTER_DATA_DIR/logs
