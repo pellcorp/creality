@@ -132,7 +132,7 @@ else
       fi
   fi
 
-  files=$(find /usr/data/printer_data/config/ ! -name 'printer-*.cfg' -a -name "*.cfg" -o -name "*.conf")
+  files=$(find /usr/data/printer_data/config/ ! -name 'printer-*.cfg' -a ! -name ".printer.cfg" -a -name "*.cfg" -o -name "*.conf")
   for file in $files; do
     file=$(basename $file)
     override_file $file
