@@ -265,12 +265,14 @@ install_nginx() {
             rm -rf /usr/data/nginx
         fi
 
-        tar -zxf /usr/data/pellcorp/k1/nginx.tar.gz -C /usr/data/ || exit $?
+        /opt/bin/opkg install nginx || exit $?
+        if [ -f /opt/etc/init.d/S80nginx ]; then
+          rm /opt/etc/init.d/S80nginx
+        fi
 
-        cp /usr/data/pellcorp/k1/nginx.conf /usr/data/nginx/nginx/ || exit $?
-        mkdir -p /usr/data/nginx/nginx/sites/
-        cp /usr/data/pellcorp/k1/nginx/fluidd /usr/data/nginx/nginx/sites/ || exit $?
-        cp /usr/data/pellcorp/k1/nginx/mainsail /usr/data/nginx/nginx/sites/ || exit $?
+        cp /usr/data/pellcorp/k1/nginx.conf /opt/etc/nginx/ || exit $?
+        mkdir -p /opt/etc/nginx/sites/ || exit $?
+        cp /usr/data/pellcorp/k1/nginx/* /opt/etc/nginx/sites/ || exit $?
 
         cp /usr/data/pellcorp/k1/services/S50nginx_service /etc/init.d/ || exit $?
 
