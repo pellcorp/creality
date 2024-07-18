@@ -1,0 +1,22 @@
+--- /usr/data/venv/lib/python3.11/site-packages/serial/serialposix.py
++++ /usr/lib/python3.8/site-packages/serial/serialposix.py
+@@ -66,8 +66,8 @@
+     CMSPAR = 0o10000000000  # Use "stick" (mark/space) parity
+
+     # baudrate ioctls
+-    TCGETS2 = 0x802C542A
+-    TCSETS2 = 0x402C542B
++    TCGETS2 = 0x4030542A
++    TCSETS2 = 0x8030542B
+     BOTHER = 0o010000
+
+     # RS485 ioctls
+@@ -122,7 +122,7 @@
+                 # set custom speed
+                 buf[2] &= ~termios.CBAUD
+                 buf[2] |= BOTHER
+-                buf[9] = buf[10] = baudrate
++                buf[10] = buf[11] = baudrate
+
+                 # set serial_struct
+                 fcntl.ioctl(self.fd, TCSETS2, buf)
