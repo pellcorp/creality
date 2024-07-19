@@ -137,8 +137,9 @@ install_webcam() {
         /opt/bin/opkg install mjpg-streamer mjpg-streamer-input-http mjpg-streamer-input-uvc mjpg-streamer-output-http mjpg-streamer-www || exit $?
 
         # we do not want to start the entware version of the service ever
-        rm /opt/etc/init.d/S96mjpg-streamer
-
+        if [ -f /opt/etc/init.d/S96mjpg-streamer ]; then
+            rm /opt/etc/init.d/S96mjpg-streamer
+        fi
         # kill the existing creality services so that we can use the app right away without a restart
         pidof cam_app &>/dev/null && killall -TERM cam_app
         pidof mjpg_streamer &>/dev/null && killall -TERM mjpg_streamer
