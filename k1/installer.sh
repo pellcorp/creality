@@ -104,27 +104,35 @@ install_config_updater() {
     fi
 }
 
-setup_git_ssh() {
-    mkdir -p /root/.ssh
-    # this currently only supports klipper git clone via ssh as you can use a deploy key once
-    cp /usr/data/pellcorp/k1/ssh/klipper-identity /root/.ssh/
-    cp /usr/data/pellcorp/k1/ssh/git-ssh.sh /root/.git-ssh.sh
-}
-
 disable_creality_services() {
     if [ -f /etc/init.d/S99start_app ]; then
         echo ""
         echo "Disabling some creality services ..."
 
-        echo "IMPORTANT: If you reboot the printer before installing guppyscreen, the screen will be blank - this is to be expected!"
-        /etc/init.d/S99start_app stop
+        if [ -f /etc/init.d/S99start_app ]; then
+            echo "IMPORTANT: If you reboot the printer before installing guppyscreen, the screen will be blank - this is to be expected!"
+            /etc/init.d/S99start_app stop
+            rm /etc/init.d/S99start_app
+        fi
 
-        [ -f /etc/init.d/S99start_app ] && rm /etc/init.d/S99start_app
-        [ -f /etc/init.d/S70cx_ai_middleware ] && rm /etc/init.d/S70cx_ai_middleware
-        [ -f /etc/init.d/S97webrtc ] && rm /etc/init.d/S97webrtc
-        [ -f /etc/init.d/S99mdns ] && rm /etc/init.d/S99mdns
-        [ -f /etc/init.d/S12boot_display ] && rm /etc/init.d/S12boot_display
-        [ -f /etc/init.d/S96wipe_data ] && rm /etc/init.d/S96wipe_data
+        if [ -f /etc/init.d/S70cx_ai_middleware ]; then
+            /etc/init.d/S70cx_ai_middleware stop
+            rm /etc/init.d/S70cx_ai_middleware
+        fi
+        if [ -f /etc/init.d/S97webrtc ]; then
+            /etc/init.d/S97webrtc stop
+            rm /etc/init.d/S97webrtc
+        fi
+        if [ -f /etc/init.d/S99mdns ]; then
+            /etc/init.d/S99mdns stop
+            rm /etc/init.d/S99mdns
+        fi
+        if [ -f /etc/init.d/S12boot_display ]; then
+            rm /etc/init.d/S12boot_display
+        fi
+        if [ -f /etc/init.d/S96wipe_data ]; then
+            rm /etc/init.d/S96wipe_data
+        fi
         sync
     fi
 }
@@ -172,7 +180,7 @@ install_moonraker() {
         if [ "$mode" = "update" ]; then
             echo "Updating moonraker ..."
 
-            update_repo /usr/data/moonraker
+            update_repo /usr/data/moonraker || exit $?
         else
             echo "Installing moonraker ..."
         
@@ -223,8 +231,13 @@ install_moonraker() {
         ln -sf /usr/data/pellcorp/k1/moonraker.asvc /usr/data/printer_data/ || exit $?
         cp /usr/data/pellcorp/k1/webcam.conf /usr/data/printer_data/config/ || exit $?
 
-        [ -d /usr/data/moonraker-timelapse ] && rm -rf /usr/data/moonraker-timelapse
-        git clone https://github.com/mainsail-crew/moonraker-timelapse.git /usr/data/moonraker-timelapse/ || exit $?
+        if [ "$mode" = "update" ]; then
+            update_repo /usr/data/moonraker-timelapse || exit $?
+        else
+            [ -d /usr/data/moonraker-timelapse ] && rm -rf /usr/data/moonraker-timelapse
+            git clone https://github.com/mainsail-crew/moonraker-timelapse.git /usr/data/moonraker-timelapse/ || exit $?
+        fi
+
         ln -sf /usr/data/moonraker-timelapse/component/timelapse.py /usr/data/moonraker/moonraker/components/ || exit $?
         if ! grep -q "moonraker/components/timelapse.py" "/usr/data/moonraker/.git/info/exclude"; then
             echo "moonraker/components/timelapse.py" >> "/usr/data/moonraker/.git/info/exclude"
@@ -285,6 +298,8 @@ install_nginx() {
 }
 
 install_fluidd() {
+    local mode=$1
+
     grep -q "fluidd" /usr/data/pellcorp.done
     if [ $? -ne 0 ]; then
         echo ""
@@ -297,8 +312,12 @@ install_fluidd() {
         unzip -qd /usr/data/fluidd /usr/data/fluidd.zip || exit $?
         rm /usr/data/fluidd.zip
 
-        [ -d /usr/data/fluidd-config ] && rm -rf /usr/data/fluidd-config
-        git clone https://github.com/fluidd-core/fluidd-config.git /usr/data/fluidd-config
+        if [ "$mode" = "update" ]; then
+            update_repo /usr/data/fluidd-config || exit $?
+        else
+            [ -d /usr/data/fluidd-config ] && rm -rf /usr/data/fluidd-config
+            git clone https://github.com/fluidd-core/fluidd-config.git /usr/data/fluidd-config || exit $?
+        fi
 
         [ -f /usr/data/printer_data/config/fluidd.cfg ] && rm /usr/data/printer_data/config/fluidd.cfg
 
@@ -349,14 +368,27 @@ install_mainsail() {
 }
 
 install_kamp() {
+    local mode=$1
+
     grep -q "KAMP" /usr/data/pellcorp.done
     if [ $? -ne 0 ]; then
         echo ""
-        echo "Installing KAMP ..."
+        if [ "$mode" = "update" ]; then
+            echo "Updating KAMP ..."
+            update_repo /usr/data/KAMP || exit $?
+        else
+            echo "Installing KAMP ..."
+            [ -d /usr/data/KAMP ] && rm -rf /usr/data/KAMP
 
-        [ -d /usr/data/KAMP ] && rm -rf /usr/data/KAMP
-
-        git clone https://github.com/kyleisah/Klipper-Adaptive-Meshing-Purging.git /usr/data/KAMP || exit $?
+            if [ "$AF_GIT_CLONE" = "ssh" ]; then
+                export GIT_SSH_IDENTITY=KAMP
+                export GIT_SSH=/usr/data/pellcorp/k1/ssh/git-ssh.sh
+                git clone git@github.com:pellcorp/Klipper-Adaptive-Meshing-Purging.git /usr/data/KAMP || exit $?
+                cd /usr/data/KAMP && git remote set-url origin https://github.com/kyleisah/Klipper-Adaptive-Meshing-Purging.git && cd - > /dev/null
+            else
+                git clone https://github.com/kyleisah/Klipper-Adaptive-Meshing-Purging.git /usr/data/KAMP || exit $?
+            fi
+        fi
 
         ln -sf /usr/data/KAMP/Configuration/ /usr/data/printer_data/config/KAMP || exit $?
 
@@ -398,7 +430,7 @@ install_klipper() {
         if [ "$mode" = "update" ]; then
             echo "Updating klipper ..."
 
-            update_repo /usr/data/klipper
+            update_repo /usr/data/klipper || exit $?
         else
             echo "Installing klipper ..."
 
@@ -409,10 +441,9 @@ install_klipper() {
                 rm -rf /usr/data/klipper
             fi
             
-            # this is only for testing with crappy internet
-            if [ "$KLIPPER_GIT_CLONE" = "ssh" ]; then
+            if [ "$AF_GIT_CLONE" = "ssh" ]; then
                 export GIT_SSH_IDENTITY=klipper
-                export GIT_SSH=$HOME/.git-ssh.sh
+                export GIT_SSH=/usr/data/pellcorp/k1/ssh/git-ssh.sh
                 git clone git@github.com:pellcorp/klipper.git /usr/data/klipper || exit $?
                 # reset the origin url to make moonraker happy
                 cd /usr/data/klipper && git remote set-url origin https://github.com/pellcorp/klipper.git && cd - > /dev/null
@@ -560,16 +591,24 @@ install_guppyscreen() {
 
 # regardless of probe choice just install the repo
 install_cartographer_klipper() {
+    local mode=$1
+
     grep -q "cartographer-klipper" /usr/data/pellcorp.done
     if [ $? -ne 0 ]; then
         echo ""
-        echo "Installing cartographer-klipper ..."
+        if [ "$mode" = "update" ]; then
+            echo "Updating cartographer-klipper ..."
+
+            update_repo /usr/data/cartographer-klipper || exit $?
+        else
+            echo "Installing cartographer-klipper ..."
         
-        if [ -d /usr/data/cartographer-klipper ]; then
-            rm -rf /usr/data/cartographer-klipper
+            if [ -d /usr/data/cartographer-klipper ]; then
+                rm -rf /usr/data/cartographer-klipper
+            fi
+
+            git clone https://github.com/pellcorp/cartographer-klipper.git /usr/data/cartographer-klipper || exit $?
         fi
-        
-        git clone https://github.com/pellcorp/cartographer-klipper.git /usr/data/cartographer-klipper || exit $?
 
         echo "Running cartographer-klipper installer ..."
         /usr/data/cartographer-klipper/install.sh || exit $?
@@ -846,17 +885,9 @@ elif [ "x$probe" = "x" ]; then
     exit 1
 fi
 
-# this is just something to make it easier for me to test various command line arguments
-if [ "$SIMPLE_AF_MODE" = "test" ]; then
-  echo "Mode: $mode"
-  echo "Probe: $probe"
-  exit 1
-fi
-
 touch /usr/data/pellcorp.done
 cp /usr/data/printer_data/config/printer.cfg /usr/data/printer_data/config/.printer.cfg.bkp
 
-setup_git_ssh
 install_config_updater
 install_entware $mode
 
@@ -870,20 +901,20 @@ install_moonraker=$?
 install_nginx
 install_nginx=$?
 
-install_fluidd
+install_fluidd $mode
 install_fluidd=$?
 
 install_mainsail
 install_mainsail=$?
 
 # KAMP is in the moonraker.conf file so it must be installed before moonraker is first started
-install_kamp
+install_kamp $mode
 install_kamp=$?
 
 install_klipper $mode
 install_klipper=$?
 
-install_cartographer_klipper
+install_cartographer_klipper $mode
 install_cartographer_klipper=$?
 
 # if moonraker was installed or updated
