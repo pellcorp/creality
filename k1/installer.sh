@@ -177,7 +177,7 @@ install_moonraker() {
     grep -q "moonraker" /usr/data/pellcorp.done
     if [ $? -ne 0 ]; then
         echo ""
-        if [ "$mode" = "update" ]; then
+        if [ "$mode" = "update" ] && [ -d /usr/data/moonraker ]; then
             echo "Updating moonraker ..."
 
             update_repo /usr/data/moonraker || exit $?
@@ -231,7 +231,7 @@ install_moonraker() {
         ln -sf /usr/data/pellcorp/k1/moonraker.asvc /usr/data/printer_data/ || exit $?
         cp /usr/data/pellcorp/k1/webcam.conf /usr/data/printer_data/config/ || exit $?
 
-        if [ "$mode" = "update" ]; then
+        if [ "$mode" = "update" ] && [ -d /usr/data/moonraker-timelapse ]; then
             update_repo /usr/data/moonraker-timelapse || exit $?
         else
             [ -d /usr/data/moonraker-timelapse ] && rm -rf /usr/data/moonraker-timelapse
@@ -312,7 +312,7 @@ install_fluidd() {
         unzip -qd /usr/data/fluidd /usr/data/fluidd.zip || exit $?
         rm /usr/data/fluidd.zip
 
-        if [ "$mode" = "update" ]; then
+        if [ "$mode" = "update" ] && [ -d /usr/data/fluidd-config ]; then
             update_repo /usr/data/fluidd-config || exit $?
         else
             [ -d /usr/data/fluidd-config ] && rm -rf /usr/data/fluidd-config
@@ -373,7 +373,7 @@ install_kamp() {
     grep -q "KAMP" /usr/data/pellcorp.done
     if [ $? -ne 0 ]; then
         echo ""
-        if [ "$mode" = "update" ]; then
+        if [ "$mode" = "update" ] && [ -d /usr/data/KAMP ]; then
             echo "Updating KAMP ..."
             update_repo /usr/data/KAMP || exit $?
         else
@@ -427,7 +427,7 @@ install_klipper() {
             /etc/init.d/S55klipper_service start > /dev/null
         fi
 
-        if [ "$mode" = "update" ]; then
+        if [ "$mode" = "update" ] && [ -d /usr/data/klipper ]; then
             echo "Updating klipper ..."
 
             update_repo /usr/data/klipper || exit $?
@@ -596,7 +596,7 @@ install_cartographer_klipper() {
     grep -q "cartographer-klipper" /usr/data/pellcorp.done
     if [ $? -ne 0 ]; then
         echo ""
-        if [ "$mode" = "update" ]; then
+        if [ "$mode" = "update" ] && [ -d /usr/data/cartographer-klipper ]; then
             echo "Updating cartographer-klipper ..."
 
             update_repo /usr/data/cartographer-klipper || exit $?
