@@ -6,6 +6,10 @@ unset LD_PRELOAD
 LOADER=ld.so.1
 GLIBC=2.27
 
+# for k1 the installed curl does not do ssl, so we replace it first
+# and we can then make use of it going forward
+cp /usr/data/pellcorp/k1/tools/curl /usr/bin/curl
+
 if [ "$1" = "reinstall" ] || [ ! -f /opt/bin/opkg ]; then
   rm -rf /opt
   rm -rf /usr/data/opt
