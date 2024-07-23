@@ -52,6 +52,7 @@ function apply_overrides() {
             echo "Applying SAVE_CONFIG state to /usr/data/printer_data/config/printer.cfg"
             echo "" >> /usr/data/printer_data/config/printer.cfg
             cat $overrides_dir/printer.cfg.save_config >> /usr/data/printer_data/config/printer.cfg
+            return_status=1
           else
             echo "Skipped applying SAVE_CONFIG state to /usr/data/printer_data/config/printer.cfg"
           fi
