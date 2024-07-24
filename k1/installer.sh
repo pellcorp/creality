@@ -134,6 +134,13 @@ disable_creality_services() {
             rm /etc/init.d/S96wipe_data
         fi
         sync
+
+        # the log main process takes up so much memory a lot of it swapped, killing this process might make the
+        # installer go a little more quickly as there is no swapping going on
+        log_main_pid=$(ps -ef | grep log_main | grep -v "grep" | awk '{print $1}')
+        if [ -n "$log_main_pid" ]; then
+            kill -9 $log_main_pid
+        fi
     fi
 }
 
