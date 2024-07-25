@@ -252,8 +252,6 @@ install_moonraker() {
         ln -sf /usr/data/moonraker-timelapse/klipper_macro/timelapse.cfg /usr/data/printer_data/config/ || exit $?
         cp /usr/data/pellcorp/k1/timelapse.conf /usr/data/printer_data/config/ || exit $?
 
-        $CONFIG_HELPER --add-include "timelapse.cfg" || exit $?
-
         # after an initial install do not overwrite notifier.conf or moonraker.secrets
         if [ ! -f /usr/data/printer_data/config/notifier.conf ]; then
             cp /usr/data/pellcorp/k1/notifier.conf /usr/data/printer_data/config/ || exit $?
