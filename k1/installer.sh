@@ -252,7 +252,7 @@ install_moonraker() {
         ln -sf /usr/data/moonraker-timelapse/klipper_macro/timelapse.cfg /usr/data/printer_data/config/ || exit $?
         cp /usr/data/pellcorp/k1/timelapse.conf /usr/data/printer_data/config/ || exit $?
 
-        # $CONFIG_HELPER --add-include "timelapse.cfg" || exit $?
+        $CONFIG_HELPER --add-include "timelapse.cfg" || exit $?
 
         # after an initial install do not overwrite notifier.conf or moonraker.secrets
         if [ ! -f /usr/data/printer_data/config/notifier.conf ]; then
@@ -261,7 +261,7 @@ install_moonraker() {
         if [ ! -f /usr/data/printer_data/moonraker.secrets ]; then
             cp /usr/data/pellcorp/k1/moonraker.secrets /usr/data/printer_data/ || exit $?
         fi
-        
+
         echo "moonraker" >> /usr/data/pellcorp.done
         sync
 
@@ -314,7 +314,7 @@ install_fluidd() {
 
         [ -d /usr/data/fluidd ] && rm -rf /usr/data/fluidd
 
-        mkdir -p /usr/data/fluidd || exit $? 
+        mkdir -p /usr/data/fluidd || exit $?
         curl -L "https://github.com/fluidd-core/fluidd/releases/latest/download/fluidd.zip" -o /usr/data/fluidd.zip || exit $?
         unzip -qd /usr/data/fluidd /usr/data/fluidd.zip || exit $?
         rm /usr/data/fluidd.zip
@@ -337,7 +337,7 @@ install_fluidd() {
         $CONFIG_HELPER --remove-section "pause_resume" || exit $?
         $CONFIG_HELPER --remove-section "display_status" || exit $?
         $CONFIG_HELPER --remove-section "virtual_sdcard" || exit $?
-        
+
         $CONFIG_HELPER --add-include "fluidd.cfg" || exit $?
 
         echo "fluidd" >> /usr/data/pellcorp.done
@@ -356,7 +356,7 @@ install_mainsail() {
         echo "Installing mainsail ..."
 
         [ -d /usr/data/mainsail ] && rm -rf /usr/data/mainsail
-        
+
         mkdir -p /usr/data/mainsail || exit $?
         curl -L "https://github.com/mainsail-crew/mainsail/releases/latest/download/mainsail.zip" -o /usr/data/mainsail.zip || exit $?
         unzip -qd /usr/data/mainsail /usr/data/mainsail.zip || exit $?
@@ -447,7 +447,7 @@ install_klipper() {
                 fi
                 rm -rf /usr/data/klipper
             fi
-            
+
             if [ "$AF_GIT_CLONE" = "ssh" ]; then
                 export GIT_SSH_IDENTITY=klipper
                 export GIT_SSH=/usr/data/pellcorp/k1/ssh/git-ssh.sh
@@ -467,7 +467,7 @@ install_klipper() {
         cp /usr/data/pellcorp/k1/services/S13mcu_update /etc/init.d/ || exit $?
 
         cp /usr/data/pellcorp/k1/sensorless.cfg /usr/data/printer_data/config/ || exit $?
-        
+
         cp /usr/data/pellcorp/k1/useful_macros.cfg /usr/data/printer_data/config/ || exit $?
         $CONFIG_HELPER --add-include "useful_macros.cfg" || exit $?
 
@@ -509,6 +509,13 @@ install_klipper() {
         $CONFIG_HELPER --remove-section "output_pin fan0" || exit $?
         $CONFIG_HELPER --remove-section "output_pin fan1" || exit $?
         $CONFIG_HELPER --remove-section "output_pin fan2" || exit $?
+
+        # a few strange duplicate pins appear in some firmware
+        $CONFIG_HELPER --remove-section "output_pin PA0" || exit $?
+        $CONFIG_HELPER --remove-section "output_pin PB2" || exit $?
+        $CONFIG_HELPER --remove-section "output_pin PB10" || exit $?
+        $CONFIG_HELPER --remove-section "output_pin PC8" || exit $?
+        $CONFIG_HELPER --remove-section "output_pin PC9" || exit $?
         
         # duplicate pin can only be assigned once, so we remove it from printer.cfg so we can
         # configure it in fan_control.cfg
