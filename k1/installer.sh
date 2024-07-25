@@ -231,7 +231,8 @@ install_moonraker() {
         /opt/bin/opkg install ffmpeg || exit $?
 
         ln -sf /usr/data/pellcorp/k1/tools/supervisorctl /usr/bin/ || exit $?
-        tar -zxf /usr/data/pellcorp/k1/moonraker-env.tar.gz -C /usr/data/ || exit $?
+        curl -L "https://github.com/pellcorp/downloads/raw/main/creality/k1/buildroot/moonraker-env.tar.xz" -o /usr/data/moonraker-env.tar.xz || exit $?
+        xz -dkc /usr/data/moonraker-env.tar.xz | tar -x -C /usr/data/ || exit $?
 
         cp /usr/data/pellcorp/k1/services/S56moonraker_service /etc/init.d/ || exit $?
         cp /usr/data/pellcorp/k1/moonraker.conf /usr/data/printer_data/config/ || exit $?
@@ -467,8 +468,12 @@ install_klipper() {
             sed -i "/klippy\/extras\/cartographer.py$/d" "/usr/data/klipper/.git/info/exclude"
         fi
 
-        /usr/share/klippy-env/bin/python3 -m compileall /usr/data/klipper/klippy || exit $?
-        ln -sf /usr/data/klipper /usr/share/ || exit $?
+        curl -L "https://github.com/pellcorp/downloads/raw/main/creality/k1/buildroot/klippy-env.tar.xz" -o /usr/data/klippy-env.tar.xz || exit $?
+        xz -dkc /usr/data/klippy-env.tar.xz | tar -x -C /usr/data/ || exit $?
+        if [ -d /usr/share/klippy-env ]; then
+            rm -rf /usr/share/klippy-env
+        fi
+        /usr/data/klippy-env/bin/python3 -m compileall /usr/data/klipper/klippy || exit $?
         cp /usr/data/pellcorp/k1/services/S55klipper_service /etc/init.d/ || exit $?
 
         cp /usr/data/pellcorp/k1/services/S13mcu_update /etc/init.d/ || exit $?
@@ -764,6 +769,27 @@ install_entware() {
     fi
 }
 
+install_pellcorp_buildroot() {
+    curl -L "https://github.com/pellcorp/downloads/raw/main/creality/k1/buildroot/rootfs.tar.xz" -o /usr/data/buildroot-rootfs.tar.xz || exit $?
+    if [ -e /usr/local ]; then
+        rm -rf /usr/local
+    fi
+    if [ -d /usr/data/local ]; then
+        rm -rf /usr/data/local
+    fi
+    mkdir -p /usr/data/local
+    ln -nsf /usr/data/local /usr/local
+
+    xz -dkc /usr/data/buildroot-rootfs.tar.xz | tar -x -C /usr/data/local/ || exit $?
+    rm /usr/data/buildroot-rootfs.tar.xz
+
+    [ -f /usr/bin/python ] && rm /usr/bin/python
+    cp /usr/data/pellcorp/k1/python /usr/bin/
+
+    [ -f /usr/bin/python ] && rm /usr/bin/python3
+    cp /usr/data/pellcorp/k1/python3 /usr/bin/
+}
+
 function apply_overrides() {
     return_status=0
     grep -q "overrides" /usr/data/pellcorp.done
@@ -872,6 +898,7 @@ cp /usr/data/printer_data/config/printer.cfg /usr/data/printer_data/config/.prin
 
 install_config_updater
 install_entware $mode
+install_pellcorp_buildroot
 
 install_webcam
 

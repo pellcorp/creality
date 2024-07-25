@@ -1,0 +1,3 @@
+#!/bin/ash
+
+LD_LIBRARY_PATH=/usr/local/lib:/usr/local/usr/lib /usr/local/usr/bin/python $@
