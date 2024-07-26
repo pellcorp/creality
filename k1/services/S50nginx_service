@@ -12,6 +12,9 @@ case "$1" in
   stop)
 	start-stop-daemon -K -q -p "$PID_FILE" -o
 	;;
+  reload)
+	"$NGINX" -s reload $NGINX_ARGS
+	;;
   restart)
 	"$0" stop
 	# this allows a graceful restart of service by actually waiting for it to stop first
@@ -26,6 +29,6 @@ case "$1" in
 	"$0" start
 	;;
   *)
-	echo "Usage: $0 {start|stop|restart}"
+	echo "Usage: $0 {start|stop|restart|reload}"
 	exit 1
 esac
