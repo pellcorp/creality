@@ -458,6 +458,11 @@ install_klipper() {
             [ -d /usr/share/klipper ] && rm -rf /usr/share/klipper
         fi
 
+        # we used to copy cartographer from cartographer-klipper repo now its integrated so remove exclude
+        if grep -q "klippy/extras/cartographer.py" "/usr/data/klipper/.git/info/exclude"; then
+            sed -i "/klippy\/extras\/cartographer.py$/d" "/usr/data/klipper/.git/info/exclude"
+        fi
+
         /usr/share/klippy-env/bin/python3 -m compileall /usr/data/klipper/klippy || exit $?
         ln -sf /usr/data/klipper /usr/share/ || exit $?
         cp /usr/data/pellcorp/k1/services/S55klipper_service /etc/init.d/ || exit $?
@@ -596,38 +601,6 @@ install_guppyscreen() {
         sync
 
         # means klipper needs to be restarted
-        return 1
-    fi
-    return 0
-}
-
-# regardless of probe choice just install the repo
-install_cartographer_klipper() {
-    local mode=$1
-
-    grep -q "cartographer-klipper" /usr/data/pellcorp.done
-    if [ $? -ne 0 ]; then
-        echo ""
-        if [ "$mode" = "update" ] && [ -d /usr/data/cartographer-klipper ]; then
-            echo "Updating cartographer-klipper ..."
-
-            update_repo /usr/data/cartographer-klipper || exit $?
-        else
-            echo "Installing cartographer-klipper ..."
-        
-            if [ -d /usr/data/cartographer-klipper ]; then
-                rm -rf /usr/data/cartographer-klipper
-            fi
-
-            git clone https://github.com/pellcorp/cartographer-klipper.git /usr/data/cartographer-klipper || exit $?
-        fi
-
-        echo "Running cartographer-klipper installer ..."
-        /usr/data/cartographer-klipper/install.sh || exit $?
-        /usr/share/klippy-env/bin/python3 -m compileall /usr/data/klipper/klippy || exit $?
-
-        echo "cartographer-klipper" >> /usr/data/pellcorp.done
-        sync
         return 1
     fi
     return 0
@@ -926,15 +899,12 @@ install_kamp=$?
 install_klipper $mode
 install_klipper=$?
 
-install_cartographer_klipper $mode
-install_cartographer_klipper=$?
-
 # if moonraker was installed or updated
 if [ $install_moonraker -ne 0 ]; then
     restart_moonraker
 fi
 
-if [ $install_klipper -ne 0 ] || [ $install_moonraker -ne 0 ] || [ $install_nginx -ne 0 ] || [ $install_fluidd -ne 0 ] || [ $install_mainsail -ne 0 ] || [ $install_cartographer_klipper -ne 0 ]; then
+if [ $install_klipper -ne 0 ] || [ $install_moonraker -ne 0 ] || [ $install_nginx -ne 0 ] || [ $install_fluidd -ne 0 ] || [ $install_mainsail -ne 0 ]; then
     echo ""
     echo "Restarting Nginx ..."
     /etc/init.d/S50nginx_service restart
@@ -974,7 +944,7 @@ if [ "$skip_overrides" != "true" ]; then
     fi
 fi
 
-if [ $apply_overrides -ne 0 ] || [ $install_cartographer_klipper -ne 0 ] || [ $install_kamp -ne 0 ] || [ $install_klipper -ne 0 ] || [ $install_guppyscreen -ne 0 ] || [ $setup_probe -ne 0 ] || [ $setup_probe_specific -ne 0 ]; then
+if [ $apply_overrides -ne 0 ] || [ $install_kamp -ne 0 ] || [ $install_klipper -ne 0 ] || [ $install_guppyscreen -ne 0 ] || [ $setup_probe -ne 0 ] || [ $setup_probe_specific -ne 0 ]; then
     echo ""
     echo "Restarting Klipper ..."
     /etc/init.d/S55klipper_service restart
