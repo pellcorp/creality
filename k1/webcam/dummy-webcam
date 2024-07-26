@@ -1,0 +1,19 @@
+#!/bin/sh
+
+PID_FILE="/var/run/dummy_webcam.pid"
+
+case "$1" in
+  start)
+    start-stop-daemon -S -b -m -p $PID_FILE --exec "/usr/bin/python3" -- /usr/data/pellcorp/k1/webcam/dummy-webcam.py 
+    ;;
+  stop)
+    start-stop-daemon -K -p $PID_FILE
+    ;;
+
+  *)
+    echo "Usage:"
+    echo "    $0 {start|stop|restart}"
+    exit 1
+esac
+
+exit $?
