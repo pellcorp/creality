@@ -573,20 +573,13 @@ install_guppyscreen() {
         else
             cp /usr/data/guppyscreen/k1_mods/ft2font.cpython-38-mipsel-linux-gnu.so /usr/lib/python3.8/site-packages/matplotlib/ || exit $?
         fi
-        
-        # previously guppyscreen provided gcode_shell_macro.py now its provided by my klipper fork so
-        # remove the exclusion if its still there
-        if grep -q "klippy/extras/gcode_shell_command.py" "/usr/data/klipper/.git/info/exclude"; then
-            sed -i "/klippy\/extras\/gcode_shell_command.py$/d" "/usr/data/klipper/.git/info/exclude"
-        fi
 
-        for file in guppy_config_helper.py calibrate_shaper_config.py guppy_module_loader.py tmcstatus.py; do
-            ln -sf /usr/data/guppyscreen/k1_mods/$file /usr/data/klipper/klippy/extras/$file || exit $?
-            if ! grep -q "klippy/extras/${file}" "/usr/data/klipper/.git/info/exclude"; then
-                echo "klippy/extras/$file" >> "/usr/data/klipper/.git/info/exclude"
+        # remove all excludes from guppyscreen
+        for file in gcode_shell_command.py guppy_config_helper.py calibrate_shaper_config.py guppy_module_loader.py tmcstatus.py; do
+            if grep -q "klippy/extras/${file}" "/usr/data/klipper/.git/info/exclude"; then
+                sed -i "/klippy\/extras\/$file$/d" "/usr/data/klipper/.git/info/exclude"
             fi
         done
-        /usr/share/klippy-env/bin/python3 -m compileall /usr/data/klipper/klippy || exit $?
         
         # get rid of the old guppyscreen config
         [ -d /usr/data/printer_data/config/GuppyScreen ] && rm -rf /usr/data/printer_data/config/GuppyScreen
