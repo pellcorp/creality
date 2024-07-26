@@ -34,9 +34,13 @@ function apply_overrides() {
             elif [ -L /usr/data/printer_data/config/$file ] || [ "$file" = "bltouch.cfg" ] || [ "$file" = "microprobe.cfg" ]; then
                 echo "Ignoring $file ..."
             elif [ "$file" = "printer.cfg" ] || [ -f "/usr/data/pellcorp-backups/$file" ] || [ -f "/usr/data/pellcorp/k1/$file" ]; then
-              echo "Applying overrides for /usr/data/printer_data/config/$file ..."
-              cp /usr/data/printer_data/config/$file /usr/data/printer_data/config/${file}.override.bkp
-              $CONFIG_HELPER --file $file --overrides $overrides_dir/$file || exit $?
+              if [ -f /usr/data/printer_data/config/$file ]; then
+                echo "Applying overrides for /usr/data/printer_data/config/$file ..."
+                cp /usr/data/printer_data/config/$file /usr/data/printer_data/config/${file}.override.bkp
+                $CONFIG_HELPER --file $file --overrides $overrides_dir/$file || exit $?
+              else # if switching probes we might run into this
+                echo "Ignoring overrides for missing /usr/data/printer_data/config/$file"
+              fi
             elif [ "$file" != "printer.cfg.save_config" ]; then
                 echo "Restoring /usr/data/printer_data/config/$file ..."
                 cp $overrides_dir/$file /usr/data/printer_data/config/
