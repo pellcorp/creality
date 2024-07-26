@@ -458,6 +458,10 @@ install_klipper() {
             [ -d /usr/share/klipper ] && rm -rf /usr/share/klipper
         fi
 
+        if [ -d /usr/data/cartographer-klipper ]; then
+            rm -rf /usr/data/cartographer-klipper
+        fi
+
         # we used to copy cartographer from cartographer-klipper repo now its integrated so remove exclude
         if grep -q "klippy/extras/cartographer.py" "/usr/data/klipper/.git/info/exclude"; then
             sed -i "/klippy\/extras\/cartographer.py$/d" "/usr/data/klipper/.git/info/exclude"
