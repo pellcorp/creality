@@ -656,6 +656,7 @@ setup_bltouch() {
 
         cleanup_probe cartographer
         cleanup_probe microprobe
+        cleanup_probe btteddy
 
         if [ -f /usr/data/printer_data/config/bltouch.cfg ]; then
           rm /usr/data/printer_data/config/bltouch.cfg
@@ -690,6 +691,7 @@ setup_microprobe() {
         
         cleanup_probe cartographer
         cleanup_probe bltouch
+        cleanup_probe btteddy
 
         if [ -f /usr/data/printer_data/config/microprobe.cfg ]; then
           rm /usr/data/printer_data/config/microprobe.cfg
@@ -722,6 +724,7 @@ setup_cartographer() {
 
         cleanup_probe bltouch
         cleanup_probe microprobe
+        cleanup_probe btteddy
 
         cp /usr/data/pellcorp/k1/cartographer_macro.cfg /usr/data/printer_data/config/ || exit $?
         $CONFIG_HELPER --add-include "cartographer_macro.cfg" || exit $?
@@ -750,6 +753,47 @@ setup_cartographer() {
         fi
 
         echo "cartographer-probe" >> /usr/data/pellcorp.done
+        sync
+        return 1
+    fi
+    return 0
+}
+
+setup_btteddy() {
+    grep -q "btteddy-probe" /usr/data/pellcorp.done
+    if [ $? -ne 0 ]; then
+        echo ""
+        echo "Setting up btteddy ..."
+
+        cleanup_probe bltouch
+        cleanup_probe microprobe
+        cleanup_probe cartographer
+
+        cp /usr/data/pellcorp/k1/btteddy.cfg /usr/data/printer_data/config/ || exit $?
+        
+        BTTEDDY_SERIAL_ID=$(ls /dev/serial/by-id/usb-Klipper_rp2040* | head -1)
+        if [ "x$BTTEDDY_SERIAL_ID" != "x" ]; then
+            $CONFIG_HELPER --file btteddy.cfg --replace-section-entry "mcu eddy" "serial" "$BTTEDDY_SERIAL_ID" || exit $?
+        else
+            echo "WARNING: There does not seem to be a btt eddy attached - skipping auto configuration"
+        fi
+        $CONFIG_HELPER --add-include "btteddy.cfg" || exit $?
+
+        cp /usr/data/pellcorp/k1/btteddy_macro.cfg /usr/data/printer_data/config/ || exit $?
+        $CONFIG_HELPER --add-include "btteddy_macro.cfg" || exit $?
+
+        if [ "$MODEL" = "CR-K1" ] || [ "$MODEL" = "K1C" ]; then
+            cp /usr/data/pellcorp/k1/btteddy-k1.cfg /usr/data/printer_data/config/ || exit $?
+            $CONFIG_HELPER --add-include "btteddy-k1.cfg" || exit $?
+            # the max for the current initial mount which is not really ideal
+            $CONFIG_HELPER --replace-section-entry "stepper_y" "position_max" "206" || exit $?
+        elif [ "$MODEL" = "CR-K1 Max" ]; then
+            cp /usr/data/pellcorp/k1/cartographer-k1m.cfg /usr/data/printer_data/config/ || exit $?
+            $CONFIG_HELPER --add-include "btteddy-k1m.cfg" || exit $?
+            $CONFIG_HELPER --replace-section-entry "stepper_y" "position_max" "276" || exit $?
+        fi
+
+        echo "btteddy-probe" >> /usr/data/pellcorp.done
         sync
         return 1
     fi
@@ -824,6 +868,8 @@ elif [ -f /usr/data/printer_data/config/cartographer-k1.cfg ] || [ -f /usr/data/
     probe=cartographer
 elif [ -f /usr/data/printer_data/config/microprobe-k1.cfg ] || [ -f /usr/data/printer_data/config/microprobe-k1m.cfg ]; then
     probe=microprobe
+elif [ -f /usr/data/printer_data/config/btteddy-k1.cfg ] || [ -f /usr/data/printer_data/config/btteddy-k1m.cfg ]; then
+    probe=btteddy
 fi
 
 mode=install
@@ -841,7 +887,7 @@ while true; do
     elif [ "$1" = "--debug" ]; then
         shift
         debug=true
-    elif [ "$1" = "microprobe" ] || [ "$1" = "bltouch" ] || [ "$1" = "cartographer" ]; then
+    elif [ "$1" = "microprobe" ] || [ "$1" = "bltouch" ] || [ "$1" = "cartographer" ] || [ "$1" = "btteddy" ]; then
         if [ -n "$probe" ] && [ "$1" != "$probe" ]; then
             echo ""
             echo "WARNING: About to switch from $probe to $1!"
@@ -850,7 +896,7 @@ while true; do
         shift
     elif [ -n "$1" ]; then # no more valid parameters
         echo "ERROR: You must specify a probe you want to configure"
-        echo "One of: [microprobe, bltouch, cartographer]"
+        echo "One of: [microprobe, bltouch, cartographer, btteddy]"
         exit 1
     else # no more parameters
         break
@@ -941,9 +987,15 @@ if [ "$probe" = "cartographer" ]; then
 elif [ "$probe" = "bltouch" ]; then
     setup_bltouch
     setup_probe_specific=$?
-else # microprobe
+elif [ "$probe" = "btteddy" ]; then
+    setup_btteddy
+    setup_probe_specific=$?
+elif [ "$probe" = "microprobe" ]; then
     setup_microprobe
     setup_probe_specific=$?
+else
+    echo "Probe $probe not supported"
+    exit 1
 fi
 
 # there will be no support for generating pellcorp-overrides unless you have done a factory reset
