@@ -487,6 +487,10 @@ install_klipper() {
         $CONFIG_HELPER --remove-section-entry "printer" "square_corner_max_velocity" || exit $?
         $CONFIG_HELPER --remove-section-entry "printer" "max_accel_to_decel" || exit $?
 
+        # https://www.klipper3d.org/TMC_Drivers.html#prefer-to-not-specify-a-hold_current
+        $CONFIG_HELPER --remove-section-entry "tmc2209 stepper_x" "hold_current" || exit $?
+        $CONFIG_HELPER --remove-section-entry "tmc2209 stepper_y" "hold_current" || exit $?
+
         $CONFIG_HELPER --remove-include "printer_params.cfg" || exit $?
         $CONFIG_HELPER --remove-include "gcode_macro.cfg" || exit $?
         $CONFIG_HELPER --remove-include "custom_gcode.cfg" || exit $?
