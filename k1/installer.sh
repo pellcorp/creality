@@ -809,37 +809,66 @@ restart_moonraker() {
     done
 }
 
+
 mkdir -p /usr/data/pellcorp-backups
 # so if the installer has never been run we should grab a backup of the printer.cfg
 if [ ! -f /usr/data/pellcorp.done ] && [ ! -f /usr/data/pellcorp-backups/printer.factory.cfg ]; then
     cp /usr/data/printer_data/config/printer.cfg /usr/data/pellcorp-backups/printer.factory.cfg
 fi
 
-mode=install
-skip_overrides=false
-if [ "$1" = "--install" ] || [ "$1" = "--update" ] || [ "$1" = "--reinstall" ] || [ "$1" = "--clean-install" ] || [ "$1" = "--clean-update" ] || [ "$1" = "--clean-reinstall" ]; then
-    mode=$(echo $1 | sed 's/--//g')
-    shift
-
-    if [ "$mode" = "clean-install" ] || [ "$mode" = "clean-reinstall" ] || [ "$mode" = "clean-update" ]; then
-        skip_overrides=true
-        echo "INFO: Configuration overrides will not be saved or applied"
-        mode=$(echo $mode | sed 's/clean-//g')
-    fi
+# figure out what existing probe if any is being used
+probe=
+if [ -f /usr/data/printer_data/config/bltouch-k1.cfg ] || [ -f /usr/data/printer_data/config/bltouch-k1m.cfg ]; then
+    probe=bltouch
+elif [ -f /usr/data/printer_data/config/cartographer-k1.cfg ] || [ -f /usr/data/printer_data/config/cartographer-k1m.cfg ]; then
+    probe=cartographer
+elif [ -f /usr/data/printer_data/config/microprobe-k1.cfg ] || [ -f /usr/data/printer_data/config/microprobe-k1m.cfg ]; then
+    probe=microprobe
 fi
 
-probe=
+mode=install
+skip_overrides=false
+debug=false
+# parse arguments here
+while true; do
+    if [ "$1" = "--install" ] || [ "$1" = "--update" ] || [ "$1" = "--reinstall" ] || [ "$1" = "--clean-install" ] || [ "$1" = "--clean-update" ] || [ "$1" = "--clean-reinstall" ]; then
+        mode=$(echo $1 | sed 's/--//g')
+        shift
+        if [ "$mode" = "clean-install" ] || [ "$mode" = "clean-reinstall" ] || [ "$mode" = "clean-update" ]; then
+            skip_overrides=true
+            mode=$(echo $mode | sed 's/clean-//g')
+        fi
+    elif [ "$1" = "--debug" ]; then
+        shift
+        debug=true
+    elif [ "$1" = "microprobe" ] || [ "$1" = "bltouch" ] || [ "$1" = "cartographer" ]; then
+        if [ -n "$probe" ] && [ "$1" != "$probe" ]; then
+            echo ""
+            echo "WARNING: About to switch from $probe to $1!"
+        fi
+        probe=$1
+        shift
+    elif [ -n "$1" ]; then # no more valid parameters
+        echo "ERROR: You must specify a probe you want to configure"
+        echo "One of: [microprobe, bltouch, cartographer]"
+        exit 1
+    else # no more parameters
+        break
+    fi
+done
+
+if [ "$debug" = "true" ]; then
+    echo "INFO: Mode is $mode"
+    echo "INFO: Probe is $probe"
+fi
+
+if [ "$skip_overrides" = "true" ]; then
+    echo "INFO: Configuration overrides will not be saved or applied"
+fi
+
 if [ "$mode" = "reinstall" ] || [ "$mode" = "update" ]; then
     if [ "$skip_overrides" != "true" ] && [ -f /usr/data/pellcorp-backups/printer.pellcorp.cfg ]; then
         /usr/data/pellcorp/k1/config-overrides.sh
-    fi
-
-    if [ -f /usr/data/printer_data/config/bltouch-k1.cfg ] || [ -f /usr/data/printer_data/config/bltouch-k1m.cfg ]; then
-        probe=bltouch
-    elif [ -f /usr/data/printer_data/config/cartographer-k1.cfg ] || [ -f /usr/data/printer_data/config/cartographer-k1m.cfg ]; then
-        probe=cartographer
-    elif [ -f /usr/data/printer_data/config/microprobe-k1.cfg ] || [ -f /usr/data/printer_data/config/microprobe-k1m.cfg ]; then
-        probe=microprobe
     fi
 
     if [ -f /usr/data/pellcorp.done ]; then
@@ -857,18 +886,6 @@ if [ "$mode" = "reinstall" ] || [ "$mode" = "update" ]; then
         echo "ERROR: Update mode is not available to users who have not done a factory reset since 27th of June 2024"
         exit 1
     fi
-fi
-
-if [ "$1" = "microprobe" ] || [ "$1" = "bltouch" ] || [ "$1" = "cartographer" ]; then
-    if [ "x$probe" != "x" ] && [ "$1" != "$probe" ]; then
-        echo ""
-        echo "WARNING: About to switch from $probe to $1!"
-    fi
-    probe=$1
-elif [ "x$probe" = "x" ]; then
-    echo "ERROR: You must specify a probe you want to configure"
-    echo "One of: [microprobe, bltouch, cartographer]"
-    exit 1
 fi
 
 touch /usr/data/pellcorp.done
