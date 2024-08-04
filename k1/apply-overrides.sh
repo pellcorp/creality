@@ -43,6 +43,8 @@ function apply_overrides() {
                 # so be a nice to people and clean that shit up
                 if [ "$file" = "guppyscreen.cfg" ]; then
                     /usr/data/pellcorp/k1/config-helper.py --file guppyscreen.cfg --remove-section guppy_module_loader
+                elif [ "$file" = "moonraker.conf" ]; then
+                    /usr/data/pellcorp/k1/config-helper.py --file moonraker.conf --remove-section "update_manager cartographer"
                 fi
               else # if switching probes we might run into this
                 echo "Ignoring overrides for missing /usr/data/printer_data/config/$file"
