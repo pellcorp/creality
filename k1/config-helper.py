@@ -139,12 +139,15 @@ def override_cfg(updater, override_cfg_file):
             elif updater.has_section(section_name):
                 for entry in section:
                     value = section.get(entry, None)
-                    if value and value.value == '__DELETED__' and remove_section_value(updater, section_name, entry):
-                        updated = True
-                    elif value and len(value.lines) > 1 and replace_section_multiline_value(updater, section_name, entry, value.lines):
-                        updated = True
-                    elif value and len(value.lines) == 1 and replace_section_value(updater, section_name, entry, value.value):
-                        updated = True
+                    if value and value.value == '__DELETED__':
+                        if remove_section_value(updater, section_name, entry):
+                            updated = True
+                    elif value and len(value.lines) > 1:
+                        if replace_section_multiline_value(updater, section_name, entry, value.lines):
+                            updated = True
+                    elif value and len(value.lines) == 1:
+                        if replace_section_value(updater, section_name, entry, value.value):
+                            updated = True
             elif 'include ' in section_name: # handle an include being added
                 include = section_name.replace('include ', '')
                 if add_include(updater, include):

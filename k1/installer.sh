@@ -895,13 +895,17 @@ while true; do
         probe=$1
         shift
     elif [ -n "$1" ]; then # no more valid parameters
-        echo "ERROR: You must specify a probe you want to configure"
-        echo "One of: [microprobe, bltouch, cartographer, btteddy]"
-        exit 1
+        break
     else # no more parameters
         break
     fi
 done
+
+if [ -z "$probe" ]; then
+    echo "ERROR: You must specify a probe you want to configure"
+    echo "One of: [microprobe, bltouch, cartographer, btteddy]"
+    exit 1
+fi
 
 if [ "$debug" = "true" ]; then
     echo "INFO: Mode is $mode"
