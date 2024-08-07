@@ -395,7 +395,7 @@ install_kamp() {
             fi
         fi
 
-        ln -sf /usr/data/KAMP/Configuration/ /usr/data/printer_data/config/KAMP || exit $?
+        ln -sf /usr/data/KAMP/Configuration /usr/data/printer_data/config/KAMP || exit $?
 
         cp /usr/data/KAMP/Configuration/KAMP_Settings.cfg /usr/data/printer_data/config/ || exit $?
 
