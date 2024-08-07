@@ -52,7 +52,7 @@ override_file() {
     
     if [ "$file" = "printer.cfg" ] && [ -f "/usr/data/pellcorp-backups/printer.pellcorp.cfg" ]; then
         original_file="/usr/data/pellcorp-backups/printer.pellcorp.cfg"
-    elif [ "$file" = "bltouch.cfg" ] || [ "$file" = "microprobe.cfg" ]; then
+    elif [ "$file" = "bltouch.cfg" ] || [ "$file" = "microprobe.cfg" ] || [ "$file" = "start_end.cfg" ] || [ "$file" = "useful_macros.cfg" ] || [ "$file" = "guppyscreen.cfg" ] || [ "$file" = "fan_control.cfg" ]; then
         echo "INFO: Overrides not supported for $file"
         return 0
     elif [ -f /usr/data/pellcorp-backups/$file ]; then
