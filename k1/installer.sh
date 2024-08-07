@@ -749,7 +749,7 @@ setup_cartographer() {
         elif [ "$MODEL" = "CR-K1 Max" ]; then
             cp /usr/data/pellcorp/k1/cartographer-k1m.cfg /usr/data/printer_data/config/ || exit $?
             $CONFIG_HELPER --add-include "cartographer-k1m.cfg" || exit $?
-            $CONFIG_HELPER --replace-section-entry "stepper_y" "position_max" "280" || exit $?
+            $CONFIG_HELPER --replace-section-entry "stepper_y" "position_max" "284" || exit $?
         fi
 
         echo "cartographer-probe" >> /usr/data/pellcorp.done
@@ -786,11 +786,11 @@ setup_btteddy() {
             cp /usr/data/pellcorp/k1/btteddy-k1.cfg /usr/data/printer_data/config/ || exit $?
             $CONFIG_HELPER --add-include "btteddy-k1.cfg" || exit $?
             # the max for the current initial mount which is not really ideal
-            $CONFIG_HELPER --replace-section-entry "stepper_y" "position_max" "206" || exit $?
+            $CONFIG_HELPER --replace-section-entry "stepper_y" "position_max" "210" || exit $?
         elif [ "$MODEL" = "CR-K1 Max" ]; then
             cp /usr/data/pellcorp/k1/cartographer-k1m.cfg /usr/data/printer_data/config/ || exit $?
             $CONFIG_HELPER --add-include "btteddy-k1m.cfg" || exit $?
-            $CONFIG_HELPER --replace-section-entry "stepper_y" "position_max" "276" || exit $?
+            $CONFIG_HELPER --replace-section-entry "stepper_y" "position_max" "284" || exit $?
         fi
 
         echo "btteddy-probe" >> /usr/data/pellcorp.done
