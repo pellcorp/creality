@@ -64,7 +64,7 @@ def main():
                 original_value = original_section.get(key, None)
                 updated_value = updated_section.get(key, None)
 
-                # no support for generating overrides for gcode attribute of a gcode macro
+                # no support for generating overrides for gcode attribute, this covers gcode macros and homing_override gcode as well
                 if key != 'gcode':
                     if (not original_value and updated_value and updated_value.value) or (original_value and original_value.value and updated_value and updated_value.value and original_value.value != updated_value.value):
                         if not overrides.has_section(section_name):
