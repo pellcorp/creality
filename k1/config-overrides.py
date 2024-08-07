@@ -21,15 +21,15 @@ def main():
     if not os.path.exists(args.updated):
        raise Exception(f"Config File {args.updated} not found")
 
-    original = ConfigUpdater(strict = False, allow_no_value = True, space_around_delimiters = False, delimiters = (":", "="))
+    original = ConfigUpdater(strict=False, allow_no_value=True, space_around_delimiters=False, delimiters=(":", "="))
     with open(args.original, 'r') as file:
         original.read_file(file)
     
-    updated = ConfigUpdater(strict = False, allow_no_value = True, space_around_delimiters = False, delimiters = (":", "="))
+    updated = ConfigUpdater(strict=False, allow_no_value=True, space_around_delimiters=False, delimiters=(":", "="))
     with open(args.updated, 'r') as file:
-       updated.read_file(file)
+        updated.read_file(file)
 
-    overrides = ConfigUpdater(strict = False, allow_no_value = True, space_around_delimiters = False, delimiters = (":", "="))
+    overrides = ConfigUpdater(strict=False, allow_no_value=True, space_around_delimiters=False, delimiters=(":", "="))
     
     update_overrides = False
 
@@ -50,10 +50,21 @@ def main():
             if section_name not in original.sections():
                 new_section = updated.get_section(section_name, None)
                 if len(overrides.sections()) > 0:
-                    overrides[overrides.sections()[-1]].add_after.space().section(new_section.detach())
+                    overrides[overrides.sections()[-1]].add_after.space().section(section_name)
                 else:
-                    overrides.add_section(new_section.detach())
+                    overrides.add_section(section_name)
+
+                for key in new_section.keys():
+                    value = new_section.get(key, None)
+                    if len(value.lines) > 1:
+                        lines = value.lines
+                        lines[0] = '\n'
+                        overrides[section_name][key] = ''
+                        overrides[section_name][key].set_values(lines, indent='', separator='')
+                    else:
+                        overrides[section_name][key] = f' {value.value.strip()}'
                 update_overrides = True
+
     # any deleted entries
     for section_name in updated.sections():
         original_section = original.get_section(section_name, None)
@@ -74,7 +85,6 @@ def main():
                 original_value = original_section.get(key, None)
                 updated_value = updated_section.get(key, None)
 
-                # no support for generating overrides for gcode attribute, this covers gcode macros and homing_override gcode as well
                 if key != 'gcode':
                     if (not original_value and updated_value and updated_value.value) or (original_value and original_value.value and updated_value and updated_value.value and original_value.value != updated_value.value):
                         if not overrides.has_section(section_name):
