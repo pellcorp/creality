@@ -33,6 +33,16 @@ def main():
     
     update_overrides = False
 
+    # support deleting includes only
+    for section_name in original.sections():
+        if 'include' in section_name and section_name not in updated.sections():
+            if len(overrides.sections()) > 0:
+                overrides[overrides.sections()[-1]].add_after.space().section(section_name)
+            else:
+                overrides.add_section(section_name)
+            overrides[section_name]['__action__'] = ' DELETED'
+            update_overrides = True
+
     # now new sections
     for section_name in updated.sections():
         # new gcode macros are not supported
