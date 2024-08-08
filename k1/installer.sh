@@ -207,7 +207,6 @@ install_moonraker() {
                 fi               
             fi
             [ -d /usr/data/moonraker ] && rm -rf /usr/data/moonraker
-            [ -d /usr/data/moonraker-env ] && rm -rf /usr/data/moonraker-env
 
             echo ""
             git clone https://github.com/Arksine/moonraker /usr/data/moonraker || exit $?
@@ -222,17 +221,29 @@ install_moonraker() {
             fi
         fi
 
+        [ -d /usr/data/moonraker-env ] && rm -rf /usr/data/moonraker-env
+        [ -d /usr/data/moonraker-venv ] && rm -rf /usr/data/moonraker-venv
+
         # an existing bug where the moonraker secrets was not correctly copied
         if [ ! -f /usr/data/printer_data/moonraker.secrets ]; then
             cp /usr/data/pellcorp/k1/moonraker.secrets /usr/data/printer_data/
         fi
 
+        echo "Installing Python 3.11 from entware ..."
+        /opt/bin/opkg install python3 python3-uvloop libsodium libjpeg libfreetype libwebp || exit $?
+
+        # moonraker looks for libsodium specific .so
+        ln -sf /opt/lib/libsodium.so.26 /opt/lib/libsodium.so.23
+        sync
+        
         echo "Upgrading ffmpeg for moonraker timelapse ..."
         /opt/bin/opkg install ffmpeg || exit $?
+        sync
+        curl -L "https://github.com/pellcorp/downloads/raw/main/creality/k1/entware/moonraker-venv.tar.gz" -o /usr/data/moonraker-venv.tar.gz || exit $?
+        tar -zxf /usr/data/moonraker-venv.tar.gz -C /usr/data/ || exit $?
+        rm /usr/data/moonraker-venv.tar.gz
 
         ln -sf /usr/data/pellcorp/k1/tools/supervisorctl /usr/bin/ || exit $?
-        tar -zxf /usr/data/pellcorp/k1/moonraker-env.tar.gz -C /usr/data/ || exit $?
-
         cp /usr/data/pellcorp/k1/services/S56moonraker_service /etc/init.d/ || exit $?
         cp /usr/data/pellcorp/k1/moonraker.conf /usr/data/printer_data/config/ || exit $?
         ln -sf /usr/data/pellcorp/k1/moonraker.asvc /usr/data/printer_data/ || exit $?
@@ -455,7 +466,6 @@ install_klipper() {
             else
                 git clone https://github.com/pellcorp/klipper.git /usr/data/klipper || exit $?
             fi
-            [ -d /usr/share/klipper ] && rm -rf /usr/share/klipper
         fi
 
         if [ -d /usr/data/cartographer-klipper ]; then
@@ -467,8 +477,25 @@ install_klipper() {
             sed -i "/klippy\/extras\/cartographer.py$/d" "/usr/data/klipper/.git/info/exclude"
         fi
 
-        /usr/share/klippy-env/bin/python3 -m compileall /usr/data/klipper/klippy || exit $?
-        ln -sf /usr/data/klipper /usr/share/ || exit $?
+        [ -d /usr/share/klipper ] && rm -rf /usr/share/klipper
+        [ -e /usr/share/klipper ] && rm /usr/share/klipper
+        [ -d /usr/share/klippy-env ] && rm -rf /usr/share/klippy-env
+
+        # FIXME - this is only while we are testing the entware python3 feature
+        cd /usr/data/klipper && git switch jp_entware_python3 && cd - > /dev/null
+
+        /opt/bin/opkg install gcc libffi || exit $?
+        sync
+
+        # just check gcc version now in case there was an issue installing, no point going any further
+        gcc --version || exit $?
+
+        curl -L "https://github.com/pellcorp/downloads/raw/main/creality/k1/entware/klippy-venv.tar.gz" -o /usr/data/klippy-venv.tar.gz || exit $?
+        tar -zxf /usr/data/klippy-venv.tar.gz -C /usr/data/ || exit $?
+        rm /usr/data/klippy-venv.tar.gz
+
+        /usr/data/klippy-venv/bin/python3 -m compileall /usr/data/klipper/klippy || exit $?
+
         cp /usr/data/pellcorp/k1/services/S55klipper_service /etc/init.d/ || exit $?
 
         cp /usr/data/pellcorp/k1/services/S13mcu_update /etc/init.d/ || exit $?
@@ -576,19 +603,13 @@ install_guppyscreen() {
         cp /usr/data/pellcorp/k1/services/S99guppyscreen /etc/init.d/ || exit $?
         cp /usr/data/pellcorp/k1/guppyconfig.json /usr/data/guppyscreen || exit $?
 
-        if [ ! -d "/usr/lib/python3.8/site-packages/matplotlib-2.2.3-py3.8.egg-info" ]; then
-            echo "WARNING: Not replacing mathplotlib ft2font module. PSD graphs might not work!"
-        else
-            cp /usr/data/guppyscreen/k1_mods/ft2font.cpython-38-mipsel-linux-gnu.so /usr/lib/python3.8/site-packages/matplotlib/ || exit $?
-        fi
-
         # remove all excludes from guppyscreen
         for file in gcode_shell_command.py guppy_config_helper.py calibrate_shaper_config.py guppy_module_loader.py tmcstatus.py; do
             if grep -q "klippy/extras/${file}" "/usr/data/klipper/.git/info/exclude"; then
                 sed -i "/klippy\/extras\/$file$/d" "/usr/data/klipper/.git/info/exclude"
             fi
         done
-        
+
         # get rid of the old guppyscreen config
         [ -d /usr/data/printer_data/config/GuppyScreen ] && rm -rf /usr/data/printer_data/config/GuppyScreen
 
@@ -837,9 +858,7 @@ restart_moonraker() {
     echo "Waiting for Moonraker ..."
     while true; do
         KLIPPER_PATH=$(curl localhost:7125/printer/info 2> /dev/null | jq -r .result.klipper_path)
-        # not sure why, but moonraker will start reporting the location of klipper as /usr/data/klipper
-        # when using a soft link
-        if [ "$KLIPPER_PATH" = "/usr/share/klipper" ] || [ "$KLIPPER_PATH" = "/usr/data/klipper" ]; then
+        if [ "$KLIPPER_PATH" = "/usr/data/klipper" ]; then
             break;
         fi
 
