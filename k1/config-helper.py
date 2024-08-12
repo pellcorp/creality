@@ -124,7 +124,7 @@ def add_section(updater, section_name):
     return True
 
 
-def override_cfg(updater, override_cfg_file):
+def override_cfg(updater, override_cfg_file, after_section=None):
     overrides = ConfigUpdater(strict=False, allow_no_value=True, space_around_delimiters=False, delimiters=(':'))
     updated = False
     with open(override_cfg_file, 'r') as file:
@@ -148,18 +148,23 @@ def override_cfg(updater, override_cfg_file):
                     elif value and len(value.lines) == 1:
                         if replace_section_value(updater, section_name, entry, value.value):
                             updated = True
-            elif 'include ' in section_name: # handle an include being added
+            elif 'include ' in section_name:  # handle an include being added
                 include = section_name.replace('include ', '')
                 if add_include(updater, include):
                     updated = True
-            elif 'gcode_macro' not in section_name: # no new gcode macros
+            elif 'gcode_macro' not in section_name:  # no new gcode macros
                 new_section = overrides.get_section(section_name, None)
                 if new_section:
-                    last_section = _last_section(updater)
-                    if last_section:
-                        updater[last_section].add_before.section(new_section.detach()).space()
-                    else: # file is basically empty
-                        updater.add_section(new_section.detach())
+                    if after_section and updater.has_section(after_section):
+                        updater[after_section].add_after.section(new_section.detach()).space()
+                        # ok now we want the next section to be overriden to be after the section we just added
+                        after_section = section_name
+                    else:
+                        last_section = _last_section(updater)
+                        if last_section:
+                            updater[last_section].add_before.section(new_section.detach()).space()
+                        else: # file is basically empty
+                            updater.add_section(new_section.detach())
                     updated = True
     return updated
 
@@ -179,6 +184,7 @@ def main():
     opts.add_option("", "--section-exists", dest="section_exists", nargs=1, type="string")
     opts.add_option("", "--add-section", dest="add_section", nargs=1, type="string")
     opts.add_option("", "--overrides", dest="overrides", nargs=1, type="string")
+    opts.add_option("", "--after", dest="after", nargs=1, type="string")
     options, _ = opts.parse_args()
 
     if os.path.exists(options.config_file):
@@ -225,7 +231,7 @@ def main():
         updated = add_section(updater, options.add_section)
     elif options.overrides:
         if os.path.exists(options.overrides):
-            updated = override_cfg(updater, options.overrides)
+            updated = override_cfg(updater, options.overrides, options.after)
         else:
             raise Exception(f"Overrides Config File {options.overrides} not found")
     else:
