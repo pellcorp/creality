@@ -24,6 +24,7 @@ get_services() {
 get_pid_file() {
   service="$1"
   [ $service == "klipper" ] && service="klippy"
+  [ $service == "webcam" ] && service="mjpg_streamer"
   pid_file="/var/run/$service.pid"
   echo $pid_file
 }
