@@ -132,7 +132,8 @@ def override_cfg(updater, override_cfg_file, after_section=None):
         for section_name in overrides.sections():
             section = overrides.get_section(section_name, None)
             section_action = section.get('__action__', None)
-            if section_action and section_action.value == 'DELETED':
+            # only support deleting includes, do not support deleting any other sections
+            if 'include ' in section_name and section_action and section_action.value == 'DELETED':
                 if updater.has_section(section_name):
                     if remove_section(updater, section_name):
                         updated = True
@@ -151,20 +152,6 @@ def override_cfg(updater, override_cfg_file, after_section=None):
             elif 'include ' in section_name:  # handle an include being added
                 include = section_name.replace('include ', '')
                 if add_include(updater, include):
-                    updated = True
-            elif 'gcode_macro' not in section_name:  # no new gcode macros
-                new_section = overrides.get_section(section_name, None)
-                if new_section:
-                    if after_section and updater.has_section(after_section):
-                        updater[after_section].add_after.section(new_section.detach()).space()
-                        # ok now we want the next section to be overriden to be after the section we just added
-                        after_section = section_name
-                    else:
-                        last_section = _last_section(updater)
-                        if last_section:
-                            updater[last_section].add_before.section(new_section.detach()).space()
-                        else: # file is basically empty
-                            updater.add_section(new_section.detach())
                     updated = True
     return updated
 

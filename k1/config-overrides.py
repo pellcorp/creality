@@ -43,10 +43,10 @@ def main():
             overrides[section_name]['__action__'] = ' DELETED'
             update_overrides = True
 
-    # now new sections
+    # support adding includes only
     for section_name in updated.sections():
         # new gcode macros are not supported
-        if 'gcode_macro' not in section_name:
+        if 'include' in section_name:
             if section_name not in original.sections():
                 new_section = updated.get_section(section_name, None)
                 if len(overrides.sections()) > 0:
