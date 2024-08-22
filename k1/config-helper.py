@@ -99,6 +99,14 @@ def _first_section(updater):
     return first_section
 
 
+def _last_include(updater):
+    last_include = None
+    for section in updater.sections():
+        if section.startswith("include "):
+            last_include = section
+    return last_include
+
+
 def remove_include(updater, include):
     if updater.has_section(f"include {include}"):
         updater.remove_section(f"include {include}")
@@ -106,10 +114,17 @@ def remove_include(updater, include):
     return False
 
 
-def add_include(updater, include):
+def add_include(updater, include, printer_cfg=False):
     if not updater.has_section(f"include {include}"):
         first_section = _first_section(updater)
-        updater[first_section].add_before.section(f"include {include}").space(1)
+        if printer_cfg:
+            updater[first_section].add_before.section(f"include {include}").space(1)
+        else:
+            last_include = _last_include(updater)
+            if last_include:
+                updater[last_include].add_after.section(f"include {include}").space(1)
+            else:
+                updater[first_section].add_before.section(f"include {include}").space(1)
         return True
     return False
 
@@ -124,7 +139,7 @@ def add_section(updater, section_name):
     return True
 
 
-def override_cfg(updater, override_cfg_file, printer_cfg=False, after_section=None):
+def override_cfg(updater, override_cfg_file, printer_cfg=False, moonraker_conf=False, after_section=None):
     overrides = ConfigUpdater(strict=False, allow_no_value=True, space_around_delimiters=False, delimiters=(':'))
     updated = False
     with open(override_cfg_file, 'r') as file:
@@ -149,16 +164,16 @@ def override_cfg(updater, override_cfg_file, printer_cfg=False, after_section=No
                     elif value and len(value.lines) == 1:
                         if replace_section_value(updater, section_name, entry, value.value):
                             updated = True
-            elif 'include ' in section_name:  # handle an include being added
+            elif 'include ' in section_name:
                 include = section_name.replace('include ', '')
                 if add_include(updater, include):
                     updated = True
-            elif 'gcode_macro' not in section_name and printer_cfg:  # no new gcode macros
+            elif 'gcode_macro' not in section_name and (printer_cfg or moonraker_conf):
                 new_section = overrides.get_section(section_name, None)
                 if new_section:
                     if after_section and updater.has_section(after_section):
                         updater[after_section].add_after.section(new_section.detach()).space()
-                        # ok now we want the next section to be overriden to be after the section we just added
+                        # ok now we want the next section to be overridden to be after the section we just added
                         after_section = section_name
                     else:
                         last_section = _last_section(updater)
@@ -200,6 +215,9 @@ def main():
     updater = ConfigUpdater(strict=False, allow_no_value=True, space_around_delimiters=False, delimiters=(":", "="))
     with open(config_file, 'r') as file:
         updater.read_file(file)
+    
+    printer_cfg = 'printer.cfg' == os.path.basename(config_file)
+    moonraker_conf = 'moonraker.conf' == os.path.basename(config_file)
 
     updated = False
     if options.remove_section:
@@ -227,13 +245,12 @@ def main():
     elif options.remove_include:
         updated = remove_include(updater, options.remove_include)
     elif options.add_include:
-        updated = add_include(updater, options.add_include)
+        updated = add_include(updater, options.add_include, printer_cfg=printer_cfg)
     elif options.add_section:
         updated = add_section(updater, options.add_section)
     elif options.overrides:
         if os.path.exists(options.overrides):
-            updated = override_cfg(updater, options.overrides, after_section=options.after,
-                                   printer_cfg=('printer.cfg' == os.path.basename(config_file)))
+            updated = override_cfg(updater, options.overrides, after_section=options.after, printer_cfg=printer_cfg, moonraker_conf=moonraker_conf)
         else:
             raise Exception(f"Overrides Config File {options.overrides} not found")
     else:

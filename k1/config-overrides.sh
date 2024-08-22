@@ -50,8 +50,10 @@ override_file() {
     original_file="/usr/data/pellcorp/k1/$file"
     updated_file="/usr/data/printer_data/config/$file"
     
-    if [ "$file" = "printer.cfg" ] && [ -f "/usr/data/pellcorp-backups/printer.pellcorp.cfg" ]; then
-        original_file="/usr/data/pellcorp-backups/printer.pellcorp.cfg"
+    if [ "$file" = "printer.cfg" ] && [ -f "/usr/data/pellcorp-backups/printer.cfg" ]; then
+        original_file="/usr/data/pellcorp-backups/printer.cfg"
+    elif [ "$file" = "moonraker.conf" ] && [ -f "/usr/data/pellcorp-backups/moonraker.conf" ]; then
+      original_file="/usr/data/pellcorp-backups/moonraker.conf"
     elif [ "$file" = "bltouch.cfg" ] || [ "$file" = "microprobe.cfg" ] || [ "$file" = "start_end.cfg" ] || [ "$file" = "useful_macros.cfg" ] || [ "$file" = "guppyscreen.cfg" ] || [ "$file" = "fan_control.cfg" ]; then
         echo "INFO: Overrides not supported for $file"
         return 0
@@ -70,7 +72,7 @@ override_file() {
         if [ "$line" = "#*# <---------------------- SAVE_CONFIG ---------------------->" ]; then
           saves=true
           echo "" > /usr/data/pellcorp-overrides/printer.cfg.save_config
-          echo "INFO: Saving SAVE_CONFIG state to /usr/data/pellcorp-overrides/printer.cfg.save_config"
+          echo "INFO: Saving save config state to /usr/data/pellcorp-overrides/printer.cfg.save_config"
         fi
         if [ "$saves" = "true" ]; then
           echo "$line" >> /usr/data/pellcorp-overrides/printer.cfg.save_config
@@ -100,8 +102,8 @@ if [ "$1" = "--repo" ] || [ "$1" = "--clean-repo" ]; then
         exit 1
     fi
 else
-  if [ ! -f /usr/data/pellcorp-backups/printer.pellcorp.cfg ]; then
-      echo "ERROR: /usr/data/pellcorp-backups/printer.pellcorp.cfg missing"
+  if [ ! -f /usr/data/pellcorp-backups/printer.cfg ]; then
+      echo "ERROR: /usr/data/pellcorp-backups/printer.cfg missing"
       exit 1
   fi
 
@@ -129,6 +131,14 @@ else
       if [ $? -ne 0 ]; then
           echo "INFO: Backing up /usr/data/printer_data/moonraker.secrets..."
           cp /usr/data/printer_data/moonraker.secrets /usr/data/pellcorp-overrides/
+      fi
+  fi
+
+  # there will be no support for generating pellcorp-overrides unless you have done a factory reset
+  if [ -f /usr/data/pellcorp-backups/printer.factory.cfg ]; then
+      # the pellcorp-backups do not need .pellcorp extension, so this is to fix backwards compatible
+      if [ -f /usr/data/pellcorp-backups/printer.pellcorp.cfg ]; then
+          mv /usr/data/pellcorp-backups/printer.pellcorp.cfg /usr/data/pellcorp-backups/printer.cfg
       fi
   fi
 

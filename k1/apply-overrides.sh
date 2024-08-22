@@ -61,12 +61,12 @@ function apply_overrides() {
         if [ -f $overrides_dir/printer.cfg.save_config ]; then
           # if the printer.cfg already has SAVE_CONFIG skip applying it again
           if ! grep -q "#*# <---------------------- SAVE_CONFIG ---------------------->" /usr/data/printer_data/config/printer.cfg ; then
-            echo "Applying SAVE_CONFIG state to /usr/data/printer_data/config/printer.cfg"
+            echo "Applying save config state to /usr/data/printer_data/config/printer.cfg"
             echo "" >> /usr/data/printer_data/config/printer.cfg
             cat $overrides_dir/printer.cfg.save_config >> /usr/data/printer_data/config/printer.cfg
             return_status=1
           else
-            echo "Skipped applying SAVE_CONFIG state to /usr/data/printer_data/config/printer.cfg"
+            echo "Skipped applying save config state to /usr/data/printer_data/config/printer.cfg"
           fi
         fi
 
