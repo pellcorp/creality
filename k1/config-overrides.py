@@ -32,6 +32,8 @@ def main():
     overrides = ConfigUpdater(strict=False, allow_no_value=True, space_around_delimiters=False, delimiters=(":", "="))
     
     update_overrides = False
+    printer_cfg = 'printer.cfg' == os.path.basename(args.original)
+    moonraker_conf = 'moonraker.conf' == os.path.basename(args.original)
 
     # support deleting includes only
     for section_name in original.sections():
@@ -43,10 +45,9 @@ def main():
             overrides[section_name]['__action__'] = ' DELETED'
             update_overrides = True
 
-    # support adding includes only
     for section_name in updated.sections():
-        # new gcode macros are not supported
-        if 'include' in section_name:
+        # so for printer.cfg and moonraker.conf a new section can be saved, but it can't be a gcode macro
+        if 'gcode_macro' not in section_name and (printer_cfg or moonraker_conf):
             if section_name not in original.sections():
                 new_section = updated.get_section(section_name, None)
                 if len(overrides.sections()) > 0:

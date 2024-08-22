@@ -458,15 +458,6 @@ install_klipper() {
             [ -d /usr/share/klipper ] && rm -rf /usr/share/klipper
         fi
 
-        if [ -d /usr/data/cartographer-klipper ]; then
-            rm -rf /usr/data/cartographer-klipper
-        fi
-
-        # we used to copy cartographer from cartographer-klipper repo now its integrated so remove exclude
-        if grep -q "klippy/extras/cartographer.py" "/usr/data/klipper/.git/info/exclude"; then
-            sed -i "/klippy\/extras\/cartographer.py$/d" "/usr/data/klipper/.git/info/exclude"
-        fi
-
         /usr/share/klippy-env/bin/python3 -m compileall /usr/data/klipper/klippy || exit $?
         ln -sf /usr/data/klipper /usr/share/ || exit $?
         cp /usr/data/pellcorp/k1/services/S55klipper_service /etc/init.d/ || exit $?
@@ -626,18 +617,55 @@ setup_probe() {
     return 0
 }
 
+install_cartographer_klipper() {
+    local mode=$1
+
+    grep -q "cartographer-klipper" /usr/data/pellcorp.done
+    if [ $? -ne 0 ]; then
+        echo ""
+        if [ "$mode" = "update" ] && [ -d /usr/data/cartographer-klipper ]; then
+            echo "Updating cartographer-klipper ..."
+
+            update_repo /usr/data/cartographer-klipper || exit $?
+        else
+            echo "Installing cartographer-klipper ..."
+
+            if [ -d /usr/data/cartographer-klipper ]; then
+                rm -rf /usr/data/cartographer-klipper
+            fi
+
+            git clone https://github.com/Cartographer3D/cartographer-klipper.git /usr/data/cartographer-klipper || exit $?
+        fi
+
+        echo "Running cartographer-klipper installer ..."
+        bash /usr/data/cartographer-klipper/install.sh || exit $?
+        /usr/share/klippy-env/bin/python3 -m compileall /usr/data/klipper/klippy || exit $?
+
+        echo "cartographer-klipper" >> /usr/data/pellcorp.done
+        sync
+        return 1
+    fi
+    return 0
+}
+
 cleanup_probe() {
     local probe=$1
 
-    if [ "$probe" = "cartographer" ]; then
-        [ -f /usr/data/printer_data/config/cartographer_macro.cfg ] &&  rm /usr/data/printer_data/config/cartographer_macro.cfg
-        $CONFIG_HELPER --remove-include "cartographer_macro.cfg" || exit $?
+    if [ "$probe" = "cartographer" ] || [ "$probe" = "cartotouch" ]; then
+        [ -f /usr/data/printer_data/config/${probe}_macro.cfg ] && rm /usr/data/printer_data/config/${probe}_macro.cfg
+        $CONFIG_HELPER --remove-include "${probe}_macro.cfg" || exit $?
 
         $CONFIG_HELPER --remove-section-entry "stepper_z" "homing_retract_dist" || exit $?
+        $CONFIG_HELPER --file moonraker.conf --remove-include "cartographer.conf" || exit $?
     fi
 
-    [ -f /usr/data/printer_data/config/$probe.cfg ] &&  rm /usr/data/printer_data/config/$probe.cfg
+    [ -f /usr/data/printer_data/config/$probe.cfg ] && rm /usr/data/printer_data/config/$probe.cfg
     $CONFIG_HELPER --remove-include "$probe.cfg" || exit $?
+
+    # we use the cartographer includes
+    if [ "$probe" = "cartotouch" ]; then
+        probe=cartographer
+    fi
 
     if [ "$MODEL" = "CR-K1" ] || [ "$MODEL" = "K1C" ]; then
         [ -f /usr/data/printer_data/config/$probe-k1.cfg ] && rm /usr/data/printer_data/config/$probe-k1.cfg
@@ -657,6 +685,7 @@ setup_bltouch() {
         cleanup_probe cartographer
         cleanup_probe microprobe
         cleanup_probe btteddy
+        cleanup_probe cartotouch
 
         if [ -f /usr/data/printer_data/config/bltouch.cfg ]; then
           rm /usr/data/printer_data/config/bltouch.cfg
@@ -692,6 +721,7 @@ setup_microprobe() {
         cleanup_probe cartographer
         cleanup_probe bltouch
         cleanup_probe btteddy
+        cleanup_probe cartotouch
 
         if [ -f /usr/data/printer_data/config/microprobe.cfg ]; then
           rm /usr/data/printer_data/config/microprobe.cfg
@@ -725,6 +755,10 @@ setup_cartographer() {
         cleanup_probe bltouch
         cleanup_probe microprobe
         cleanup_probe btteddy
+        cleanup_probe cartotouch
+
+        cp /usr/data/pellcorp/k1/cartographer.conf /usr/data/printer_data/config/ || exit $?
+        $CONFIG_HELPER --file moonraker.conf --add-include "cartographer.conf" || exit $?
 
         cp /usr/data/pellcorp/k1/cartographer_macro.cfg /usr/data/printer_data/config/ || exit $?
         $CONFIG_HELPER --add-include "cartographer_macro.cfg" || exit $?
@@ -759,6 +793,49 @@ setup_cartographer() {
     return 0
 }
 
+setup_cartotouch() {
+    grep -q "cartotouch-probe" /usr/data/pellcorp.done
+    if [ $? -ne 0 ]; then
+        echo ""
+        echo "Setting up carto touch ..."
+
+        cleanup_probe bltouch
+        cleanup_probe microprobe
+        cleanup_probe btteddy
+        cleanup_probe cartographer
+
+        cp /usr/data/pellcorp/k1/cartographer.conf /usr/data/printer_data/config/ || exit $?
+        $CONFIG_HELPER --file moonraker.conf --add-include "cartographer.conf" || exit $?
+
+        cp /usr/data/pellcorp/k1/cartotouch_macro.cfg /usr/data/printer_data/config/ || exit $?
+        $CONFIG_HELPER --add-include "cartotouch_macro.cfg" || exit $?
+
+        $CONFIG_HELPER --overrides "/usr/data/pellcorp/k1/cartotouch.cfg" || exit $?
+
+        CARTO_SERIAL_ID=$(ls /dev/serial/by-id/usb-Cartographer* | head -1)
+        if [ "x$CARTO_SERIAL_ID" != "x" ]; then
+            $CONFIG_HELPER --file printer.cfg --replace-section-entry "scanner" "serial" "$CARTO_SERIAL_ID" || exit $?
+        else
+            echo "WARNING: There does not seem to be a cartographer attached - skipping auto configuration"
+        fi
+
+        if [ "$MODEL" = "CR-K1" ] || [ "$MODEL" = "K1C" ]; then
+            cp /usr/data/pellcorp/k1/cartographer-k1.cfg /usr/data/printer_data/config/ || exit $?
+            $CONFIG_HELPER --add-include "cartographer-k1.cfg" || exit $?
+            $CONFIG_HELPER --replace-section-entry "stepper_y" "position_max" "210" || exit $?
+        elif [ "$MODEL" = "CR-K1 Max" ]; then
+            cp /usr/data/pellcorp/k1/cartographer-k1m.cfg /usr/data/printer_data/config/ || exit $?
+            $CONFIG_HELPER --add-include "cartographer-k1m.cfg" || exit $?
+            $CONFIG_HELPER --replace-section-entry "stepper_y" "position_max" "284" || exit $?
+        fi
+
+        echo "cartotouch-probe" >> /usr/data/pellcorp.done
+        sync
+        return 1
+    fi
+    return 0
+}
+
 setup_btteddy() {
     grep -q "btteddy-probe" /usr/data/pellcorp.done
     if [ $? -ne 0 ]; then
@@ -768,6 +845,7 @@ setup_btteddy() {
         cleanup_probe bltouch
         cleanup_probe microprobe
         cleanup_probe cartographer
+        cleanup_probe cartotouch
 
         cp /usr/data/pellcorp/k1/btteddy.cfg /usr/data/printer_data/config/ || exit $?
         
@@ -864,6 +942,8 @@ fi
 probe=
 if [ -f /usr/data/printer_data/config/bltouch-k1.cfg ] || [ -f /usr/data/printer_data/config/bltouch-k1m.cfg ]; then
     probe=bltouch
+elif grep -q "\[scanner\]" /usr/data/printer_data/config/printer.cfg; then
+    probe=cartotouch
 elif [ -f /usr/data/printer_data/config/cartographer-k1.cfg ] || [ -f /usr/data/printer_data/config/cartographer-k1m.cfg ]; then
     probe=cartographer
 elif [ -f /usr/data/printer_data/config/microprobe-k1.cfg ] || [ -f /usr/data/printer_data/config/microprobe-k1m.cfg ]; then
@@ -887,7 +967,7 @@ while true; do
     elif [ "$1" = "--debug" ]; then
         shift
         debug=true
-    elif [ "$1" = "microprobe" ] || [ "$1" = "bltouch" ] || [ "$1" = "cartographer" ] || [ "$1" = "btteddy" ]; then
+    elif [ "$1" = "microprobe" ] || [ "$1" = "bltouch" ] || [ "$1" = "cartographer" ] || [ "$1" = "cartotouch" ] || [ "$1" = "btteddy" ]; then
         if [ -n "$probe" ] && [ "$1" != "$probe" ]; then
             echo ""
             echo "WARNING: About to switch from $probe to $1!"
@@ -916,8 +996,13 @@ if [ "$skip_overrides" = "true" ]; then
     echo "INFO: Configuration overrides will not be saved or applied"
 fi
 
+# the pellcorp-backups do not need .pellcorp extension, so this is to fix backwards compatible
+if [ -f /usr/data/pellcorp-backups/printer.pellcorp.cfg ]; then
+    mv /usr/data/pellcorp-backups/printer.pellcorp.cfg /usr/data/pellcorp-backups/printer.cfg
+fi
+
 if [ "$mode" = "reinstall" ] || [ "$mode" = "update" ]; then
-    if [ "$skip_overrides" != "true" ] && [ -f /usr/data/pellcorp-backups/printer.pellcorp.cfg ]; then
+    if [ "$skip_overrides" != "true" ] && [ -f /usr/data/pellcorp-backups/printer.cfg ]; then
         /usr/data/pellcorp/k1/config-overrides.sh
     fi
 
@@ -928,9 +1013,12 @@ if [ "$mode" = "reinstall" ] || [ "$mode" = "update" ]; then
     # if we took a post factory reset backup for a reinstall restore it now
     if [ -f /usr/data/pellcorp-backups/printer.factory.cfg ]; then
         cp /usr/data/pellcorp-backups/printer.factory.cfg /usr/data/printer_data/config/printer.cfg
-        # for a reinstall need to trash that file
-        if [ -f /usr/data/pellcorp-backups/printer.pellcorp.cfg ]; then
-            rm /usr/data/pellcorp-backups/printer.pellcorp.cfg
+
+        if [ -f /usr/data/pellcorp-backups/printer.cfg ]; then
+            rm /usr/data/pellcorp-backups/printer.cfg
+        fi
+        if [ -f /usr/data/pellcorp-backups/moonraker.conf ]; then
+            rm /usr/data/pellcorp-backups/moonraker.conf
         fi
     elif [ "$mode" = "update" ]; then
         echo "ERROR: Update mode is not available to users who have not done a factory reset since 27th of June 2024"
@@ -967,12 +1055,18 @@ install_kamp=$?
 install_klipper $mode
 install_klipper=$?
 
+install_cartographer_klipper=0
+if [ "$probe" = "cartographer" ] || [ "$probe" = "cartotouch" ]; then
+  install_cartographer_klipper $mode
+  install_cartographer_klipper=$?
+fi
+
 # if moonraker was installed or updated
-if [ $install_moonraker -ne 0 ]; then
+if [ $install_moonraker -ne 0 ] || [ $install_cartographer_klipper -ne 0 ]; then
     restart_moonraker
 fi
 
-if [ $install_klipper -ne 0 ] || [ $install_moonraker -ne 0 ] || [ $install_nginx -ne 0 ] || [ $install_fluidd -ne 0 ] || [ $install_mainsail -ne 0 ]; then
+if [ $install_klipper -ne 0 ] || [ $install_moonraker -ne 0 ] || [ $install_nginx -ne 0 ] || [ $install_fluidd -ne 0 ] || [ $install_mainsail -ne 0 ] || [ $install_cartographer_klipper -ne 0 ]; then
     echo ""
     echo "Restarting Nginx ..."
     /etc/init.d/S50nginx_service restart
@@ -987,6 +1081,9 @@ setup_probe=$?
 # installing carto must come after installing klipper
 if [ "$probe" = "cartographer" ]; then
     setup_cartographer
+    setup_probe_specific=$?
+elif [ "$probe" = "cartotouch" ]; then
+    setup_cartotouch
     setup_probe_specific=$?
 elif [ "$probe" = "bltouch" ]; then
     setup_bltouch
@@ -1003,8 +1100,13 @@ else
 fi
 
 # there will be no support for generating pellcorp-overrides unless you have done a factory reset
-if [ ! -f /usr/data/pellcorp-backups/printer.pellcorp.cfg ] && [ -f /usr/data/pellcorp-backups/printer.factory.cfg ]; then
-    cp /usr/data/printer_data/config/printer.cfg /usr/data/pellcorp-backups/printer.pellcorp.cfg
+if [ -f /usr/data/pellcorp-backups/printer.factory.cfg ]; then
+    if [ ! -f /usr/data/pellcorp-backups/printer.cfg ]; then
+        cp /usr/data/printer_data/config/printer.cfg /usr/data/pellcorp-backups/printer.cfg
+    fi
+    if [ ! -f /usr/data/pellcorp-backups/moonraker.conf ]; then
+        cp /usr/data/printer_data/config/moonraker.conf /usr/data/pellcorp-backups/moonraker.conf
+    fi
 fi
 
 apply_overrides=0
@@ -1018,7 +1120,7 @@ if [ "$skip_overrides" != "true" ]; then
     fi
 fi
 
-if [ $apply_overrides -ne 0 ] || [ $install_kamp -ne 0 ] || [ $install_klipper -ne 0 ] || [ $install_guppyscreen -ne 0 ] || [ $setup_probe -ne 0 ] || [ $setup_probe_specific -ne 0 ]; then
+if [ $apply_overrides -ne 0 ] || [ $install_cartographer_klipper -ne 0 ] || [ $install_kamp -ne 0 ] || [ $install_klipper -ne 0 ] || [ $install_guppyscreen -ne 0 ] || [ $setup_probe -ne 0 ] || [ $setup_probe_specific -ne 0 ]; then
     echo ""
     echo "Restarting Klipper ..."
     /etc/init.d/S55klipper_service restart
