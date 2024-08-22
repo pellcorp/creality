@@ -124,7 +124,7 @@ def add_section(updater, section_name):
     return True
 
 
-def override_cfg(updater, override_cfg_file, after_section=None):
+def override_cfg(updater, override_cfg_file, printer_cfg=False, after_section=None):
     overrides = ConfigUpdater(strict=False, allow_no_value=True, space_around_delimiters=False, delimiters=(':'))
     updated = False
     with open(override_cfg_file, 'r') as file:
@@ -153,6 +153,20 @@ def override_cfg(updater, override_cfg_file, after_section=None):
                 include = section_name.replace('include ', '')
                 if add_include(updater, include):
                     updated = True
+            elif 'gcode_macro' not in section_name and printer_cfg:  # no new gcode macros
+                new_section = overrides.get_section(section_name, None)
+                if new_section:
+                    if after_section and updater.has_section(after_section):
+                        updater[after_section].add_after.section(new_section.detach()).space()
+                        # ok now we want the next section to be overriden to be after the section we just added
+                        after_section = section_name
+                    else:
+                        last_section = _last_section(updater)
+                        if last_section:
+                            updater[last_section].add_before.section(new_section.detach()).space()
+                        else: # file is basically empty
+                            updater.add_section(new_section.detach())
+                    updated = True
     return updated
 
 
@@ -178,7 +192,7 @@ def main():
         config_file = options.config_file
     elif os.path.exists(f"{PRINTER_CONFIG_DIR}/{options.config_file}"):
         config_file = f"{PRINTER_CONFIG_DIR}/{options.config_file}"
-    elif os.path.exists(f"{os.environ['HOME']}/{options.config_file}"): # mostly for local testing
+    elif os.path.exists(f"{os.environ['HOME']}/{options.config_file}"):  # mostly for local testing
         config_file = f"{os.environ['HOME']}/{options.config_file}"
     else:
         raise Exception(f"Config File {options.config_file} not found")
@@ -218,7 +232,8 @@ def main():
         updated = add_section(updater, options.add_section)
     elif options.overrides:
         if os.path.exists(options.overrides):
-            updated = override_cfg(updater, options.overrides, options.after)
+            updated = override_cfg(updater, options.overrides, after_section=options.after,
+                                   printer_cfg=('printer.cfg' == os.path.basename(config_file)))
         else:
             raise Exception(f"Overrides Config File {options.overrides} not found")
     else:
@@ -233,7 +248,7 @@ def main():
                 updater.write(file)
     elif options.output:
         with open(options.output, 'w') as file:
-                updater.write(file)
+            updater.write(file)
 
     sys.exit(exit_code)
 
