@@ -108,6 +108,14 @@ if [ "$1" = "--repo" ] || [ "$1" = "--clean-repo" ]; then
         exit 1
     fi
 else
+  # there will be no support for generating pellcorp-overrides unless you have done a factory reset
+  if [ -f /usr/data/pellcorp-backups/printer.factory.cfg ]; then
+      # the pellcorp-backups do not need .pellcorp extension, so this is to fix backwards compatible
+      if [ -f /usr/data/pellcorp-backups/printer.pellcorp.cfg ]; then
+          mv /usr/data/pellcorp-backups/printer.pellcorp.cfg /usr/data/pellcorp-backups/printer.cfg
+      fi
+  fi
+
   if [ ! -f /usr/data/pellcorp-backups/printer.cfg ]; then
       echo "ERROR: /usr/data/pellcorp-backups/printer.cfg missing"
       exit 1
@@ -137,14 +145,6 @@ else
       if [ $? -ne 0 ]; then
           echo "INFO: Backing up /usr/data/printer_data/moonraker.secrets..."
           cp /usr/data/printer_data/moonraker.secrets /usr/data/pellcorp-overrides/
-      fi
-  fi
-
-  # there will be no support for generating pellcorp-overrides unless you have done a factory reset
-  if [ -f /usr/data/pellcorp-backups/printer.factory.cfg ]; then
-      # the pellcorp-backups do not need .pellcorp extension, so this is to fix backwards compatible
-      if [ -f /usr/data/pellcorp-backups/printer.pellcorp.cfg ]; then
-          mv /usr/data/pellcorp-backups/printer.pellcorp.cfg /usr/data/pellcorp-backups/printer.cfg
       fi
   fi
 
