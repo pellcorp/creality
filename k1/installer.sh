@@ -856,9 +856,11 @@ setup_btteddy() {
             echo "WARNING: There does not seem to be a btt eddy attached - skipping auto configuration"
         fi
         $CONFIG_HELPER --add-include "btteddy.cfg" || exit $?
-
         cp /usr/data/pellcorp/k1/btteddy_macro.cfg /usr/data/printer_data/config/ || exit $?
         $CONFIG_HELPER --add-include "btteddy_macro.cfg" || exit $?
+
+        $CONFIG_HELPER --add-section "probe_eddy_current btt_eddy" || exit $?
+        $CONFIG_HELPER --replace-section-entry "probe_eddy_current btt_eddy" "z_offset" "1.0" || exit $?
 
         if [ "$MODEL" = "CR-K1" ] || [ "$MODEL" = "K1C" ]; then
             cp /usr/data/pellcorp/k1/btteddy-k1.cfg /usr/data/printer_data/config/ || exit $?
@@ -866,7 +868,7 @@ setup_btteddy() {
             # the max for the current initial mount which is not really ideal
             $CONFIG_HELPER --replace-section-entry "stepper_y" "position_max" "210" || exit $?
         elif [ "$MODEL" = "CR-K1 Max" ]; then
-            cp /usr/data/pellcorp/k1/cartographer-k1m.cfg /usr/data/printer_data/config/ || exit $?
+            cp /usr/data/pellcorp/k1/btteddy-k1m.cfg /usr/data/printer_data/config/ || exit $?
             $CONFIG_HELPER --add-include "btteddy-k1m.cfg" || exit $?
             $CONFIG_HELPER --replace-section-entry "stepper_y" "position_max" "284" || exit $?
         fi
