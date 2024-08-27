@@ -420,10 +420,24 @@ install_kamp() {
 
 install_klipper() {
     local mode=$1
+    local probe=$2
 
     grep -q "klipper" /usr/data/pellcorp.done
     if [ $? -ne 0 ]; then
         echo ""
+
+        klipper_repo=klipper
+        # pellcorp/k1-carto-klipper is a version of klipper that is the same as k1-klipper/klipper k1_carto branch
+        if [ "$probe" = "cartographer" ] || [ "$probe" = "cartotouch" ]; then
+            klipper_repo=k1-carto-klipper
+        fi
+
+        if [ -d /usr/data/klipper/.git ]; then
+            remote_repo=$(git remote get-url origin | awk -F '/' '{print $2}' | sed 's/.git//g')
+            if [ "$remote_repo" != "$klipper_repo" ]; then
+                rm -rf /usr/data/klipper/
+            fi
+        fi
 
         if [ -f /etc/init.d/S57klipper_mcu ]; then
             /etc/init.d/S55klipper_service stop
@@ -446,14 +460,15 @@ install_klipper() {
                 rm -rf /usr/data/klipper
             fi
 
-            if [ "$AF_GIT_CLONE" = "ssh" ]; then
+            # currently only support pellcorp/klipper not pellcorp/k1-carto-klipper
+            if [ "$AF_GIT_CLONE" = "ssh" ] && [ "$klipper_repo" = "klipper" ]; then
                 export GIT_SSH_IDENTITY=klipper
                 export GIT_SSH=/usr/data/pellcorp/k1/ssh/git-ssh.sh
-                git clone git@github.com:pellcorp/klipper.git /usr/data/klipper || exit $?
+                git clone git@github.com:pellcorp/${klipper_repo}.git /usr/data/klipper || exit $?
                 # reset the origin url to make moonraker happy
-                cd /usr/data/klipper && git remote set-url origin https://github.com/pellcorp/klipper.git && cd - > /dev/null
+                cd /usr/data/klipper && git remote set-url origin https://github.com/pellcorp/${klipper_repo}.git && cd - > /dev/null
             else
-                git clone https://github.com/pellcorp/klipper.git /usr/data/klipper || exit $?
+                git clone https://github.com/pellcorp/${klipper_repo}.git /usr/data/klipper || exit $?
             fi
             [ -d /usr/share/klipper ] && rm -rf /usr/share/klipper
         fi
@@ -1054,7 +1069,7 @@ install_mainsail=$?
 install_kamp $mode
 install_kamp=$?
 
-install_klipper $mode
+install_klipper $mode $probe
 install_klipper=$?
 
 install_cartographer_klipper=0
