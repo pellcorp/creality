@@ -86,7 +86,7 @@ def main():
                 updated_value = updated_section.get(key, None)
 
                 # no support for updating gcode macros or homing override config but any other gcode values if any are fair game
-                if (((section_name == 'gcode_macro' or section_name == 'homing_override') and key == 'gcode')
+                if ((('gcode_macro' in section_name or section_name == 'homing_override') and key == 'gcode')
                         or ((section_name == 'scanner' or section_name == 'cartographer' or section_name == 'mcu eddy') and key == 'serial')):
                     continue
 
