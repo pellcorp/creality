@@ -39,11 +39,9 @@ function apply_overrides() {
                 cp /usr/data/printer_data/config/$file /usr/data/printer_data/config/${file}.override.bkp
                 $CONFIG_HELPER --file $file --overrides $overrides_dir/$file || exit $?
 
-                # if users had their own version of guppyscreen.cfg their config will break because I removed the guppy_module_loader
-                # so be a nice to people and clean that shit up
-                if [ "$file" = "guppyscreen.cfg" ]; then
+                if [ "$file" = "guppyscreen.cfg" ]; then  # we removed guppy module loader completely
                     /usr/data/pellcorp/k1/config-helper.py --file guppyscreen.cfg --remove-section guppy_module_loader
-                elif [ "$file" = "moonraker.conf" ]; then
+                elif [ "$file" = "moonraker.conf" ]; then  # we moved cartographer to a separate cartographer.conf include
                     /usr/data/pellcorp/k1/config-helper.py --file moonraker.conf --remove-section "update_manager cartographer"
                 fi
               else # if switching probes we might run into this

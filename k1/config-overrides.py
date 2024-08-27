@@ -47,7 +47,8 @@ def main():
 
     for section_name in updated.sections():
         # so for printer.cfg and moonraker.conf a new section can be saved, but it can't be a gcode macro
-        if 'gcode_macro' not in section_name and (printer_cfg or moonraker_conf):
+        # and we are ignoring a new scanner section in config overrides due to migrating to cartotouch.cfg
+        if section_name != 'scanner' and 'gcode_macro' not in section_name and (printer_cfg or moonraker_conf):
             if section_name not in original.sections():
                 new_section = updated.get_section(section_name, None)
                 if len(overrides.sections()) > 0:
@@ -85,9 +86,16 @@ def main():
                 original_value = original_section.get(key, None)
                 updated_value = updated_section.get(key, None)
 
-                # no support for updating gcode macros or homing override config but any other gcode values if any are fair game
-                if ((('gcode_macro' in section_name or section_name == 'homing_override') and key == 'gcode')
-                        or ((section_name == 'scanner' or section_name == 'cartographer' or section_name == 'mcu eddy') and key == 'serial')):
+                # do not generate any overrides for scanner in printer.cfg because we are migrating to cartotouch.cfg
+                if printer_cfg and section_name == 'scanner':
+                    continue
+
+                # no gcode macros or sensorless gcode overrides
+                if ('gcode_macro' in section_name or section_name == 'homing_override') and key == 'gcode':
+                    continue
+
+                # do not save the serial field
+                if (section_name == 'scanner' or section_name == 'cartographer' or section_name == 'mcu eddy') and key == 'serial':
                     continue
 
                 if (not original_value and updated_value and updated_value.value) or (original_value and original_value.value and updated_value and updated_value.value and original_value.value != updated_value.value):

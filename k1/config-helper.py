@@ -179,7 +179,7 @@ def override_cfg(updater, override_cfg_file, printer_cfg=False, moonraker_conf=F
                         last_section = _last_section(updater)
                         if last_section:
                             updater[last_section].add_before.section(new_section.detach()).space()
-                        else: # file is basically empty
+                        else:  # file is basically empty
                             updater.add_section(new_section.detach())
                     updated = True
     return updated
