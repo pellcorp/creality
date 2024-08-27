@@ -827,13 +827,30 @@ setup_cartotouch() {
         cp /usr/data/pellcorp/k1/cartotouch_macro.cfg /usr/data/printer_data/config/ || exit $?
         $CONFIG_HELPER --add-include "cartotouch_macro.cfg" || exit $?
 
-        $CONFIG_HELPER --overrides "/usr/data/pellcorp/k1/cartotouch.cfg" || exit $?
+        $CONFIG_HELPER --replace-section-entry "stepper_z" "homing_retract_dist" "0" || exit $?
+
+        cp /usr/data/pellcorp/k1/cartotouch.cfg /usr/data/printer_data/config/ || exit $?
+        $CONFIG_HELPER --add-include "cartotouch.cfg" || exit $?
+
+        # a slight change to the way cartotouch is configured
+        $CONFIG_HELPER --remove-section "force_move" || exit $?
 
         CARTO_SERIAL_ID=$(ls /dev/serial/by-id/usb-Cartographer* | head -1)
         if [ -n "$CARTO_SERIAL_ID" ]; then
-            $CONFIG_HELPER --file printer.cfg --replace-section-entry "scanner" "serial" "$CARTO_SERIAL_ID" || exit $?
+            $CONFIG_HELPER --file cartotouch.cfg --replace-section-entry "scanner" "serial" "$CARTO_SERIAL_ID" || exit $?
         else
             echo "WARNING: There does not seem to be a cartographer attached - skipping auto configuration"
+        fi
+
+        # as we are referencing the included cartographer now we want to remove the included value
+        # from any previous installation
+        $CONFIG_HELPER --remove-section "scanner" || exit $?
+        $CONFIG_HELPER --add-section "scanner" || exit $?
+
+        if grep -q "#*# [scanner]" /usr/data/pellcorp-overrides/printer.cfg.save_config 2> /dev/null; then
+          $CONFIG_HELPER --replace-section-entry "scanner" "#scanner_touch_z_offset" "0.05" || exit $?
+        else
+          $CONFIG_HELPER --replace-section-entry "scanner" "scanner_touch_z_offset" "0.05" || exit $?
         fi
 
         if [ "$MODEL" = "CR-K1" ] || [ "$MODEL" = "K1C" ]; then
