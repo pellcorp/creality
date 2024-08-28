@@ -781,15 +781,14 @@ setup_cartographer() {
         $CONFIG_HELPER --replace-section-entry "stepper_z" "homing_retract_dist" "0" || exit $?
 
         cp /usr/data/pellcorp/k1/cartographer.cfg /usr/data/printer_data/config/ || exit $?
+        $CONFIG_HELPER --add-include "cartographer.cfg" || exit $?
 
         CARTO_SERIAL_ID=$(ls /dev/serial/by-id/usb-Cartographer* | head -1)
-        if [ "x$CARTO_SERIAL_ID" != "x" ]; then
+        if [ -n "$CARTO_SERIAL_ID" ]; then
             $CONFIG_HELPER --file cartographer.cfg --replace-section-entry "cartographer" "serial" "$CARTO_SERIAL_ID" || exit $?
         else
             echo "WARNING: There does not seem to be a cartographer attached - skipping auto configuration"
         fi
-
-        $CONFIG_HELPER --add-include "cartographer.cfg" || exit $?
 
         if [ "$MODEL" = "CR-K1" ] || [ "$MODEL" = "K1C" ]; then
             cp /usr/data/pellcorp/k1/cartographer-k1.cfg /usr/data/printer_data/config/ || exit $?
@@ -828,7 +827,7 @@ setup_cartotouch() {
         $CONFIG_HELPER --overrides "/usr/data/pellcorp/k1/cartotouch.cfg" || exit $?
 
         CARTO_SERIAL_ID=$(ls /dev/serial/by-id/usb-Cartographer* | head -1)
-        if [ "x$CARTO_SERIAL_ID" != "x" ]; then
+        if [ -n "$CARTO_SERIAL_ID" ]; then
             $CONFIG_HELPER --file printer.cfg --replace-section-entry "scanner" "serial" "$CARTO_SERIAL_ID" || exit $?
         else
             echo "WARNING: There does not seem to be a cartographer attached - skipping auto configuration"
@@ -865,7 +864,7 @@ setup_btteddy() {
         cp /usr/data/pellcorp/k1/btteddy.cfg /usr/data/printer_data/config/ || exit $?
         
         BTTEDDY_SERIAL_ID=$(ls /dev/serial/by-id/usb-Klipper_rp2040* | head -1)
-        if [ "x$BTTEDDY_SERIAL_ID" != "x" ]; then
+        if [ -n "$BTTEDDY_SERIAL_ID" ]; then
             $CONFIG_HELPER --file btteddy.cfg --replace-section-entry "mcu eddy" "serial" "$BTTEDDY_SERIAL_ID" || exit $?
         else
             echo "WARNING: There does not seem to be a btt eddy attached - skipping auto configuration"
@@ -874,8 +873,15 @@ setup_btteddy() {
         cp /usr/data/pellcorp/k1/btteddy_macro.cfg /usr/data/printer_data/config/ || exit $?
         $CONFIG_HELPER --add-include "btteddy_macro.cfg" || exit $?
 
+        $CONFIG_HELPER --remove-section "probe_eddy_current btt_eddy" || exit $?
         $CONFIG_HELPER --add-section "probe_eddy_current btt_eddy" || exit $?
-        $CONFIG_HELPER --replace-section-entry "probe_eddy_current btt_eddy" "z_offset" "1.0" || exit $?
+
+        # for an update the save config has not as yet been reapplied to printer.cfg so we need to check the overrides
+        if grep -q "#*# [probe_eddy_current btt_eddy]" /usr/data/pellcorp-overrides/printer.cfg.save_config 2> /dev/null; then
+          $CONFIG_HELPER --replace-section-entry "probe_eddy_current btt_eddy" "#z_offset" "1.0" || exit $?
+        else
+          $CONFIG_HELPER --replace-section-entry "probe_eddy_current btt_eddy" "z_offset" "1.0" || exit $?
+        fi
 
         if [ "$MODEL" = "CR-K1" ] || [ "$MODEL" = "K1C" ]; then
             cp /usr/data/pellcorp/k1/btteddy-k1.cfg /usr/data/printer_data/config/ || exit $?
@@ -1031,12 +1037,11 @@ if [ "$mode" = "reinstall" ] || [ "$mode" = "update" ]; then
     if [ -f /usr/data/pellcorp-backups/printer.factory.cfg ]; then
         cp /usr/data/pellcorp-backups/printer.factory.cfg /usr/data/printer_data/config/printer.cfg
 
-        if [ -f /usr/data/pellcorp-backups/printer.cfg ]; then
-            rm /usr/data/pellcorp-backups/printer.cfg
-        fi
-        if [ -f /usr/data/pellcorp-backups/moonraker.conf ]; then
-            rm /usr/data/pellcorp-backups/moonraker.conf
-        fi
+        for file in printer.cfg moonraker.conf; do
+            if [ -f /usr/data/pellcorp-backups/$file ]; then
+                rm /usr/data/pellcorp-backups/$file
+            fi
+        done
     elif [ "$mode" = "update" ]; then
         echo "ERROR: Update mode is not available to users who have not done a factory reset since 27th of June 2024"
         exit 1
