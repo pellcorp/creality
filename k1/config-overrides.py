@@ -72,10 +72,7 @@ def main():
         updated_section = updated.get_section(section_name, None)
         if original_section and updated_section:
             for key in original_section.keys():
-<<<<<<< Updated upstream
                 # cannot delete a section value unless its from printer.cfg
-=======
->>>>>>> Stashed changes
                 if key not in updated_section and printer_cfg:
                     if not overrides.has_section(section_name):
                         if len(overrides.sections()) > 0:
