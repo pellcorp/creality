@@ -35,9 +35,9 @@ def main():
     printer_cfg = 'printer.cfg' == os.path.basename(args.original)
     moonraker_conf = 'moonraker.conf' == os.path.basename(args.original)
 
-    # support deleting includes only
+    # only support deleting sections from printer.cfg for now
     for section_name in original.sections():
-        if 'include' in section_name and section_name not in updated.sections():
+        if section_name not in updated.sections() and printer_cfg:
             if len(overrides.sections()) > 0:
                 overrides[overrides.sections()[-1]].add_after.space().section(section_name)
             else:
