@@ -50,17 +50,15 @@ override_file() {
     original_file="/usr/data/pellcorp/k1/$file"
     updated_file="/usr/data/printer_data/config/$file"
     
-    if [ "$file" = "printer.cfg" ] && [ -f "/usr/data/pellcorp-backups/printer.cfg" ]; then
-        original_file="/usr/data/pellcorp-backups/printer.cfg"
-    elif [ "$file" = "moonraker.conf" ]; then
-        # config overrides only supported if we have the backup moonraker.conf
-        if [ -f "/usr/data/pellcorp-backups/moonraker.conf" ]; then
-            original_file="/usr/data/pellcorp-backups/moonraker.conf"
+    if [ "$file" = "printer.cfg" ] || [ "$file" = "moonraker.conf" ]; then
+        # config overrides only supported if we have the backup
+        if [ -f "/usr/data/pellcorp-backups/$file" ]; then
+            original_file="/usr/data/pellcorp-backups/$file"
         else
             echo "INFO: Overrides not supported for $file"
             return 0
         fi
-    elif [ "$file" = "bltouch.cfg" ] || [ "$file" = "microprobe.cfg" ] || [ "$file" = "start_end.cfg" ] || [ "$file" = "useful_macros.cfg" ] || [ "$file" = "guppyscreen.cfg" ] || [ "$file" = "fan_control.cfg" ]; then
+    elif [ "$file" = "start_end.cfg" ] || [ "$file" = "guppyscreen.cfg" ] || [ "$file" = "fan_control.cfg" ]; then
         echo "INFO: Overrides not supported for $file"
         return 0
     elif [ -f /usr/data/pellcorp-backups/$file ]; then

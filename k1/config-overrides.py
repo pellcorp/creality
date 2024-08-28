@@ -72,7 +72,8 @@ def main():
         updated_section = updated.get_section(section_name, None)
         if original_section and updated_section:
             for key in original_section.keys():
-                if key not in updated_section:
+                # cannot delete a section value unless its from printer.cfg
+                if key not in updated_section and printer_cfg:
                     if not overrides.has_section(section_name):
                         if len(overrides.sections()) > 0:
                             overrides[overrides.sections()[-1]].add_after.space().section(section_name)
@@ -96,6 +97,10 @@ def main():
 
                 # do not save the serial field
                 if (section_name == 'scanner' or section_name == 'cartographer' or section_name == 'mcu eddy') and key == 'serial':
+                    continue
+
+                # do not add a new value that was missing from original unless this is for printer.cfg
+                if not original_value and not printer_cfg:
                     continue
 
                 if (not original_value and updated_value and updated_value.value) or (original_value and original_value.value and updated_value and updated_value.value and original_value.value != updated_value.value):

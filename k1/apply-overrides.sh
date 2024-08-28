@@ -31,9 +31,9 @@ function apply_overrides() {
             if [ "$file" = "moonraker.secrets" ]; then
                 echo "Restoring /usr/data/printer_data/$file ..."
                 cp $overrides_dir/$file /usr/data/printer_data/
-            elif [ -L /usr/data/printer_data/config/$file ] || [ "$file" = "bltouch.cfg" ] || [ "$file" = "microprobe.cfg" ] || [ "$file" = "start_end.cfg" ] || [ "$file" = "useful_macros.cfg" ] || [ "$file" = "guppyscreen.cfg" ] || [ "$file" = "fan_control.cfg" ]; then
+            elif [ -L /usr/data/printer_data/config/$file ] || [ "$file" = "start_end.cfg" ] || [ "$file" = "guppyscreen.cfg" ] || [ "$file" = "fan_control.cfg" ]; then
                 echo "Ignoring $file ..."
-            elif [ "$file" = "printer.cfg" ] || [ -f "/usr/data/pellcorp-backups/$file" ] || [ -f "/usr/data/pellcorp/k1/$file" ]; then
+            elif [ -f "/usr/data/pellcorp-backups/$file" ] || [ -f "/usr/data/pellcorp/k1/$file" ]; then
               if [ -f /usr/data/printer_data/config/$file ]; then
                 echo "Applying overrides for /usr/data/printer_data/config/$file ..."
                 cp /usr/data/printer_data/config/$file /usr/data/printer_data/config/${file}.override.bkp

@@ -1118,12 +1118,11 @@ fi
 
 # there will be no support for generating pellcorp-overrides unless you have done a factory reset
 if [ -f /usr/data/pellcorp-backups/printer.factory.cfg ]; then
-    if [ ! -f /usr/data/pellcorp-backups/printer.cfg ]; then
-        cp /usr/data/printer_data/config/printer.cfg /usr/data/pellcorp-backups/printer.cfg
-    fi
-    if [ ! -f /usr/data/pellcorp-backups/moonraker.conf ]; then
-        cp /usr/data/printer_data/config/moonraker.conf /usr/data/pellcorp-backups/moonraker.conf
-    fi
+    for file in printer.cfg moonraker.conf; do
+        if [ -f /usr/data/printer_data/config/$file ] && [ ! -f /usr/data/pellcorp-backups/$file ]; then
+            cp /usr/data/printer_data/config/$file /usr/data/pellcorp-backups/$file
+        fi
+    done
 fi
 
 apply_overrides=0

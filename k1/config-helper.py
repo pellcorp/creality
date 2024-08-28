@@ -134,7 +134,7 @@ def add_section(updater, section_name):
         last_section = _last_section(updater)
         if last_section:
             updater[last_section].add_before.section(section_name).space()
-        else: # file is basically empty
+        else:  # file is basically empty
             updater.add_section(section_name)
     return True
 
@@ -156,7 +156,8 @@ def override_cfg(updater, override_cfg_file, printer_cfg=False, moonraker_conf=F
                 for entry in section:
                     value = section.get(entry, None)
                     if value and value.value == '__DELETED__':
-                        if remove_section_value(updater, section_name, entry):
+                        # only support deletion of entries from printer.cfg
+                        if printer_cfg and remove_section_value(updater, section_name, entry):
                             updated = True
                     elif value and len(value.lines) > 1:
                         if replace_section_multiline_value(updater, section_name, entry, value.lines):
