@@ -433,8 +433,11 @@ install_klipper() {
         fi
 
         if [ -d /usr/data/klipper/.git ]; then
-            remote_repo=$(git remote get-url origin | awk -F '/' '{print $2}' | sed 's/.git//g')
+            cd /usr/data/klipper/
+            remote_repo=$(git remote get-url origin | awk -F '/' '{print $NF}' | sed 's/.git//g')
+            cd - > /dev/null
             if [ "$remote_repo" != "$klipper_repo" ]; then
+                echo "Forcing Klipper repo to be switched to pellcorp/${klipper_repo}"
                 rm -rf /usr/data/klipper/
             fi
         fi
@@ -447,11 +450,11 @@ install_klipper() {
         fi
 
         if [ "$mode" = "update" ] && [ -d /usr/data/klipper ]; then
-            echo "Updating klipper ..."
+            echo "Updating ${klipper_repo} ..."
 
             update_repo /usr/data/klipper || exit $?
         else
-            echo "Installing klipper ..."
+            echo "Installing ${klipper_repo} ..."
 
             if [ -d /usr/data/klipper ]; then
                 if [ -f /etc/init.d/S55klipper_service ]; then
@@ -1047,6 +1050,9 @@ if [ "$mode" = "reinstall" ] || [ "$mode" = "update" ]; then
         exit 1
     fi
 fi
+
+# lets make sure we are not stranded in some repo dir
+cd /root
 
 touch /usr/data/pellcorp.done
 cp /usr/data/printer_data/config/printer.cfg /usr/data/printer_data/config/.printer.cfg.bkp
