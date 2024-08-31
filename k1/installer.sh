@@ -68,6 +68,33 @@ elif [ "$1" = "--klipper-branch" ] && [ -n "$2" ]; then # convenience for testin
     cd /usr/data/klipper && git switch $2 && cd - > /dev/null
     update_repo /usr/data/klipper
     exit $?
+elif [ "$1" = "--klipper-repo" ] && [ -n "$2" ]; then # convenience for testing new features
+    klipper_repo=$2
+    if [ -d /usr/data/klipper/.git ]; then
+        cd /usr/data/klipper/
+        remote_repo=$(git remote get-url origin | awk -F '/' '{print $NF}' | sed 's/.git//g')
+        cd - > /dev/null
+        if [ "$remote_repo" != "$klipper_repo" ]; then
+            echo "Switching klipper from pellcorp/$remote_repo to pellcorp/${klipper_repo} ..."
+            rm -rf /usr/data/klipper
+        fi
+    fi
+
+    if [ ! -d /usr/data/klipper ]; then
+        git clone https://github.com/pellcorp/${klipper_repo}.git /usr/data/klipper || exit $?
+    else
+        update_repo /usr/data/klipper || exit $?
+    fi
+
+    if [ -n "$3" ]; then
+        cd /usr/data/klipper && git switch $3 && cd - > /dev/null
+        update_repo /usr/data/klipper || exit $?
+    fi
+    /usr/data/pellcorp/k1/check-firmware.sh --status
+    if [ $? -eq 0 ]; then
+        /etc/init.d/S55klipper_service restart
+    fi
+    exit $?
 fi
 
 # kill pip cache to free up overlayfs
