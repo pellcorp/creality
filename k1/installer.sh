@@ -119,7 +119,7 @@ CONFIG_HELPER="/usr/data/pellcorp/k1/config-helper.py"
 install_config_updater() {
     python3 -c 'from configupdater import ConfigUpdater' 2> /dev/null
     if [ $? -ne 0 ]; then
-        echo "Installing configupdater python package ..."
+        echo "INFO: Installing configupdater python package ..."
         pip3 install configupdater==3.2
 
         python3 -c 'from configupdater import ConfigUpdater' 2> /dev/null
@@ -138,10 +138,10 @@ install_config_updater() {
 disable_creality_services() {
     if [ -f /etc/init.d/S99start_app ]; then
         echo ""
-        echo "Disabling some creality services ..."
+        echo "INFO: Disabling some creality services ..."
 
         if [ -f /etc/init.d/S99start_app ]; then
-            echo "IMPORTANT: If you reboot the printer before installing guppyscreen, the screen will be blank - this is to be expected!"
+            echo "INFO: : If you reboot the printer before installing guppyscreen, the screen will be blank - this is to be expected!"
             /etc/init.d/S99start_app stop
             rm /etc/init.d/S99start_app
         fi
@@ -176,12 +176,17 @@ disable_creality_services() {
 }
 
 install_webcam() {
+    local mode=$1
+    
     grep -q "webcam" /usr/data/pellcorp.done
     if [ $? -ne 0 ]; then
-        echo ""
-        echo "Installing mjpg streamer ..."
-        /opt/bin/opkg install mjpg-streamer mjpg-streamer-input-http mjpg-streamer-input-uvc mjpg-streamer-output-http mjpg-streamer-www || exit $?
+        if [ "$mode" != "update" ] || [ ! -f /opt/bin/mjpg_streamer ]; then
+            echo ""
+            echo "INFO: Installing mjpg streamer ..."
+            /opt/bin/opkg install mjpg-streamer mjpg-streamer-input-http mjpg-streamer-input-uvc mjpg-streamer-output-http mjpg-streamer-www || exit $?
+        fi
 
+        echo "INFO: Updating webcam config ..."
         # we do not want to start the entware version of the service ever
         if [ -f /opt/etc/init.d/S96mjpg-streamer ]; then
             rm /opt/etc/init.d/S96mjpg-streamer
@@ -215,28 +220,31 @@ install_moonraker() {
     grep -q "moonraker" /usr/data/pellcorp.done
     if [ $? -ne 0 ]; then
         echo ""
-        if [ "$mode" = "update" ] && [ -d /usr/data/moonraker ]; then
-            echo "Updating moonraker ..."
-
-            update_repo /usr/data/moonraker || exit $?
-        else
-            echo "Installing moonraker ..."
         
-            if [ -d /usr/data/moonraker ]; then
-                if [ -f /etc/init.d/S56moonraker_service ]; then
-                    /etc/init.d/S56moonraker_service stop
-                fi
-                if [ -d /usr/data/printer_data/database/ ]; then
-                    [ -f  /usr/data/moonraker-database.tar.gz ] && rm /usr/data/moonraker-database.tar.gz
-
-                    echo ""
-                    echo "Backing up moonraker database ..."
-                    cd /usr/data/printer_data/
-
-                    tar -zcf /usr/data/moonraker-database.tar.gz database/
-                    cd
-                fi               
+        if [ "$mode" != "update" ] && [ -d /usr/data/moonraker ]; then
+            if [ -f /etc/init.d/S56moonraker_service ]; then
+                /etc/init.d/S56moonraker_service stop
             fi
+            if [ -d /usr/data/printer_data/database/ ]; then
+                [ -f /usr/data/moonraker-database.tar.gz ] && rm /usr/data/moonraker-database.tar.gz
+
+                echo ""
+                echo "INFO: Backing up moonraker database ..."
+                cd /usr/data/printer_data/
+
+                tar -zcf /usr/data/moonraker-database.tar.gz database/
+                cd 
+            fi
+            rm -rf /usr/data/moonraker
+        fi
+
+        if [ "$mode" != "update" ] && [ -d /usr/data/moonraker-env ]; then
+            rm -rf /usr/data/moonraker-env
+        fi
+
+        if [ ! -d /usr/data/moonraker ]; then
+            echo "INFO: Installing moonraker ..."
+        
             [ -d /usr/data/moonraker ] && rm -rf /usr/data/moonraker
             [ -d /usr/data/moonraker-env ] && rm -rf /usr/data/moonraker-env
 
@@ -245,7 +253,7 @@ install_moonraker() {
 
             if [ -f /usr/data/moonraker-database.tar.gz ]; then
                 echo ""
-                echo "Restoring moonraker database ..."
+                echo "INFO: Restoring moonraker database ..."
                 cd /usr/data/printer_data/
                 tar -zxf /usr/data/moonraker-database.tar.gz
                 rm /usr/data/moonraker-database.tar.gz
@@ -253,28 +261,31 @@ install_moonraker() {
             fi
         fi
 
+        if [ ! -d /usr/data/moonraker-timelapse ]; then
+            git clone https://github.com/mainsail-crew/moonraker-timelapse.git /usr/data/moonraker-timelapse/ || exit $?
+        fi
+
+        if [ ! /usr/data/moonraker-env ]; then
+            tar -zxf /usr/data/pellcorp/k1/moonraker-env.tar.gz -C /usr/data/ || exit $?
+        fi
+
+        if [ "$mode" != "update" ] || [ ! -f /opt/bin/ffmpeg ]; then
+            echo "INFO: Upgrading ffmpeg for moonraker timelapse ..."
+            /opt/bin/opkg install ffmpeg || exit $?
+        fi
+
+        echo "INFO: Updating moonraker config ..."
+
         # an existing bug where the moonraker secrets was not correctly copied
         if [ ! -f /usr/data/printer_data/moonraker.secrets ]; then
             cp /usr/data/pellcorp/k1/moonraker.secrets /usr/data/printer_data/
         fi
 
-        echo "Upgrading ffmpeg for moonraker timelapse ..."
-        /opt/bin/opkg install ffmpeg || exit $?
-
         ln -sf /usr/data/pellcorp/k1/tools/supervisorctl /usr/bin/ || exit $?
-        tar -zxf /usr/data/pellcorp/k1/moonraker-env.tar.gz -C /usr/data/ || exit $?
-
         cp /usr/data/pellcorp/k1/services/S56moonraker_service /etc/init.d/ || exit $?
         cp /usr/data/pellcorp/k1/moonraker.conf /usr/data/printer_data/config/ || exit $?
         ln -sf /usr/data/pellcorp/k1/moonraker.asvc /usr/data/printer_data/ || exit $?
         cp /usr/data/pellcorp/k1/webcam.conf /usr/data/printer_data/config/ || exit $?
-
-        if [ "$mode" = "update" ] && [ -d /usr/data/moonraker-timelapse ]; then
-            update_repo /usr/data/moonraker-timelapse || exit $?
-        else
-            [ -d /usr/data/moonraker-timelapse ] && rm -rf /usr/data/moonraker-timelapse
-            git clone https://github.com/mainsail-crew/moonraker-timelapse.git /usr/data/moonraker-timelapse/ || exit $?
-        fi
 
         ln -sf /usr/data/moonraker-timelapse/component/timelapse.py /usr/data/moonraker/moonraker/components/ || exit $?
         if ! grep -q "moonraker/components/timelapse.py" "/usr/data/moonraker/.git/info/exclude"; then
@@ -301,22 +312,25 @@ install_moonraker() {
 }
 
 install_nginx() {
+    local mode=$1
+
     grep -q "nginx" /usr/data/pellcorp.done
     if [ $? -ne 0 ]; then
-        echo ""
-        echo "Installing nginx ..."
-
-        # because the nginx tar ball is local, lets just redo the whole
-        # thing, there should be no user configurable stuff here anyway
-        if [ -d /usr/data/nginx ]; then
+        if [ "$mode" != "update" ] && [ -d /usr/data/nginx ]; then
             if [ -f /etc/init.d/S50nginx_service ]; then
                 /etc/init.d/S50nginx_service stop
             fi
             rm -rf /usr/data/nginx
         fi
 
-        tar -zxf /usr/data/pellcorp/k1/nginx.tar.gz -C /usr/data/ || exit $?
+        if [ ! -d /usr/data/nginx ]; then
+            echo ""
+            echo "INFO: Installing nginx ..."
 
+            tar -zxf /usr/data/pellcorp/k1/nginx.tar.gz -C /usr/data/ || exit $?
+        fi
+
+        echo "INFO: Updating nginx config ..."
         cp /usr/data/pellcorp/k1/nginx.conf /usr/data/nginx/nginx/ || exit $?
         mkdir -p /usr/data/nginx/nginx/sites/
         cp /usr/data/pellcorp/k1/nginx/fluidd /usr/data/nginx/nginx/sites/ || exit $?
@@ -338,23 +352,28 @@ install_fluidd() {
 
     grep -q "fluidd" /usr/data/pellcorp.done
     if [ $? -ne 0 ]; then
-        echo ""
-        echo "Installing fluidd ..."
+        if [ "$mode" != "update" ] && [ -d /usr/data/fluidd ]; then
+            rm -rf /usr/data/fluidd
+        fi
+        if [ "$mode" != "update" ] && [ -d /usr/data/fluidd-config ]; then
+            rm -rf /usr/data/fluidd-config
+        fi
 
-        [ -d /usr/data/fluidd ] && rm -rf /usr/data/fluidd
+        if [ ! -d /usr/data/fluidd ]; then
+            echo ""
+            echo "INFO: Installing fluidd ..."
 
-        mkdir -p /usr/data/fluidd || exit $?
-        curl -L "https://github.com/fluidd-core/fluidd/releases/latest/download/fluidd.zip" -o /usr/data/fluidd.zip || exit $?
-        unzip -qd /usr/data/fluidd /usr/data/fluidd.zip || exit $?
-        rm /usr/data/fluidd.zip
-
-        if [ "$mode" = "update" ] && [ -d /usr/data/fluidd-config ]; then
-            update_repo /usr/data/fluidd-config || exit $?
-        else
-            [ -d /usr/data/fluidd-config ] && rm -rf /usr/data/fluidd-config
+            mkdir -p /usr/data/fluidd || exit $?
+            curl -L "https://github.com/fluidd-core/fluidd/releases/latest/download/fluidd.zip" -o /usr/data/fluidd.zip || exit $?
+            unzip -qd /usr/data/fluidd /usr/data/fluidd.zip || exit $?
+            rm /usr/data/fluidd.zip
+        fi
+        
+        if [ ! -d /usr/data/fluidd-config ]; then
             git clone https://github.com/fluidd-core/fluidd-config.git /usr/data/fluidd-config || exit $?
         fi
 
+        echo "INFO: Updating fluidd config ..."
         [ -f /usr/data/printer_data/config/fluidd.cfg ] && rm /usr/data/printer_data/config/fluidd.cfg
 
         ln -sf /usr/data/fluidd-config/client.cfg /usr/data/printer_data/config/fluidd.cfg
@@ -379,17 +398,25 @@ install_fluidd() {
 }
 
 install_mainsail() {
+    local mode=$1
+
     grep -q "mainsail" /usr/data/pellcorp.done
     if [ $? -ne 0 ]; then
-        echo ""
-        echo "Installing mainsail ..."
+        if [ "$mode" != "update" ] && [ -d /usr/data/mainsail ]; then
+            rm -rf /usr/data/mainsail
+        fi
 
-        [ -d /usr/data/mainsail ] && rm -rf /usr/data/mainsail
+        if [ ! -d /usr/data/mainsail ]; then
+            echo ""
+            echo "INFO: Installing mainsail ..."
 
-        mkdir -p /usr/data/mainsail || exit $?
-        curl -L "https://github.com/mainsail-crew/mainsail/releases/latest/download/mainsail.zip" -o /usr/data/mainsail.zip || exit $?
-        unzip -qd /usr/data/mainsail /usr/data/mainsail.zip || exit $?
-        rm /usr/data/mainsail.zip
+            mkdir -p /usr/data/mainsail || exit $?
+            curl -L "https://github.com/mainsail-crew/mainsail/releases/latest/download/mainsail.zip" -o /usr/data/mainsail.zip || exit $?
+            unzip -qd /usr/data/mainsail /usr/data/mainsail.zip || exit $?
+            rm /usr/data/mainsail.zip
+        fi
+
+        echo "INFO: Updating mainsail config ..."
 
         # the mainsail and fluidd client.cfg are exactly the same
         [ -f /usr/data/printer_data/config/mainsail.cfg ] && rm /usr/data/printer_data/config/mainsail.cfg
@@ -408,12 +435,13 @@ install_kamp() {
 
     grep -q "KAMP" /usr/data/pellcorp.done
     if [ $? -ne 0 ]; then
-        echo ""
-        if [ "$mode" = "update" ] && [ -d /usr/data/KAMP ]; then
-            echo "Updating KAMP ..."
-            update_repo /usr/data/KAMP || exit $?
-        else
-            echo "Installing KAMP ..."
+        if [ "$mode" != "update" ] && [ -d /usr/data/KAMP ]; then
+            rm -rf /usr/data/KAMP
+        fi
+        
+        if [ ! -d /usr/data/KAMP ]; then
+            echo ""
+            echo "INFO: Installing KAMP ..."
             [ -d /usr/data/KAMP ] && rm -rf /usr/data/KAMP
 
             if [ "$AF_GIT_CLONE" = "ssh" ]; then
@@ -426,6 +454,7 @@ install_kamp() {
             fi
         fi
 
+        echo "INFO: Updating KAMP config ..."
         ln -sf /usr/data/KAMP/Configuration /usr/data/printer_data/config/KAMP || exit $?
 
         cp /usr/data/KAMP/Configuration/KAMP_Settings.cfg /usr/data/printer_data/config/ || exit $?
@@ -463,12 +492,19 @@ install_klipper() {
             klipper_repo=k1-carto-klipper
         fi
 
+        if [ "$mode" != "update" ] && [ -d /usr/data/klipper ]; then
+            if [ -f /etc/init.d/S55klipper_service ]; then
+                /etc/init.d/S55klipper_service stop
+            fi
+            rm -rf /usr/data/klipper
+        fi
+
         if [ -d /usr/data/klipper/.git ]; then
             cd /usr/data/klipper/
             remote_repo=$(git remote get-url origin | awk -F '/' '{print $NF}' | sed 's/.git//g')
             cd - > /dev/null
             if [ "$remote_repo" != "$klipper_repo" ]; then
-                echo "Forcing Klipper repo to be switched to pellcorp/${klipper_repo}"
+                echo "INFO: Forcing Klipper repo to be switched to pellcorp/${klipper_repo}"
                 rm -rf /usr/data/klipper/
             fi
         fi
@@ -480,19 +516,8 @@ install_klipper() {
             /etc/init.d/S55klipper_service start > /dev/null
         fi
 
-        if [ "$mode" = "update" ] && [ -d /usr/data/klipper ]; then
-            echo "Updating ${klipper_repo} ..."
-
-            update_repo /usr/data/klipper || exit $?
-        else
-            echo "Installing ${klipper_repo} ..."
-
-            if [ -d /usr/data/klipper ]; then
-                if [ -f /etc/init.d/S55klipper_service ]; then
-                    /etc/init.d/S55klipper_service stop
-                fi
-                rm -rf /usr/data/klipper
-            fi
+        if [ ! -d /usr/data/klipper ]; then
+            echo "INFO: Installing ${klipper_repo} ..."
 
             # currently only support pellcorp/klipper not pellcorp/k1-carto-klipper
             if [ "$AF_GIT_CLONE" = "ssh" ] && [ "$klipper_repo" = "klipper" ]; then
@@ -507,6 +532,7 @@ install_klipper() {
             [ -d /usr/share/klipper ] && rm -rf /usr/share/klipper
         fi
 
+        echo "INFO: Updating klipper config ..."
         /usr/share/klippy-env/bin/python3 -m compileall /usr/data/klipper/klippy || exit $?
         ln -sf /usr/data/klipper /usr/share/ || exit $?
         cp /usr/data/pellcorp/k1/services/S55klipper_service /etc/init.d/ || exit $?
@@ -596,23 +622,30 @@ install_klipper() {
 }
 
 install_guppyscreen() {
+    local mode=$1
+
     grep -q "guppyscreen" /usr/data/pellcorp.done
     if [ $? -ne 0 ]; then
-        echo ""
-        echo "Installing guppyscreen ..."
 
-        if [ -d /usr/data/guppyscreen ]; then
+
+        if [ "$mode" != "update" ] && [ -d /usr/data/guppyscreen ]; then
             if [ -f /etc/init.d/S99guppyscreen ]; then
-                /etc/init.d/S99guppyscreen stop &> /dev/null
+              /etc/init.d/S99guppyscreen stop &> /dev/null
+              killall -q guppyscreen
             fi
-            killall -q guppyscreen
-            
             rm -rf /usr/data/guppyscreen
         fi
-    
-        curl -L "https://github.com/ballaswag/guppyscreen/releases/latest/download/guppyscreen.tar.gz" -o /usr/data/guppyscreen.tar.gz || exit $?
-        tar xf /usr/data/guppyscreen.tar.gz  -C /usr/data/ || exit $?
-        rm /usr/data/guppyscreen.tar.gz 
+
+        if [ ! -d /usr/data/guppyscreen ]; then
+            echo ""
+            echo "INFO: Installing guppyscreen ..."
+
+            curl -L "https://github.com/ballaswag/guppyscreen/releases/latest/download/guppyscreen.tar.gz" -o /usr/data/guppyscreen.tar.gz || exit $?
+            tar xf /usr/data/guppyscreen.tar.gz  -C /usr/data/ || exit $?
+            rm /usr/data/guppyscreen.tar.gz 
+        fi
+
+        echo "INFO: Updating guppyscreen config ..."
         cp /usr/data/pellcorp/k1/services/S99guppyscreen /etc/init.d/ || exit $?
         cp /usr/data/pellcorp/k1/guppyconfig.json /usr/data/guppyscreen || exit $?
 
@@ -651,7 +684,7 @@ setup_probe() {
     grep -q "probe" /usr/data/pellcorp.done
     if [ $? -ne 0 ]; then
         echo ""
-        echo "Setting up generic probe config ..."
+        echo "INFO: Setting up generic probe config ..."
 
         $CONFIG_HELPER --remove-section "bed_mesh" || exit $?
         $CONFIG_HELPER --remove-section-entry "stepper_z" "position_endstop" || exit $?
@@ -671,22 +704,17 @@ install_cartographer_klipper() {
 
     grep -q "cartographer-klipper" /usr/data/pellcorp.done
     if [ $? -ne 0 ]; then
-        echo ""
-        if [ "$mode" = "update" ] && [ -d /usr/data/cartographer-klipper ]; then
-            echo "Updating cartographer-klipper ..."
+        if [ "$mode" != "update" ] && [ -d /usr/data/cartographer-klipper ]; then
+            rm -rf /usr/data/cartographer-klipper
+        fi
 
-            update_repo /usr/data/cartographer-klipper || exit $?
-        else
-            echo "Installing cartographer-klipper ..."
-
-            if [ -d /usr/data/cartographer-klipper ]; then
-                rm -rf /usr/data/cartographer-klipper
-            fi
-
+        if [ ! -d /usr/data/cartographer-klipper ]; then
+            echo ""
+            echo "INFO: Installing cartographer-klipper ..."
             git clone https://github.com/Cartographer3D/cartographer-klipper.git /usr/data/cartographer-klipper || exit $?
         fi
 
-        echo "Running cartographer-klipper installer ..."
+        echo "INFO: Running cartographer-klipper installer ..."
         bash /usr/data/cartographer-klipper/install.sh || exit $?
         /usr/share/klippy-env/bin/python3 -m compileall /usr/data/klipper/klippy || exit $?
 
@@ -729,7 +757,7 @@ setup_bltouch() {
     grep -q "bltouch-probe" /usr/data/pellcorp.done
     if [ $? -ne 0 ]; then
         echo ""
-        echo "Setting up bltouch ..."
+        echo "INFO: Setting up bltouch/crtouch/3dtouch ..."
 
         cleanup_probe cartographer
         cleanup_probe microprobe
@@ -765,7 +793,7 @@ setup_microprobe() {
     grep -q "microprobe-probe" /usr/data/pellcorp.done
     if [ $? -ne 0 ]; then
         echo ""
-        echo "Setting up microprobe ..."
+        echo "INFO: Setting up microprobe ..."
         
         cleanup_probe cartographer
         cleanup_probe bltouch
@@ -799,7 +827,7 @@ setup_cartographer() {
     grep -q "cartographer-probe" /usr/data/pellcorp.done
     if [ $? -ne 0 ]; then
         echo ""
-        echo "Setting up cartographer ..."
+        echo "INFO: Setting up cartographer ..."
 
         cleanup_probe bltouch
         cleanup_probe microprobe
@@ -845,7 +873,7 @@ setup_cartotouch() {
     grep -q "cartotouch-probe" /usr/data/pellcorp.done
     if [ $? -ne 0 ]; then
         echo ""
-        echo "Setting up carto touch ..."
+        echo "INFO: Setting up carto touch ..."
 
         cleanup_probe bltouch
         cleanup_probe microprobe
@@ -905,7 +933,7 @@ setup_btteddy() {
     grep -q "btteddy-probe" /usr/data/pellcorp.done
     if [ $? -ne 0 ]; then
         echo ""
-        echo "Setting up btteddy ..."
+        echo "INFO: Setting up btteddy ..."
 
         cleanup_probe bltouch
         cleanup_probe microprobe
@@ -956,7 +984,6 @@ install_entware() {
     local mode=$1
     if ! grep -q "entware" /usr/data/pellcorp.done; then
         echo ""
-        echo "Installing entware ..."
         /usr/data/pellcorp/k1/entware-install.sh "$mode" || exit $?
 
         echo "entware" >> /usr/data/pellcorp.done
@@ -979,7 +1006,7 @@ function apply_overrides() {
 # thanks to @Nestaa51 for the timeout changes to not wait forever for moonraker
 restart_moonraker() {
     echo ""
-    echo "Restarting Moonraker ..."
+    echo "INFO: Restarting Moonraker ..."
     /etc/init.d/S56moonraker_service restart
 
     timeout=60
@@ -1005,7 +1032,6 @@ restart_moonraker() {
     done
 }
 
-
 mkdir -p /usr/data/pellcorp-backups
 # so if the installer has never been run we should grab a backup of the printer.cfg
 if [ ! -f /usr/data/pellcorp.done ] && [ ! -f /usr/data/pellcorp-backups/printer.factory.cfg ]; then
@@ -1016,14 +1042,16 @@ fi
 probe=
 if [ -f /usr/data/printer_data/config/bltouch-k1.cfg ] || [ -f /usr/data/printer_data/config/bltouch-k1m.cfg ]; then
     probe=bltouch
-elif grep -q "\[scanner\]" /usr/data/printer_data/config/printer.cfg; then
-    probe=cartotouch
 elif [ -f /usr/data/printer_data/config/cartographer-k1.cfg ] || [ -f /usr/data/printer_data/config/cartographer-k1m.cfg ]; then
     probe=cartographer
 elif [ -f /usr/data/printer_data/config/microprobe-k1.cfg ] || [ -f /usr/data/printer_data/config/microprobe-k1m.cfg ]; then
     probe=microprobe
 elif [ -f /usr/data/printer_data/config/btteddy-k1.cfg ] || [ -f /usr/data/printer_data/config/btteddy-k1m.cfg ]; then
     probe=btteddy
+elif [ -f /usr/data/printer_data/config/cartotouch.cfg ]; then
+  probe=cartotouch
+elif grep -q "\[scanner\]" /usr/data/printer_data/config/printer.cfg; then
+    probe=cartotouch
 fi
 
 mode=install
@@ -1043,8 +1071,13 @@ while true; do
         debug=true
     elif [ "$1" = "microprobe" ] || [ "$1" = "bltouch" ] || [ "$1" = "cartographer" ] || [ "$1" = "cartotouch" ] || [ "$1" = "btteddy" ]; then
         if [ -n "$probe" ] && [ "$1" != "$probe" ]; then
+          if [ "$mode" = "reinstall" ]; then
             echo ""
             echo "WARNING: About to switch from $probe to $1!"
+          else
+            echo "ERROR: Cannot switch $probe to $1 without reinstalling"
+            exit 1
+          fi
         fi
         probe=$1
         shift
@@ -1061,10 +1094,8 @@ if [ -z "$probe" ]; then
     exit 1
 fi
 
-if [ "$debug" = "true" ]; then
-    echo "INFO: Mode is $mode"
-    echo "INFO: Probe is $probe"
-fi
+echo "INFO: Mode is $mode"
+echo "INFO: Probe is $probe"
 
 if [ "$skip_overrides" = "true" ]; then
     echo "INFO: Configuration overrides will not be saved or applied"
@@ -1108,20 +1139,20 @@ cp /usr/data/printer_data/config/printer.cfg /usr/data/printer_data/config/.prin
 install_config_updater
 install_entware $mode
 
-install_webcam
+install_webcam $mode
 
 disable_creality_services
 
 install_moonraker $mode
 install_moonraker=$?
 
-install_nginx
+install_nginx $mode
 install_nginx=$?
 
 install_fluidd $mode
 install_fluidd=$?
 
-install_mainsail
+install_mainsail $mode
 install_mainsail=$?
 
 # KAMP is in the moonraker.conf file so it must be installed before moonraker is first started
@@ -1137,18 +1168,20 @@ if [ "$probe" = "cartographer" ] || [ "$probe" = "cartotouch" ]; then
   install_cartographer_klipper=$?
 fi
 
-# if moonraker was installed or updated
-if [ $install_moonraker -ne 0 ] || [ $install_cartographer_klipper -ne 0 ]; then
-    restart_moonraker
+if [ "$CALLED_FROM_MOONRAKER" != "true" ]; then
+  # if moonraker was installed or updated
+  if [ $install_moonraker -ne 0 ] || [ $install_cartographer_klipper -ne 0 ]; then
+      restart_moonraker
+  fi
+
+  if [ $install_klipper -ne 0 ] || [ $install_moonraker -ne 0 ] || [ $install_nginx -ne 0 ] || [ $install_fluidd -ne 0 ] || [ $install_mainsail -ne 0 ] || [ $install_cartographer_klipper -ne 0 ]; then
+      echo ""
+      echo "Restarting Nginx ..."
+      /etc/init.d/S50nginx_service restart
+  fi
 fi
 
-if [ $install_klipper -ne 0 ] || [ $install_moonraker -ne 0 ] || [ $install_nginx -ne 0 ] || [ $install_fluidd -ne 0 ] || [ $install_mainsail -ne 0 ] || [ $install_cartographer_klipper -ne 0 ]; then
-    echo ""
-    echo "Restarting Nginx ..."
-    /etc/init.d/S50nginx_service restart
-fi
-
-install_guppyscreen
+install_guppyscreen $mode
 install_guppyscreen=$?
 
 setup_probe
@@ -1190,21 +1223,23 @@ if [ "$skip_overrides" != "true" ]; then
     apply_overrides=$?
 
     # just restart moonraker in case any overrides were applied
-    if [ $apply_overrides -ne 0 ]; then
+    if [ "$CALLED_FROM_MOONRAKER" != "true" ] && [ $apply_overrides -ne 0 ]; then
         restart_moonraker
     fi
 fi
 
-if [ $apply_overrides -ne 0 ] || [ $install_cartographer_klipper -ne 0 ] || [ $install_kamp -ne 0 ] || [ $install_klipper -ne 0 ] || [ $install_guppyscreen -ne 0 ] || [ $setup_probe -ne 0 ] || [ $setup_probe_specific -ne 0 ]; then
-    echo ""
-    echo "Restarting Klipper ..."
-    /etc/init.d/S55klipper_service restart
-fi
+if [ "$CALLED_FROM_MOONRAKER" != "true" ]; then
+  if [ $apply_overrides -ne 0 ] || [ $install_cartographer_klipper -ne 0 ] || [ $install_kamp -ne 0 ] || [ $install_klipper -ne 0 ] || [ $install_guppyscreen -ne 0 ] || [ $setup_probe -ne 0 ] || [ $setup_probe_specific -ne 0 ]; then
+      echo ""
+      echo "Restarting Klipper ..."
+      /etc/init.d/S55klipper_service restart
+  fi
 
-if [ $install_guppyscreen -ne 0 ]; then
-    echo ""
-    echo "Restarting Guppyscreen ..."
-    /etc/init.d/S99guppyscreen restart
+  if [ $install_guppyscreen -ne 0 ]; then
+      echo ""
+      echo "Restarting Guppyscreen ..."
+      /etc/init.d/S99guppyscreen restart
+  fi
 fi
 
 /usr/data/pellcorp/k1/check-firmware.sh

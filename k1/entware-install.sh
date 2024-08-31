@@ -37,15 +37,15 @@ download_files() {
   return $?
 }
 
-if [ "$mode" = "reinstall" ]; then
+if [ "$mode" != "update" ]; then
   if download_files "$primary_URL/opkg" "/opt/bin/opkg"; then
     download_files "$primary_URL/opkg.conf" "/opt/etc/opkg.conf"
   else
-    echo -e "Info: Unable to download from Entware repo. Attempting to download from openK1 repo..."
+    echo -e "INFO: : Unable to download from Entware repo. Attempting to download from openK1 repo..."
     if download_files "$secondary_URL/opkg" "/opt/bin/opkg"; then
       download_files "$secondary_URL/opkg.conf" "/opt/etc/opkg.conf"
     else
-      echo "Info: Failed to download from openK1 repo..."
+      echo "INFO: : Failed to download from openK1 repo..."
       exit 1
     fi
   fi
