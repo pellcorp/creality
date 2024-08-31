@@ -92,6 +92,7 @@ elif [ "$1" = "--klipper-repo" ] && [ -n "$2" ]; then # convenience for testing 
     fi
     if [ -d /usr/data/cartographer-klipper ]; then
         /usr/data/cartographer-klipper/install.sh || exit $?
+        sync
     fi
     /usr/data/pellcorp/k1/check-firmware.sh --status
     if [ $? -eq 0 ]; then
