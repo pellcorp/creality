@@ -10,7 +10,12 @@ GLIBC=2.27
 # and we can then make use of it going forward
 cp /usr/data/pellcorp/k1/tools/curl /usr/bin/curl
 
-if [ "$1" = "reinstall" ] || [ ! -f /opt/bin/opkg ]; then
+mode=$1
+if [ ! -f /opt/bin/opkg ]; then
+  mode=reinstall
+fi
+
+if [ "$mode" = "reinstall" ]; then
   rm -rf /opt
   rm -rf /usr/data/opt
 fi
@@ -32,18 +37,19 @@ download_files() {
   return $?
 }
 
-if download_files "$primary_URL/opkg" "/opt/bin/opkg"; then
-  download_files "$primary_URL/opkg.conf" "/opt/etc/opkg.conf"
-else
-  echo -e "Info: Unable to download from Entware repo. Attempting to download from openK1 repo..."
-  if download_files "$secondary_URL/opkg" "/opt/bin/opkg"; then
-    download_files "$secondary_URL/opkg.conf" "/opt/etc/opkg.conf"
+if [ "$mode" = "reinstall" ]; then
+  if download_files "$primary_URL/opkg" "/opt/bin/opkg"; then
+    download_files "$primary_URL/opkg.conf" "/opt/etc/opkg.conf"
   else
-    echo "Info: Failed to download from openK1 repo..."
-    exit 1
+    echo -e "Info: Unable to download from Entware repo. Attempting to download from openK1 repo..."
+    if download_files "$secondary_URL/opkg" "/opt/bin/opkg"; then
+      download_files "$secondary_URL/opkg.conf" "/opt/etc/opkg.conf"
+    else
+      echo "Info: Failed to download from openK1 repo..."
+      exit 1
+    fi
   fi
 fi
-
 chmod 755 /opt/bin/opkg
 chmod 777 /opt/tmp
 
