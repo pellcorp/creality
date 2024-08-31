@@ -55,6 +55,12 @@ fi
 
 if [ "$firmware_upgrade_required" = "true" ]; then
     echo "MCU Firmware updates are pending you need to power cycle your printer!"
+    if [ "$1" = "--status" ]; then
+        exit 1
+    fi
 else
     echo "Your MCU Firmware is up to date!"
+    if [ "$1" = "--status" ]; then
+        exit 0
+    fi
 fi
