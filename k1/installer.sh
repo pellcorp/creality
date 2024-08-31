@@ -265,7 +265,7 @@ install_moonraker() {
             git clone https://github.com/mainsail-crew/moonraker-timelapse.git /usr/data/moonraker-timelapse/ || exit $?
         fi
 
-        if [ ! /usr/data/moonraker-env ]; then
+        if [ ! -d /usr/data/moonraker-env ]; then
             tar -zxf /usr/data/pellcorp/k1/moonraker-env.tar.gz -C /usr/data/ || exit $?
         fi
 
