@@ -90,6 +90,9 @@ elif [ "$1" = "--klipper-repo" ] && [ -n "$2" ]; then # convenience for testing 
         cd /usr/data/klipper && git switch $3 && cd - > /dev/null
         update_repo /usr/data/klipper || exit $?
     fi
+    if [ -d /usr/data/cartographer-klipper ]; then
+        /usr/data/cartographer-klipper/install.sh || exit $?
+    fi
     /usr/data/pellcorp/k1/check-firmware.sh --status
     if [ $? -eq 0 ]; then
         /etc/init.d/S55klipper_service restart
