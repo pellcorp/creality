@@ -121,7 +121,7 @@ def main():
                     update_overrides = True
 
     if update_overrides:
-        print(f"Saving overrides to {args.overrides} ...")
+        print(f"INFO: Saving overrides to {args.overrides} ...")
         with open(args.overrides, 'w') as file:
             overrides.write(file)
             
