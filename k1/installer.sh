@@ -775,7 +775,7 @@ setup_bltouch() {
 
         # because the model sits out the back we do need to set position max back
         position_max=$($CONFIG_HELPER --get-section-entry "stepper_y" "position_max")
-        position_max=$((position_max-16))
+        position_max=$((position_max-17))
         $CONFIG_HELPER --replace-section-entry "stepper_y" "position_max" "$position_max" || exit $?
 
         echo "bltouch-probe" >> /usr/data/pellcorp.done
