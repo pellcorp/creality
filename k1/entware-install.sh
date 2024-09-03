@@ -50,11 +50,14 @@ if [ "$mode" != "update" ]; then
     fi
   fi
 fi
+
 chmod 755 /opt/bin/opkg
 chmod 777 /opt/tmp
 
-/opt/bin/opkg update
-/opt/bin/opkg install entware-opt
+if [ "$mode" != "update" ]; then
+  /opt/bin/opkg update
+  /opt/bin/opkg install entware-opt
+fi
 
 for file in passwd group shells shadow gshadow; do
   if [ -f /etc/$file ]; then
@@ -71,9 +74,13 @@ echo 'export PATH="$PATH:/opt/bin:/opt/sbin"' > /etc/profile.d/entware.sh
 # this is required so that any services installed by opkg get started
 cp /usr/data/pellcorp/k1/services/S50unslung /etc/init.d/
 
-# by default dropbear does not come with sftp support, so this enables it
-/opt/bin/opkg install openssh-sftp-server || exit $?
+if [ ! -f /opt/libexec/sftp-server ]; then
+  # by default dropbear does not come with sftp support, so this enables it
+  /opt/bin/opkg install openssh-sftp-server || exit $?
+fi
 ln -sf /opt/libexec/sftp-server /usr/libexec/sftp-server
 
-/opt/bin/opkg install bash
+if [ ! -f /opt/bin/bash ]; then
+  /opt/bin/opkg install bash
+fi
 ln -sf /opt/bin/bash /bin/
