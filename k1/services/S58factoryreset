@@ -22,9 +22,11 @@ factory_reset() {
         -path /overlay/upper/etc/localtime -prune -o \
         -path /overlay/upper/etc/init.d/S58factoryreset -prune -o \
         -exec rm {} \; >/dev/null 2>&1
+    /bin/sync >/dev/null 2>&1
     /usr/bin/find /overlay/upper/ -type d \
         -depth -print \
         -exec rmdir {} \; >/dev/null 2>&1
+    /bin/sync >/dev/null 2>&1
     /usr/bin/find /usr/data/ \
         -path '/usr/data/creality' -prune -o \
         -path '/usr/data/wpa_supplicant.conf' -prune -o \
@@ -33,14 +35,17 @@ factory_reset() {
         -path '/usr/data/machine_production_info' -prune -o \
         -path '/usr/data/' -o -print \
         -exec rm -rf {} \; >/dev/null 2>&1
+    /bin/sync >/dev/null 2>&1
     /usr/bin/find /usr/data/creality/userdata \
         -path '/usr/data/creality/userdata/config/system_config.json' -prune -o \
         -path '/usr/data/creality/userdata/user_agree_root' -prune -o \
         -path '/usr/data/creality/userdata' -o -type d -o -print \
         -exec rm {} \; >/dev/null 2>&1
+    /bin/sync >/dev/null 2>&1
     /usr/bin/find /usr/data/creality/ \
         -depth -print \
         -exec rmdir {} \; >/dev/null 2>&1
+    /bin/sync >/dev/null 2>&1
     echo "Info: Factory reset was executed successfully, the printer will restart..."
     /etc/init.d/rcK >/dev/null 2>&1
     /bin/sync >/dev/null 2>&1
