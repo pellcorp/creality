@@ -21,6 +21,13 @@ if [ "$MODEL" != "CR-K1" ] && [ "$MODEL" != "K1C" ] && [ "$MODEL" != "CR-K1 Max"
     exit 1
 fi
 
+# now map it to the probe file name suffix
+if [ "$MODEL" = "CR-K1" ] || [ "$MODEL" = "K1C" ]; then
+  model=k1
+elif [ "$MODEL" = "CR-K1 Max" ]; then
+  model=k1m
+fi
+
 if [ -d /usr/data/helper-script ] || [ -f /usr/data/fluidd.sh ] || [ -f /usr/data/mainsail.sh ]; then
     echo "The Guilouz helper and K1_Series_Annex scripts cannot be installed"
     exit 1
@@ -744,13 +751,8 @@ cleanup_probe() {
         probe=cartographer
     fi
 
-    if [ "$MODEL" = "CR-K1" ] || [ "$MODEL" = "K1C" ]; then
-        [ -f /usr/data/printer_data/config/$probe-k1.cfg ] && rm /usr/data/printer_data/config/$probe-k1.cfg
-        $CONFIG_HELPER --remove-include "$probe-k1.cfg" || exit $?
-    elif [ "$MODEL" = "CR-K1 Max" ]; then
-        [ -f /usr/data/printer_data/config/$probe-k1m.cfg ] && rm /usr/data/printer_data/config/$probe-k1m.cfg
-        $CONFIG_HELPER --remove-include "$probe-k1m.cfg" || exit $?
-    fi
+    [ -f /usr/data/printer_data/config/$probe-${model}.cfg ] && rm /usr/data/printer_data/config/$probe-${model}.cfg
+    $CONFIG_HELPER --remove-include "$probe-${model}.cfg" || exit $?
 }
 
 setup_bltouch() {
@@ -770,15 +772,13 @@ setup_bltouch() {
         $CONFIG_HELPER --remove-include "bltouch.cfg" || exit $?
         $CONFIG_HELPER --overrides "/usr/data/pellcorp/k1/bltouch.cfg" || exit $?
 
-        if [ "$MODEL" = "CR-K1" ] || [ "$MODEL" = "K1C" ]; then
-            cp /usr/data/pellcorp/k1/bltouch-k1.cfg /usr/data/printer_data/config/ || exit $?
-            $CONFIG_HELPER --add-include "bltouch-k1.cfg" || exit $?
-            $CONFIG_HELPER --replace-section-entry "stepper_y" "position_max" "209" || exit $?
-        elif [ "$MODEL" = "CR-K1 Max" ]; then
-            cp /usr/data/pellcorp/k1/bltouch-k1m.cfg /usr/data/printer_data/config/ || exit $?
-            $CONFIG_HELPER --add-include "bltouch-k1m.cfg" || exit $?
-            $CONFIG_HELPER --replace-section-entry "stepper_y" "position_max" "280" || exit $?
-        fi
+        cp /usr/data/pellcorp/k1/bltouch-${model}.cfg /usr/data/printer_data/config/ || exit $?
+        $CONFIG_HELPER --add-include "bltouch-${model}.cfg" || exit $?
+
+        # because the model sits out the back we do need to set position max back
+        position_max=$($CONFIG_HELPER --get-section-entry "stepper_y" "position_max")
+        position_max=$((position_max-16))
+        $CONFIG_HELPER --replace-section-entry "stepper_y" "position_max" "$position_max" || exit $?
 
         echo "bltouch-probe" >> /usr/data/pellcorp.done
         sync
@@ -806,14 +806,9 @@ setup_microprobe() {
         $CONFIG_HELPER --remove-include "microprobe.cfg" || exit $?
         $CONFIG_HELPER --overrides "/usr/data/pellcorp/k1/microprobe.cfg" || exit $?
 
-        if [ "$MODEL" = "CR-K1" ] || [ "$MODEL" = "K1C" ]; then
-            cp /usr/data/pellcorp/k1/microprobe-k1.cfg /usr/data/printer_data/config/ || exit $?
-            $CONFIG_HELPER --add-include "microprobe-k1.cfg" || exit $?
-        elif [ "$MODEL" = "CR-K1 Max" ]; then
-            cp /usr/data/pellcorp/k1/microprobe-k1m.cfg /usr/data/printer_data/config/ || exit $?
-            $CONFIG_HELPER --add-include "microprobe-k1m.cfg" || exit $?
-        fi
-        
+        cp /usr/data/pellcorp/k1/microprobe-${model}.cfg /usr/data/printer_data/config/ || exit $?
+        $CONFIG_HELPER --add-include "microprobe-${model}.cfg" || exit $?
+
         echo "microprobe-probe" >> /usr/data/pellcorp.done
         sync
 
@@ -852,15 +847,13 @@ setup_cartographer() {
             echo "WARNING: There does not seem to be a cartographer attached - skipping auto configuration"
         fi
 
-        if [ "$MODEL" = "CR-K1" ] || [ "$MODEL" = "K1C" ]; then
-            cp /usr/data/pellcorp/k1/cartographer-k1.cfg /usr/data/printer_data/config/ || exit $?
-            $CONFIG_HELPER --add-include "cartographer-k1.cfg" || exit $?
-            $CONFIG_HELPER --replace-section-entry "stepper_y" "position_max" "210" || exit $?
-        elif [ "$MODEL" = "CR-K1 Max" ]; then
-            cp /usr/data/pellcorp/k1/cartographer-k1m.cfg /usr/data/printer_data/config/ || exit $?
-            $CONFIG_HELPER --add-include "cartographer-k1m.cfg" || exit $?
-            $CONFIG_HELPER --replace-section-entry "stepper_y" "position_max" "284" || exit $?
-        fi
+        cp /usr/data/pellcorp/k1/cartographer-${model}.cfg /usr/data/printer_data/config/ || exit $?
+        $CONFIG_HELPER --add-include "cartographer-${model}.cfg" || exit $?
+
+        # because the model sits out the back we do need to set position max back
+        position_max=$($CONFIG_HELPER --get-section-entry "stepper_y" "position_max")
+        position_max=$((position_max-16))
+        $CONFIG_HELPER --replace-section-entry "stepper_y" "position_max" "$position_max" || exit $?
 
         echo "cartographer-probe" >> /usr/data/pellcorp.done
         sync
@@ -912,15 +905,13 @@ setup_cartotouch() {
           $CONFIG_HELPER --replace-section-entry "scanner" "scanner_touch_z_offset" "0.05" || exit $?
         fi
 
-        if [ "$MODEL" = "CR-K1" ] || [ "$MODEL" = "K1C" ]; then
-            cp /usr/data/pellcorp/k1/cartographer-k1.cfg /usr/data/printer_data/config/ || exit $?
-            $CONFIG_HELPER --add-include "cartographer-k1.cfg" || exit $?
-            $CONFIG_HELPER --replace-section-entry "stepper_y" "position_max" "210" || exit $?
-        elif [ "$MODEL" = "CR-K1 Max" ]; then
-            cp /usr/data/pellcorp/k1/cartographer-k1m.cfg /usr/data/printer_data/config/ || exit $?
-            $CONFIG_HELPER --add-include "cartographer-k1m.cfg" || exit $?
-            $CONFIG_HELPER --replace-section-entry "stepper_y" "position_max" "284" || exit $?
-        fi
+        cp /usr/data/pellcorp/k1/cartographer-${model}.cfg /usr/data/printer_data/config/ || exit $?
+        $CONFIG_HELPER --add-include "cartographer-${model}.cfg" || exit $?
+
+        # because the model sits out the back we do need to set position max back
+        position_max=$($CONFIG_HELPER --get-section-entry "stepper_y" "position_max")
+        position_max=$((position_max-16))
+        $CONFIG_HELPER --replace-section-entry "stepper_y" "position_max" "$position_max" || exit $?
 
         echo "cartotouch-probe" >> /usr/data/pellcorp.done
         sync
@@ -962,16 +953,13 @@ setup_btteddy() {
           $CONFIG_HELPER --replace-section-entry "probe_eddy_current btt_eddy" "z_offset" "1.0" || exit $?
         fi
 
-        if [ "$MODEL" = "CR-K1" ] || [ "$MODEL" = "K1C" ]; then
-            cp /usr/data/pellcorp/k1/btteddy-k1.cfg /usr/data/printer_data/config/ || exit $?
-            $CONFIG_HELPER --add-include "btteddy-k1.cfg" || exit $?
-            # the max for the current initial mount which is not really ideal
-            $CONFIG_HELPER --replace-section-entry "stepper_y" "position_max" "210" || exit $?
-        elif [ "$MODEL" = "CR-K1 Max" ]; then
-            cp /usr/data/pellcorp/k1/btteddy-k1m.cfg /usr/data/printer_data/config/ || exit $?
-            $CONFIG_HELPER --add-include "btteddy-k1m.cfg" || exit $?
-            $CONFIG_HELPER --replace-section-entry "stepper_y" "position_max" "284" || exit $?
-        fi
+        cp /usr/data/pellcorp/k1/btteddy-${model}.cfg /usr/data/printer_data/config/ || exit $?
+        $CONFIG_HELPER --add-include "btteddy-${model}.cfg" || exit $?
+
+        # because the model sits out the back we do need to set position max back
+        position_max=$($CONFIG_HELPER --get-section-entry "stepper_y" "position_max")
+        position_max=$((position_max-16))
+        $CONFIG_HELPER --replace-section-entry "stepper_y" "position_max" "$position_max" || exit $?
 
         echo "btteddy-probe" >> /usr/data/pellcorp.done
         sync
@@ -1013,7 +1001,7 @@ restart_moonraker() {
     start_time=$(date +%s)
 
     # this is mostly for k1-qemu where Moonraker takes a while to start up
-    echo "Waiting for Moonraker ..."
+    echo "INFO: Waiting for Moonraker ..."
     while true; do
         KLIPPER_PATH=$(curl localhost:7125/printer/info 2> /dev/null | jq -r .result.klipper_path)
         # not sure why, but moonraker will start reporting the location of klipper as /usr/data/klipper
@@ -1031,6 +1019,10 @@ restart_moonraker() {
         sleep 1
     done
 }
+
+# to avoid cluttering the printer_data/config directory lets move stuff
+mkdir -p /usr/data/printer_data/config/backups/
+mv /usr/data/printer_data/config/*.bkp /usr/data/printer_data/config/backups/ 2> /dev/null
 
 mkdir -p /usr/data/pellcorp-backups
 # so if the installer has never been run we should grab a backup of the printer.cfg
@@ -1071,13 +1063,7 @@ while true; do
         debug=true
     elif [ "$1" = "microprobe" ] || [ "$1" = "bltouch" ] || [ "$1" = "cartographer" ] || [ "$1" = "cartotouch" ] || [ "$1" = "btteddy" ]; then
         if [ -n "$probe" ] && [ "$1" != "$probe" ]; then
-          if [ "$mode" = "reinstall" ]; then
-            echo ""
-            echo "WARNING: About to switch from $probe to $1!"
-          else
-            echo "ERROR: Cannot switch $probe to $1 without reinstalling"
-            exit 1
-          fi
+          echo "WARNING: About to switch from $probe to $1!"
         fi
         probe=$1
         shift
@@ -1094,8 +1080,10 @@ if [ -z "$probe" ]; then
     exit 1
 fi
 
+echo ""
 echo "INFO: Mode is $mode"
 echo "INFO: Probe is $probe"
+echo ""
 
 if [ "$skip_overrides" = "true" ]; then
     echo "INFO: Configuration overrides will not be saved or applied"
@@ -1134,7 +1122,7 @@ fi
 cd /root
 
 touch /usr/data/pellcorp.done
-cp /usr/data/printer_data/config/printer.cfg /usr/data/printer_data/config/.printer.cfg.bkp
+cp /usr/data/printer_data/config/printer.cfg /usr/data/printer_data/config/backups/printer.cfg.bkp
 
 install_config_updater
 install_entware $mode
@@ -1208,7 +1196,11 @@ fi
 
 # there will be no support for generating pellcorp-overrides unless you have done a factory reset
 if [ -f /usr/data/pellcorp-backups/printer.factory.cfg ]; then
-    for file in printer.cfg moonraker.conf; do
+    probe_model=${probe}
+    if [ "$probe" = "cartotouch" ]; then
+        probe_model=cartotouch
+    fi
+    for file in printer.cfg start_end.cfg moonraker.conf sensorless.cfg ${probe}.cfg ${probe_model}-${model}.cfg; do
         if [ -f /usr/data/printer_data/config/$file ] && [ ! -f /usr/data/pellcorp-backups/$file ]; then
             cp /usr/data/printer_data/config/$file /usr/data/pellcorp-backups/$file
         fi
