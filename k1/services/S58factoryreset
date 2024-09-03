@@ -12,7 +12,11 @@ factory_reset() {
     
     /usr/bin/mcu_reset.sh >/dev/null 2>&1
     ACTION=stop /usr/bin/auto_uvc.sh >/dev/null 2>&1
-    /etc/init.d/rcK >/dev/null 2>&1
+    [ -f /etc/init.d/S50nginx_service ] && /etc/init.d/S50nginx_service stop >/dev/null 2>&1
+    [ -f /etc/init.d/S99guppyscreen ] && /etc/init.d/S99guppyscreen stop >/dev/null 2>&1
+    [ -f /etc/init.d/S50webcam ] && /etc/init.d/S50webcam stop >/dev/null 2>&1
+    [ -f /etc/init.d/S56moonraker_service ] && /etc/init.d/S56moonraker_service stop >/dev/null 2>&1
+    [ -f /etc/init.d/S55klipper_service ] && /etc/init.d/S55klipper_service stop >/dev/null 2>&1
     /usr/bin/find /overlay/upper/ \
         -path '/overlay/upper/etc/dropbear' -prune -o \
         -path /overlay/upper/etc/localtime -prune -o \
@@ -37,9 +41,10 @@ factory_reset() {
     /usr/bin/find /usr/data/creality/ \
         -depth -print \
         -exec rmdir {} \; >/dev/null 2>&1
+    echo "Info: Factory reset was executed successfully, the printer will restart..."
+    /etc/init.d/rcK >/dev/null 2>&1
     /bin/sync >/dev/null 2>&1
     /sbin/swapoff -a >/dev/null 2>&1
-    echo "Info: Factory reset was executed successfully, the printer will restart..."
     /sbin/reboot -f >/dev/null 2>&1
 }
 

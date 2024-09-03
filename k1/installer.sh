@@ -112,8 +112,6 @@ fi
 rm -rf /root/.cache
 
 cp /usr/data/pellcorp/k1/services/S58factoryreset /etc/init.d || exit $?
-sync
-
 cp /usr/data/pellcorp/k1/services/S50dropbear /etc/init.d/ || exit $?
 sync
 
