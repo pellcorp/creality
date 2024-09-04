@@ -601,6 +601,9 @@ install_klipper() {
         # duplicate pin can only be assigned once, so we remove it from printer.cfg so we can
         # configure it in fan_control.cfg
         $CONFIG_HELPER --remove-section "duplicate_pin_override" || exit $?
+        
+        # no longer required as we configure the part fan entirely in fan_control.cfg
+        $CONFIG_HELPER --remove-section "static_digital_output my_fan_output_pins" || exit $?
 
         # moving the heater_fan to fan_control.cfg
         $CONFIG_HELPER --remove-section "heater_fan hotend_fan" || exit $?
