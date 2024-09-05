@@ -24,7 +24,7 @@ function apply_overrides() {
             done < "/usr/data/pellcorp-overrides.cfg"
         fi
 
-        files=$(find $overrides_dir ! -name 'printer-*.cfg' -a ! -name ".printer.cfg" -a -name "*.cfg" -o -name "*.conf" -o -name "printer.cfg.save_config")
+        files=$(find $overrides_dir -maxdepth 1 ! -name 'printer-*.cfg' -a ! -name ".printer.cfg" -a -name "*.cfg" -o -name "*.conf" -o -name "printer.cfg.save_config")
         for file in $files; do
             file=$(basename $file)
             # special case for moonraker.secrets
