@@ -62,7 +62,7 @@ update_repo() {
 }
 
 # special mode to update the repo only
-if [ "$1" = "--update-repo" ]; then
+if [ "$1" = "--update-repo" ] || [ "$1" = "--update-branch" ]; then
     update_repo /usr/data/pellcorp
     exit $?
 elif [ "$1" = "--branch" ] && [ -n "$2" ]; then # convenience for testing new features
@@ -247,7 +247,7 @@ install_moonraker() {
             rm -rf /usr/data/moonraker-env
         fi
 
-        if [ ! -d /usr/data/moonraker ]; then
+        if [ ! -d /usr/data/moonraker/.git ]; then
             echo "INFO: Installing moonraker ..."
         
             [ -d /usr/data/moonraker ] && rm -rf /usr/data/moonraker
@@ -266,7 +266,10 @@ install_moonraker() {
             fi
         fi
 
-        if [ ! -d /usr/data/moonraker-timelapse ]; then
+        if [ ! -f /usr/data/moonraker-timelapse/component/timelapse.py ]; then
+            if [ -d /usr/data/moonraker-timelapse ]; then
+                rm -rf /usr/data/moonraker-timelapse
+            fi
             git clone https://github.com/mainsail-crew/moonraker-timelapse.git /usr/data/moonraker-timelapse/ || exit $?
         fi
 
@@ -444,7 +447,7 @@ install_kamp() {
             rm -rf /usr/data/KAMP
         fi
         
-        if [ ! -d /usr/data/KAMP ]; then
+        if [ ! -d /usr/data/KAMP/.git ]; then
             echo ""
             echo "INFO: Installing KAMP ..."
             [ -d /usr/data/KAMP ] && rm -rf /usr/data/KAMP
@@ -521,7 +524,7 @@ install_klipper() {
             /etc/init.d/S55klipper_service start > /dev/null
         fi
 
-        if [ ! -d /usr/data/klipper ]; then
+        if [ ! -d /usr/data/klipper/.git ]; then
             echo "INFO: Installing ${klipper_repo} ..."
 
             if [ "$AF_GIT_CLONE" = "ssh" ]; then
@@ -538,7 +541,10 @@ install_klipper() {
 
         echo "INFO: Updating klipper config ..."
         /usr/share/klippy-env/bin/python3 -m compileall /usr/data/klipper/klippy || exit $?
+
+        # FIXME - one day maybe we can get rid of this link
         ln -sf /usr/data/klipper /usr/share/ || exit $?
+
         cp /usr/data/pellcorp/k1/services/S55klipper_service /etc/init.d/ || exit $?
 
         cp /usr/data/pellcorp/k1/services/S13mcu_update /etc/init.d/ || exit $?
