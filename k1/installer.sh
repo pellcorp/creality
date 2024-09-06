@@ -206,8 +206,7 @@ install_webcam() {
 
         # auto_uvc.sh is responsible for starting the web cam_app
         [ -f /usr/bin/auto_uvc.sh ] && rm /usr/bin/auto_uvc.sh
-        # create an empty script to avoid udev getting upset
-        touch /usr/bin/auto_uvc.sh
+        cp /usr/data/pellcorp/k1/files/auto_uvc.sh /usr/bin/
         chmod 777 /usr/bin/auto_uvc.sh
 
         cp /usr/data/pellcorp/k1/services/S50webcam /etc/init.d/
