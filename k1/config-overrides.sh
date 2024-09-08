@@ -152,6 +152,18 @@ fi
 cd /usr/data/pellcorp-overrides
 if git status > /dev/null 2>&1; then
     echo "INFO: /usr/data/pellcorp-overrides is a git repository"
+
+    # special handling for moonraker.secrets, we do not want to source control this
+    # file for fear of leaking credentials
+    if [ ! -f .gitignore ]; then
+      echo "moonraker.secrets" > .gitignore
+    elif ! grep -q "moonraker.secrets" .gitignore; then
+      echo "moonraker.secrets" >> .gitignore
+    fi
+
+    # make sure we remove any versioned file
+    git rm --cached moonraker.secrets 2> /dev/null
+
     status=$(git status)
     echo "$status" | grep -q "nothing to commit, working tree clean"
     if [ $? -eq 0 ]; then
