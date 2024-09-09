@@ -31,7 +31,7 @@ function apply_overrides() {
             if [ "$file" = "moonraker.secrets" ]; then
                 echo "Restoring /usr/data/printer_data/$file ..."
                 cp $overrides_dir/$file /usr/data/printer_data/
-            elif [ -L /usr/data/printer_data/config/$file ] || [ "$file" = "guppyscreen.cfg" ] || [ "$file" = "fan_control.cfg" ]; then
+            elif [ -L /usr/data/printer_data/config/$file ] || [ "$file" = "guppyscreen.cfg" ]; then
                 echo "Ignoring $file ..."
             elif [ -f "/usr/data/pellcorp-backups/$file" ] || [ -f "/usr/data/pellcorp/k1/$file" ]; then
               if [ -f /usr/data/printer_data/config/$file ]; then
