@@ -1205,7 +1205,7 @@ if [ -f /usr/data/pellcorp-backups/printer.factory.cfg ]; then
     if [ "$probe" = "cartotouch" ]; then
         probe_model=cartotouch
     fi
-    for file in printer.cfg start_end.cfg useful_macros.cfg moonraker.conf sensorless.cfg ${probe}.cfg ${probe_model}-${model}.cfg; do
+    for file in printer.cfg start_end.cfg fan_control.cfg useful_macros.cfg moonraker.conf sensorless.cfg ${probe}.cfg ${probe_model}-${model}.cfg; do
         if [ -f /usr/data/printer_data/config/$file ] && [ ! -f /usr/data/pellcorp-backups/$file ]; then
             cp /usr/data/printer_data/config/$file /usr/data/pellcorp-backups/$file
         fi
