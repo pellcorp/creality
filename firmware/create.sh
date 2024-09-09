@@ -2,14 +2,8 @@
 
 CURRENT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd -P)"
 
-# if you look hard enough you can find the password on the interwebs in a certain discord
-if [ -z "$K1_FIRMWARE_PASSWORD" ]; then
-    echo "Creality K1 firmware password not defined, did you forget to: "
-    echo "export K1_FIRMWARE_PASSWORD='the password from a certain discord'"
-    exit 1
-fi
 
-commands="7z unsquashfs mksquashfs"
+commands="7z unsquashfs mksquashfs mkpasswd"
 for command in $commands; do
     command -v "$command" > /dev/null
     if [ $? -ne 0 ]; then
@@ -18,12 +12,19 @@ for command in $commands; do
     fi
 done
 
-old_version=1.3.3.8
-version="6.${old_version}"
+BOARD_SHORT_NAME=F003
+# CR-10_SE_F003_ota_img_V1.1.0.23.img
+DOWNLOAD_PAGE=download-cr-10-se
+CREALITY_VERSION=1.1.0.23
+
+# thanks to Neon for showing me how to derive the password
+FIRMWARE_PASSWORD=$(mkpasswd -m md5 "${BOARD_SHORT_NAME}C3_7e_bz" -S cxswfile)
+
+version="6.${CREALITY_VERSION}"
 
 function write_ota_info() {
     echo "ota_version=${version}" > /tmp/${version}-pellcorp/ota_info
-    echo "ota_board_name=${board_name}" >> /tmp/${version}-pellcorp/ota_info
+    echo "ota_board_name=${BOARD_SHORT_NAME}" >> /tmp/${version}-pellcorp/ota_info
     echo "ota_compile_time=$(date '+%Y %m.%d %H:%M:%S')" >> /tmp/${version}-pellcorp/ota_info
     echo "ota_site=http://192.168.43.52/ota/board_test" >> /tmp/${version}-pellcorp/ota_info
     sudo cp /tmp/${version}-pellcorp/ota_info /tmp/${version}-pellcorp/squashfs-root/etc/
@@ -43,11 +44,11 @@ function update_rootfs() {
     sudo chown $USER rootfs.squashfs 
 }
 
-download=$(wget -q https://www.creality.com/pages/download-k1-flagship -O- | grep -o  "\"\(.*\)V${old_version}.img\"" | head -1 | tr -d '"')
+download=$(wget -q https://www.creality.com/pages/${DOWNLOAD_PAGE} -O- | grep -o  "\"\(.*\)V${CREALITY_VERSION}.img\"" | head -1 | tr -d '"')
 old_image_name=$(basename $download)
-board_name=$(echo "$old_image_name" | grep -oh "CR[^_\]*")
-old_directory="${board_name}_ota_img_V${old_version}"
-old_sub_directory="ota_v${old_version}"
+board_name=$(echo "$old_image_name" | grep -o "\(CR.*\)ota" | sed 's/_ota//g')
+old_directory="${board_name}_ota_img_V${CREALITY_VERSION}"
+old_sub_directory="ota_v${CREALITY_VERSION}"
 directory="${board_name}_ota_img_V${version}"
 sub_directory="ota_v${version}"
 image_name="${board_name}_ota_img_V${version}".img
@@ -61,7 +62,7 @@ if [ -d /tmp/$old_directory ]; then
     rm -rf /tmp/$old_directory
 fi
 
-7z x /tmp/$old_image_name -p"$K1_FIRMWARE_PASSWORD" -o/tmp
+7z x /tmp/$old_image_name -p"$FIRMWARE_PASSWORD" -o/tmp
 
 if [ -d /tmp/${version}-pellcorp ]; then
     sudo rm -rf /tmp/${version}-pellcorp
@@ -104,11 +105,12 @@ for i in $(ls /tmp/${version}-pellcorp/$directory/$sub_directory/rootfs.squashfs
     echo "$part_md5" >> "/tmp/${version}-pellcorp/$directory/$sub_directory/ota_md5_rootfs.squashfs.${rootfs_md5}"
 done
 
-sed -i "s/ota_version=$old_version/ota_version=$version/g" /tmp/${version}-pellcorp/$directory/$sub_directory/ota_update.in
+sed -i "s/ota_version=${CREALITY_VERSION}/ota_version=$version/g" /tmp/${version}-pellcorp/$directory/$sub_directory/ota_update.in
 sed -i "s/img_md5=$orig_rootfs_md5/img_md5=$rootfs_md5/g" /tmp/${version}-pellcorp/$directory/$sub_directory/ota_update.in
 sed -i "s/img_size=$orig_rootfs_size/img_size=$rootfs_size/g" /tmp/${version}-pellcorp/$directory/$sub_directory/ota_update.in
 
 pushd /tmp/${version}-pellcorp/ > /dev/null
-7z a ${image_name}.7z -p"$K1_FIRMWARE_PASSWORD" $directory
+7z a ${image_name}.7z -p"$FIRMWARE_PASSWORD" $directory
 mv ${image_name}.7z ${image_name}
+echo "Firmware is ${image_name}"
 popd > /dev/null

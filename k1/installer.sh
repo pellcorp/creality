@@ -16,13 +16,13 @@ fi
 
 MODEL=$(/usr/bin/get_sn_mac.sh model)
 
-if [ "$MODEL" != "CR-K1" ] && [ "$MODEL" != "K1C" ] && [ "$MODEL" != "CR-K1 Max" ]; then
-    echo "This script is only supported for the K1, K1C and CR-K1 Max!"
+if [ "$MODEL" != "CR-K1" ] && [ "$MODEL" != "K1C" ] && [ "$MODEL" != "CR-K1 Max" ] && [ "$MODEL" != "F003" ]; then
+    echo "This script is only supported for the CR-10SE, K1, K1C and CR-K1 Max!"
     exit 1
 fi
 
 # now map it to the probe file name suffix
-if [ "$MODEL" = "CR-K1" ] || [ "$MODEL" = "K1C" ]; then
+if [ "$MODEL" = "CR-K1" ] || [ "$MODEL" = "K1C" ] || [ "$MODEL" = "F003" ]; then
   model=k1
 elif [ "$MODEL" = "CR-K1 Max" ]; then
   model=k1m
@@ -499,6 +499,11 @@ install_klipper() {
             klipper_repo=k1-carto-klipper
         fi
 
+        # force the use of CR-10SE_Klipper fork
+        if [ "$MODEL" = "F003" ]; then
+          klipper_repo="CR-10SE_Klipper"
+        fi
+
         if [ "$mode" != "update" ] && [ -d /usr/data/klipper ]; then
             if [ -f /etc/init.d/S55klipper_service ]; then
                 /etc/init.d/S55klipper_service stop
@@ -555,6 +560,10 @@ install_klipper() {
 
         # the klipper_mcu is not even used, so just get rid of it
         $CONFIG_HELPER --remove-section "mcu rpi" || exit $?
+
+        # CR-10 SE
+        $CONFIG_HELPER --remove-section "z_compensate" || exit $?
+        $CONFIG_HELPER --remove-section "soft_homing" || exit $?
 
         $CONFIG_HELPER --remove-section "bl24c16f" || exit $?
         $CONFIG_HELPER --remove-section "prtouch_v2" || exit $?

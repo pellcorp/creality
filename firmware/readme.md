@@ -38,7 +38,6 @@ Don't try and create this on windows or MacOs, you could do it on a ubuntu vm no
 Then you can create a new firmware file, currently without any customations just to test things work with:
 
 ```
-export K1_FIRMWARE_PASSWORD='the password from a certain discord'
 ./create.sh
 ```
 
@@ -60,8 +59,10 @@ a new firmware image from the cli rather than relying on the display server
 Thanks for destinal from discord for providing information about testing the image and also for providing 
 the password creality uses for generating the image.
 
-https://www.reddit.com/r/crealityk1/comments/15d3b8k/reverting_to_stock_firmware_on_the_k1_or_k1_max/  
+Thanks to Neon for explaining to me how to derive the password for various creality firmware based on
+the board name.
 
+https://www.reddit.com/r/crealityk1/comments/15d3b8k/reverting_to_stock_firmware_on_the_k1_or_k1_max/  
 
 I also have used a couple of his init.d scripts which I got from 
 https://openk1.org/static/k1/packages/crealityos-root-init-scripts.tar.gz
