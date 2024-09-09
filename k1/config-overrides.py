@@ -92,7 +92,11 @@ def main():
                     continue
 
                 # no gcode macros or sensorless gcode overrides
-                if ('gcode_macro' in section_name or 'gcode_shell_command' in section_name or section_name == 'homing_override') and key == 'gcode':
+                if ('gcode_macro' in section_name or section_name == 'homing_override') and key == 'gcode':
+                    continue
+
+                # disable all overrides for any gcode shell commands
+                if 'gcode_shell_command' in section_name:
                     continue
 
                 # do not save the serial field
