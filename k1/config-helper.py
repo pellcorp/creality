@@ -139,7 +139,11 @@ def add_section(updater, section_name):
     return True
 
 
-def override_cfg(updater, override_cfg_file, printer_cfg=False, moonraker_conf=False, after_section=None):
+def override_cfg(updater, override_cfg_file, config_file, after_section=None):
+    printer_cfg = 'printer.cfg' == os.path.basename(config_file)
+    moonraker_conf = 'moonraker.conf' == os.path.basename(config_file)
+    fan_control = 'fan_control.cfg' == os.path.basename(config_file)
+
     overrides = ConfigUpdater(strict=False, allow_no_value=True, space_around_delimiters=False, delimiters=(':'))
     updated = False
     with open(override_cfg_file, 'r') as file:
@@ -169,7 +173,7 @@ def override_cfg(updater, override_cfg_file, printer_cfg=False, moonraker_conf=F
                 include = section_name.replace('include ', '')
                 if add_include(updater, include):
                     updated = True
-            elif 'gcode_macro' not in section_name and 'gcode_shell_command' not in section_name and (printer_cfg or moonraker_conf):
+            elif 'gcode_macro' not in section_name and 'gcode_shell_command' not in section_name and (fan_control or printer_cfg or moonraker_conf):
                 new_section = overrides.get_section(section_name, None)
                 if new_section:
                     if after_section and updater.has_section(after_section):
@@ -218,7 +222,6 @@ def main():
         updater.read_file(file)
     
     printer_cfg = 'printer.cfg' == os.path.basename(config_file)
-    moonraker_conf = 'moonraker.conf' == os.path.basename(config_file)
 
     updated = False
     if options.remove_section:
@@ -251,7 +254,7 @@ def main():
         updated = add_section(updater, options.add_section)
     elif options.overrides:
         if os.path.exists(options.overrides):
-            updated = override_cfg(updater, options.overrides, after_section=options.after, printer_cfg=printer_cfg, moonraker_conf=moonraker_conf)
+            updated = override_cfg(updater, options.overrides, after_section=options.after, config_file=os.path.basename(config_file))
         else:
             raise Exception(f"Overrides Config File {options.overrides} not found")
     else:
