@@ -34,6 +34,7 @@ def main():
     update_overrides = False
     printer_cfg = 'printer.cfg' == os.path.basename(args.original)
     moonraker_conf = 'moonraker.conf' == os.path.basename(args.original)
+    fan_control = 'fan_control.cfg' == os.path.basename(args.original)
 
     # only support deleting sections from printer.cfg for now
     for section_name in original.sections():
@@ -46,9 +47,9 @@ def main():
             update_overrides = True
 
     for section_name in updated.sections():
-        # so for printer.cfg and moonraker.conf a new section can be saved, but it can't be a gcode macro
+        # so for printer.cfg, moonraker.conf or fan_control a new section can be saved, but it can't be a gcode macro
         # and we are ignoring a new scanner section in config overrides due to migrating to cartotouch.cfg
-        if section_name != 'scanner' and 'gcode_macro' not in section_name and (printer_cfg or moonraker_conf):
+        if section_name != 'scanner' and 'gcode_macro' not in section_name and (printer_cfg or moonraker_conf or fan_control):
             if section_name not in original.sections():
                 new_section = updated.get_section(section_name, None)
                 if len(overrides.sections()) > 0:
