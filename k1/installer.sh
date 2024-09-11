@@ -1211,8 +1211,11 @@ if [ -f /usr/data/pellcorp-backups/printer.factory.cfg ]; then
     if [ "$probe" = "cartotouch" ]; then
         probe_model=cartotouch
     fi
+
+    # we want a copy of the file before config overrides are re-applied so we can correctly generate diffs
+    # against different generations of the original file
     for file in printer.cfg start_end.cfg fan_control.cfg useful_macros.cfg moonraker.conf sensorless.cfg ${probe}.cfg ${probe_model}-${model}.cfg; do
-        if [ -f /usr/data/printer_data/config/$file ] && [ ! -f /usr/data/pellcorp-backups/$file ]; then
+        if [ -f /usr/data/printer_data/config/$file ]; then
             cp /usr/data/printer_data/config/$file /usr/data/pellcorp-backups/$file
         fi
     done
