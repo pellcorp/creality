@@ -702,6 +702,12 @@ setup_probe() {
         $CONFIG_HELPER --remove-section-entry "stepper_z" "position_endstop" || exit $?
         $CONFIG_HELPER --replace-section-entry "stepper_z" "endstop_pin" "probe:z_virtual_endstop" || exit $?
 
+        # because we are using force move with 3mm, as a safety feature we will lower the position max
+        # by 3mm ootb to avoid damaging the printer if you do a really big print
+        position_max=$($CONFIG_HELPER --get-section-entry "stepper_z" "position_max")
+        position_max=$((position_max-3))
+        $CONFIG_HELPER --replace-section-entry "stepper_z" "position_max" "$position_max" || exit $?
+
         echo "probe" >> /usr/data/pellcorp.done
         sync
 
