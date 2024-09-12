@@ -624,6 +624,10 @@ install_klipper() {
         # the nozzle should not trigger the MCU anymore        
         $CONFIG_HELPER --remove-section "multi_pin heater_fans" || exit $?
 
+        # moving idle timeout to start_end.cfg so we can have some integration with
+        # start and end print and warp stabilisation if needed
+        $CONFIG_HELPER --remove-section "idle_timeout"
+
         echo "klipper" >> /usr/data/pellcorp.done
         sync
 
