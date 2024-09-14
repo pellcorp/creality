@@ -493,12 +493,6 @@ install_klipper() {
     if [ $? -ne 0 ]; then
         echo ""
 
-        klipper_repo=klipper
-        # pellcorp/k1-carto-klipper is a version of klipper that is the same as k1-klipper/klipper k1_carto branch
-        if [ "$probe" = "cartographer" ] || [ "$probe" = "cartotouch" ]; then
-            klipper_repo=k1-carto-klipper
-        fi
-
         if [ "$mode" != "update" ] && [ -d /usr/data/klipper ]; then
             if [ -f /etc/init.d/S55klipper_service ]; then
                 /etc/init.d/S55klipper_service stop
@@ -510,8 +504,8 @@ install_klipper() {
             cd /usr/data/klipper/
             remote_repo=$(git remote get-url origin | awk -F '/' '{print $NF}' | sed 's/.git//g')
             cd - > /dev/null
-            if [ "$remote_repo" != "$klipper_repo" ]; then
-                echo "INFO: Forcing Klipper repo to be switched to pellcorp/${klipper_repo}"
+            if [ "$remote_repo" != "klipper" ]; then
+                echo "INFO: Forcing Klipper repo to be switched to pellcorp/klipper"
                 rm -rf /usr/data/klipper/
             fi
         fi
@@ -524,16 +518,16 @@ install_klipper() {
         fi
 
         if [ ! -d /usr/data/klipper/.git ]; then
-            echo "INFO: Installing ${klipper_repo} ..."
+            echo "INFO: Installing klipper ..."
 
             if [ "$AF_GIT_CLONE" = "ssh" ]; then
-                export GIT_SSH_IDENTITY=${klipper_repo}
+                export GIT_SSH_IDENTITY=klipper
                 export GIT_SSH=/usr/data/pellcorp/k1/ssh/git-ssh.sh
-                git clone git@github.com:pellcorp/${klipper_repo}.git /usr/data/klipper || exit $?
+                git clone git@github.com:pellcorp/klipper.git /usr/data/klipper || exit $?
                 # reset the origin url to make moonraker happy
-                cd /usr/data/klipper && git remote set-url origin https://github.com/pellcorp/${klipper_repo}.git && cd - > /dev/null
+                cd /usr/data/klipper && git remote set-url origin https://github.com/pellcorp/klipper.git && cd - > /dev/null
             else
-                git clone https://github.com/pellcorp/${klipper_repo}.git /usr/data/klipper || exit $?
+                git clone https://github.com/pellcorp/klipper.git /usr/data/klipper || exit $?
             fi
             [ -d /usr/share/klipper ] && rm -rf /usr/share/klipper
         fi
