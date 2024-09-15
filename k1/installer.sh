@@ -646,7 +646,7 @@ install_guppyscreen() {
 
         if [ "$mode" != "update" ] && [ -d /usr/data/guppyscreen ]; then
             if [ -f /etc/init.d/S99guppyscreen ]; then
-              /etc/init.d/S99guppyscreen stop &> /dev/null
+              /etc/init.d/S99guppyscreen stop > /dev/null
               killall -q guppyscreen
             fi
             rm -rf /usr/data/guppyscreen
@@ -657,7 +657,7 @@ install_guppyscreen() {
             echo "INFO: Installing guppyscreen ..."
 
             curl -L "https://github.com/ballaswag/guppyscreen/releases/latest/download/guppyscreen.tar.gz" -o /usr/data/guppyscreen.tar.gz || exit $?
-            tar xf /usr/data/guppyscreen.tar.gz  -C /usr/data/ || exit $?
+            tar xf /usr/data/guppyscreen.tar.gz -C /usr/data/ || exit $?
             rm /usr/data/guppyscreen.tar.gz 
         fi
 
