@@ -544,6 +544,9 @@ install_klipper() {
         # FIXME - one day maybe we can get rid of this link
         ln -sf /usr/data/klipper /usr/share/ || exit $?
 
+        # for scripts like ~/klipper/scripts, a soft link makes things a little bit easier
+        ln -sf /usr/data/klipper/ /root
+
         cp /usr/data/pellcorp/k1/services/S55klipper_service /etc/init.d/ || exit $?
 
         cp /usr/data/pellcorp/k1/services/S13mcu_update /etc/init.d/ || exit $?
