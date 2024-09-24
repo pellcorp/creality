@@ -211,6 +211,7 @@ install_webcam() {
 
         cp /usr/data/pellcorp/k1/services/S50webcam /etc/init.d/
         /etc/init.d/S50webcam start
+
         echo "webcam" >> /usr/data/pellcorp.done
         sync
         return 1
@@ -293,6 +294,11 @@ install_moonraker() {
         cp /usr/data/pellcorp/k1/moonraker.conf /usr/data/printer_data/config/ || exit $?
         ln -sf /usr/data/pellcorp/k1/moonraker.asvc /usr/data/printer_data/ || exit $?
         cp /usr/data/pellcorp/k1/webcam.conf /usr/data/printer_data/config/ || exit $?
+
+        IP_ADDRESS=$(ip a | grep "inet" | grep -v "host lo" | awk '{ print $2 }' | awk -F '/' '{print $1}' | tail -1)
+        if [ -n "$IP_ADDRESS" ]; then
+            sed -i "s/xxx.xxx.xxx.xxx/$IP_ADDRESS/g" /usr/data/printer_data/config/webcam.conf
+        fi
 
         ln -sf /usr/data/moonraker-timelapse/component/timelapse.py /usr/data/moonraker/moonraker/components/ || exit $?
         if ! grep -q "moonraker/components/timelapse.py" "/usr/data/moonraker/.git/info/exclude"; then
@@ -1220,7 +1226,7 @@ if [ -f /usr/data/pellcorp-backups/printer.factory.cfg ]; then
 
     # we want a copy of the file before config overrides are re-applied so we can correctly generate diffs
     # against different generations of the original file
-    for file in printer.cfg start_end.cfg fan_control.cfg useful_macros.cfg moonraker.conf sensorless.cfg ${probe}.cfg ${probe_model}-${model}.cfg; do
+    for file in printer.cfg start_end.cfg fan_control.cfg useful_macros.cfg moonraker.conf sensorless.cfg ${probe}_macro.cfg ${probe}.cfg ${probe_model}-${model}.cfg; do
         if [ -f /usr/data/printer_data/config/$file ]; then
             cp /usr/data/printer_data/config/$file /usr/data/pellcorp-backups/$file
         fi
