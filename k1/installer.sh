@@ -214,6 +214,8 @@ install_webcam() {
 
         cp /usr/data/pellcorp/k1/webcam.conf /usr/data/printer_data/config/ || exit $?
 
+        # I don't know what IP this gets for K1 Max, but its only updating commented out config at the moment
+        # so its not too much of an issue
         IP_ADDRESS=$(ip a | grep "inet" | grep -v "host lo" | awk '{ print $2 }' | awk -F '/' '{print $1}' | tail -1)
         if [ -n "$IP_ADDRESS" ]; then
             sed -i "s/xxx.xxx.xxx.xxx/$IP_ADDRESS/g" /usr/data/printer_data/config/webcam.conf
