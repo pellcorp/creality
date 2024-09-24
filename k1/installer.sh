@@ -212,6 +212,13 @@ install_webcam() {
         cp /usr/data/pellcorp/k1/services/S50webcam /etc/init.d/
         /etc/init.d/S50webcam start
 
+        cp /usr/data/pellcorp/k1/webcam.conf /usr/data/printer_data/config/ || exit $?
+
+        IP_ADDRESS=$(ip a | grep "inet" | grep -v "host lo" | awk '{ print $2 }' | awk -F '/' '{print $1}' | tail -1)
+        if [ -n "$IP_ADDRESS" ]; then
+            sed -i "s/xxx.xxx.xxx.xxx/$IP_ADDRESS/g" /usr/data/printer_data/config/webcam.conf
+        fi
+
         echo "webcam" >> /usr/data/pellcorp.done
         sync
         return 1
@@ -293,12 +300,6 @@ install_moonraker() {
         cp /usr/data/pellcorp/k1/services/S56moonraker_service /etc/init.d/ || exit $?
         cp /usr/data/pellcorp/k1/moonraker.conf /usr/data/printer_data/config/ || exit $?
         ln -sf /usr/data/pellcorp/k1/moonraker.asvc /usr/data/printer_data/ || exit $?
-        cp /usr/data/pellcorp/k1/webcam.conf /usr/data/printer_data/config/ || exit $?
-
-        IP_ADDRESS=$(ip a | grep "inet" | grep -v "host lo" | awk '{ print $2 }' | awk -F '/' '{print $1}' | tail -1)
-        if [ -n "$IP_ADDRESS" ]; then
-            sed -i "s/xxx.xxx.xxx.xxx/$IP_ADDRESS/g" /usr/data/printer_data/config/webcam.conf
-        fi
 
         ln -sf /usr/data/moonraker-timelapse/component/timelapse.py /usr/data/moonraker/moonraker/components/ || exit $?
         if ! grep -q "moonraker/components/timelapse.py" "/usr/data/moonraker/.git/info/exclude"; then
