@@ -74,6 +74,8 @@ elif [ "$1" = "--klipper-branch" ] && [ -n "$2" ]; then # convenience for testin
     update_repo /usr/data/klipper || exit $?
     cd /usr/data/klipper && git switch $2 && cd - > /dev/null
     update_repo /usr/data/klipper
+
+    /usr/share/klippy-env/bin/python3 -m compileall /usr/data/klipper/klippy || exit $?
     exit $?
 elif [ "$1" = "--klipper-repo" ] && [ -n "$2" ]; then # convenience for testing new features
     klipper_repo=$2
@@ -84,6 +86,8 @@ elif [ "$1" = "--klipper-repo" ] && [ -n "$2" ]; then # convenience for testing 
         if [ "$remote_repo" != "$klipper_repo" ]; then
             echo "Switching klipper from pellcorp/$remote_repo to pellcorp/${klipper_repo} ..."
             rm -rf /usr/data/klipper
+
+            echo "$klipper_repo" > /usr/data/pellcorp.klipper
         fi
     fi
 
@@ -101,6 +105,9 @@ elif [ "$1" = "--klipper-repo" ] && [ -n "$2" ]; then # convenience for testing 
         /usr/data/cartographer-klipper/install.sh || exit $?
         sync
     fi
+
+    /usr/share/klippy-env/bin/python3 -m compileall /usr/data/klipper/klippy || exit $?
+
     /usr/data/pellcorp/k1/check-firmware.sh --status
     if [ $? -eq 0 ]; then
         /etc/init.d/S55klipper_service restart
@@ -512,9 +519,16 @@ install_klipper() {
                 /etc/init.d/S55klipper_service stop
             fi
             rm -rf /usr/data/klipper
+
+            # a reinstall should reset the choice of what klipper to run
+            if [ -f /usr/data/pellcorp.klipper ]; then
+              rm /usr/data/pellcorp.klipper
+            fi
         fi
 
-        if [ -d /usr/data/klipper/.git ]; then
+        # switch to required klipper version except where there is a flag file indicating we explicitly
+        # decided to use a particular version of klipper
+        if [ -d /usr/data/klipper/.git ] && [ ! -f /usr/data/pellcorp.klipper ]; then
             cd /usr/data/klipper/
             remote_repo=$(git remote get-url origin | awk -F '/' '{print $NF}' | sed 's/.git//g')
             cd - > /dev/null
