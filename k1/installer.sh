@@ -1001,6 +1001,9 @@ setup_btteddy() {
         position_max=$((position_max-16))
         $CONFIG_HELPER --replace-section-entry "stepper_y" "position_max" "$position_max" || exit $?
 
+        # if user has installed the Zero SimpleAddon, go ahead and remove the save-zoffset.cfg include
+        $CONFIG_HELPER --remove-include "SimpleAddon/save-zoffset.cfg"
+
         echo "btteddy-probe" >> /usr/data/pellcorp.done
         sync
         return 1
