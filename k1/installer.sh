@@ -989,8 +989,10 @@ setup_btteddy() {
         # for an update the save config has not as yet been reapplied to printer.cfg so we need to check the overrides
         if grep -q "#*# [probe_eddy_current btt_eddy]" /usr/data/pellcorp-overrides/printer.cfg.save_config 2> /dev/null; then
           $CONFIG_HELPER --replace-section-entry "probe_eddy_current btt_eddy" "#z_offset" "1.0" || exit $?
+          $CONFIG_HELPER --replace-section-entry "probe_eddy_current btt_eddy" "#reg_drive_current" "31" || exit $?
         else
           $CONFIG_HELPER --replace-section-entry "probe_eddy_current btt_eddy" "z_offset" "1.0" || exit $?
+          $CONFIG_HELPER --replace-section-entry "probe_eddy_current btt_eddy" "reg_drive_current" "31" || exit $?
         fi
 
         cp /usr/data/pellcorp/k1/btteddy-${model}.cfg /usr/data/printer_data/config/ || exit $?
