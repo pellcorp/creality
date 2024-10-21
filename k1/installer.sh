@@ -987,6 +987,8 @@ setup_btteddy() {
         $CONFIG_HELPER --add-section "probe_eddy_current btt_eddy" || exit $?
 
         # for an update the save config has not as yet been reapplied to printer.cfg so we need to check the overrides
+        # according to https://klipper.discourse.group/t/eddy-current-sensor-homing-and-calibration-problems/16670/11 setting
+        # a bigger default reg_drive_current should allow the BTT_EDDY_CALIBRATE_DRIVE_CURRENT to return a more accurate value
         if grep -q "#*# [probe_eddy_current btt_eddy]" /usr/data/pellcorp-overrides/printer.cfg.save_config 2> /dev/null; then
           $CONFIG_HELPER --replace-section-entry "probe_eddy_current btt_eddy" "#z_offset" "1.0" || exit $?
           $CONFIG_HELPER --replace-section-entry "probe_eddy_current btt_eddy" "#reg_drive_current" "31" || exit $?
