@@ -17,7 +17,11 @@ def remove_section_value(updater, section_name, key):
             current_value = section.get(key, None)
             if current_value:
                 del section[key]
-                section.last_block.add_before.comment(f"{current_value}")
+                if current_value.lines == 1:
+                    section.last_block.add_before.comment(f"{current_value}")
+                else:
+                    for _, line in enumerate(current_value.lines):
+                        section.last_block.add_before.comment(f"{line}")
                 return True
     return False
 
