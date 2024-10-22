@@ -11,9 +11,14 @@ from configupdater import ConfigUpdater
 
 
 def remove_section_value(updater, section_name, key):
-    if updater.has_option(section_name, key):
-        updater.remove_option(section_name, key)
-        return True
+    if updater.has_section(section_name):
+        section = updater.get_section(section_name, None)
+        if section:
+            current_value = section.get(key, None)
+            if current_value:
+                del section[key]
+                section.last_block.add_before.comment(f"{current_value}")
+                return True
     return False
 
 
