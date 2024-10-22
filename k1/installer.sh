@@ -1166,7 +1166,8 @@ fi
 cd /root
 
 touch /usr/data/pellcorp.done
-cp /usr/data/printer_data/config/printer.cfg /usr/data/printer_data/config/backups/printer.cfg.bkp
+TIMESTAMP=$(date +"%Y%m%d_%H%M%S")
+cp /usr/data/printer_data/config/printer.cfg /usr/data/printer_data/config/backups/printer-${TIMESTAMP}.cfg
 
 install_config_updater
 install_entware $mode
