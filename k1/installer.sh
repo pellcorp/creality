@@ -1007,8 +1007,8 @@ setup_btteddy() {
 
         # if user has installed the Zero SimpleAddon, go ahead and remove the save-zoffset.cfg include and file
         for file in addons/save-zoffset.cfg SimpleAddon/save-zoffset.cfg; do
+          $CONFIG_HELPER --remove-include "$file"
           if [ -f /usr/data/printer_data/config/$file ]; then
-            $CONFIG_HELPER --remove-include "$file"
             rm /usr/data/printer_data/config/$file
           fi
         done
