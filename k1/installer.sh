@@ -731,6 +731,9 @@ setup_probe() {
         $CONFIG_HELPER --remove-section-entry "stepper_z" "position_endstop" || exit $?
         $CONFIG_HELPER --replace-section-entry "stepper_z" "endstop_pin" "probe:z_virtual_endstop" || exit $?
 
+        cp /usr/data/pellcorp/k1/guided/quickstart.cfg /usr/data/printer_data/config/ || exit $?
+        $CONFIG_HELPER --add-include "quickstart.cfg" || exit $?
+
         # because we are using force move with 3mm, as a safety feature we will lower the position max
         # by 3mm ootb to avoid damaging the printer if you do a really big print
         position_max=$($CONFIG_HELPER --get-section-entry "stepper_z" "position_max")
@@ -953,6 +956,9 @@ setup_cartotouch() {
         position_max=$((position_max-16))
         $CONFIG_HELPER --replace-section-entry "stepper_y" "position_max" "$position_max" || exit $?
 
+        cp /usr/data/pellcorp/k1/cartographer_calibrate.cfg /usr/data/printer_data/config/ || exit $?
+        $CONFIG_HELPER --add-include "cartographer_calibrate.cfg" || exit $?
+
         echo "cartotouch-probe" >> /usr/data/pellcorp.done
         sync
         return 1
@@ -1005,13 +1011,8 @@ setup_btteddy() {
         position_max=$((position_max-16))
         $CONFIG_HELPER --replace-section-entry "stepper_y" "position_max" "$position_max" || exit $?
 
-        # if user has installed the Zero SimpleAddon, go ahead and remove the save-zoffset.cfg include and file
-        for file in addons/save-zoffset.cfg SimpleAddon/save-zoffset.cfg; do
-          $CONFIG_HELPER --remove-include "$file"
-          if [ -f /usr/data/printer_data/config/$file ]; then
-            rm /usr/data/printer_data/config/$file
-          fi
-        done
+        cp /usr/data/pellcorp/k1/btteddy_calibrate.cfg /usr/data/printer_data/config/ || exit $?
+        $CONFIG_HELPER --add-include "btteddy_calibrate.cfg" || exit $?
 
         echo "btteddy-probe" >> /usr/data/pellcorp.done
         sync
@@ -1140,6 +1141,17 @@ echo ""
 if [ "$skip_overrides" = "true" ]; then
     echo "INFO: Configuration overrides will not be saved or applied"
 fi
+
+# completely remove all iterations of zero SimpleAddon
+for dir in addons SimpleAddon; do
+  if [ -d /usr/data/printer_data/config/$dir ]; then
+    rm -rf /usr/data/printer_data/config/$dir
+  fi
+done
+for file in save-zoffset.cfg eddycalibrate.cfg quickstart.cfg cartographer_calibrate.cfg btteddy_calibrate.cfg; do
+  $CONFIG_HELPER --remove-include "SimpleAddon/$file"
+done
+$CONFIG_HELPER --remove-include "addons/*.cfg"
 
 # the pellcorp-backups do not need .pellcorp extension, so this is to fix backwards compatible
 if [ -f /usr/data/pellcorp-backups/printer.pellcorp.cfg ]; then
