@@ -731,7 +731,7 @@ setup_probe() {
         $CONFIG_HELPER --remove-section-entry "stepper_z" "position_endstop" || exit $?
         $CONFIG_HELPER --replace-section-entry "stepper_z" "endstop_pin" "probe:z_virtual_endstop" || exit $?
 
-        cp /usr/data/pellcorp/k1/guided/quickstart.cfg /usr/data/printer_data/config/ || exit $?
+        cp /usr/data/pellcorp/k1/quickstart.cfg /usr/data/printer_data/config/ || exit $?
         $CONFIG_HELPER --add-include "quickstart.cfg" || exit $?
 
         # because we are using force move with 3mm, as a safety feature we will lower the position max
