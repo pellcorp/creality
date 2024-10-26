@@ -35,6 +35,11 @@ function apply_overrides() {
                 echo "Ignoring $file ..."
             elif [ -f "/usr/data/pellcorp-backups/$file" ] || [ -f "/usr/data/pellcorp/k1/$file" ]; then
               if [ -f /usr/data/printer_data/config/$file ]; then
+                # we renamed the SENSORLESS_PARAMS to hide it
+                if [ "$file" = "sensorless.cfg" ]; then
+                    sed -i 's/gcode_macro SENSORLESS_PARAMS/gcode_macro _SENSORLESS_PARAMS/g' /usr/data/pellcorp-overrides/sensorless.cfg
+                fi
+
                 echo "Applying overrides for /usr/data/printer_data/config/$file ..."
                 cp /usr/data/printer_data/config/$file /usr/data/printer_data/config/backups/${file}.override.bkp
                 $CONFIG_HELPER --file $file --overrides $overrides_dir/$file || exit $?

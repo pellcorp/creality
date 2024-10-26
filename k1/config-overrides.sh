@@ -66,6 +66,11 @@ override_file() {
     fi
     $CONFIG_OVERRIDES --original "$original_file" --updated "$updated_file" --overrides "$overrides_file" || exit $?
 
+    # we renamed the SENSORLESS_PARAMS to hide it
+    if [ -f /usr/data/pellcorp-overrides/sensorless.cfg ]; then
+      sed -i 's/gcode_macro SENSORLESS_PARAMS/gcode_macro _SENSORLESS_PARAMS/g' /usr/data/pellcorp-overrides/sensorless.cfg
+    fi
+
     if [ "$file" = "printer.cfg" ]; then
       saves=false
       while IFS= read -r line; do
