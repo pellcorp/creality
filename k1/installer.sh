@@ -76,6 +76,10 @@ elif [ "$1" = "--klipper-branch" ] && [ -n "$2" ]; then # convenience for testin
     update_repo /usr/data/klipper
 
     /usr/share/klippy-env/bin/python3 -m compileall /usr/data/klipper/klippy || exit $?
+    /usr/data/pellcorp/k1/check-firmware.sh --status
+    if [ $? -eq 0 ]; then
+        /etc/init.d/S55klipper_service restart
+    fi
     exit $?
 elif [ "$1" = "--klipper-repo" ] && [ -n "$2" ]; then # convenience for testing new features
     klipper_repo=$2
