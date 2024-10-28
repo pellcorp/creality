@@ -76,7 +76,7 @@ elif [ "$1" = "--klipper-branch" ] && [ -n "$2" ]; then # convenience for testin
     update_repo /usr/data/klipper
 
     /usr/share/klippy-env/bin/python3 -m compileall /usr/data/klipper/klippy || exit $?
-    /usr/data/pellcorp/k1/check-firmware.sh --status
+    /usr/data/pellcorp/k1/tools/check-firmware.sh --status
     if [ $? -eq 0 ]; then
         /etc/init.d/S55klipper_service restart
     fi
@@ -112,7 +112,7 @@ elif [ "$1" = "--klipper-repo" ] && [ -n "$2" ]; then # convenience for testing 
 
     /usr/share/klippy-env/bin/python3 -m compileall /usr/data/klipper/klippy || exit $?
 
-    /usr/data/pellcorp/k1/check-firmware.sh --status
+    /usr/data/pellcorp/k1/tools/check-firmware.sh --status
     if [ $? -eq 0 ]; then
         /etc/init.d/S55klipper_service restart
     fi
@@ -1223,17 +1223,6 @@ if [ "$probe" = "cartographer" ] || [ "$probe" = "cartotouch" ]; then
   install_cartographer_klipper=$?
 fi
 
-# if moonraker was installed or updated
-if [ $install_moonraker -ne 0 ] || [ $install_cartographer_klipper -ne 0 ]; then
-    restart_moonraker
-fi
-
-if [ $install_klipper -ne 0 ] || [ $install_moonraker -ne 0 ] || [ $install_nginx -ne 0 ] || [ $install_fluidd -ne 0 ] || [ $install_mainsail -ne 0 ] || [ $install_cartographer_klipper -ne 0 ]; then
-    echo ""
-    echo "Restarting Nginx ..."
-    /etc/init.d/S50nginx_service restart
-fi
-
 install_guppyscreen $mode
 install_guppyscreen=$?
 
@@ -1281,11 +1270,17 @@ apply_overrides=0
 if [ "$skip_overrides" != "true" ]; then
     apply_overrides
     apply_overrides=$?
+fi
 
-    # just restart moonraker in case any overrides were applied
-    if [ $apply_overrides -ne 0 ]; then
-        restart_moonraker
-    fi
+# if moonraker was installed or updated
+if [ $install_moonraker -ne 0 ] || [ $install_cartographer_klipper -ne 0 ][ $apply_overrides -ne 0 ]; then
+    restart_moonraker
+fi
+
+if [ $install_klipper -ne 0 ] || [ $install_moonraker -ne 0 ] || [ $install_nginx -ne 0 ] || [ $install_fluidd -ne 0 ] || [ $install_mainsail -ne 0 ] || [ $install_cartographer_klipper -ne 0 ]; then
+    echo ""
+    echo "Restarting Nginx ..."
+    /etc/init.d/S50nginx_service restart
 fi
 
 if [ $apply_overrides -ne 0 ] || [ $install_cartographer_klipper -ne 0 ] || [ $install_kamp -ne 0 ] || [ $install_klipper -ne 0 ] || [ $install_guppyscreen -ne 0 ] || [ $setup_probe -ne 0 ] || [ $setup_probe_specific -ne 0 ]; then
@@ -1300,5 +1295,5 @@ if [ $install_guppyscreen -ne 0 ]; then
     /etc/init.d/S99guppyscreen restart
 fi
 
-/usr/data/pellcorp/k1/check-firmware.sh
+/usr/data/pellcorp/k1/tools/check-firmware.sh
 exit 0
