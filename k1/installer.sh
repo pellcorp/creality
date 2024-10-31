@@ -62,6 +62,10 @@ function update_klipper() {
       /usr/data/cartographer-klipper/install.sh || return $?
       sync
   fi
+  if [ -d /usr/data/beacon-klipper ]; then
+      /usr/data/pellcorp/k1/beacon-install.sh || return $?
+      sync
+  fi
   /usr/share/klippy-env/bin/python3 -m compileall /usr/data/klipper/klippy || return $?
   /usr/data/pellcorp/k1/tools/check-firmware.sh --status
   if [ $? -eq 0 ]; then
@@ -267,7 +271,7 @@ install_webcam() {
         /etc/init.d/S50webcam start
 
         if [ -f /usr/data/pellcorp.ipaddress ]; then
-          rm /usr/data/pellcorp.ipaddress 
+          rm /usr/data/pellcorp.ipaddress
         fi
         cp /usr/data/pellcorp/k1/webcam.conf /usr/data/printer_data/config/ || exit $?
 
@@ -833,6 +837,33 @@ install_cartographer_klipper() {
     return 0
 }
 
+install_beacon_klipper() {
+    local mode=$1
+
+    grep -q "beacon-klipper" /usr/data/pellcorp.done
+    if [ $? -ne 0 ]; then
+        if [ "$mode" != "update" ] && [ -d /usr/data/beacon-klipper ]; then
+            rm -rf /usr/data/beacon-klipper
+        fi
+
+        if [ ! -d /usr/data/beacon-klipper ]; then
+            echo
+            echo "INFO: Installing beacon-klipper ..."
+            git clone https://github.com/beacon3d/beacon_klipper /usr/data/beacon-klipper || exit $?
+        fi
+
+        # FIXME - maybe beacon will accept a PR to make their installer work on k1
+        /usr/data/pellcorp/k1/beacon-install.sh
+
+        /usr/share/klippy-env/bin/python3 -m compileall /usr/data/klipper/klippy || exit $?
+
+        echo "beacon-klipper" >> /usr/data/pellcorp.done
+        sync
+        return 1
+    fi
+    return 0
+}
+
 cleanup_probe() {
     local probe=$1
 
@@ -866,6 +897,7 @@ setup_bltouch() {
         cleanup_probe microprobe
         cleanup_probe btteddy
         cleanup_probe cartotouch
+        cleanup_probe beacon
 
         if [ -f /usr/data/printer_data/config/bltouch.cfg ]; then
           rm /usr/data/printer_data/config/bltouch.cfg
@@ -900,6 +932,7 @@ setup_microprobe() {
         cleanup_probe bltouch
         cleanup_probe btteddy
         cleanup_probe cartotouch
+        cleanup_probe beacon
 
         if [ -f /usr/data/printer_data/config/microprobe.cfg ]; then
           rm /usr/data/printer_data/config/microprobe.cfg
@@ -929,6 +962,7 @@ setup_cartographer() {
         cleanup_probe microprobe
         cleanup_probe btteddy
         cleanup_probe cartotouch
+        cleanup_probe beacon
 
         cp /usr/data/pellcorp/k1/cartographer.conf /usr/data/printer_data/config/ || exit $?
         $CONFIG_HELPER --file moonraker.conf --add-include "cartographer.conf" || exit $?
@@ -973,6 +1007,7 @@ setup_cartotouch() {
         cleanup_probe microprobe
         cleanup_probe btteddy
         cleanup_probe cartographer
+        cleanup_probe beacon
 
         cp /usr/data/pellcorp/k1/cartographer.conf /usr/data/printer_data/config/ || exit $?
         $CONFIG_HELPER --file moonraker.conf --add-include "cartographer.conf" || exit $?
@@ -1024,6 +1059,63 @@ setup_cartotouch() {
     return 0
 }
 
+setup_beacon() {
+    grep -q "beacon-probe" /usr/data/pellcorp.done
+    if [ $? -ne 0 ]; then
+        echo
+        echo "INFO: Setting up beacon ..."
+
+        cleanup_probe bltouch
+        cleanup_probe microprobe
+        cleanup_probe btteddy
+        cleanup_probe cartographer
+        cleanup_probe cartotouch
+
+        cp /usr/data/pellcorp/k1/beacon.conf /usr/data/printer_data/config/ || exit $?
+        $CONFIG_HELPER --file moonraker.conf --add-include "beacon.conf" || exit $?
+
+        cp /usr/data/pellcorp/k1/beacon_macro.cfg /usr/data/printer_data/config/ || exit $?
+        $CONFIG_HELPER --add-include "beacon_macro.cfg" || exit $?
+
+        $CONFIG_HELPER --replace-section-entry "stepper_z" "homing_retract_dist" "0" || exit $?
+
+        cp /usr/data/pellcorp/k1/beacon.cfg /usr/data/printer_data/config/ || exit $?
+        $CONFIG_HELPER --add-include "beacon.cfg" || exit $?
+
+        BEACON_SERIAL_ID=$(ls /dev/serial/by-id/usb-Beacon_Beacon* | head -1)
+        if [ -n "$BEACON_SERIAL_ID" ]; then
+            $CONFIG_HELPER --file beacon.cfg --replace-section-entry "beacon" "serial" "$BEACON_SERIAL_ID" || exit $?
+        else
+            echo "WARNING: There does not seem to be a beacon attached - skipping auto configuration"
+        fi
+
+        # as we are referencing the included cartographer now we want to remove the included value
+        # from any previous installation
+        $CONFIG_HELPER --remove-section "beacon" || exit $?
+        $CONFIG_HELPER --add-section "beacon" || exit $?
+
+        if grep -q "#*# [beacon]" /usr/data/pellcorp-overrides/printer.cfg.save_config 2> /dev/null; then
+          $CONFIG_HELPER --replace-section-entry "beacon" "#cal_nozzle_z" "0.1" || exit $?
+        else
+          $CONFIG_HELPER --replace-section-entry "beacon" "cal_nozzle_z" "0.1" || exit $?
+        fi
+
+        cp /usr/data/pellcorp/k1/beacon-${model}.cfg /usr/data/printer_data/config/ || exit $?
+        $CONFIG_HELPER --add-include "beacon-${model}.cfg" || exit $?
+
+        position_max=$($CONFIG_HELPER --get-section-entry "stepper_y" "position_max")
+        # 25mm for safety in case someone is using a RevD or low profile, lots of space to reclaim
+        # if you are using the side mount
+        position_max=$((position_max-25))
+        $CONFIG_HELPER --replace-section-entry "stepper_y" "position_max" "$position_max" || exit $?
+
+        echo "beacon-probe" >> /usr/data/pellcorp.done
+        sync
+        return 1
+    fi
+    return 0
+}
+
 setup_btteddy() {
     grep -q "btteddy-probe" /usr/data/pellcorp.done
     if [ $? -ne 0 ]; then
@@ -1034,6 +1126,7 @@ setup_btteddy() {
         cleanup_probe microprobe
         cleanup_probe cartographer
         cleanup_probe cartotouch
+        cleanup_probe beacon
 
         cp /usr/data/pellcorp/k1/btteddy.cfg /usr/data/printer_data/config/ || exit $?
         
@@ -1151,6 +1244,8 @@ if [ -f /usr/data/printer_data/config/bltouch-k1.cfg ] || [ -f /usr/data/printer
     probe=bltouch
 elif [ -f /usr/data/printer_data/config/cartotouch.cfg ]; then
   probe=cartotouch
+elif [ -f /usr/data/printer_data/config/beacon.cfg ]; then
+  probe=beacon
 elif grep -q "\[scanner\]" /usr/data/printer_data/config/printer.cfg; then
     probe=cartotouch
 elif [ -f /usr/data/printer_data/config/cartographer-k1.cfg ] || [ -f /usr/data/printer_data/config/cartographer-k1m.cfg ]; then
@@ -1177,7 +1272,7 @@ while true; do
         shift
         client=$1
         shift
-    elif [ "$1" = "microprobe" ] || [ "$1" = "bltouch" ] || [ "$1" = "cartographer" ] || [ "$1" = "cartotouch" ] || [ "$1" = "btteddy" ]; then
+    elif [ "$1" = "microprobe" ] || [ "$1" = "bltouch" ] || [ "$1" = "beacon" ] || [ "$1" = "cartographer" ] || [ "$1" = "cartotouch" ] || [ "$1" = "btteddy" ]; then
         if [ -n "$probe" ] && [ "$1" != "$probe" ]; then
           echo "WARNING: About to switch from $probe to $1!"
         fi
@@ -1192,7 +1287,7 @@ done
 
 if [ -z "$probe" ]; then
     echo "ERROR: You must specify a probe you want to configure"
-    echo "One of: [microprobe, bltouch, cartotouch, btteddy]"
+    echo "One of: [microprobe, bltouch, cartotouch, btteddy, beacon]"
     exit 1
 fi
 
@@ -1304,6 +1399,9 @@ install_cartographer_klipper=0
 if [ "$probe" = "cartographer" ] || [ "$probe" = "cartotouch" ]; then
   install_cartographer_klipper $mode
   install_cartographer_klipper=$?
+elif [ "$probe" = "beacon" ]; then
+  install_beacon_klipper $mode
+  install_beacon_klipper=$?
 fi
 
 install_guppyscreen $mode
@@ -1328,6 +1426,9 @@ elif [ "$probe" = "btteddy" ]; then
     setup_probe_specific=$?
 elif [ "$probe" = "microprobe" ]; then
     setup_microprobe
+    setup_probe_specific=$?
+elif [ "$probe" = "beacon" ]; then
+    setup_beacon
     setup_probe_specific=$?
 else
     echo "ERROR: Probe $probe not supported"
@@ -1361,7 +1462,7 @@ fi
 /usr/data/pellcorp/k1/update-ip-address.sh
 update_ip_address=$?
 
-if [ $apply_overrides -ne 0 ] || [ $install_moonraker -ne 0 ] || [ $install_cartographer_klipper -ne 0 ] || [ $update_ip_address -ne 0 ]; then
+if [ $apply_overrides -ne 0 ] || [ $install_moonraker -ne 0 ] || [ $install_cartographer_klipper -ne 0 ] || [ $install_beacon_klipper -ne 0 ] || [ $update_ip_address -ne 0 ]; then
     if [ "$client" = "cli" ]; then
         restart_moonraker
     else
@@ -1379,7 +1480,7 @@ if [ $install_moonraker -ne 0 ] || [ $install_nginx -ne 0 ] || [ $install_fluidd
     fi
 fi
 
-if [ $apply_overrides -ne 0 ] || [ $install_cartographer_klipper -ne 0 ] || [ $install_kamp -ne 0 ] || [ $install_klipper -ne 0 ] || [ $install_guppyscreen -ne 0 ] || [ $setup_probe -ne 0 ] || [ $setup_probe_specific -ne 0 ]; then
+if [ $apply_overrides -ne 0 ] || [ $install_cartographer_klipper -ne 0 ] || [ $install_beacon_klipper -ne 0 ] || [ $install_kamp -ne 0 ] || [ $install_klipper -ne 0 ] || [ $install_guppyscreen -ne 0 ] || [ $setup_probe -ne 0 ] || [ $setup_probe_specific -ne 0 ]; then
     if [ "$client" = "cli" ]; then
         echo
         echo "INFO: Restarting Klipper ..."
