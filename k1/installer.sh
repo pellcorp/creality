@@ -1245,6 +1245,9 @@ setup_probe=$?
 
 # installing carto must come after installing klipper
 if [ "$probe" = "cartographer" ]; then
+    if [ "$mode" = "install" ]; then
+      echo "WARNING: Cartographer for 4.0.0 firmware is deprecated and will be removed soon!"
+    fi
     setup_cartographer
     setup_probe_specific=$?
 elif [ "$probe" = "cartotouch" ]; then
