@@ -343,6 +343,14 @@ install_nginx() {
 
     grep -q "nginx" /usr/data/pellcorp.done
     if [ $? -ne 0 ]; then
+        default_ui=fluidd
+        if [ -f /usr/data/nginx/nginx/sites/mainsail ]; then
+          grep "#listen" /usr/data/nginx/nginx/sites/mainsail > /dev/null
+          if [ $? -ne 0 ]; then
+            default_ui=mainsail
+          fi
+        fi
+
         if [ "$mode" != "update" ] && [ -d /usr/data/nginx ]; then
             if [ -f /etc/init.d/S50nginx_service ]; then
                 /etc/init.d/S50nginx_service stop
@@ -362,6 +370,12 @@ install_nginx() {
         mkdir -p /usr/data/nginx/nginx/sites/
         cp /usr/data/pellcorp/k1/nginx/fluidd /usr/data/nginx/nginx/sites/ || exit $?
         cp /usr/data/pellcorp/k1/nginx/mainsail /usr/data/nginx/nginx/sites/ || exit $?
+
+        if [ "$default_ui" = "mainsail" ]; then
+          echo "INFO: Restoring mainsail as default UI"
+          sed -i 's/.*listen 80 default_server;/    #listen 80 default_server;/g' /usr/data/nginx/nginx/sites/fluidd || exit $?
+          sed -i 's/.*#listen 80 default_server;/    listen 80 default_server;/g' /usr/data/nginx/nginx/sites/mainsail || exit $?
+        fi
 
         cp /usr/data/pellcorp/k1/services/S50nginx_service /etc/init.d/ || exit $?
 
