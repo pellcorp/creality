@@ -1290,7 +1290,7 @@ if [ "$skip_overrides" != "true" ]; then
 fi
 
 # if moonraker was installed or updated
-if [ $install_moonraker -ne 0 ] || [ $install_cartographer_klipper -ne 0 ][ $apply_overrides -ne 0 ]; then
+if [ $install_moonraker -ne 0 ] || [ $install_cartographer_klipper -ne 0 ] || [ $apply_overrides -ne 0 ]; then
     restart_moonraker
 fi
 
