@@ -2,7 +2,7 @@
 
 CURRENT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd -P)"
 
-commands="7z unsquashfs mksquashfs"
+commands="7z unsquashfs mksquashfs mkpasswd"
 for command in $commands; do
     command -v "$command" > /dev/null
     if [ $? -ne 0 ]; then
@@ -44,7 +44,7 @@ function update_rootfs() {
 
 download=$(wget -q https://www.creality.com/pages/${DOWNLOAD_PAGE} -O- | grep -o  "\"\(.*\)V${CREALITY_VERSION}.img\"" | head -1 | tr -d '"')
 old_image_name=$(basename $download)
-board_name=$(echo "$old_image_name" | grep -oh "CR[^_\]*")
+board_name=$(echo "$old_image_name" | grep -o "\(CR.*\)ota" | sed 's/_ota//g')
 old_directory="${board_name}_ota_img_V${CREALITY_VERSION}"
 old_sub_directory="ota_v${CREALITY_VERSION}"
 directory="${board_name}_ota_img_V${version}"
