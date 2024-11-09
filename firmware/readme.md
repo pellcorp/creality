@@ -24,11 +24,12 @@ You will need a linux machine with the following commands available, something l
 - wget
 - unsquashfs
 - mksquashfs
+- mkpasswd
 
 The packages on ubuntu can be installed like so:
 
 ```
-sudo apt-get install p7zip squashfs-tools wget
+sudo apt-get install p7zip squashfs-tools wget whois
 ```
 
 Don't try and create this on windows or MacOs, you could do it on a ubuntu vm no problem
@@ -38,7 +39,6 @@ Don't try and create this on windows or MacOs, you could do it on a ubuntu vm no
 Then you can create a new firmware file, currently without any customations just to test things work with:
 
 ```
-export K1_FIRMWARE_PASSWORD='the password from a certain discord'
 ./create.sh
 ```
 
