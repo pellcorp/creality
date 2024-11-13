@@ -905,6 +905,9 @@ setup_bltouch() {
         $CONFIG_HELPER --remove-include "bltouch.cfg" || exit $?
         $CONFIG_HELPER --overrides "/usr/data/pellcorp/k1/bltouch.cfg" || exit $?
 
+        cp /usr/data/pellcorp/k1/bltouch_macro.cfg /usr/data/printer_data/config/ || exit $?
+        $CONFIG_HELPER --add-include "bltouch_macro.cfg" || exit $?
+
         cp /usr/data/pellcorp/k1/bltouch-${model}.cfg /usr/data/printer_data/config/ || exit $?
         $CONFIG_HELPER --add-include "bltouch-${model}.cfg" || exit $?
 
@@ -939,6 +942,9 @@ setup_microprobe() {
         fi
         $CONFIG_HELPER --remove-include "microprobe.cfg" || exit $?
         $CONFIG_HELPER --overrides "/usr/data/pellcorp/k1/microprobe.cfg" || exit $?
+
+        cp /usr/data/pellcorp/k1/microprobe_macro.cfg /usr/data/printer_data/config/ || exit $?
+        $CONFIG_HELPER --add-include "microprobe_macro.cfg" || exit $?
 
         cp /usr/data/pellcorp/k1/microprobe-${model}.cfg /usr/data/printer_data/config/ || exit $?
         $CONFIG_HELPER --add-include "microprobe-${model}.cfg" || exit $?
