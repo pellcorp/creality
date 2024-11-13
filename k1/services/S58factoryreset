@@ -42,6 +42,10 @@ factory_reset() {
         -path '/usr/data/creality/userdata' -o -type d -o -print \
         -exec rm {} \; >/dev/null 2>&1
     /bin/sync >/dev/null 2>&1
+    rm -rf /overlay/upper/usr/data/
+    /bin/sync >/dev/null 2>&1
+    rm -rf /overlay/upper/usr/share/
+    /bin/sync >/dev/null 2>&1
     /usr/bin/find /usr/data/creality/ \
         -depth -print \
         -exec rmdir {} \; >/dev/null 2>&1
