@@ -1,0 +1,11 @@
+#!/bin/sh
+
+case "$1" in
+    start)
+        cmd_jpeg_display /etc/logo/black.jpg &
+    ;;
+    *)
+        exit 1
+esac
+
+exit 0

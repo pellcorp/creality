@@ -174,9 +174,6 @@ disable_creality_services() {
             /etc/init.d/S99mdns stop
             rm /etc/init.d/S99mdns
         fi
-        if [ -f /etc/init.d/S12boot_display ]; then
-            rm /etc/init.d/S12boot_display
-        fi
         if [ -f /etc/init.d/S96wipe_data ]; then
             rm /etc/init.d/S96wipe_data
         fi
@@ -189,6 +186,26 @@ disable_creality_services() {
             kill -9 $log_main_pid
         fi
     fi
+}
+
+# shamelessly stolen from https://github.com/Guilouz/Creality-Helper-Script/blob/main/scripts/custom_boot_display.sh
+install_boot_display() {
+  grep -q "boot-display" /usr/data/pellcorp.done
+  if [ $? -ne 0 ]; then
+    echo ""
+    echo "INFO: Installing custom boot display ..."
+
+    cp /usr/data/pellcorp/k1/services/S12boot_display /etc/init.d/
+    cp /usr/data/pellcorp/k1/services/S11jpeg_display_shell /etc/init.d/
+    cp /usr/data/pellcorp/k1/black.jpg /etc/logo/
+    rm -rf /etc/boot-display/part0
+    rm -f /etc/boot-display/boot-display.conf
+    tar -zxf "/usr/data/pellcorp/k1/boot-display.tar.gz" -C /etc/boot-display/
+    echo "boot-display" >> /usr/data/pellcorp.done
+    sync
+    return 1
+  fi
+  return 0
 }
 
 install_webcam() {
@@ -1207,7 +1224,7 @@ cp /usr/data/printer_data/config/printer.cfg /usr/data/printer_data/config/backu
 
 install_config_updater
 install_entware $mode
-
+install_boot_display
 install_webcam $mode
 
 disable_creality_services
