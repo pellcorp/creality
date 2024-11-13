@@ -4,11 +4,6 @@ GUPPYSCREEN=/usr/data/guppyscreen/guppyscreen
 PID_FILE="/var/run/guppyscreen.pid"
 
 start_server() {
-    # kill the boot display so it does not keep showing over top of guppyscreen
-    killall boot_display 2> /dev/null
-    # display black transition image to stop the corrupt image being shown
-    cmd_jpeg_display /etc/logo/black.jpg &
-
     export HOME=/root
     sync && echo 3 > /proc/sys/vm/drop_caches
     start-stop-daemon -S -b -m -p $PID_FILE --exec $GUPPYSCREEN

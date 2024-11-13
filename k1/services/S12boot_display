@@ -1,3 +1,0 @@
-#!/bin/sh
-
-[ -d /etc/boot-display ] && [ -e /usr/bin/boot_display ] && /usr/bin/boot_display display &
