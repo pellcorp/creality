@@ -108,6 +108,6 @@ sed -i "s/img_md5=$orig_rootfs_md5/img_md5=$rootfs_md5/g" /tmp/${version}-pellco
 sed -i "s/img_size=$orig_rootfs_size/img_size=$rootfs_size/g" /tmp/${version}-pellcorp/$directory/$sub_directory/ota_update.in
 
 pushd /tmp/${version}-pellcorp/ > /dev/null
-7z a ${image_name}.7z -p"$K1_FIRMWARE_PASSWORD" $directory
+7z a ${image_name}.7z -p"$FIRMWARE_PASSWORD" $directory
 mv ${image_name}.7z ${image_name}
 popd > /dev/null
