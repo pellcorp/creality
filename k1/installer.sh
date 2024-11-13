@@ -152,6 +152,16 @@ install_config_updater() {
 }
 
 disable_creality_services() {
+    # if it is a soft link then we are using the boot-display.sh optionally
+    if [ ! -L /etc/boot-display/part0 ]; then
+      # clean up failed installation of custom boot display
+      rm -rf /overlay/upper/etc/boot-display/*
+      rm -rf /overlay/upper/etc/logo/*
+      rm -f /overlay/upper/etc/init.d/S12boot_display
+      rm -f /overlay/upper/etc/init.d/S11jpeg_display_shell
+      mount -o remount /
+    fi
+
     if [ -f /etc/init.d/S99start_app ]; then
         echo ""
         echo "INFO: Disabling some creality services ..."
@@ -174,13 +184,9 @@ disable_creality_services() {
             /etc/init.d/S99mdns stop
             rm /etc/init.d/S99mdns
         fi
-        if [ -f /etc/init.d/S12boot_display ]; then
-            rm /etc/init.d/S12boot_display
-        fi
         if [ -f /etc/init.d/S96wipe_data ]; then
             rm /etc/init.d/S96wipe_data
         fi
-        sync
 
         # the log main process takes up so much memory a lot of it swapped, killing this process might make the
         # installer go a little more quickly as there is no swapping going on
@@ -189,6 +195,7 @@ disable_creality_services() {
             kill -9 $log_main_pid
         fi
     fi
+    sync
 }
 
 install_webcam() {
@@ -1207,7 +1214,6 @@ cp /usr/data/printer_data/config/printer.cfg /usr/data/printer_data/config/backu
 
 install_config_updater
 install_entware $mode
-
 install_webcam $mode
 
 disable_creality_services
