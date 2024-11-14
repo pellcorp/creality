@@ -1,0 +1,12 @@
+#!/bin/sh
+
+# we run this quite late in the boot hopefully WIFI and Ethernet IP addresses
+# are both up by this time
+case "$1" in
+  start)
+    # its important this script is called and sent to background as it will take a
+    # while for an ip address to be assigned to wifi and possibly even ethernet
+    /usr/data/pellcorp/k1/update-ip-address.sh --init &
+esac
+
+exit $?

@@ -100,6 +100,10 @@ def main():
                 if 'gcode_shell_command' in section_name:
                     continue
 
+                # the stream urls are updated by s96ipaddress service so ignore if they are different
+                if 'webcam default' in section_name and (key == 'stream_url' or key == 'snapshot_url'):
+                    continue
+
                 # do not save the serial field
                 if (section_name == 'scanner' or section_name == 'cartographer' or section_name == 'mcu eddy') and key == 'serial':
                     continue
