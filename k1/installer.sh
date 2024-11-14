@@ -268,13 +268,6 @@ install_webcam() {
 
         cp /usr/data/pellcorp/k1/webcam.conf /usr/data/printer_data/config/ || exit $?
 
-        # I don't know what IP this gets for K1 Max, but its only updating commented out config at the moment
-        # so its not too much of an issue
-        IP_ADDRESS=$(ip a | grep "inet" | grep -v "host lo" | awk '{ print $2 }' | awk -F '/' '{print $1}' | tail -1)
-        if [ -n "$IP_ADDRESS" ]; then
-            sed -i "s/xxx.xxx.xxx.xxx/$IP_ADDRESS/g" /usr/data/printer_data/config/webcam.conf
-        fi
-
         echo "webcam" >> /usr/data/pellcorp.done
         sync
         return 1
@@ -1267,6 +1260,9 @@ if [ "$mode" = "reinstall" ] || [ "$mode" = "update" ]; then
 fi
 sync
 
+# add a service to take care of updating various config files if ip address changes
+cp /usr/data/pellcorp/k1/services/S96ipaddress /etc/init.d/
+
 ln -sf /var/log/messages /usr/data/printer_data/logs/
 
 # lets make sure we are not stranded in some repo dir
@@ -1358,7 +1354,10 @@ if [ "$skip_overrides" != "true" ]; then
     apply_overrides=$?
 fi
 
-if [ $apply_overrides -ne 0 ] || [ $install_moonraker -ne 0 ] || [ $install_cartographer_klipper -ne 0 ]; then
+/usr/data/pellcorp/k1/update-ip-address.sh
+update_ip_address=$?
+
+if [ $apply_overrides -ne 0 ] || [ $install_moonraker -ne 0 ] || [ $install_cartographer_klipper -ne 0 ] || [ $update_ip_address -ne 0 ]; then
     restart_moonraker
 fi
 
