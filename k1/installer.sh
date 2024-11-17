@@ -1152,7 +1152,7 @@ done
 
 if [ -z "$probe" ]; then
     echo "ERROR: You must specify a probe you want to configure"
-    echo "One of: [microprobe, bltouch, cartographer, cartotouch, btteddy]"
+    echo "One of: [microprobe, bltouch, cartotouch, btteddy]"
     exit 1
 fi
 
