@@ -198,6 +198,26 @@ disable_creality_services() {
     sync
 }
 
+install_boot_display() {
+  grep -q "boot-display" /usr/data/pellcorp.done
+  if [ $? -ne 0 ]; then
+    echo ""
+    echo "INFO: Installing custom boot display ..."
+
+    # shamelessly stolen from https://github.com/Guilouz/Creality-Helper-Script/blob/main/scripts/custom_boot_display.sh
+    rm -rf /etc/boot-display/part0
+    cp /usr/data/pellcorp/k1/boot-display.conf /etc/boot-display/
+    cp /usr/data/pellcorp/k1/services/S11jpeg_display_shell /etc/init.d/
+    mkdir -p /usr/data/boot-display
+    tar -zxf "/usr/data/pellcorp/k1/boot-display.tar.gz" -C /usr/data/boot-display
+    ln -s /usr/data/boot-display/part0 /etc/boot-display/
+    echo "boot-display" >> /usr/data/pellcorp.done
+    sync
+    return 1
+  fi
+  return 0
+}
+
 install_webcam() {
     local mode=$1
     
@@ -1217,6 +1237,7 @@ install_entware $mode
 install_webcam $mode
 
 disable_creality_services
+install_boot_display
 
 install_moonraker $mode
 install_moonraker=$?
