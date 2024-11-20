@@ -1297,13 +1297,15 @@ fi
 # there will be no support for generating pellcorp-overrides unless you have done a factory reset
 if [ -f /usr/data/pellcorp-backups/printer.factory.cfg ]; then
     probe_model=${probe}
+
+    # FIXME - when we migrate cartotouch back to cartographer remember to remove this if
     if [ "$probe" = "cartotouch" ]; then
-        probe_model=cartotouch
+        probe_model=cartographer
     fi
 
     # we want a copy of the file before config overrides are re-applied so we can correctly generate diffs
     # against different generations of the original file
-    for file in printer.cfg start_end.cfg fan_control.cfg useful_macros.cfg moonraker.conf sensorless.cfg ${probe}_macro.cfg ${probe}.cfg ${probe_model}-${model}.cfg; do
+    for file in printer.cfg start_end.cfg fan_control.cfg useful_macros.cfg cartographer.conf moonraker.conf sensorless.cfg ${probe}_macro.cfg ${probe}.cfg ${probe_model}-${model}.cfg; do
         if [ -f /usr/data/printer_data/config/$file ]; then
             cp /usr/data/printer_data/config/$file /usr/data/pellcorp-backups/$file
         fi
