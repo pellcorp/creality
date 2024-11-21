@@ -1185,6 +1185,7 @@ if [ "$skip_overrides" = "true" ]; then
     echo "INFO: Configuration overrides will not be saved or applied"
 fi
 
+install_config_updater
 # completely remove all iterations of zero SimpleAddon
 for dir in addons SimpleAddon; do
   if [ -d /usr/data/printer_data/config/$dir ]; then
@@ -1232,7 +1233,6 @@ touch /usr/data/pellcorp.done
 TIMESTAMP=$(date +"%Y%m%d_%H%M%S")
 cp /usr/data/printer_data/config/printer.cfg /usr/data/printer_data/config/backups/printer-${TIMESTAMP}.cfg
 
-install_config_updater
 install_entware $mode
 install_webcam $mode
 
