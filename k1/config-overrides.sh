@@ -181,3 +181,4 @@ if git status > /dev/null 2>&1; then
         git push -u origin $branch || exit $?
     fi
 fi
+sync

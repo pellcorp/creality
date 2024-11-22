@@ -129,6 +129,7 @@ sync
 # for k1 the installed curl does not do ssl, so we replace it first
 # and we can then make use of it going forward
 cp /usr/data/pellcorp/k1/tools/curl /usr/bin/curl
+sync
 
 CONFIG_HELPER="/usr/data/pellcorp/k1/config-helper.py"
 
@@ -149,19 +150,10 @@ install_config_updater() {
     if [ -d /usr/data/pellcorp-env/ ]; then
         rm -rf /usr/data/pellcorp-env/
     fi
+    sync
 }
 
 disable_creality_services() {
-    # if it is a soft link then we are using the boot-display.sh optionally
-    if [ ! -L /etc/boot-display/part0 ]; then
-      # clean up failed installation of custom boot display
-      rm -rf /overlay/upper/etc/boot-display/*
-      rm -rf /overlay/upper/etc/logo/*
-      rm -f /overlay/upper/etc/init.d/S12boot_display
-      rm -f /overlay/upper/etc/init.d/S11jpeg_display_shell
-      mount -o remount /
-    fi
-
     if [ -f /etc/init.d/S99start_app ]; then
         echo ""
         echo "INFO: Disabling some creality services ..."
@@ -171,7 +163,6 @@ disable_creality_services() {
             /etc/init.d/S99start_app stop
             rm /etc/init.d/S99start_app
         fi
-
         if [ -f /etc/init.d/S70cx_ai_middleware ]; then
             /etc/init.d/S70cx_ai_middleware stop
             rm /etc/init.d/S70cx_ai_middleware
@@ -185,7 +176,17 @@ disable_creality_services() {
             rm /etc/init.d/S99mdns
         fi
         if [ -f /etc/init.d/S96wipe_data ]; then
+            wipe_data_pid=$(ps -ef | grep wipe_data | grep -v "grep" | awk '{print $1}')
+            if [ -n "$wipe_data_pid" ]; then
+                kill -9 $wipe_data_pid
+            fi
             rm /etc/init.d/S96wipe_data
+        fi
+        if [ -f /etc/init.d/S55klipper_service ]; then
+            /etc/init.d/S55klipper_service stop
+        fi
+        if [ -f /etc/init.d/S57klipper_mcu ]; then
+            /etc/init.d/S57klipper_mcu stop
         fi
 
         # the log main process takes up so much memory a lot of it swapped, killing this process might make the
@@ -208,6 +209,7 @@ install_boot_display() {
     rm -rf /etc/boot-display/part0
     cp /usr/data/pellcorp/k1/boot-display.conf /etc/boot-display/
     cp /usr/data/pellcorp/k1/services/S11jpeg_display_shell /etc/init.d/
+    cp /usr/data/pellcorp/k1/services/S12boot_display /etc/init.d/
     mkdir -p /usr/data/boot-display
     tar -zxf "/usr/data/pellcorp/k1/boot-display.tar.gz" -C /usr/data/boot-display
     ln -s /usr/data/boot-display/part0 /etc/boot-display/
@@ -325,6 +327,7 @@ install_moonraker() {
         fi
 
         if [ "$mode" != "update" ] || [ ! -f /opt/bin/ffmpeg ]; then
+            echo ""
             echo "INFO: Upgrading ffmpeg for moonraker timelapse ..."
             /opt/bin/opkg install ffmpeg || exit $?
         fi
@@ -1192,6 +1195,7 @@ if [ "$skip_overrides" = "true" ]; then
 fi
 
 install_config_updater
+
 # completely remove all iterations of zero SimpleAddon
 for dir in addons SimpleAddon; do
   if [ -d /usr/data/printer_data/config/$dir ]; then
@@ -1200,8 +1204,10 @@ for dir in addons SimpleAddon; do
 done
 for file in save-zoffset.cfg eddycalibrate.cfg quickstart.cfg cartographer_calibrate.cfg btteddy_calibrate.cfg; do
   $CONFIG_HELPER --remove-include "SimpleAddon/$file"
+  sync
 done
 $CONFIG_HELPER --remove-include "addons/*.cfg"
+sync
 
 # the pellcorp-backups do not need .pellcorp extension, so this is to fix backwards compatible
 if [ -f /usr/data/pellcorp-backups/printer.pellcorp.cfg ]; then
@@ -1231,6 +1237,7 @@ if [ "$mode" = "reinstall" ] || [ "$mode" = "update" ]; then
         exit 1
     fi
 fi
+sync
 
 # lets make sure we are not stranded in some repo dir
 cd /root
@@ -1238,6 +1245,7 @@ cd /root
 touch /usr/data/pellcorp.done
 TIMESTAMP=$(date +"%Y%m%d_%H%M%S")
 cp /usr/data/printer_data/config/printer.cfg /usr/data/printer_data/config/backups/printer-${TIMESTAMP}.cfg
+sync
 
 install_entware $mode
 install_webcam $mode
@@ -1278,9 +1286,7 @@ setup_probe=$?
 
 # installing carto must come after installing klipper
 if [ "$probe" = "cartographer" ]; then
-    if [ "$mode" = "install" ]; then
-      echo "WARNING: Cartographer for 4.0.0 firmware is deprecated and will be removed soon!"
-    fi
+    echo "WARNING: Cartographer for 4.0.0 firmware is deprecated and will be removed soon!"
     setup_cartographer
     setup_probe_specific=$?
 elif [ "$probe" = "cartotouch" ]; then
