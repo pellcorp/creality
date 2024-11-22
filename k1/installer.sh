@@ -61,6 +61,11 @@ update_repo() {
     return 0
 }
 
+config_helper() {
+  /usr/data/pellcorp/k1/config-helper.py $@ || exit $?
+  sync
+}
+
 # special mode to update the repo only
 if [ "$1" = "--update-repo" ] || [ "$1" = "--update-branch" ]; then
     update_repo /usr/data/pellcorp
@@ -129,8 +134,7 @@ sync
 # for k1 the installed curl does not do ssl, so we replace it first
 # and we can then make use of it going forward
 cp /usr/data/pellcorp/k1/tools/curl /usr/bin/curl
-
-CONFIG_HELPER="/usr/data/pellcorp/k1/config-helper.py"
+sync
 
 install_config_updater() {
     python3 -c 'from configupdater import ConfigUpdater' 2> /dev/null
@@ -149,6 +153,7 @@ install_config_updater() {
     if [ -d /usr/data/pellcorp-env/ ]; then
         rm -rf /usr/data/pellcorp-env/
     fi
+    sync
 }
 
 disable_creality_services() {
@@ -450,11 +455,11 @@ install_fluidd() {
         ln -sf /usr/data/printer_data/ /root
 
         # these are already defined in fluidd config so get rid of them from printer.cfg
-        $CONFIG_HELPER --remove-section "pause_resume" || exit $?
-        $CONFIG_HELPER --remove-section "display_status" || exit $?
-        $CONFIG_HELPER --remove-section "virtual_sdcard" || exit $?
+        config_helper --remove-section "pause_resume"
+        config_helper --remove-section "display_status"
+        config_helper --remove-section "virtual_sdcard"
 
-        $CONFIG_HELPER --add-include "fluidd.cfg" || exit $?
+        config_helper --add-include "fluidd.cfg"
 
         echo "fluidd" >> /usr/data/pellcorp.done
         sync
@@ -527,7 +532,7 @@ install_kamp() {
 
         cp /usr/data/KAMP/Configuration/KAMP_Settings.cfg /usr/data/printer_data/config/ || exit $?
 
-        $CONFIG_HELPER --add-include "KAMP_Settings.cfg" || exit $?
+        config_helper --add-include "KAMP_Settings.cfg"
 
         # LINE_PURGE
         sed -i 's:#\[include ./KAMP/Line_Purge.cfg\]:\[include ./KAMP/Line_Purge.cfg\]:g' /usr/data/printer_data/config/KAMP_Settings.cfg
@@ -621,24 +626,24 @@ install_klipper() {
         cp /usr/data/pellcorp/k1/sensorless.cfg /usr/data/printer_data/config/ || exit $?
 
         cp /usr/data/pellcorp/k1/useful_macros.cfg /usr/data/printer_data/config/ || exit $?
-        $CONFIG_HELPER --add-include "useful_macros.cfg" || exit $?
+        config_helper --add-include "useful_macros.cfg"
 
         # the klipper_mcu is not even used, so just get rid of it
-        $CONFIG_HELPER --remove-section "mcu rpi" || exit $?
+        config_helper --remove-section "mcu rpi"
 
-        $CONFIG_HELPER --remove-section "bl24c16f" || exit $?
-        $CONFIG_HELPER --remove-section "prtouch_v2" || exit $?
-        $CONFIG_HELPER --remove-section "mcu leveling_mcu" || exit $?
-        $CONFIG_HELPER --remove-section-entry "printer" "square_corner_max_velocity" || exit $?
-        $CONFIG_HELPER --remove-section-entry "printer" "max_accel_to_decel" || exit $?
+        config_helper --remove-section "bl24c16f"
+        config_helper --remove-section "prtouch_v2"
+        config_helper --remove-section "mcu leveling_mcu"
+        config_helper --remove-section-entry "printer" "square_corner_max_velocity"
+        config_helper --remove-section-entry "printer" "max_accel_to_decel"
 
         # https://www.klipper3d.org/TMC_Drivers.html#prefer-to-not-specify-a-hold_current
-        $CONFIG_HELPER --remove-section-entry "tmc2209 stepper_x" "hold_current" || exit $?
-        $CONFIG_HELPER --remove-section-entry "tmc2209 stepper_y" "hold_current" || exit $?
+        config_helper --remove-section-entry "tmc2209 stepper_x" "hold_current"
+        config_helper --remove-section-entry "tmc2209 stepper_y" "hold_current"
 
-        $CONFIG_HELPER --remove-include "printer_params.cfg" || exit $?
-        $CONFIG_HELPER --remove-include "gcode_macro.cfg" || exit $?
-        $CONFIG_HELPER --remove-include "custom_gcode.cfg" || exit $?
+        config_helper --remove-include "printer_params.cfg"
+        config_helper --remove-include "gcode_macro.cfg"
+        config_helper --remove-include "custom_gcode.cfg"
 
         if [ -f /usr/data/printer_data/config/custom_gcode.cfg ]; then
             rm /usr/data/printer_data/config/custom_gcode.cfg
@@ -657,46 +662,46 @@ install_klipper() {
         fi
 
         cp /usr/data/pellcorp/k1/start_end.cfg /usr/data/printer_data/config/ || exit $?
-        $CONFIG_HELPER --add-include "start_end.cfg" || exit $?
+        config_helper --add-include "start_end.cfg"
 
         cp /usr/data/pellcorp/k1/fan_control.cfg /usr/data/printer_data/config || exit $?
-        $CONFIG_HELPER --add-include "fan_control.cfg" || exit $?
+        config_helper --add-include "fan_control.cfg"
 
-        $CONFIG_HELPER --remove-section "output_pin fan0" || exit $?
-        $CONFIG_HELPER --remove-section "output_pin fan1" || exit $?
-        $CONFIG_HELPER --remove-section "output_pin fan2" || exit $?
+        config_helper --remove-section "output_pin fan0"
+        config_helper --remove-section "output_pin fan1"
+        config_helper --remove-section "output_pin fan2"
 
         # a few strange duplicate pins appear in some firmware
-        $CONFIG_HELPER --remove-section "output_pin PA0" || exit $?
-        $CONFIG_HELPER --remove-section "output_pin PB2" || exit $?
-        $CONFIG_HELPER --remove-section "output_pin PB10" || exit $?
-        $CONFIG_HELPER --remove-section "output_pin PC8" || exit $?
-        $CONFIG_HELPER --remove-section "output_pin PC9" || exit $?
+        config_helper --remove-section "output_pin PA0"
+        config_helper --remove-section "output_pin PB2"
+        config_helper --remove-section "output_pin PB10"
+        config_helper --remove-section "output_pin PC8"
+        config_helper --remove-section "output_pin PC9"
         
         # duplicate pin can only be assigned once, so we remove it from printer.cfg so we can
         # configure it in fan_control.cfg
-        $CONFIG_HELPER --remove-section "duplicate_pin_override" || exit $?
+        config_helper --remove-section "duplicate_pin_override"
         
         # no longer required as we configure the part fan entirely in fan_control.cfg
-        $CONFIG_HELPER --remove-section "static_digital_output my_fan_output_pins" || exit $?
+        config_helper --remove-section "static_digital_output my_fan_output_pins"
 
         # moving the heater_fan to fan_control.cfg
-        $CONFIG_HELPER --remove-section "heater_fan hotend_fan" || exit $?
+        config_helper --remove-section "heater_fan hotend_fan"
 
         # all the fans and temp sensors are going to fan control now
-        $CONFIG_HELPER --remove-section "temperature_sensor mcu_temp" || exit $?
-        $CONFIG_HELPER --remove-section "temperature_sensor chamber_temp" || exit $?
-        $CONFIG_HELPER --remove-section "temperature_fan chamber_fan" || exit $?
+        config_helper --remove-section "temperature_sensor mcu_temp"
+        config_helper --remove-section "temperature_sensor chamber_temp"
+        config_helper --remove-section "temperature_fan chamber_fan"
 
         # just in case anyone manually has added this to printer.cfg
-        $CONFIG_HELPER --remove-section "temperature_fan mcu_fan" || exit $?
+        config_helper --remove-section "temperature_fan mcu_fan"
 
         # the nozzle should not trigger the MCU anymore        
-        $CONFIG_HELPER --remove-section "multi_pin heater_fans" || exit $?
+        config_helper --remove-section "multi_pin heater_fans"
 
         # moving idle timeout to start_end.cfg so we can have some integration with
         # start and end print and warp stabilisation if needed
-        $CONFIG_HELPER --remove-section "idle_timeout"
+        config_helper --remove-section "idle_timeout"
 
         echo "klipper" >> /usr/data/pellcorp.done
         sync
@@ -754,8 +759,8 @@ install_guppyscreen() {
         cp /usr/data/pellcorp/k1/guppyscreen.cfg /usr/data/printer_data/config/ || exit $?
 
         # a single local guppyscreen.cfg which references the python files from /usr/data/guppyscreen instead
-        $CONFIG_HELPER --remove-include "GuppyScreen/*.cfg" || exit $?
-        $CONFIG_HELPER --add-include "guppyscreen.cfg" || exit $?
+        config_helper --remove-include "GuppyScreen/*.cfg"
+        config_helper --add-include "guppyscreen.cfg"
 
         echo "guppyscreen" >> /usr/data/pellcorp.done
         sync
@@ -772,18 +777,18 @@ setup_probe() {
         echo ""
         echo "INFO: Setting up generic probe config ..."
 
-        $CONFIG_HELPER --remove-section "bed_mesh" || exit $?
-        $CONFIG_HELPER --remove-section-entry "stepper_z" "position_endstop" || exit $?
-        $CONFIG_HELPER --replace-section-entry "stepper_z" "endstop_pin" "probe:z_virtual_endstop" || exit $?
+        config_helper --remove-section "bed_mesh"
+        config_helper --remove-section-entry "stepper_z" "position_endstop"
+        config_helper --replace-section-entry "stepper_z" "endstop_pin" "probe:z_virtual_endstop"
 
         cp /usr/data/pellcorp/k1/quickstart.cfg /usr/data/printer_data/config/ || exit $?
-        $CONFIG_HELPER --add-include "quickstart.cfg" || exit $?
+        config_helper --add-include "quickstart.cfg"
 
         # because we are using force move with 3mm, as a safety feature we will lower the position max
         # by 3mm ootb to avoid damaging the printer if you do a really big print
-        position_max=$($CONFIG_HELPER --get-section-entry "stepper_z" "position_max")
+        position_max=$(config_helper --get-section-entry "stepper_z" "position_max")
         position_max=$((position_max-3))
-        $CONFIG_HELPER --replace-section-entry "stepper_z" "position_max" "$position_max" || exit $?
+        config_helper --replace-section-entry "stepper_z" "position_max" "$position_max"
 
         echo "probe" >> /usr/data/pellcorp.done
         sync
@@ -825,14 +830,14 @@ cleanup_probe() {
 
     if [ "$probe" = "cartographer" ] || [ "$probe" = "cartotouch" ]; then
         [ -f /usr/data/printer_data/config/${probe}_macro.cfg ] && rm /usr/data/printer_data/config/${probe}_macro.cfg
-        $CONFIG_HELPER --remove-include "${probe}_macro.cfg" || exit $?
+        config_helper --remove-include "${probe}_macro.cfg"
 
-        $CONFIG_HELPER --remove-section-entry "stepper_z" "homing_retract_dist" || exit $?
-        $CONFIG_HELPER --file moonraker.conf --remove-include "cartographer.conf" || exit $?
+        config_helper --remove-section-entry "stepper_z" "homing_retract_dist"
+        config_helper --file moonraker.conf --remove-include "cartographer.conf"
     fi
 
     [ -f /usr/data/printer_data/config/$probe.cfg ] && rm /usr/data/printer_data/config/$probe.cfg
-    $CONFIG_HELPER --remove-include "$probe.cfg" || exit $?
+    config_helper --remove-include "$probe.cfg"
 
     # we use the cartographer includes
     if [ "$probe" = "cartotouch" ]; then
@@ -840,7 +845,7 @@ cleanup_probe() {
     fi
 
     [ -f /usr/data/printer_data/config/$probe-${model}.cfg ] && rm /usr/data/printer_data/config/$probe-${model}.cfg
-    $CONFIG_HELPER --remove-include "$probe-${model}.cfg" || exit $?
+    config_helper --remove-include "$probe-${model}.cfg"
 }
 
 setup_bltouch() {
@@ -857,16 +862,16 @@ setup_bltouch() {
         if [ -f /usr/data/printer_data/config/bltouch.cfg ]; then
           rm /usr/data/printer_data/config/bltouch.cfg
         fi
-        $CONFIG_HELPER --remove-include "bltouch.cfg" || exit $?
-        $CONFIG_HELPER --overrides "/usr/data/pellcorp/k1/bltouch.cfg" || exit $?
+        config_helper --remove-include "bltouch.cfg"
+        config_helper --overrides "/usr/data/pellcorp/k1/bltouch.cfg"
 
         cp /usr/data/pellcorp/k1/bltouch-${model}.cfg /usr/data/printer_data/config/ || exit $?
-        $CONFIG_HELPER --add-include "bltouch-${model}.cfg" || exit $?
+        config_helper --add-include "bltouch-${model}.cfg"
 
         # because the model sits out the back we do need to set position max back
-        position_max=$($CONFIG_HELPER --get-section-entry "stepper_y" "position_max")
+        position_max=$(config_helper --get-section-entry "stepper_y" "position_max")
         position_max=$((position_max-17))
-        $CONFIG_HELPER --replace-section-entry "stepper_y" "position_max" "$position_max" || exit $?
+        config_helper --replace-section-entry "stepper_y" "position_max" "$position_max"
 
         echo "bltouch-probe" >> /usr/data/pellcorp.done
         sync
@@ -891,11 +896,11 @@ setup_microprobe() {
         if [ -f /usr/data/printer_data/config/microprobe.cfg ]; then
           rm /usr/data/printer_data/config/microprobe.cfg
         fi
-        $CONFIG_HELPER --remove-include "microprobe.cfg" || exit $?
-        $CONFIG_HELPER --overrides "/usr/data/pellcorp/k1/microprobe.cfg" || exit $?
+        config_helper --remove-include "microprobe.cfg"
+        config_helper --overrides "/usr/data/pellcorp/k1/microprobe.cfg"
 
         cp /usr/data/pellcorp/k1/microprobe-${model}.cfg /usr/data/printer_data/config/ || exit $?
-        $CONFIG_HELPER --add-include "microprobe-${model}.cfg" || exit $?
+        config_helper --add-include "microprobe-${model}.cfg"
 
         echo "microprobe-probe" >> /usr/data/pellcorp.done
         sync
@@ -918,30 +923,30 @@ setup_cartographer() {
         cleanup_probe cartotouch
 
         cp /usr/data/pellcorp/k1/cartographer.conf /usr/data/printer_data/config/ || exit $?
-        $CONFIG_HELPER --file moonraker.conf --add-include "cartographer.conf" || exit $?
+        config_helper --file moonraker.conf --add-include "cartographer.conf"
 
         cp /usr/data/pellcorp/k1/cartographer_macro.cfg /usr/data/printer_data/config/ || exit $?
-        $CONFIG_HELPER --add-include "cartographer_macro.cfg" || exit $?
+        config_helper --add-include "cartographer_macro.cfg"
 
-        $CONFIG_HELPER --replace-section-entry "stepper_z" "homing_retract_dist" "0" || exit $?
+        config_helper --replace-section-entry "stepper_z" "homing_retract_dist" "0"
 
         cp /usr/data/pellcorp/k1/cartographer.cfg /usr/data/printer_data/config/ || exit $?
-        $CONFIG_HELPER --add-include "cartographer.cfg" || exit $?
+        config_helper --add-include "cartographer.cfg"
 
         CARTO_SERIAL_ID=$(ls /dev/serial/by-id/usb-Cartographer* | head -1)
         if [ -n "$CARTO_SERIAL_ID" ]; then
-            $CONFIG_HELPER --file cartographer.cfg --replace-section-entry "cartographer" "serial" "$CARTO_SERIAL_ID" || exit $?
+            config_helper --file cartographer.cfg --replace-section-entry "cartographer" "serial" "$CARTO_SERIAL_ID"
         else
             echo "WARNING: There does not seem to be a cartographer attached - skipping auto configuration"
         fi
 
         cp /usr/data/pellcorp/k1/cartographer-${model}.cfg /usr/data/printer_data/config/ || exit $?
-        $CONFIG_HELPER --add-include "cartographer-${model}.cfg" || exit $?
+        config_helper --add-include "cartographer-${model}.cfg"
 
         # because the model sits out the back we do need to set position max back
-        position_max=$($CONFIG_HELPER --get-section-entry "stepper_y" "position_max")
+        position_max=$(config_helper --get-section-entry "stepper_y" "position_max")
         position_max=$((position_max-16))
-        $CONFIG_HELPER --replace-section-entry "stepper_y" "position_max" "$position_max" || exit $?
+        config_helper --replace-section-entry "stepper_y" "position_max" "$position_max"
 
         echo "cartographer-probe" >> /usr/data/pellcorp.done
         sync
@@ -962,47 +967,47 @@ setup_cartotouch() {
         cleanup_probe cartographer
 
         cp /usr/data/pellcorp/k1/cartographer.conf /usr/data/printer_data/config/ || exit $?
-        $CONFIG_HELPER --file moonraker.conf --add-include "cartographer.conf" || exit $?
+        config_helper --file moonraker.conf --add-include "cartographer.conf"
 
         cp /usr/data/pellcorp/k1/cartotouch_macro.cfg /usr/data/printer_data/config/ || exit $?
-        $CONFIG_HELPER --add-include "cartotouch_macro.cfg" || exit $?
+        config_helper --add-include "cartotouch_macro.cfg"
 
-        $CONFIG_HELPER --replace-section-entry "stepper_z" "homing_retract_dist" "0" || exit $?
+        config_helper --replace-section-entry "stepper_z" "homing_retract_dist" "0"
 
         cp /usr/data/pellcorp/k1/cartotouch.cfg /usr/data/printer_data/config/ || exit $?
-        $CONFIG_HELPER --add-include "cartotouch.cfg" || exit $?
+        config_helper --add-include "cartotouch.cfg"
 
         # a slight change to the way cartotouch is configured
-        $CONFIG_HELPER --remove-section "force_move" || exit $?
+        config_helper --remove-section "force_move"
 
         CARTO_SERIAL_ID=$(ls /dev/serial/by-id/usb-Cartographer* | head -1)
         if [ -n "$CARTO_SERIAL_ID" ]; then
-            $CONFIG_HELPER --file cartotouch.cfg --replace-section-entry "scanner" "serial" "$CARTO_SERIAL_ID" || exit $?
+            config_helper --file cartotouch.cfg --replace-section-entry "scanner" "serial" "$CARTO_SERIAL_ID"
         else
             echo "WARNING: There does not seem to be a cartographer attached - skipping auto configuration"
         fi
 
         # as we are referencing the included cartographer now we want to remove the included value
         # from any previous installation
-        $CONFIG_HELPER --remove-section "scanner" || exit $?
-        $CONFIG_HELPER --add-section "scanner" || exit $?
+        config_helper --remove-section "scanner"
+        config_helper --add-section "scanner"
 
         if grep -q "#*# [scanner]" /usr/data/pellcorp-overrides/printer.cfg.save_config 2> /dev/null; then
-          $CONFIG_HELPER --replace-section-entry "scanner" "#scanner_touch_z_offset" "0.05" || exit $?
+          config_helper --replace-section-entry "scanner" "#scanner_touch_z_offset" "0.05"
         else
-          $CONFIG_HELPER --replace-section-entry "scanner" "scanner_touch_z_offset" "0.05" || exit $?
+          config_helper --replace-section-entry "scanner" "scanner_touch_z_offset" "0.05"
         fi
 
         cp /usr/data/pellcorp/k1/cartographer-${model}.cfg /usr/data/printer_data/config/ || exit $?
-        $CONFIG_HELPER --add-include "cartographer-${model}.cfg" || exit $?
+        config_helper --add-include "cartographer-${model}.cfg"
 
         # because the model sits out the back we do need to set position max back
-        position_max=$($CONFIG_HELPER --get-section-entry "stepper_y" "position_max")
+        position_max=$(config_helper --get-section-entry "stepper_y" "position_max")
         position_max=$((position_max-16))
-        $CONFIG_HELPER --replace-section-entry "stepper_y" "position_max" "$position_max" || exit $?
+        config_helper --replace-section-entry "stepper_y" "position_max" "$position_max"
 
         cp /usr/data/pellcorp/k1/cartographer_calibrate.cfg /usr/data/printer_data/config/ || exit $?
-        $CONFIG_HELPER --add-include "cartographer_calibrate.cfg" || exit $?
+        config_helper --add-include "cartographer_calibrate.cfg"
 
         echo "cartotouch-probe" >> /usr/data/pellcorp.done
         sync
@@ -1026,36 +1031,36 @@ setup_btteddy() {
         
         BTTEDDY_SERIAL_ID=$(ls /dev/serial/by-id/usb-Klipper_rp2040* | head -1)
         if [ -n "$BTTEDDY_SERIAL_ID" ]; then
-            $CONFIG_HELPER --file btteddy.cfg --replace-section-entry "mcu eddy" "serial" "$BTTEDDY_SERIAL_ID" || exit $?
+            config_helper --file btteddy.cfg --replace-section-entry "mcu eddy" "serial" "$BTTEDDY_SERIAL_ID"
         else
             echo "WARNING: There does not seem to be a btt eddy attached - skipping auto configuration"
         fi
-        $CONFIG_HELPER --add-include "btteddy.cfg" || exit $?
+        config_helper --add-include "btteddy.cfg"
         cp /usr/data/pellcorp/k1/btteddy_macro.cfg /usr/data/printer_data/config/ || exit $?
-        $CONFIG_HELPER --add-include "btteddy_macro.cfg" || exit $?
+        config_helper --add-include "btteddy_macro.cfg"
 
-        $CONFIG_HELPER --remove-section "probe_eddy_current btt_eddy" || exit $?
-        $CONFIG_HELPER --add-section "probe_eddy_current btt_eddy" || exit $?
+        config_helper --remove-section "probe_eddy_current btt_eddy"
+        config_helper --add-section "probe_eddy_current btt_eddy"
 
         # for an update the save config has not as yet been reapplied to printer.cfg so we need to check the overrides
         # according to https://klipper.discourse.group/t/eddy-current-sensor-homing-and-calibration-problems/16670/11 setting
         # a bigger default reg_drive_current should allow the BTT_EDDY_CALIBRATE_DRIVE_CURRENT to return a more accurate value
         if grep -q "#*# [probe_eddy_current btt_eddy]" /usr/data/pellcorp-overrides/printer.cfg.save_config 2> /dev/null; then
-          $CONFIG_HELPER --replace-section-entry "probe_eddy_current btt_eddy" "#reg_drive_current" "31" || exit $?
+          config_helper --replace-section-entry "probe_eddy_current btt_eddy" "#reg_drive_current" "31"
         else
-          $CONFIG_HELPER --replace-section-entry "probe_eddy_current btt_eddy" "reg_drive_current" "31" || exit $?
+          config_helper --replace-section-entry "probe_eddy_current btt_eddy" "reg_drive_current" "31"
         fi
 
         cp /usr/data/pellcorp/k1/btteddy-${model}.cfg /usr/data/printer_data/config/ || exit $?
-        $CONFIG_HELPER --add-include "btteddy-${model}.cfg" || exit $?
+        config_helper --add-include "btteddy-${model}.cfg"
 
         # because the model sits out the back we do need to set position max back
-        position_max=$($CONFIG_HELPER --get-section-entry "stepper_y" "position_max")
+        position_max=$(config_helper --get-section-entry "stepper_y" "position_max")
         position_max=$((position_max-16))
-        $CONFIG_HELPER --replace-section-entry "stepper_y" "position_max" "$position_max" || exit $?
+        config_helper --replace-section-entry "stepper_y" "position_max" "$position_max"
 
         cp /usr/data/pellcorp/k1/btteddy_calibrate.cfg /usr/data/printer_data/config/ || exit $?
-        $CONFIG_HELPER --add-include "btteddy_calibrate.cfg" || exit $?
+        config_helper --add-include "btteddy_calibrate.cfg"
 
         echo "btteddy-probe" >> /usr/data/pellcorp.done
         sync
@@ -1192,6 +1197,7 @@ if [ "$skip_overrides" = "true" ]; then
 fi
 
 install_config_updater
+
 # completely remove all iterations of zero SimpleAddon
 for dir in addons SimpleAddon; do
   if [ -d /usr/data/printer_data/config/$dir ]; then
@@ -1199,9 +1205,9 @@ for dir in addons SimpleAddon; do
   fi
 done
 for file in save-zoffset.cfg eddycalibrate.cfg quickstart.cfg cartographer_calibrate.cfg btteddy_calibrate.cfg; do
-  $CONFIG_HELPER --remove-include "SimpleAddon/$file"
+  config_helper --remove-include "SimpleAddon/$file"
 done
-$CONFIG_HELPER --remove-include "addons/*.cfg"
+config_helper --remove-include "addons/*.cfg"
 
 # the pellcorp-backups do not need .pellcorp extension, so this is to fix backwards compatible
 if [ -f /usr/data/pellcorp-backups/printer.pellcorp.cfg ]; then
