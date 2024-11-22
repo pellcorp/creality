@@ -1181,6 +1181,12 @@ echo "INFO: Mode is $mode"
 echo "INFO: Probe is $probe"
 echo ""
 
+if [ "$mode" = "install" ] && [ "$probe" = "cartographer" ]; then
+  echo "ERROR: Cartographer for 4.0.0 firmware is deprecated and new installations are not supported!"
+  echo "Perhaps you meant to run an --install cartotouch?"
+  exit 1
+fi
+
 if [ "$skip_overrides" = "true" ]; then
     echo "INFO: Configuration overrides will not be saved or applied"
 fi
