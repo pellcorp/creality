@@ -50,6 +50,9 @@ factory_reset() {
         -depth -print \
         -exec rmdir {} \; >/dev/null 2>&1
     /bin/sync >/dev/null 2>&1
+    # this is just for my dev board
+    sed -i 's/pcba_test/nada/g' /etc/init.d/S55klipper_service
+    /bin/sync >/dev/null 2>&1
     echo "Info: Factory reset was executed successfully, the printer will restart..."
     /etc/init.d/rcK >/dev/null 2>&1
     /bin/sync >/dev/null 2>&1
