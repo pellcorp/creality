@@ -171,8 +171,10 @@ auto_update() {
         fi
     fi
 
-    rm $VERSION_FILE
-    
+    if [ -f $VERSION_FILE ]; then
+      rm $VERSION_FILE
+    fi
+
     # Flashing
     if [ $mcu_ready = "true" ]; then
         local mcu_version=$(get_version $mcu_serial)
