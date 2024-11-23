@@ -1135,7 +1135,13 @@ mv /usr/data/printer_data/config/*.bkp /usr/data/printer_data/config/backups/ 2>
 mkdir -p /usr/data/pellcorp-backups
 # so if the installer has never been run we should grab a backup of the printer.cfg
 if [ ! -f /usr/data/pellcorp.done ] && [ ! -f /usr/data/pellcorp-backups/printer.factory.cfg ]; then
-    cp /usr/data/printer_data/config/printer.cfg /usr/data/pellcorp-backups/printer.factory.cfg
+    # just to make sure we don't accidentally copy printer.cfg to backup if the backup directory
+    # is deleted, add a stamp to config files to we can know for sure.
+    if ! grep -q "# Modified by Simple AF " /usr/data/printer_data/config/printer.cfg; then
+        cp /usr/data/printer_data/config/printer.cfg /usr/data/pellcorp-backups/printer.factory.cfg
+    else
+      echo "ERROR: No pristine factory printer.cfg available"
+    fi
 fi
 
 # figure out what existing probe if any is being used
@@ -1235,6 +1241,8 @@ if [ "$mode" = "reinstall" ] || [ "$mode" = "update" ]; then
     # if we took a post factory reset backup for a reinstall restore it now
     if [ -f /usr/data/pellcorp-backups/printer.factory.cfg ]; then
         cp /usr/data/pellcorp-backups/printer.factory.cfg /usr/data/printer_data/config/printer.cfg
+        DATE_TIME=$(date +"%Y-%m-%d %H:%M:%S")
+        sed -i "1s/^/# Modified by Simple AF ${DATE_TIME}\n/" /usr/data/printer_data/config/printer.cfg
 
         for file in printer.cfg moonraker.conf; do
             if [ -f /usr/data/pellcorp-backups/$file ]; then
@@ -1242,7 +1250,7 @@ if [ "$mode" = "reinstall" ] || [ "$mode" = "update" ]; then
             fi
         done
     elif [ "$mode" = "update" ]; then
-        echo "ERROR: Update mode is not available to users who have not done a factory reset since 27th of June 2024"
+        echo "ERROR: Update mode is not available as pristine factory printer.cfg is missing"
         exit 1
     fi
 fi
