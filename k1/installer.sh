@@ -1248,6 +1248,8 @@ if [ "$mode" = "reinstall" ] || [ "$mode" = "update" ]; then
 fi
 sync
 
+ln -sf /var/log/messages /usr/data/printer_data/logs/
+
 # lets make sure we are not stranded in some repo dir
 cd /root
 
