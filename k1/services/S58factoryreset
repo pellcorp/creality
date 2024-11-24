@@ -58,6 +58,8 @@ factory_reset() {
 
 case "$1" in
     start)
+      # for whatever reason some dodgy usb keys will get mounted to /tmp/udisk/sda
+      # or /tmp/udisk/sda2 (usually if there is more than one partition on the usb
       FLAG_FILE=$(ls /tmp/udisk/sda*/emergency_factory_reset 2> /dev/null)
       if [ $? -eq 0 ] && [ "x$FLAG_FILE" != "x" ]; then
           # there should never be a case where it gets more than one file but
