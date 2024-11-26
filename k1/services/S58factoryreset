@@ -67,6 +67,11 @@ case "$1" in
           FLAG_FILE=$(echo $FLAG_FILE | awk '{print $1}')
           echo "Info: Executing factory reset..."
           mv "$FLAG_FILE" "${FLAG_FILE}.old" >/dev/null 2>&1
+
+          # we want to unmount the device cleanly
+          MOUNT_DEVICE=$(echo $FLAG_FILE | awk -F '/' '{print $4}')
+          umount $MOUNT_DEVICE
+
           factory_reset
       else
           echo "Info: No 'emergency_factory_reset' file found on the USB drive!"
