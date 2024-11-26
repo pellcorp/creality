@@ -154,7 +154,6 @@ install_config_updater() {
 }
 
 disable_creality_services() {
-    # if it is a soft link then we are using the boot-display.sh optionally
     if [ ! -L /etc/boot-display/part0 ]; then
       # clean up failed installation of custom boot display
       rm -rf /overlay/upper/etc/boot-display/*
@@ -195,8 +194,10 @@ disable_creality_services() {
         if [ -f /etc/init.d/S55klipper_service ]; then
             /etc/init.d/S55klipper_service stop
         fi
+
         if [ -f /etc/init.d/S57klipper_mcu ]; then
             /etc/init.d/S57klipper_mcu stop
+            rm /etc/init.d/S57klipper_mcu
         fi
 
         # the log main process takes up so much memory a lot of it swapped, killing this process might make the
@@ -206,6 +207,14 @@ disable_creality_services() {
             kill -9 $log_main_pid
         fi
     fi
+
+    # this is mostly backwards compatible
+    if [ -f /etc/init.d/S57klipper_mcu ]; then
+        /etc/init.d/S55klipper_service stop
+        /etc/init.d/S57klipper_mcu stop
+        rm /etc/init.d/S57klipper_mcu
+    fi
+
     sync
 }
 
@@ -593,13 +602,6 @@ install_klipper() {
                 echo "INFO: Forcing Klipper repo to be switched to pellcorp/${klipper_repo}"
                 rm -rf /usr/data/klipper/
             fi
-        fi
-
-        if [ -f /etc/init.d/S57klipper_mcu ]; then
-            /etc/init.d/S55klipper_service stop
-            /etc/init.d/S57klipper_mcu stop
-            rm /etc/init.d/S57klipper_mcu
-            /etc/init.d/S55klipper_service start > /dev/null
         fi
 
         if [ ! -d /usr/data/klipper/.git ]; then
@@ -1209,6 +1211,10 @@ if [ "$skip_overrides" = "true" ]; then
     echo "INFO: Configuration overrides will not be saved or applied"
 fi
 
+# we want to disable creality services at the very beginning otherwise shit gets weird
+# if the crazy creality S55klipper_service is still copying files
+disable_creality_services
+
 install_config_updater
 
 # completely remove all iterations of zero SimpleAddon
@@ -1265,8 +1271,6 @@ touch /usr/data/pellcorp.done
 TIMESTAMP=$(date +"%Y%m%d_%H%M%S")
 cp /usr/data/printer_data/config/printer.cfg /usr/data/printer_data/config/backups/printer-${TIMESTAMP}.cfg
 sync
-
-disable_creality_services
 
 install_entware $mode
 install_webcam $mode
