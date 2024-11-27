@@ -120,7 +120,7 @@ else
       exit 1
   fi
 
-  if [ -f /usr/data/pellcorp-printer-overrides.cfg ]; then
+  if [ -f /usr/data/pellcorp-overrides.cfg ]; then
       echo "ERROR: /usr/data/pellcorp-overrides.cfg exists!"
       exit 1
   fi
