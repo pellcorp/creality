@@ -4,12 +4,12 @@ CONFIG_HELPER="/usr/data/pellcorp/k1/config-helper.py"
 
 function apply_overrides() {
     return_status=0
-    if [ -f /usr/data/pellcorp-overrides.cfg ] || [ -d /usr/data/pellcorp-overrides ]; then
+    if [ -f /usr/data/pellcorp-printer-overrides.cfg ] || [ -d /usr/data/pellcorp-overrides ]; then
         echo ""
         echo "Applying overrides ..."
 
         overrides_dir=/usr/data/pellcorp-overrides
-        if [ -f /usr/data/pellcorp-overrides.cfg ]; then
+        if [ -f /usr/data/pellcorp-printer-overrides.cfg ]; then
             overrides_dir=/tmp/overrides.$$
             mkdir $overrides_dir
             file=
