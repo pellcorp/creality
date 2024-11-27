@@ -820,7 +820,15 @@ install_cartographer_klipper() {
         if [ ! -d /usr/data/cartographer-klipper ]; then
             echo ""
             echo "INFO: Installing cartographer-klipper ..."
-            git clone https://github.com/Cartographer3D/cartographer-klipper.git /usr/data/cartographer-klipper || exit $?
+            git clone https://github.com/pellcorp/cartographer-klipper.git /usr/data/cartographer-klipper || exit $?
+        else
+          cd /usr/data/cartographer-klipper
+          REMOTE_URL=$(git remote get-url origin)
+          if [ "$REMOTE_URL" != "https://github.com/pellcorp/cartographer-klipper.git" ]; then
+            echo "INFO: Switching cartographer-klipper to pellcorp fork"
+            git remote set-url origin https://github.com/pellcorp/cartographer-klipper.git
+            git fetch origin
+          fi
         fi
 
         echo "INFO: Running cartographer-klipper installer ..."
