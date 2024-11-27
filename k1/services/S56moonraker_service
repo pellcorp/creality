@@ -20,7 +20,7 @@ start() {
 }
 
 stop() {
-  start-stop-daemon -K -q -p $PID_FILE
+  start-stop-daemon -K -q -p $PID_FILE > /dev/null 2>&1
 }
 
 restart() {
