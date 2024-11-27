@@ -15,17 +15,13 @@ if [ -z "$ota_version" ] || [ $ota_version -lt 1335 ]; then
 fi
 
 MODEL=$(/usr/bin/get_sn_mac.sh model)
-
-if [ "$MODEL" != "CR-K1" ] && [ "$MODEL" != "K1C" ] && [ "$MODEL" != "CR-K1 Max" ]; then
-    echo "This script is only supported for the K1, K1C and CR-K1 Max!"
-    exit 1
-fi
-
-# now map it to the probe file name suffix
 if [ "$MODEL" = "CR-K1" ] || [ "$MODEL" = "K1C" ] || [ "$MODEL" = "K1 SE" ]; then
   model=k1
 elif [ "$MODEL" = "CR-K1 Max" ] || [ "$MODEL" = "K1 Max SE" ]; then
   model=k1m
+else
+  echo "This script is not supported for $MODEL!"
+  exit 1
 fi
 
 if [ -d /usr/data/helper-script ] || [ -f /usr/data/fluidd.sh ] || [ -f /usr/data/mainsail.sh ]; then
