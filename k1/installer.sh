@@ -830,6 +830,7 @@ install_cartographer_klipper() {
             git fetch origin
           fi
         fi
+        cd -
 
         echo "INFO: Running cartographer-klipper installer ..."
         bash /usr/data/cartographer-klipper/install.sh || exit $?
