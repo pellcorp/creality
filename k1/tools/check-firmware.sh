@@ -8,8 +8,8 @@ if [ -f /etc/init.d/S13mcu_update ]; then
     # klipper/fw/K1 directory
     mcu_update_fw_root_dir=$(cat /etc/init.d/S13mcu_update | grep FW_ROOT_DIR= | awk -F '=' '{print $2}')
     if [ "${mcu_update_fw_root_dir}/K1" != "$FW_DIR" ]; then
-        echo "It looks like you have not run the installer.sh in a while, the /etc/init.d/S13mcu_update file"
-        echo "should be pointing at $FW_DIR for firmware files, but its actually pointing at "
+        echo "ERROR: It looks like you have not run the installer.sh in a while, the /etc/init.d/S13mcu_update file"
+        echo "       should be pointing at $FW_DIR for firmware files, but its actually pointing at "
         echo "${mcu_update_fw_root_dir}/K1!"
         exit 1
     fi
@@ -17,8 +17,8 @@ if [ -f /etc/init.d/S13mcu_update ]; then
     # we can't check versions if the S13mcu_update is too old to be even writing this file
     mcu_update_version_file=$(cat /etc/init.d/S13mcu_update | grep VERSION_FILE= | awk -F '=' '{print $2}')
     if [ "$mcu_update_version_file" != "$VERSION_FILE" ]; then
-        echo "It looks like you have not run the installer.sh in a while, the /etc/init.d/S13mcu_update file"
-        echo "should be pointing at $VERSION_FILE to write the mcu.versions file, but its actually pointing at "
+        echo "ERROR: It looks like you have not run the installer.sh in a while, the /etc/init.d/S13mcu_update file"
+        echo "       should be pointing at $VERSION_FILE to write the mcu.versions file, but its actually pointing at "
         echo "${mcu_update_version_file}!"
         exit 1
     fi
@@ -54,12 +54,12 @@ if [ -f $VERSION_FILE ] && [ -d $FW_DIR ]; then
 fi
 
 if [ "$firmware_upgrade_required" = "true" ]; then
-    echo "MCU Firmware updates are pending you need to power cycle your printer!"
+    echo "WARNING: MCU Firmware updates are pending you need to power cycle your printer!"
     if [ "$1" = "--status" ]; then
         exit 1
     fi
 else
-    echo "Your MCU Firmware is up to date!"
+    echo "INFO: Your MCU Firmware is up to date!"
     if [ "$1" = "--status" ]; then
         exit 0
     fi

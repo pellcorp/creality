@@ -15,7 +15,7 @@ start_server() {
 }
 
 stop_server() {
-    start-stop-daemon -K -q -p $PID_FILE
+    start-stop-daemon -K -q -p $PID_FILE > /dev/null 2>&1
 }
 
 case "$1" in
