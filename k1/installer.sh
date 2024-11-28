@@ -57,6 +57,19 @@ update_repo() {
     return 0
 }
 
+function update_klipper() {
+  if [ -d /usr/data/cartographer-klipper ]; then
+      /usr/data/cartographer-klipper/install.sh || return $?
+      sync
+  fi
+  /usr/share/klippy-env/bin/python3 -m compileall /usr/data/klipper/klippy || return $?
+  /usr/data/pellcorp/k1/tools/check-firmware.sh --status
+  if [ $? -eq 0 ]; then
+      /etc/init.d/S55klipper_service restart
+  fi
+  return $?
+}
+
 # special mode to update the repo only
 if [ "$1" = "--update-repo" ] || [ "$1" = "--update-branch" ]; then
     update_repo /usr/data/pellcorp
@@ -70,13 +83,8 @@ elif [ "$1" = "--klipper-branch" ] && [ -n "$2" ]; then # convenience for testin
     update_repo /usr/data/klipper || exit $?
     cd /usr/data/klipper && git switch $2 && cd - > /dev/null
     update_repo /usr/data/klipper
-
-    /usr/share/klippy-env/bin/python3 -m compileall /usr/data/klipper/klippy || exit $?
-    /usr/data/pellcorp/k1/tools/check-firmware.sh --status
-    if [ $? -eq 0 ]; then
-        /etc/init.d/S55klipper_service restart
-    fi
-    exit $?
+    update_klipper || exit $?
+    exit 0
 elif [ "$1" = "--klipper-repo" ] && [ -n "$2" ]; then # convenience for testing new features
     klipper_repo=$2
     if [ -d /usr/data/klipper/.git ]; then
@@ -101,18 +109,8 @@ elif [ "$1" = "--klipper-repo" ] && [ -n "$2" ]; then # convenience for testing 
         cd /usr/data/klipper && git switch $3 && cd - > /dev/null
         update_repo /usr/data/klipper || exit $?
     fi
-    if [ -d /usr/data/cartographer-klipper ]; then
-        /usr/data/cartographer-klipper/install.sh || exit $?
-        sync
-    fi
-
-    /usr/share/klippy-env/bin/python3 -m compileall /usr/data/klipper/klippy || exit $?
-
-    /usr/data/pellcorp/k1/tools/check-firmware.sh --status
-    if [ $? -eq 0 ]; then
-        /etc/init.d/S55klipper_service restart
-    fi
-    exit $?
+    update_klipper || exit $?
+    exit 0
 fi
 
 # kill pip cache to free up overlayfs
