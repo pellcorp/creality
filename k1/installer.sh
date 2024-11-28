@@ -1345,7 +1345,7 @@ if [ -f /usr/data/pellcorp-backups/printer.factory.cfg ]; then
 
     # we want a copy of the file before config overrides are re-applied so we can correctly generate diffs
     # against different generations of the original file
-    for file in printer.cfg start_end.cfg fan_control.cfg useful_macros.cfg cartographer.conf moonraker.conf sensorless.cfg ${probe}_macro.cfg ${probe}.cfg ${probe_model}-${model}.cfg; do
+    for file in printer.cfg start_end.cfg fan_control.cfg useful_macros.cfg $probe_model.conf moonraker.conf sensorless.cfg ${probe}_macro.cfg ${probe}.cfg ${probe_model}-${model}.cfg; do
         if [ -f /usr/data/printer_data/config/$file ]; then
             cp /usr/data/printer_data/config/$file /usr/data/pellcorp-backups/$file
         fi
@@ -1358,12 +1358,11 @@ if [ "$skip_overrides" != "true" ]; then
     apply_overrides=$?
 fi
 
-# if moonraker was installed or updated
-if [ $install_moonraker -ne 0 ] || [ $install_cartographer_klipper -ne 0 ] || [ $apply_overrides -ne 0 ]; then
+if [ $apply_overrides -ne 0 ] || [ $install_moonraker -ne 0 ] || [ $install_cartographer_klipper -ne 0 ]; then
     restart_moonraker
 fi
 
-if [ $install_klipper -ne 0 ] || [ $install_moonraker -ne 0 ] || [ $install_nginx -ne 0 ] || [ $install_fluidd -ne 0 ] || [ $install_mainsail -ne 0 ] || [ $install_cartographer_klipper -ne 0 ]; then
+if [ $install_moonraker -ne 0 ] || [ $install_nginx -ne 0 ] || [ $install_fluidd -ne 0 ] || [ $install_mainsail -ne 0 ]; then
     echo
     echo "INFO: Restarting Nginx ..."
     /etc/init.d/S50nginx_service restart
