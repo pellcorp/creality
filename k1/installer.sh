@@ -1158,6 +1158,7 @@ elif [ -f /usr/data/printer_data/config/btteddy-k1.cfg ] || [ -f /usr/data/print
     probe=btteddy
 fi
 
+client=cli
 mode=install
 skip_overrides=false
 debug=false
@@ -1171,6 +1172,11 @@ while true; do
             mode=$(echo $mode | sed 's/clean-//g')
         fi
     elif [ "$1" = "--debug" ]; then
+        shift
+        debug=true
+    elif [ "$1" = "--client" ]; then
+        shift
+        client=$1
         shift
         debug=true
     elif [ "$1" = "microprobe" ] || [ "$1" = "bltouch" ] || [ "$1" = "cartographer" ] || [ "$1" = "cartotouch" ] || [ "$1" = "btteddy" ]; then
@@ -1358,25 +1364,41 @@ fi
 update_ip_address=$?
 
 if [ $apply_overrides -ne 0 ] || [ $install_moonraker -ne 0 ] || [ $install_cartographer_klipper -ne 0 ] || [ $update_ip_address -ne 0 ]; then
-    restart_moonraker
+    if [ "$client" = "cli" ]; then
+        restart_moonraker
+    else
+        echo "WARNING: Moonraker restart required"
+    fi
 fi
 
 if [ $install_moonraker -ne 0 ] || [ $install_nginx -ne 0 ] || [ $install_fluidd -ne 0 ] || [ $install_mainsail -ne 0 ]; then
-    echo
-    echo "INFO: Restarting Nginx ..."
-    /etc/init.d/S50nginx_service restart
+    if [ "$client" = "cli" ]; then
+        echo
+        echo "INFO: Restarting Nginx ..."
+        /etc/init.d/S50nginx_service restart
+    else
+        echo "WARNING: NGINX restart required"
+    fi
 fi
 
 if [ $apply_overrides -ne 0 ] || [ $install_cartographer_klipper -ne 0 ] || [ $install_kamp -ne 0 ] || [ $install_klipper -ne 0 ] || [ $install_guppyscreen -ne 0 ] || [ $setup_probe -ne 0 ] || [ $setup_probe_specific -ne 0 ]; then
-    echo
-    echo "INFO: Restarting Klipper ..."
-    /etc/init.d/S55klipper_service restart
+    if [ "$client" = "cli" ]; then
+        echo
+        echo "INFO: Restarting Klipper ..."
+        /etc/init.d/S55klipper_service restart
+    else
+        echo "WARNING: Klipper restart required"
+    fi
 fi
 
 if [ $install_guppyscreen -ne 0 ]; then
-    echo
-    echo "INFO: Restarting Guppyscreen ..."
-    /etc/init.d/S99guppyscreen restart
+    if [ "$client" = "cli" ]; then
+        echo
+        echo "INFO: Restarting Guppyscreen ..."
+        /etc/init.d/S99guppyscreen restart
+    else
+        echo "WARNING: Guppyscreen restart required"
+    fi
 fi
 
 echo
