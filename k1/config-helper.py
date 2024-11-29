@@ -160,7 +160,7 @@ def override_cfg(updater, override_cfg_file, config_file, after_section=None):
         for section_name in overrides.sections():
             section = overrides.get_section(section_name, None)
             section_action = section.get('__action__', None)
-            if printer_cfg and section_action and section_action.value == 'DELETED':
+            if (printer_cfg or fan_control) and section_action and section_action.value == 'DELETED':
                 if updater.has_section(section_name):
                     if remove_section(updater, section_name):
                         updated = True
