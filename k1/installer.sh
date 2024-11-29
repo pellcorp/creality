@@ -1161,7 +1161,6 @@ fi
 client=cli
 mode=install
 skip_overrides=false
-debug=false
 # parse arguments here
 while true; do
     if [ "$1" = "--install" ] || [ "$1" = "--update" ] || [ "$1" = "--reinstall" ] || [ "$1" = "--clean-install" ] || [ "$1" = "--clean-update" ] || [ "$1" = "--clean-reinstall" ]; then
@@ -1171,14 +1170,10 @@ while true; do
             skip_overrides=true
             mode=$(echo $mode | sed 's/clean-//g')
         fi
-    elif [ "$1" = "--debug" ]; then
-        shift
-        debug=true
     elif [ "$1" = "--client" ]; then
         shift
         client=$1
         shift
-        debug=true
     elif [ "$1" = "microprobe" ] || [ "$1" = "bltouch" ] || [ "$1" = "cartographer" ] || [ "$1" = "cartotouch" ] || [ "$1" = "btteddy" ]; then
         if [ -n "$probe" ] && [ "$1" != "$probe" ]; then
           echo "WARNING: About to switch from $probe to $1!"
