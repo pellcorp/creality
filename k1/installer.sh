@@ -1458,6 +1458,10 @@ if [ -f /usr/data/pellcorp-backups/printer.factory.cfg ]; then
             cp /usr/data/printer_data/config/$file /usr/data/pellcorp-backups/$file
         fi
     done
+
+    if [ -f /usr/data/guppyscreen/guppyconfig.json ]; then
+      cp /usr/data/guppyscreen/guppyconfig.json /usr/data/pellcorp-backups/
+    fi
 fi
 
 apply_overrides=0
@@ -1497,7 +1501,7 @@ if [ $apply_overrides -ne 0 ] || [ $install_cartographer_klipper -ne 0 ] || [ $i
     fi
 fi
 
-if [ $install_guppyscreen -ne 0 ]; then
+if [ $apply_overrides -ne 0 ] || [ $install_guppyscreen -ne 0 ]; then
     if [ "$client" = "cli" ]; then
         echo
         echo "INFO: Restarting Guppyscreen ..."
