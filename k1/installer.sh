@@ -266,6 +266,9 @@ install_webcam() {
         cp /usr/data/pellcorp/k1/services/S50webcam /etc/init.d/
         /etc/init.d/S50webcam start
 
+        if [ -f /usr/data/pellcorp.ipaddress ]; then
+          rm /usr/data/pellcorp.ipaddress 
+        fi
         cp /usr/data/pellcorp/k1/webcam.conf /usr/data/printer_data/config/ || exit $?
 
         echo "webcam" >> /usr/data/pellcorp.done
