@@ -108,26 +108,24 @@ def main():
                 if (section_name == 'scanner' or section_name == 'cartographer' or section_name == 'mcu eddy') and key == 'serial':
                     continue
 
-                # do not add a new value that was missing from original unless this is for printer.cfg
-                if not original_value and not printer_cfg:
-                    continue
+                # do not add a new value that was missing from original unless this is for printer.cfg or the special is_non_critical field
+                if original_value or printer_cfg or key == 'is_non_critical':
+                    if (not original_value and updated_value and updated_value.value) or (original_value and original_value.value and updated_value and updated_value.value and original_value.value != updated_value.value):
+                        if not overrides.has_section(section_name):
+                            if len(overrides.sections()) > 0:
+                                overrides[overrides.sections()[-1]].add_after.space().section(section_name)
+                            else:
+                                overrides.add_section(section_name)
 
-                if (not original_value and updated_value and updated_value.value) or (original_value and original_value.value and updated_value and updated_value.value and original_value.value != updated_value.value):
-                    if not overrides.has_section(section_name):
-                        if len(overrides.sections()) > 0:
-                            overrides[overrides.sections()[-1]].add_after.space().section(section_name)
+                        # this will mostly be used for gcode macros and values
+                        if len(updated_value.lines) > 1:
+                            lines = updated_value.lines
+                            lines[0] = '\n'
+                            overrides[section_name][key] = ''
+                            overrides[section_name][key].set_values(lines, indent='', separator='')
                         else:
-                            overrides.add_section(section_name)
-
-                    # this will mostly be used for gcode macros and values
-                    if len(updated_value.lines) > 1:
-                        lines = updated_value.lines
-                        lines[0] = '\n'
-                        overrides[section_name][key] = ''
-                        overrides[section_name][key].set_values(lines, indent='', separator='')
-                    else:
-                        overrides[section_name][key] = f' {updated_value.value.strip()}'
-                    update_overrides = True
+                            overrides[section_name][key] = f' {updated_value.value.strip()}'
+                        update_overrides = True
 
     if update_overrides:
         print(f"INFO: Saving overrides to {args.overrides} ...")
