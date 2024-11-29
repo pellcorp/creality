@@ -38,6 +38,28 @@ setup_git_repo() {
     fi
 }
 
+override_json_file() {
+    local file=$1
+
+    if [ "$file" = "guppyconfig.json" ] && [ -f /usr/data/pellcorp-backups/guppyconfig.json ] && [ -f /usr/data/guppyscreen/guppyconfig.json ]; then
+        for entry in display_brightness invert_z_icon display_sleep_sec theme; do
+            stock_value=$(jq -cr ".$entry" /usr/data/pellcorp-backups/guppyconfig.json)
+            new_value=$(jq -cr ".$entry" /usr/data/guppyscreen/guppyconfig.json)
+            # you know what its not an actual json file its just the properties we support updating
+            if [ "$stock_value" != "null" ] && [ "$new_value" != "null" ] && [ "$stock_value" != "$new_value" ]; then
+                echo "$entry=$new_value" >> /usr/data/pellcorp-overrides/guppyconfig.json
+            fi
+        done
+        if [ -f /usr/data/pellcorp-overrides/guppyconfig.json ]; then
+            echo "INFO: Saving overrides to /usr/data/pellcorp-overrides/guppyconfig.json"
+            sync
+        fi
+    else
+        echo "INFO: Overrides not supported for $file"
+        return 0
+    fi
+}
+
 override_file() {
     local file=$1
 
@@ -131,6 +153,7 @@ else
   # all the config files there.
   rm /usr/data/pellcorp-overrides/*.cfg 2> /dev/null
   rm /usr/data/pellcorp-overrides/*.conf 2> /dev/null
+  rm /usr/data/pellcorp-overrides/*.json 2> /dev/null
   if [ -f /usr/data/pellcorp-overrides/printer.cfg.save_config ]; then
     rm /usr/data/pellcorp-overrides/printer.cfg.save_config
   fi
@@ -152,10 +175,14 @@ else
     file=$(basename $file)
     override_file $file
   done
+
+  # we will support some limited overrides of values in guppyconfig.json
+  override_json_file guppyconfig.json
 fi
 
 cd /usr/data/pellcorp-overrides
 if git status > /dev/null 2>&1; then
+    echo
     echo "INFO: /usr/data/pellcorp-overrides is a git repository"
 
     # special handling for moonraker.secrets, we do not want to source control this
