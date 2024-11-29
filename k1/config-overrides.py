@@ -36,9 +36,9 @@ def main():
     moonraker_conf = 'moonraker.conf' == os.path.basename(args.original)
     fan_control = 'fan_control.cfg' == os.path.basename(args.original)
 
-    # only support deleting sections from printer.cfg for now
+    # only support deleting sections from printer.cfg or fan_control.cfg for now
     for section_name in original.sections():
-        if section_name not in updated.sections() and printer_cfg:
+        if section_name not in updated.sections() and (printer_cfg or fan_control):
             if len(overrides.sections()) > 0:
                 overrides[overrides.sections()[-1]].add_after.space().section(section_name)
             else:
