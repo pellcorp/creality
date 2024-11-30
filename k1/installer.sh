@@ -990,6 +990,7 @@ setup_bltouch() {
         cleanup_probe cartotouch
         cleanup_probe beacon
 
+        # we merge bltouch.cfg into printer.cfg so that z_offset can be set
         if [ -f /usr/data/printer_data/config/bltouch.cfg ]; then
           rm /usr/data/printer_data/config/bltouch.cfg
         fi
@@ -1021,12 +1022,13 @@ setup_microprobe() {
     if [ $? -ne 0 ]; then
         echo
         echo "INFO: Setting up microprobe ..."
-        
+
         cleanup_probe bltouch
         cleanup_probe btteddy
         cleanup_probe cartotouch
         cleanup_probe beacon
 
+        # we merge microprobe.cfg into printer.cfg so that z_offset can be set
         if [ -f /usr/data/printer_data/config/microprobe.cfg ]; then
           rm /usr/data/printer_data/config/microprobe.cfg
         fi
@@ -1291,6 +1293,7 @@ fi
 client=cli
 mode=install
 skip_overrides=false
+mount=
 # parse arguments here
 while true; do
     if [ "$1" = "--install" ] || [ "$1" = "--update" ] || [ "$1" = "--reinstall" ] || [ "$1" = "--clean-install" ] || [ "$1" = "--clean-update" ] || [ "$1" = "--clean-reinstall" ]; then
@@ -1300,6 +1303,10 @@ while true; do
             skip_overrides=true
             mode=$(echo $mode | sed 's/clean-//g')
         fi
+    elif [ "$1" = "--mount" ]; then
+      shift
+      mount=$1
+      shift
     elif [ "$1" = "--client" ]; then
         shift
         client=$1
@@ -1326,6 +1333,19 @@ fi
 echo
 echo "INFO: Mode is $mode"
 echo "INFO: Probe is $probe"
+
+if [ -n "$mount" ]; then
+    /usr/data/pellcorp/k1/apply-mount-overrides.sh --verify $probe $mount
+    if [ $? -eq 0 ]; then
+        echo "INFO: Mount is $mount"
+    else
+        exit 1
+    fi
+#elif [ "$mode" = "install" ] || [ "$mode" = "reinstall" ]; then
+# a mount is only required for a brand new installation if no overrides are presnet
+#    echo "ERROR: --mount is a required parameter for a clean install or reinstall"
+#    exit 1
+fi
 
 if [ "$probe" = "cartographer" ]; then
   echo
@@ -1466,11 +1486,11 @@ else
 fi
 
 apply_overrides=0
+apply_mount_overrides=0
 # there will be no support for generating pellcorp-overrides unless you have done a factory reset
 if [ -f /usr/data/pellcorp-backups/printer.factory.cfg ]; then
     probe_model=${probe}
 
-    # FIXME - when we migrate cartotouch back to cartographer remember to remove this if
     if [ "$probe" = "cartotouch" ]; then
         probe_model=cartographer
     fi
@@ -1484,7 +1504,12 @@ if [ -f /usr/data/pellcorp-backups/printer.factory.cfg ]; then
     done
 
     if [ -f /usr/data/guppyscreen/guppyconfig.json ]; then
-      cp /usr/data/guppyscreen/guppyconfig.json /usr/data/pellcorp-backups/
+        cp /usr/data/guppyscreen/guppyconfig.json /usr/data/pellcorp-backups/
+    fi
+
+    if [ -n "$mount" ]; then
+        /usr/data/pellcorp/k1/apply-mount-overrides.sh $probe $mount
+        apply_mount_overrides=$?
     fi
 
     if [ "$skip_overrides" != "true" ]; then
@@ -1514,7 +1539,7 @@ if [ $install_moonraker -ne 0 ] || [ $install_nginx -ne 0 ] || [ $install_fluidd
     fi
 fi
 
-if [ $apply_overrides -ne 0 ] || [ $install_cartographer_klipper -ne 0 ] || [ $install_beacon_klipper -ne 0 ] || [ $install_kamp -ne 0 ] || [ $install_klipper -ne 0 ] || [ $install_guppyscreen -ne 0 ] || [ $setup_probe -ne 0 ] || [ $setup_probe_specific -ne 0 ]; then
+if [ $apply_overrides -ne 0 ] || [ $apply_mount_overrides -ne 0 ] || [ $install_cartographer_klipper -ne 0 ] || [ $install_beacon_klipper -ne 0 ] || [ $install_kamp -ne 0 ] || [ $install_klipper -ne 0 ] || [ $install_guppyscreen -ne 0 ] || [ $setup_probe -ne 0 ] || [ $setup_probe_specific -ne 0 ]; then
     if [ "$client" = "cli" ]; then
         echo
         echo "INFO: Restarting Klipper ..."
