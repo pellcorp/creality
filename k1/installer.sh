@@ -1396,6 +1396,7 @@ install_klipper $mode $probe
 install_klipper=$?
 
 install_cartographer_klipper=0
+install_beacon_klipper=0
 if [ "$probe" = "cartographer" ] || [ "$probe" = "cartotouch" ]; then
   install_cartographer_klipper $mode
   install_cartographer_klipper=$?
