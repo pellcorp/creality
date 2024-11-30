@@ -899,6 +899,7 @@ setup_bltouch() {
         cleanup_probe cartotouch
         cleanup_probe beacon
 
+        # we merge bltouch.cfg into printer.cfg so that z_offset can be set
         if [ -f /usr/data/printer_data/config/bltouch.cfg ]; then
           rm /usr/data/printer_data/config/bltouch.cfg
         fi
@@ -934,6 +935,7 @@ setup_microprobe() {
         cleanup_probe cartotouch
         cleanup_probe beacon
 
+        # we merge microprobe.cfg into printer.cfg so that z_offset can be set
         if [ -f /usr/data/printer_data/config/microprobe.cfg ]; then
           rm /usr/data/printer_data/config/microprobe.cfg
         fi
@@ -1259,6 +1261,7 @@ fi
 client=cli
 mode=install
 skip_overrides=false
+mount=
 # parse arguments here
 while true; do
     if [ "$1" = "--install" ] || [ "$1" = "--update" ] || [ "$1" = "--reinstall" ] || [ "$1" = "--clean-install" ] || [ "$1" = "--clean-update" ] || [ "$1" = "--clean-reinstall" ]; then
@@ -1268,6 +1271,10 @@ while true; do
             skip_overrides=true
             mode=$(echo $mode | sed 's/clean-//g')
         fi
+    elif [ "$1" = "--mount" ]; then
+      shift
+      mount=$1
+      shift
     elif [ "$1" = "--client" ]; then
         shift
         client=$1
@@ -1294,6 +1301,19 @@ fi
 echo
 echo "INFO: Mode is $mode"
 echo "INFO: Probe is $probe"
+
+if [ "$mode" = "install" ] || [ "$mode" = "reinstall" ]; then
+  if [ -n "$mount" ]; then
+    /usr/data/pellcorp/k1/installer/apply-mount-overrides.sh --verify $probe $mount
+    if [ $? -ne 0 ]; then
+      exit 1
+    fi
+    echo "INFO: Mount is $mount"
+  else
+    echo "ERROR: --mount is a required parameter for a install or reinstall"
+    exit 1
+  fi
+fi
 
 if [ "$mode" = "install" ] && [ "$probe" = "cartographer" ]; then
   echo
@@ -1453,6 +1473,12 @@ if [ -f /usr/data/pellcorp-backups/printer.factory.cfg ]; then
     done
 fi
 
+apply_mount_overrides=0
+if [ "$mode" = "install" ] || [ "$mode" = "reinstall" ]; then
+  /usr/data/pellcorp/k1/apply-mount-overrides.sh $probe $mount
+  apply_mount_overrides=$?
+fi
+
 apply_overrides=0
 if [ "$skip_overrides" != "true" ]; then
     apply_overrides
@@ -1480,7 +1506,7 @@ if [ $install_moonraker -ne 0 ] || [ $install_nginx -ne 0 ] || [ $install_fluidd
     fi
 fi
 
-if [ $apply_overrides -ne 0 ] || [ $install_cartographer_klipper -ne 0 ] || [ $install_beacon_klipper -ne 0 ] || [ $install_kamp -ne 0 ] || [ $install_klipper -ne 0 ] || [ $install_guppyscreen -ne 0 ] || [ $setup_probe -ne 0 ] || [ $setup_probe_specific -ne 0 ]; then
+if [ $apply_overrides -ne 0 ] || [ $apply_mount_overrides -ne 0 ] || [ $install_cartographer_klipper -ne 0 ] || [ $install_beacon_klipper -ne 0 ] || [ $install_kamp -ne 0 ] || [ $install_klipper -ne 0 ] || [ $install_guppyscreen -ne 0 ] || [ $setup_probe -ne 0 ] || [ $setup_probe_specific -ne 0 ]; then
     if [ "$client" = "cli" ]; then
         echo
         echo "INFO: Restarting Klipper ..."
