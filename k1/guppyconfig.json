@@ -3,6 +3,7 @@
     "display_brightness": 90,
     "display_rotate": 3,
     "display_sleep_sec": 600,
+    "invert_z_icon": false,
     "guppy_init_script": "/etc/init.d/S99guppyscreen",
     "log_path": "/usr/data/printer_data/logs/guppyscreen.log",
     "printers": {
@@ -47,6 +48,7 @@
         }
     },
     "prompt_emergency_stop": true,
+    "theme": "blue",
     "thumbnail_path": "/usr/data/printer_data/thumbnails",
     "touch_calibrated": false,
     "wpa_supplicant": "/var/run/wpa_supplicant"
