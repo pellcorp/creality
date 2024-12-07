@@ -611,6 +611,9 @@ install_klipper() {
                 git clone https://github.com/pellcorp/${klipper_repo}.git /usr/data/klipper || exit $?
             fi
             [ -d /usr/share/klipper ] && rm -rf /usr/share/klipper
+        elif ! grep -q "rotate-log-at-restart" /usr/data/klipper/klippy/klippy.py ; then
+          echo "INFO: Forcing update of klipper for rotate log at restart feature"
+          update_repo /usr/data/klipper || exit $?
         fi
 
         echo "INFO: Updating klipper config ..."
