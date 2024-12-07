@@ -19,6 +19,7 @@ start() {
             --exec $PROG -- $PY_SCRIPT \
             $PRINTER_CONFIG_DIR/printer.cfg \
             -l $PRINTER_LOGS_DIR/klippy.log \
+            --rotate-log-at-restart \
             -a /tmp/klippy_uds
 }
 
