@@ -825,6 +825,12 @@ install_cartographer_klipper() {
             git remote set-url origin https://github.com/pellcorp/cartographer-klipper.git
             git fetch origin
           fi
+          revision=$(git rev-parse --short HEAD)
+          # reset our branch back to mainstream
+          if [ "$revision" = "303ea63" ]; then
+            git fetch origin
+            git reset --hard v1.0.5
+          fi
         fi
         cd - > /dev/null
 
