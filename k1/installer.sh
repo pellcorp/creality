@@ -271,7 +271,11 @@ install_webcam() {
         /etc/init.d/S50webcam start
 
         if [ -f /usr/data/pellcorp.ipaddress ]; then
-          rm /usr/data/pellcorp.ipaddress
+          # don't wipe the pellcorp.ipaddress if its been explicitly set to skip
+          PREVIOUS_IP_ADDRESS=$(cat /usr/data/pellcorp.ipaddress 2> /dev/null)
+          if [ "$PREVIOUS_IP_ADDRESS" != "skip" ]; then
+            rm /usr/data/pellcorp.ipaddress
+          fi
         fi
         cp /usr/data/pellcorp/k1/webcam.conf /usr/data/printer_data/config/ || exit $?
 
