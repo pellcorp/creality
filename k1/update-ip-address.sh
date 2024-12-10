@@ -1,5 +1,10 @@
 #!/bin/sh
 
+# make it possible to skip this
+if [ -f /usr/data/pellcorp/ipaddress.skip ]; then
+  exit 0
+fi
+
 PREVIOUS_IP_ADDRESS=$(cat /usr/data/pellcorp.ipaddress 2> /dev/null)
 
 if [ -f /usr/data/ipaddress.log ]; then
