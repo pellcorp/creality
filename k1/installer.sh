@@ -1328,7 +1328,7 @@ echo "INFO: Probe is $probe"
 if [ "$mode" = "install" ] && [ "$probe" = "cartographer" ]; then
   echo
   echo "ERROR: Cartographer for 4.0.0 firmware is deprecated and new installations are not supported!"
-  echo "Perhaps you meant to run an $0 --install cartotouch?"
+  echo "Perhaps you meant to run an $0 --install cartotouch"
   exit 1
 fi
 
@@ -1361,10 +1361,10 @@ if [ "$mode" = "reinstall" ] || [ "$mode" = "update" ]; then
         echo
         if [ -f /usr/data/pellcorp-backups/printer.cfg ]; then
           /usr/data/pellcorp/k1/config-overrides.sh
-        else
-          echo "ERROR ERROR ERROR ERROR ERROR ERROR ERROR ERROR ERROR ERROR ERROR ERROR ERROR ERROR ERROR"
-          echo "ERROR: No /usr/data/pellcorp-backups/printer.cfg - config overrides are disabled!!!!!!!!!"
-          echo "ERROR ERROR ERROR ERROR ERROR ERROR ERROR ERROR ERROR ERROR ERROR ERROR ERROR ERROR ERROR"
+        elif [ -f /usr/data/pellcorp.done ]; then # for a factory reset this warning is superfluous
+          echo "WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING"
+          echo "WARNING: No /usr/data/pellcorp-backups/printer.cfg - config overrides won't be generated!"
+          echo "WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING"
         fi
     fi
 
@@ -1465,6 +1465,7 @@ else
     exit 1
 fi
 
+apply_overrides=0
 # there will be no support for generating pellcorp-overrides unless you have done a factory reset
 if [ -f /usr/data/pellcorp-backups/printer.factory.cfg ]; then
     probe_model=${probe}
@@ -1485,12 +1486,11 @@ if [ -f /usr/data/pellcorp-backups/printer.factory.cfg ]; then
     if [ -f /usr/data/guppyscreen/guppyconfig.json ]; then
       cp /usr/data/guppyscreen/guppyconfig.json /usr/data/pellcorp-backups/
     fi
-fi
 
-apply_overrides=0
-if [ "$skip_overrides" != "true" ]; then
-    apply_overrides
-    apply_overrides=$?
+    if [ "$skip_overrides" != "true" ]; then
+        apply_overrides
+        apply_overrides=$?
+    fi
 fi
 
 /usr/data/pellcorp/k1/update-ip-address.sh
