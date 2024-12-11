@@ -1246,7 +1246,9 @@ mkdir -p /usr/data/printer_data/config/backups/
 mv /usr/data/printer_data/config/*.bkp /usr/data/printer_data/config/backups/ 2> /dev/null
 
 TIMESTAMP=$(date +"%Y%m%d_%H%M%S")
-cp /usr/data/printer_data/config/printer.cfg /usr/data/printer_data/config/backups/printer-${TIMESTAMP}.cfg
+cd /usr/data/printer_data/config/
+tar -zcf /usr/data/printer_data/config/backups/backup-${TIMESTAMP}.tar.gz *.cfg *.conf
+cd - > /dev/null
 sync
 
 mkdir -p /usr/data/pellcorp-backups
