@@ -1395,7 +1395,10 @@ sync
 # add a service to take care of updating various config files if ip address changes
 cp /usr/data/pellcorp/k1/services/S96ipaddress /etc/init.d/
 
-ln -sf /var/log/messages /usr/data/printer_data/logs/
+if [ -L /usr/data/printer_data/logs/messages ]; then
+  rm /usr/data/printer_data/logs/messages
+fi
+ln -sf /var/log/messages /usr/data/printer_data/logs/messages.log
 
 # lets make sure we are not stranded in some repo dir
 cd /root
