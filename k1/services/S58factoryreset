@@ -47,7 +47,7 @@ factory_reset() {
         -exec rmdir {} \; >/dev/null 2>&1
     /bin/sync >/dev/null 2>&1
 
-    echo "Info: Factory reset was executed successfully, the printer will restart..."
+    echo "INFO: Factory reset was executed successfully, the printer will restart..."
     /etc/init.d/rcK >/dev/null 2>&1
     /bin/sync >/dev/null 2>&1
     /sbin/swapoff -a >/dev/null 2>&1
@@ -63,7 +63,7 @@ case "$1" in
           # there should never be a case where it gets more than one file but
           # lets just make sure
           FLAG_FILE=$(echo $FLAG_FILE | awk '{print $1}')
-          echo "Info: Executing factory reset..."
+          echo "INFO: Executing factory reset..."
           mv "$FLAG_FILE" "${FLAG_FILE}.old" >/dev/null 2>&1
 
           # we want to unmount the device cleanly
@@ -72,14 +72,25 @@ case "$1" in
 
           factory_reset
       else
-          echo "Info: No 'emergency_factory_reset' file found on the USB drive!"
+          echo "INFO: No 'emergency_factory_reset' file found on the USB drive!"
           exit 1
       fi
     ;;
 
     reset)
-    		echo "Info: Executing factory reset..."
-		    factory_reset
+        # so for cases where a user is running a factory reset and its not
+        # from helper script, we want the factory reset facility to be available
+        # in case something happens
+        diff -q $0 /etc/init.d/S58factoryreset > /dev/null 2>&1
+        if [ $? -ne 0 ]; then
+            echo "INFO: Copying $0 to /etc/init.d/S58factoryreset ..."
+            cp $0 /etc/init.d/S58factoryreset
+            chmod 777 /etc/init.d/S58factoryreset
+            sync
+        fi
+
+        echo "INFO: Executing factory reset..."
+        factory_reset
     ;;
     *)
         echo "Usage: $0 {start|reset}"

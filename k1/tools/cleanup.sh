@@ -26,10 +26,9 @@ echo "Operation $OPERATION"
 echo "Action $ACTION"
 echo "Days $DAYS"
 
-# initially just printer-?????.cfg files
 if [ "$OPERATION" = "cleanup-backups" ]; then
     cd /usr/data/printer_data/config/
-    files=$(find . -name "printer-*.cfg" -type f -mtime +7 -print)
+    files=$(find . -name "printer-*.cfg" -type f -mtime +$DAYS -print -o -name "backup-*.tar.gz" -type f -mtime +$DAYS -print)
     for file in $files; do
         if [ "$ACTION" = "delete" ]; then
             echo "Deleting $file ..."
