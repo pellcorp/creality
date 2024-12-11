@@ -1245,6 +1245,10 @@ restart_moonraker() {
 mkdir -p /usr/data/printer_data/config/backups/
 mv /usr/data/printer_data/config/*.bkp /usr/data/printer_data/config/backups/ 2> /dev/null
 
+TIMESTAMP=$(date +"%Y%m%d_%H%M%S")
+cp /usr/data/printer_data/config/printer.cfg /usr/data/printer_data/config/backups/printer-${TIMESTAMP}.cfg
+sync
+
 mkdir -p /usr/data/pellcorp-backups
 # so if the installer has never been run we should grab a backup of the printer.cfg
 if [ ! -f /usr/data/pellcorp.done ] && [ ! -f /usr/data/pellcorp-backups/printer.factory.cfg ]; then
@@ -1387,8 +1391,6 @@ ln -sf /var/log/messages /usr/data/printer_data/logs/
 cd /root
 
 touch /usr/data/pellcorp.done
-TIMESTAMP=$(date +"%Y%m%d_%H%M%S")
-cp /usr/data/printer_data/config/printer.cfg /usr/data/printer_data/config/backups/printer-${TIMESTAMP}.cfg
 sync
 
 install_entware $mode
