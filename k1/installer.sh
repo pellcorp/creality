@@ -1257,8 +1257,15 @@ if [ ! -f /usr/data/pellcorp.done ] && [ ! -f /usr/data/pellcorp-backups/printer
     if ! grep -q "# Modified by Simple AF " /usr/data/printer_data/config/printer.cfg; then
         cp /usr/data/printer_data/config/printer.cfg /usr/data/pellcorp-backups/printer.factory.cfg
     else
-      echo "ERROR: No pristine factory printer.cfg available"
+      echo "ERROR ERROR ERROR ERROR ERROR ERROR ERROR ERROR ERROR ERROR ERROR ERROR ERROR ERROR ERROR"
+      echo "ERROR: No pristine factory printer.cfg available - config overrides are disabled!!!!!!!!!"
+      echo "ERROR ERROR ERROR ERROR ERROR ERROR ERROR ERROR ERROR ERROR ERROR ERROR ERROR ERROR ERROR"
     fi
+fi
+
+# the pellcorp-backups do not need .pellcorp extension, so this is to fix backwards compatible
+if [ -f /usr/data/pellcorp-backups/printer.pellcorp.cfg ]; then
+    mv /usr/data/pellcorp-backups/printer.pellcorp.cfg /usr/data/pellcorp-backups/printer.cfg
 fi
 
 # figure out what existing probe if any is being used
@@ -1349,15 +1356,16 @@ done
 $CONFIG_HELPER --remove-include "addons/*.cfg"
 sync
 
-# the pellcorp-backups do not need .pellcorp extension, so this is to fix backwards compatible
-if [ -f /usr/data/pellcorp-backups/printer.pellcorp.cfg ]; then
-    mv /usr/data/pellcorp-backups/printer.pellcorp.cfg /usr/data/pellcorp-backups/printer.cfg
-fi
-
 if [ "$mode" = "reinstall" ] || [ "$mode" = "update" ]; then
-    if [ "$skip_overrides" != "true" ] && [ -f /usr/data/pellcorp-backups/printer.cfg ]; then
+    if [ "$skip_overrides" != "true" ]; then
         echo
-        /usr/data/pellcorp/k1/config-overrides.sh
+        if [ -f /usr/data/pellcorp-backups/printer.cfg ]; then
+          /usr/data/pellcorp/k1/config-overrides.sh
+        else
+          echo "ERROR ERROR ERROR ERROR ERROR ERROR ERROR ERROR ERROR ERROR ERROR ERROR ERROR ERROR ERROR"
+          echo "ERROR: No /usr/data/pellcorp-backups/printer.cfg - config overrides are disabled!!!!!!!!!"
+          echo "ERROR ERROR ERROR ERROR ERROR ERROR ERROR ERROR ERROR ERROR ERROR ERROR ERROR ERROR ERROR"
+        fi
     fi
 
     if [ -f /usr/data/pellcorp.done ]; then
