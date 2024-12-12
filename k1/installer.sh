@@ -475,6 +475,8 @@ install_fluidd() {
         $CONFIG_HELPER --remove-section "display_status" || exit $?
         $CONFIG_HELPER --remove-section "virtual_sdcard" || exit $?
 
+        $CONFIG_HELPER --replace-section-entry "filament_switch_sensor filament_sensor" "runout_gcode" "_ON_FILAMENT_RUNOUT" || exit $?
+
         $CONFIG_HELPER --add-include "fluidd.cfg" || exit $?
 
         echo "fluidd" >> /usr/data/pellcorp.done
@@ -1030,7 +1032,7 @@ setup_cartotouch() {
 
         scanner_mode=$($CONFIG_HELPER --ignore-missing --file /usr/data/pellcorp-overrides/printer.cfg.save_config --get-section-entry scanner mode)
         if [ -n "$scanner_mode" ]; then
-            $CONFIG_HELPER --replace-section-entry "scanner" "#mode" "touch" || exit $?
+            $CONFIG_HELPER --replace-section-entry "scanner" "# mode" "touch" || exit $?
         else
             $CONFIG_HELPER --replace-section-entry "scanner" "mode" "touch" || exit $?
         fi
