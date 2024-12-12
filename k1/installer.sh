@@ -1017,10 +1017,18 @@ setup_cartotouch() {
         $CONFIG_HELPER --remove-section "scanner" || exit $?
         $CONFIG_HELPER --add-section "scanner" || exit $?
 
-        if grep -q "#*# [scanner]" /usr/data/pellcorp-overrides/printer.cfg.save_config 2> /dev/null; then
-          $CONFIG_HELPER --replace-section-entry "scanner" "#scanner_touch_z_offset" "0.05" || exit $?
+        scanner_touch_z_offset=$($CONFIG_HELPER --ignore-missing --file /usr/data/pellcorp-overrides/printer.cfg.save_config --get-section-entry scanner scanner_touch_z_offset)
+        if [ -n "$scanner_touch_z_offset" ]; then
+          $CONFIG_HELPER --replace-section-entry "scanner" "# scanner_touch_z_offset" "0.05" || exit $?
         else
           $CONFIG_HELPER --replace-section-entry "scanner" "scanner_touch_z_offset" "0.05" || exit $?
+        fi
+
+        scanner_mode=$($CONFIG_HELPER --ignore-missing --file /usr/data/pellcorp-overrides/printer.cfg.save_config --get-section-entry scanner mode)
+        if [ -n "$scanner_mode" ]; then
+            $CONFIG_HELPER --replace-section-entry "scanner" "#mode" "touch" || exit $?
+        else
+            $CONFIG_HELPER --replace-section-entry "scanner" "mode" "touch" || exit $?
         fi
 
         cp /usr/data/pellcorp/k1/cartographer-${model}.cfg /usr/data/printer_data/config/ || exit $?
@@ -1075,8 +1083,9 @@ setup_beacon() {
         $CONFIG_HELPER --remove-section "beacon" || exit $?
         $CONFIG_HELPER --add-section "beacon" || exit $?
 
-        if grep -q "#*# [beacon]" /usr/data/pellcorp-overrides/printer.cfg.save_config 2> /dev/null; then
-          $CONFIG_HELPER --replace-section-entry "beacon" "#cal_nozzle_z" "0.1" || exit $?
+        beacon_cal_nozzle_z=$($CONFIG_HELPER --ignore-missing --file /usr/data/pellcorp-overrides/printer.cfg.save_config --get-section-entry beacon cal_nozzle_z)
+        if [ -n "$beacon_cal_nozzle_z" ]; then
+          $CONFIG_HELPER --replace-section-entry "beacon" "# cal_nozzle_z" "0.1" || exit $?
         else
           $CONFIG_HELPER --replace-section-entry "beacon" "cal_nozzle_z" "0.1" || exit $?
         fi

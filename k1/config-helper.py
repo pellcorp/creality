@@ -212,6 +212,7 @@ def main():
     opts.add_option("", "--include-exists", dest="include_exists", nargs=1, type="string")
     opts.add_option("", "--section-exists", dest="section_exists", nargs=1, type="string")
     opts.add_option("", "--add-section", dest="add_section", nargs=1, type="string")
+    opts.add_option("", "--ignore-missing", dest="ignore_missing", default=False, action='store_true')
     opts.add_option("", "--overrides", dest="overrides", nargs=1, type="string")
     opts.add_option("", "--after", dest="after", nargs=1, type="string")
     options, _ = opts.parse_args()
@@ -222,12 +223,29 @@ def main():
         config_file = f"{PRINTER_CONFIG_DIR}/{options.config_file}"
     elif os.path.exists(f"{os.environ['HOME']}/{options.config_file}"):  # mostly for local testing
         config_file = f"{os.environ['HOME']}/{options.config_file}"
+    elif options.ignore_missing:
+        sys.exit(exit_code)
     else:
         raise Exception(f"Config File {options.config_file} not found")
 
+    read_only = False
     updater = ConfigUpdater(strict=False, allow_no_value=True, space_around_delimiters=False, delimiters=(":", "="))
-    with open(config_file, 'r') as file:
-        updater.read_file(file)
+
+    # for reading config from printer.cfg.save_config it has to be read only
+    if 'printer.cfg.save_config' == os.path.basename(config_file):
+        read_only = True
+        with open(config_file, 'r') as file:
+            lines = ""
+            for line in file:
+                if "SAVE_CONFIG" in line or "DO NOT EDIT" in line:
+                    line = line.replace("#*#", "#")
+                else:
+                    line = line.replace("#*#", "")
+                lines += line
+            updater.read_string(lines)
+    else:
+        with open(config_file, 'r') as file:
+            updater.read_file(file)
     
     printer_cfg = 'printer.cfg' == os.path.basename(config_file)
 
@@ -268,14 +286,14 @@ def main():
     else:
         print(f"Invalid action")
 
-    if updated:
+    if not read_only and updated:
         if options.output:
             with open(options.output, 'w') as file:
                 updater.write(file)
         else:
             with open(config_file, 'w') as file:
                 updater.write(file)
-    elif options.output:
+    elif not read_only and options.output:
         with open(options.output, 'w') as file:
             updater.write(file)
 
