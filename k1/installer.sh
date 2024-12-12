@@ -574,10 +574,6 @@ install_klipper() {
         echo
 
         klipper_repo=klipper
-        # pellcorp/k1-carto-klipper is a version of klipper that is the same as k1-klipper/klipper k1_carto branch
-        if [ "$probe" = "cartographer" ]; then
-            klipper_repo=k1-carto-klipper
-        fi
         if [ "$mode" != "update" ] && [ -d /usr/data/klipper ]; then
             if [ -f /etc/init.d/S55klipper_service ]; then
                 /etc/init.d/S55klipper_service stop
@@ -880,21 +876,34 @@ install_beacon_klipper() {
 cleanup_probe() {
     local probe=$1
 
-    if [ "$probe" = "cartographer" ] || [ "$probe" = "cartotouch" ]; then
-        [ -f /usr/data/printer_data/config/${probe}_macro.cfg ] && rm /usr/data/printer_data/config/${probe}_macro.cfg
-        $CONFIG_HELPER --remove-include "${probe}_macro.cfg" || exit $?
+    if [ -f /usr/data/printer_data/config/${probe}_macro.cfg ]; then
+        rm /usr/data/printer_data/config/${probe}_macro.cfg
+    fi
+    $CONFIG_HELPER --remove-include "${probe}_macro.cfg" || exit $?
 
+    if [ "$probe" = "cartotouch" ] || [ "$probe" = "beacon" ]; then
         $CONFIG_HELPER --remove-section-entry "stepper_z" "homing_retract_dist" || exit $?
-        $CONFIG_HELPER --file moonraker.conf --remove-include "cartographer.conf" || exit $?
     fi
 
-    [ -f /usr/data/printer_data/config/$probe.cfg ] && rm /usr/data/printer_data/config/$probe.cfg
+    if [ -f /usr/data/printer_data/config/$probe.cfg ]; then
+        rm /usr/data/printer_data/config/$probe.cfg
+    fi
     $CONFIG_HELPER --remove-include "$probe.cfg" || exit $?
 
     # we use the cartographer includes
     if [ "$probe" = "cartotouch" ]; then
         probe=cartographer
     fi
+
+    if [ -f /usr/data/printer_data/config/${probe}.conf ]; then
+        rm /usr/data/printer_data/config/${probe}.conf
+    fi
+    $CONFIG_HELPER --file moonraker.conf --remove-include "${probe}.conf" || exit $?
+
+    if [ -f /usr/data/printer_data/config/${probe}_calibrate.cfg ]; then
+        rm /usr/data/printer_data/config/${probe}_calibrate.cfg
+    fi
+    $CONFIG_HELPER --remove-include "${probe}_calibrate.cfg" || exit $?
 
     [ -f /usr/data/printer_data/config/$probe-${model}.cfg ] && rm /usr/data/printer_data/config/$probe-${model}.cfg
     $CONFIG_HELPER --remove-include "$probe-${model}.cfg" || exit $?
@@ -906,7 +915,6 @@ setup_bltouch() {
         echo
         echo "INFO: Setting up bltouch/crtouch/3dtouch ..."
 
-        cleanup_probe cartographer
         cleanup_probe microprobe
         cleanup_probe btteddy
         cleanup_probe cartotouch
@@ -944,7 +952,6 @@ setup_microprobe() {
         echo
         echo "INFO: Setting up microprobe ..."
         
-        cleanup_probe cartographer
         cleanup_probe bltouch
         cleanup_probe btteddy
         cleanup_probe cartotouch
@@ -971,51 +978,6 @@ setup_microprobe() {
     return 0
 }
 
-setup_cartographer() {
-    grep -q "cartographer-probe" /usr/data/pellcorp.done
-    if [ $? -ne 0 ]; then
-        echo
-        echo "INFO: Setting up cartographer ..."
-
-        cleanup_probe bltouch
-        cleanup_probe microprobe
-        cleanup_probe btteddy
-        cleanup_probe cartotouch
-        cleanup_probe beacon
-
-        cp /usr/data/pellcorp/k1/cartographer.conf /usr/data/printer_data/config/ || exit $?
-        $CONFIG_HELPER --file moonraker.conf --add-include "cartographer.conf" || exit $?
-
-        cp /usr/data/pellcorp/k1/cartographer_macro.cfg /usr/data/printer_data/config/ || exit $?
-        $CONFIG_HELPER --add-include "cartographer_macro.cfg" || exit $?
-
-        $CONFIG_HELPER --replace-section-entry "stepper_z" "homing_retract_dist" "0" || exit $?
-
-        cp /usr/data/pellcorp/k1/cartographer.cfg /usr/data/printer_data/config/ || exit $?
-        $CONFIG_HELPER --add-include "cartographer.cfg" || exit $?
-
-        CARTO_SERIAL_ID=$(ls /dev/serial/by-id/usb-Cartographer* | head -1)
-        if [ -n "$CARTO_SERIAL_ID" ]; then
-            $CONFIG_HELPER --file cartographer.cfg --replace-section-entry "cartographer" "serial" "$CARTO_SERIAL_ID" || exit $?
-        else
-            echo "WARNING: There does not seem to be a cartographer attached - skipping auto configuration"
-        fi
-
-        cp /usr/data/pellcorp/k1/cartographer-${model}.cfg /usr/data/printer_data/config/ || exit $?
-        $CONFIG_HELPER --add-include "cartographer-${model}.cfg" || exit $?
-
-        # because the model sits out the back we do need to set position max back
-        position_max=$($CONFIG_HELPER --get-section-entry "stepper_y" "position_max")
-        position_max=$((position_max-16))
-        $CONFIG_HELPER --replace-section-entry "stepper_y" "position_max" "$position_max" || exit $?
-
-        echo "cartographer-probe" >> /usr/data/pellcorp.done
-        sync
-        return 1
-    fi
-    return 0
-}
-
 setup_cartotouch() {
     grep -q "cartotouch-probe" /usr/data/pellcorp.done
     if [ $? -ne 0 ]; then
@@ -1025,7 +987,6 @@ setup_cartotouch() {
         cleanup_probe bltouch
         cleanup_probe microprobe
         cleanup_probe btteddy
-        cleanup_probe cartographer
         cleanup_probe beacon
 
         cp /usr/data/pellcorp/k1/cartographer.conf /usr/data/printer_data/config/ || exit $?
@@ -1087,7 +1048,6 @@ setup_beacon() {
         cleanup_probe bltouch
         cleanup_probe microprobe
         cleanup_probe btteddy
-        cleanup_probe cartographer
         cleanup_probe cartotouch
 
         cp /usr/data/pellcorp/k1/beacon.conf /usr/data/printer_data/config/ || exit $?
@@ -1143,7 +1103,6 @@ setup_btteddy() {
 
         cleanup_probe bltouch
         cleanup_probe microprobe
-        cleanup_probe cartographer
         cleanup_probe cartotouch
         cleanup_probe beacon
 
@@ -1275,17 +1234,17 @@ probe=
 if [ -f /usr/data/printer_data/config/bltouch-k1.cfg ] || [ -f /usr/data/printer_data/config/bltouch-k1m.cfg ]; then
     probe=bltouch
 elif [ -f /usr/data/printer_data/config/cartotouch.cfg ]; then
-  probe=cartotouch
+    probe=cartotouch
 elif [ -f /usr/data/printer_data/config/beacon.cfg ]; then
-  probe=beacon
+    probe=beacon
 elif grep -q "\[scanner\]" /usr/data/printer_data/config/printer.cfg; then
     probe=cartotouch
-elif [ -f /usr/data/printer_data/config/cartographer-k1.cfg ] || [ -f /usr/data/printer_data/config/cartographer-k1m.cfg ]; then
-    probe=cartographer
 elif [ -f /usr/data/printer_data/config/microprobe-k1.cfg ] || [ -f /usr/data/printer_data/config/microprobe-k1m.cfg ]; then
     probe=microprobe
 elif [ -f /usr/data/printer_data/config/btteddy-k1.cfg ] || [ -f /usr/data/printer_data/config/btteddy-k1m.cfg ]; then
     probe=btteddy
+elif [ -f /usr/data/printer_data/config/cartographer-k1.cfg ] || [ -f /usr/data/printer_data/config/cartographer-k1m.cfg ]; then
+    probe=cartographer
 fi
 
 client=cli
@@ -1327,10 +1286,10 @@ echo
 echo "INFO: Mode is $mode"
 echo "INFO: Probe is $probe"
 
-if [ "$mode" = "install" ] && [ "$probe" = "cartographer" ]; then
+if [ "$probe" = "cartographer" ]; then
   echo
-  echo "ERROR: Cartographer for 4.0.0 firmware is deprecated and new installations are not supported!"
-  echo "Perhaps you meant to run an $0 --install cartotouch"
+  echo "ERROR: Cartographer for 4.0.0 firmware is no longer supported!"
+  echo "Perhaps you meant to run an $0 --${mode} cartotouch"
   exit 1
 fi
 
@@ -1445,12 +1404,7 @@ install_guppyscreen=$?
 setup_probe
 setup_probe=$?
 
-# installing carto must come after installing klipper
-if [ "$probe" = "cartographer" ]; then
-    echo "WARNING: Cartographer for 4.0.0 firmware is deprecated and will be removed soon!"
-    setup_cartographer
-    setup_probe_specific=$?
-elif [ "$probe" = "cartotouch" ]; then
+if [ "$probe" = "cartotouch" ]; then
     setup_cartotouch
     setup_probe_specific=$?
 elif [ "$probe" = "bltouch" ]; then
