@@ -556,6 +556,10 @@ install_kamp() {
         # SMART_PARK
         sed -i 's:#\[include ./KAMP/Smart_Park.cfg\]:\[include ./KAMP/Smart_Park.cfg\]:g' /usr/data/printer_data/config/KAMP_Settings.cfg
 
+        # lower and longer purge line
+        $CONFIG_HELPER --file KAMP_Settings.cfg --replace-section-entry "gcode_macro _KAMP_Settings" variable_purge_height 0.5
+        $CONFIG_HELPER --file KAMP_Settings.cfg --replace-section-entry "gcode_macro _KAMP_Settings" variable_purge_amount 48
+
         cp /usr/data/printer_data/config/KAMP_Settings.cfg /usr/data/pellcorp-backups/
 
         echo "KAMP" >> /usr/data/pellcorp.done
