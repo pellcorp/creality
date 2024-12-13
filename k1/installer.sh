@@ -356,6 +356,8 @@ install_moonraker() {
         fi
 
         ln -sf /usr/data/pellcorp/k1/tools/supervisorctl /usr/bin/ || exit $?
+        ln -sf /usr/data/pellcorp/k1/tools/systemctl /usr/bin/ || exit $?
+        ln -sf /usr/data/pellcorp/k1/tools/sudo /usr/bin/ || exit $?
         cp /usr/data/pellcorp/k1/services/S56moonraker_service /etc/init.d/ || exit $?
         cp /usr/data/pellcorp/k1/moonraker.conf /usr/data/printer_data/config/ || exit $?
         ln -sf /usr/data/pellcorp/k1/moonraker.asvc /usr/data/printer_data/ || exit $?

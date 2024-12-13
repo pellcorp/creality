@@ -9,6 +9,8 @@ The following files were originally from other projects.  Some of these files ar
 - sensorless.cfg -> https://raw.githubusercontent.com/K1-Klipper/installer_script_k1_and_max/main/sensorless.cfg
 - tools/curl -> https://raw.githubusercontent.com/ballaswag/k1-discovery/main/bin/curl
 - tools/supervisorctl -> https://raw.githubusercontent.com/Guilouz/Creality-Helper-Script/main/files/fixes/supervisorctl
+- tools/systemctl -> https://github.com/Guilouz/Creality-Helper-Script/blob/main/files/fixes/systemctl
+- tools/sudo -> https://github.com/Guilouz/Creality-Helper-Script/blob/main/files/fixes/sudo
 - mcu_util.py -> https://github.com/cryoz/k1_mcu_flasher/blob/master/mcu_util.py
 - install-entware.sh -> https://raw.githubusercontent.com/Guilouz/Creality-Helper-Script/main/files/entware/generic.sh
 - services/S13mcu_update -> https://github.com/Guilouz/Creality-K1-Extracted-Firmwares/blob/main/Firmware/etc/init.d/S13mcu_update
