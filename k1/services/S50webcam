@@ -10,7 +10,7 @@ case "$1" in
       exit 1
     fi
 
-    start-stop-daemon -S -b -m -p $PID_FILE --exec "/opt/bin/mjpg_streamer" -- -i "/opt/lib/mjpg-streamer/input_uvc.so -d $V4L_DEVICE -r 1280x720 -f 15 -n -timeout 15" -o "/opt/lib/mjpg-streamer/output_http.so -p 8080"
+    start-stop-daemon -S -b -m -p $PID_FILE --exec "/opt/bin/mjpg_streamer" -- -i "/opt/lib/mjpg-streamer/input_uvc.so -d $V4L_DEVICE -r 1280x720 -f 10 -n -timeout 15" -o "/opt/lib/mjpg-streamer/output_http.so -p 8080"
     ;;
   stop)
     start-stop-daemon -K -p $PID_FILE > /dev/null 2>&1
