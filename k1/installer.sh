@@ -648,6 +648,7 @@ install_klipper() {
         $CONFIG_HELPER --remove-section "bl24c16f" || exit $?
         $CONFIG_HELPER --remove-section "prtouch_v2" || exit $?
         $CONFIG_HELPER --remove-section "mcu leveling_mcu" || exit $?
+        $CONFIG_HELPER --remove-section "output_pin power" || exit $?
         $CONFIG_HELPER --remove-section-entry "printer" "square_corner_max_velocity" || exit $?
         $CONFIG_HELPER --remove-section-entry "printer" "max_accel_to_decel" || exit $?
 
