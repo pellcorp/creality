@@ -285,6 +285,7 @@ def main():
             raise Exception(f"Overrides Config File {options.overrides} not found")
     else:
         print(f"Invalid action")
+        exit_code = 1
 
     if not read_only and updated:
         if options.output:

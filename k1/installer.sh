@@ -36,18 +36,71 @@ if [ "$(dirname $(readlink -f $0))" != "/usr/data/pellcorp/k1" ]; then
   exit 1
 fi
 
+# kill pip cache to free up overlayfs
+rm -rf /root/.cache
+
+cp /usr/data/pellcorp/k1/services/S58factoryreset /etc/init.d || exit $?
+cp /usr/data/pellcorp/k1/services/S50dropbear /etc/init.d/ || exit $?
+sync
+
+# for k1 the installed curl does not do ssl, so we replace it first
+# and we can then make use of it going forward
+cp /usr/data/pellcorp/k1/tools/curl /usr/bin/curl
+sync
+
+CONFIG_HELPER="/usr/data/pellcorp/k1/config-helper.py"
+
+# thanks to @Nestaa51 for the timeout changes to not wait forever for moonraker
+restart_moonraker() {
+    echo
+    echo "INFO: Restarting Moonraker ..."
+    /etc/init.d/S56moonraker_service restart
+
+    timeout=60
+    start_time=$(date +%s)
+
+    # this is mostly for k1-qemu where Moonraker takes a while to start up
+    echo "INFO: Waiting for Moonraker ..."
+    while true; do
+        KLIPPER_PATH=$(curl localhost:7125/printer/info 2> /dev/null | jq -r .result.klipper_path)
+        # moonraker will start reporting the location of klipper as /usr/data/klipper when using a soft link
+        if [ "$KLIPPER_PATH" = "/usr/share/klipper" ] || [ "$KLIPPER_PATH" = "/usr/data/klipper" ]; then
+            break;
+        fi
+
+        current_time=$(date +%s)
+        elapsed_time=$((current_time - start_time))
+
+        if [ $elapsed_time -ge $timeout ]; then
+            break;
+        fi
+        sleep 1
+    done
+}
+
 update_repo() {
     local repo_dir=$1
-    
+    local branch=$2
+
     if [ -d "${repo_dir}/.git" ]; then
         cd $repo_dir
         branch_ref=$(git rev-parse --abbrev-ref HEAD)
         if [ -n "$branch_ref" ]; then
             git fetch
-            git reset --hard origin/$branch_ref
+
+            if [ -z "$branch" ]; then
+                git reset --hard origin/$branch_ref
+            else
+                git switch $branch
+                if [ $? -eq 0 ]; then
+                  git reset --hard origin/$branch
+                fi
+            fi
+            cd - > /dev/null
             sync
         else
-            echo "Failed to detect current branch"
+            cd - > /dev/null
+            echo "Failed to detect current branch!"
             return 1
         fi
     else
@@ -79,57 +132,64 @@ if [ "$1" = "--update-repo" ] || [ "$1" = "--update-branch" ]; then
     update_repo /usr/data/pellcorp
     exit $?
 elif [ "$1" = "--branch" ] && [ -n "$2" ]; then # convenience for testing new features
-    update_repo /usr/data/pellcorp || exit $?
-    cd /usr/data/pellcorp && git switch $2 && cd - > /dev/null
-    update_repo /usr/data/pellcorp
+    update_repo /usr/data/pellcorp $2 || exit $?
     exit $?
-elif [ "$1" = "--klipper-branch" ] && [ -n "$2" ]; then # convenience for testing new features
-    update_repo /usr/data/klipper || exit $?
-    cd /usr/data/klipper && git switch $2 && cd - > /dev/null
-    update_repo /usr/data/klipper
-    update_klipper || exit $?
-    exit 0
-elif [ "$1" = "--klipper-repo" ] && [ -n "$2" ]; then # convenience for testing new features
-    klipper_repo=$2
-    if [ -d /usr/data/klipper/.git ]; then
-        cd /usr/data/klipper/
-        remote_repo=$(git remote get-url origin | awk -F '/' '{print $NF}' | sed 's/.git//g')
-        cd - > /dev/null
-        if [ "$remote_repo" != "$klipper_repo" ]; then
-            echo "INFO: Switching klipper from pellcorp/$remote_repo to pellcorp/${klipper_repo} ..."
-            rm -rf /usr/data/klipper
-
-            echo "$klipper_repo" > /usr/data/pellcorp.klipper
-        fi
+elif [ "$1" = "--cartographer-branch" ]; then
+    branch=master
+    channel=stable
+    if [ "$2" = "beta" ]; then
+      branch=beta
+      channel=dev
+    elif [ "$2" != "master" ]; then
+      echo "Error invalid branch specified - must be master or beta"
+      exit 1
     fi
-
-    if [ ! -d /usr/data/klipper ]; then
-        git clone https://github.com/pellcorp/${klipper_repo}.git /usr/data/klipper || exit $?
+    update_repo /usr/data/cartographer-klipper $branch || exit $?
+    update_klipper || exit $?
+    $CONFIG_HELPER --file cartographer.conf --replace-section-entry 'update_manager cartographer' channel $channel || exit $?
+    $CONFIG_HELPER --file cartographer.conf --replace-section-entry 'update_manager cartographer' primary_branch $branch || exit $?
+    restart_moonraker || exit $?
+    exit 0
+elif [ "$1" = "--klipper-branch" ]; then # convenience for testing new features
+    if [ -n "$2" ]; then
+        update_repo /usr/data/klipper $2 || exit $?
+        update_klipper || exit $?
+        exit 0
     else
-        update_repo /usr/data/klipper || exit $?
+        echo "Error invalid branch specified"
+        exit 1
     fi
+elif [ "$1" = "--klipper-repo" ]; then # convenience for testing new features
+    if [ -n "$2" ]; then
+        klipper_repo=$2
+        if [ -d /usr/data/klipper/.git ]; then
+            cd /usr/data/klipper/
+            remote_repo=$(git remote get-url origin | awk -F '/' '{print $NF}' | sed 's/.git//g')
+            cd - > /dev/null
+            if [ "$remote_repo" != "$klipper_repo" ]; then
+                echo "INFO: Switching klipper from pellcorp/$remote_repo to pellcorp/${klipper_repo} ..."
+                rm -rf /usr/data/klipper
 
-    if [ -n "$3" ]; then
-        cd /usr/data/klipper && git switch $3 && cd - > /dev/null
-        update_repo /usr/data/klipper || exit $?
+                echo "$klipper_repo" > /usr/data/pellcorp.klipper
+            fi
+        fi
+
+        if [ ! -d /usr/data/klipper ]; then
+            git clone https://github.com/pellcorp/${klipper_repo}.git /usr/data/klipper || exit $?
+            if [ -n "$3" ]; then
+              cd /usr/data/klipper && git switch $3 && cd - > /dev/null
+            fi
+        else
+            update_repo /usr/data/klipper $3 || exit $?
+        fi
+
+        update_klipper || exit $?
+        exit 0
+    else
+        echo "Error invalid klipper repo specified"
+        exit 1
     fi
-    update_klipper || exit $?
-    exit 0
 fi
-
-# kill pip cache to free up overlayfs
-rm -rf /root/.cache
-
-cp /usr/data/pellcorp/k1/services/S58factoryreset /etc/init.d || exit $?
-cp /usr/data/pellcorp/k1/services/S50dropbear /etc/init.d/ || exit $?
-sync
-
-# for k1 the installed curl does not do ssl, so we replace it first
-# and we can then make use of it going forward
-cp /usr/data/pellcorp/k1/tools/curl /usr/bin/curl
-sync
-
-CONFIG_HELPER="/usr/data/pellcorp/k1/config-helper.py"
 
 install_config_updater() {
     python3 -c 'from configupdater import ConfigUpdater' 2> /dev/null
@@ -1178,35 +1238,6 @@ function apply_overrides() {
         sync
     fi
     return $return_status
-}
-
-# thanks to @Nestaa51 for the timeout changes to not wait forever for moonraker
-restart_moonraker() {
-    echo
-    echo "INFO: Restarting Moonraker ..."
-    /etc/init.d/S56moonraker_service restart
-
-    timeout=60
-    start_time=$(date +%s)
-
-    # this is mostly for k1-qemu where Moonraker takes a while to start up
-    echo "INFO: Waiting for Moonraker ..."
-    while true; do
-        KLIPPER_PATH=$(curl localhost:7125/printer/info 2> /dev/null | jq -r .result.klipper_path)
-        # not sure why, but moonraker will start reporting the location of klipper as /usr/data/klipper
-        # when using a soft link
-        if [ "$KLIPPER_PATH" = "/usr/share/klipper" ] || [ "$KLIPPER_PATH" = "/usr/data/klipper" ]; then
-            break;
-        fi
-
-        current_time=$(date +%s)
-        elapsed_time=$((current_time - start_time))
-        
-        if [ $elapsed_time -ge $timeout ]; then
-            break;
-        fi
-        sleep 1
-    done
 }
 
 # to avoid cluttering the printer_data/config directory lets move stuff
