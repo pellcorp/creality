@@ -140,8 +140,8 @@ elif [ "$1" = "--cartographer-branch" ]; then
     if [ "$2" = "beta" ]; then
       branch=beta
       channel=dev
-    elif [ "$2" != "master" ]; then
-      echo "Error invalid branch specified - must be master or beta"
+    elif [ "$2" != "master" ] && [ "$2" != "stable" ]; then
+      echo "Error invalid branch specified - must be stable or beta"
       exit 1
     fi
     update_repo /usr/data/cartographer-klipper $branch || exit $?
