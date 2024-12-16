@@ -122,6 +122,7 @@ function update_klipper() {
   /usr/share/klippy-env/bin/python3 -m compileall /usr/data/klipper/klippy || return $?
   /usr/data/pellcorp/k1/tools/check-firmware.sh --status
   if [ $? -eq 0 ]; then
+      echo "INFO: Restarting Klipper ..."
       /etc/init.d/S55klipper_service restart
   fi
   return $?
