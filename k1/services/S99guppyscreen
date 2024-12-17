@@ -1,7 +1,12 @@
 #!/bin/sh
 
 GUPPYSCREEN=/usr/data/guppyscreen/guppyscreen
-PID_FILE="/var/run/guppyscreen.pid"
+PID_FILE=/var/run/guppyscreen.pid
+
+GUPPYSCREEN_LOG=/usr/data/printer_data/logs/guppyscreen.log
+RC_DIR=/run/openrc
+SUPERVISE_DAEMON=/usr/data/pellcorp/fixes/respawn/supervise-daemon
+SVC_NAME=guppyscreen
 
 start_server() {
     # kill the boot display so it does not keep showing over top of guppyscreen
@@ -11,11 +16,13 @@ start_server() {
 
     export HOME=/root
     sync && echo 3 > /proc/sys/vm/drop_caches
-    start-stop-daemon -S -b -m -p $PID_FILE --exec $GUPPYSCREEN
+    mkdir -p $RC_DIR
+
+    RC_SVCNAME=$SVC_NAME $SUPERVISE_DAEMON $SVC_NAME --start --stderr $GUPPYSCREEN_LOG --pidfile $GUPPYSCREEN
 }
 
 stop_server() {
-    start-stop-daemon -K -q -p $PID_FILE > /dev/null 2>&1
+    RC_SVCNAME=$SVC_NAME $SUPERVISE_DAEMON $SVC_NAME --stop --pidfile $PID_FILE > /dev/null 2>&1
 }
 
 case "$1" in
