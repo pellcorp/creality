@@ -820,7 +820,7 @@ install_guppyscreen() {
             echo
             echo "INFO: Installing guppyscreen ..."
 
-            curl -L "https://github.com/ballaswag/guppyscreen/releases/latest/download/guppyscreen.tar.gz" -o /usr/data/guppyscreen.tar.gz || exit $?
+            curl -L "https://github.com/pellcorp/guppyscreen/releases/download/nightly/guppyscreen.tar.gz" -o /usr/data/guppyscreen.tar.gz || exit $?
             tar xf /usr/data/guppyscreen.tar.gz -C /usr/data/ || exit $?
             rm /usr/data/guppyscreen.tar.gz 
         fi
