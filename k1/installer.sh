@@ -237,6 +237,11 @@ disable_creality_services() {
         echo
         echo "INFO: Disabling some creality services ..."
 
+        # remove the old gcode files provided by creality as they should not be printed
+        if [ -d /usr/data/printer_data/gcodes/ ]; then
+            rm /usr/data/printer_data/gcodes/*.gcode
+        fi
+
         if [ -f /etc/init.d/S99start_app ]; then
             echo "INFO: If you reboot the printer before installing guppyscreen, the screen will be blank - this is to be expected!"
             /etc/init.d/S99start_app stop > /dev/null 2>&1
