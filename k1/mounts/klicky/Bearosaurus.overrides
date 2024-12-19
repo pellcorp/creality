@@ -1,0 +1,22 @@
+# todo
+
+-- klicky.cfg
+[probe]
+x_offset: 0.2
+y_offset: 16.1
+
+-- klicky-k1m.cfg
+[bed_mesh]
+mesh_min: 1.2,21.1
+mesh_max: 290.2,287.1
+
+-- printer-k1.cfg
+[stepper_y]
+position_max: 226
+
+-- klicky_macro.cfg
+[gcode_macro _KLICKY_VARIABLES]
+variable_dock_x_pos: 217.65
+variable_post_dock_x_pos: 192.65
+variable_dock_y_pos: 298
+variable_pre_dock_y_pos: 248
