@@ -1051,6 +1051,7 @@ function setup_bltouch() {
         cleanup_probe btteddy
         cleanup_probe cartotouch
         cleanup_probe beacon
+        cleanup_probe klicky
 
         # we merge bltouch.cfg into printer.cfg so that z_offset can be set
         if [ -f /usr/data/printer_data/config/bltouch.cfg ]; then
@@ -1088,6 +1089,7 @@ function setup_microprobe() {
         cleanup_probe btteddy
         cleanup_probe cartotouch
         cleanup_probe beacon
+        cleanup_probe klicky
 
         # we merge microprobe.cfg into printer.cfg so that z_offset can be set
         if [ -f /usr/data/printer_data/config/microprobe.cfg ]; then
@@ -1103,6 +1105,39 @@ function setup_microprobe() {
         $CONFIG_HELPER --add-include "microprobe-${model}.cfg" || exit $?
 
         echo "microprobe-probe" >> /usr/data/pellcorp.done
+        sync
+
+        # means klipper needs to be restarted
+        return 1
+    fi
+    return 0
+}
+
+function setup_klicky() {
+    grep -q "klicky-probe" /usr/data/pellcorp.done
+    if [ $? -ne 0 ]; then
+        echo
+        echo "INFO: Setting up klicky ..."
+
+        cleanup_probe bltouch
+        cleanup_probe btteddy
+        cleanup_probe cartotouch
+        cleanup_probe beacon
+        cleanup_probe microprobe
+
+        cp /usr/data/pellcorp/k1/klicky.cfg /usr/data/printer_data/config/ || exit $?
+        $CONFIG_HELPER --add-include "klicky.cfg" || exit $?
+
+        # need to add a empty probe section for baby stepping to work
+        $CONFIG_HELPER --add-section "probe" || exit $?
+
+        cp /usr/data/pellcorp/k1/klicky_macro.cfg /usr/data/printer_data/config/ || exit $?
+        $CONFIG_HELPER --add-include "klicky_macro.cfg" || exit $?
+
+        cp /usr/data/pellcorp/k1/klicky-${model}.cfg /usr/data/printer_data/config/ || exit $?
+        $CONFIG_HELPER --add-include "klicky-${model}.cfg" || exit $?
+
+        echo "klicky-probe" >> /usr/data/pellcorp.done
         sync
 
         # means klipper needs to be restarted
@@ -1138,6 +1173,7 @@ function setup_cartotouch() {
         cleanup_probe microprobe
         cleanup_probe btteddy
         cleanup_probe beacon
+        cleanup_probe klicky
 
         cp /usr/data/pellcorp/k1/cartographer.conf /usr/data/printer_data/config/ || exit $?
         $CONFIG_HELPER --file moonraker.conf --add-include "cartographer.conf" || exit $?
@@ -1219,6 +1255,7 @@ function setup_beacon() {
         cleanup_probe microprobe
         cleanup_probe btteddy
         cleanup_probe cartotouch
+        cleanup_probe klicky
 
         cp /usr/data/pellcorp/k1/beacon.conf /usr/data/printer_data/config/ || exit $?
         $CONFIG_HELPER --file moonraker.conf --add-include "beacon.conf" || exit $?
@@ -1294,6 +1331,7 @@ function setup_btteddy() {
         cleanup_probe microprobe
         cleanup_probe cartotouch
         cleanup_probe beacon
+        cleanup_probe klicky
 
         cp /usr/data/pellcorp/k1/btteddy.cfg /usr/data/printer_data/config/ || exit $?
         $CONFIG_HELPER --add-include "btteddy.cfg" || exit $?
@@ -1557,6 +1595,8 @@ cd - > /dev/null
         probe=cartotouch
     elif [ -f /usr/data/printer_data/config/beacon.cfg ]; then
         probe=beacon
+    elif [ -f /usr/data/printer_data/config/klicky.cfg ]; then
+        probe=klicky
     elif grep -q "\[scanner\]" /usr/data/printer_data/config/printer.cfg; then
         probe=cartotouch
     elif [ -f /usr/data/printer_data/config/microprobe-k1.cfg ] || [ -f /usr/data/printer_data/config/microprobe-k1m.cfg ]; then
@@ -1592,7 +1632,7 @@ cd - > /dev/null
             shift
             client=$1
             shift
-        elif [ "$1" = "microprobe" ] || [ "$1" = "bltouch" ] || [ "$1" = "beacon" ] || [ "$1" = "cartographer" ] || [ "$1" = "cartotouch" ] || [ "$1" = "btteddy" ]; then
+        elif [ "$1" = "microprobe" ] || [ "$1" = "bltouch" ] || [ "$1" = "beacon" ] || [ "$1" = "klicky" ] || [ "$1" = "cartographer" ] || [ "$1" = "cartotouch" ] || [ "$1" = "btteddy" ]; then
             if [ "$mode" = "fix-serial" ]; then
                 echo "ERROR: Switching probes is not supported while trying to fix serial!"
                 exit 1
@@ -1611,7 +1651,7 @@ cd - > /dev/null
 
     if [ -z "$probe" ]; then
         echo "ERROR: You must specify a probe you want to configure"
-        echo "One of: [microprobe, bltouch, cartotouch, btteddy, beacon]"
+        echo "One of: [microprobe, bltouch, cartotouch, btteddy, beacon, klicky]"
         exit 1
     fi
 
@@ -1854,6 +1894,9 @@ cd - > /dev/null
         setup_probe_specific=$?
     elif [ "$probe" = "beacon" ]; then
         setup_beacon
+        setup_probe_specific=$?
+    elif [ "$probe" = "klicky" ]; then
+        setup_klicky
         setup_probe_specific=$?
     else
         echo "ERROR: Probe $probe not supported"
