@@ -1,0 +1,22 @@
+# https://www.printables.com/model/1170906-klicky-pcb-probe-for-creality-k1
+
+-- klicky.cfg
+[probe]
+x_offset: -34.0
+y_offset: 0
+
+-- klicky-k1.cfg
+[bed_mesh]
+mesh_min: -3,3
+mesh_max: 192,205
+
+-- printer-k1.cfg
+[stepper_y]
+position_max: 226
+
+-- klicky_macro.cfg
+[gcode_macro _KLICKY_VARIABLES]
+variable_dock_x_pos: -5
+variable_post_dock_x_pos: 20
+variable_dock_y_pos: 215
+variable_pre_dock_y_pos: 165
