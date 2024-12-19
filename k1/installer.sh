@@ -136,20 +136,30 @@ elif [ "$1" = "--branch" ] && [ -n "$2" ]; then # convenience for testing new fe
     update_repo /usr/data/pellcorp $2 || exit $?
     exit $?
 elif [ "$1" = "--cartographer-branch" ]; then
-    branch=master
-    channel=stable
-    if [ "$2" = "beta" ]; then
-      branch=beta
-      channel=dev
-    elif [ "$2" != "master" ] && [ "$2" != "stable" ]; then
-      echo "Error invalid branch specified - must be stable or beta"
-      exit 1
+    shift
+    if [ -d /usr/data/cartographer-klipper ]; then
+        branch=master
+        channel=stable
+        if [ "$1" = "stable" ]; then
+            branch=master
+        elif [ "$1" = "beta" ]; then
+            branch=beta
+            channel=dev
+        else
+            branch=$1
+            channel=dev
+        fi
+        update_repo /usr/data/cartographer-klipper $branch || exit $?
+        update_klipper || exit $?
+        if [ -f /usr/data/printer_data/config/cartographer.conf ]; then
+            $CONFIG_HELPER --file cartographer.conf --replace-section-entry 'update_manager cartographer' channel $channel || exit $?
+            $CONFIG_HELPER --file cartographer.conf --replace-section-entry 'update_manager cartographer' primary_branch $branch || exit $?
+            restart_moonraker || exit $?
+        fi
+    else
+        echo "Error cartographer-klipper repo does not exist"
+        exit 1
     fi
-    update_repo /usr/data/cartographer-klipper $branch || exit $?
-    update_klipper || exit $?
-    $CONFIG_HELPER --file cartographer.conf --replace-section-entry 'update_manager cartographer' channel $channel || exit $?
-    $CONFIG_HELPER --file cartographer.conf --replace-section-entry 'update_manager cartographer' primary_branch $branch || exit $?
-    restart_moonraker || exit $?
     exit 0
 elif [ "$1" = "--klipper-branch" ]; then # convenience for testing new features
     if [ -n "$2" ]; then
