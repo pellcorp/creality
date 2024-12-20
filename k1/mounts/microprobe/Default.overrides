@@ -1,0 +1,36 @@
+# https://www.printables.com/model/867527-k1-biqu-microprobe-mount-remix
+
+-- microprobe.cfg
+[probe]
+x_offset: -33.0
+y_offset: 0
+
+-- microprobe-k1.cfg
+[bed_mesh]
+mesh_max: 192,215
+probe_count: 12,12
+
+[screws_tilt_adjust]
+screw1: 58,20
+screw2: 228,20
+screw3: 228,190
+screw4: 58,190
+
+-- microprobe-k1m.cfg
+[bed_mesh]
+mesh_min: 5,5
+mesh_max: 262,295
+
+[screws_tilt_adjust]
+screw1: 54,21
+screw2: 305,21
+screw3: 283,270
+screw4: 81,270
+
+-- printer-k1.cfg
+[stepper_y]
+position_max: 226
+
+-- printer-k1m.cfg
+[stepper_y]
+position_max: 306

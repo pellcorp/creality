@@ -1,0 +1,50 @@
+# https://github.com/tlace17/K1-Linear-Rail-Gantry/blob/main/STLs/Probe%20Mounts/Rail%20Carriage%20Carto%20Mount.stl
+
+-- cartotouch.cfg
+[scanner]
+x_offset: 0.0
+y_offset: 20.0
+
+-- cartographer-k1.cfg
+[bed_mesh]
+mesh_min: 10,10
+mesh_max: 200,200
+
+[screws_tilt_adjust]
+screw1: 25,0
+screw2: 195,0
+screw3: 195,170
+screw4: 25,170
+
+-- cartographer-k1m.cfg
+[bed_mesh]
+mesh_min: 10,10
+mesh_max: 280,280
+
+[screws_tilt_adjust]
+screw1: 19,3
+screw2: 278,3
+screw3: 248,252
+screw4: 48,252
+
+-- printer-k1.cfg
+[stepper_y]
+position_min: -0.5
+position_endstop: 204
+position_max: 204
+
+[stepper_x]
+position_min: -2.5
+position_endstop: 226.5
+position_max: 226.5
+
+-- printer-k1m.cfg
+[stepper_y]
+position_min: 0.5
+position_endstop: 284
+position_max: 284
+
+[stepper_x]
+position_min: 0.5
+position_endstop: 303.5
+position_max: 303.5
