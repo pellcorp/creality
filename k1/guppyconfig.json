@@ -50,6 +50,5 @@
     "prompt_emergency_stop": true,
     "theme": "blue",
     "thumbnail_path": "/usr/data/printer_data/thumbnails",
-    "touch_calibrated": false,
     "wpa_supplicant": "/var/run/wpa_supplicant"
 }
