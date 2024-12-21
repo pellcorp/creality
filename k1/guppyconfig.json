@@ -1,5 +1,5 @@
 {
-    "default_printer": "k1",
+    "default_printer": "default",
     "display_brightness": 90,
     "display_sleep_sec": 600,
     "invert_z_icon": false,
@@ -7,7 +7,7 @@
     "guppy_update_script": "/usr/data/pellcorp/k1/update-guppyscreen.sh",
     "log_path": "/usr/data/printer_data/logs/guppyscreen.log",
     "printers": {
-        "k1": {
+        "default": {
             "default_macros": {
                 "cooldown": "SET_HEATER_TEMPERATURE HEATER=extruder TARGET=0\nSET_HEATER_TEMPERATURE HEATER=heater_bed TARGET=0",
                 "load_filament": "_GUPPY_LOAD_MATERIAL",
@@ -49,6 +49,7 @@
     },
     "prompt_emergency_stop": true,
     "theme": "blue",
+    "display_rotate": 3,
     "thumbnail_path": "/usr/data/printer_data/thumbnails",
     "wpa_supplicant": "/var/run/wpa_supplicant"
 }
