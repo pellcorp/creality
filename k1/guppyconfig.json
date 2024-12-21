@@ -11,8 +11,10 @@
         "default": {
             "default_macros": {
                 "cooldown": "SET_HEATER_TEMPERATURE HEATER=extruder TARGET=0\nSET_HEATER_TEMPERATURE HEATER=heater_bed TARGET=0",
-                "load_filament": "_GUPPY_LOAD_MATERIAL",
-                "unload_filament": "_GUPPY_QUIT_MATERIAL"
+                "load_filament": "LOAD_MATERIAL",
+                "unload_filament": "QUIT_MATERIAL",
+                "belts_shaper_calibration": "BELTS_SHAPER_CALIBRATION",
+                "excitate_axis_at_frequency": "EXCITATE_AXIS_AT_FREQUENCY"
             },
             "log_level": "info",
             "moonraker_api_key": false,
