@@ -1,7 +1,6 @@
 {
     "default_printer": "k1",
     "display_brightness": 90,
-    "display_rotate": 3,
     "display_sleep_sec": 600,
     "invert_z_icon": false,
     "guppy_init_script": "/etc/init.d/S99guppyscreen",
