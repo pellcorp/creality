@@ -816,6 +816,13 @@ install_guppyscreen() {
             rm -rf /usr/data/guppyscreen
         fi
 
+        # check for non pellcorp guppyscreen and force an update
+        if [ -f /usr/data/guppyscreen/installer.sh ]; then
+            echo
+            echo "INFO: Forcing installation of pellcorp GuppyScreen fork"
+            rm -rf /usr/data/guppyscreen
+        fi
+
         if [ ! -d /usr/data/guppyscreen ]; then
             echo
             echo "INFO: Installing guppyscreen ..."
