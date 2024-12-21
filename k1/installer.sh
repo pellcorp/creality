@@ -1262,7 +1262,15 @@ mv /usr/data/printer_data/config/*.bkp /usr/data/printer_data/config/backups/ 2>
 
 TIMESTAMP=$(date +"%Y%m%d_%H%M%S")
 cd /usr/data/printer_data/config/
-tar -zcf /usr/data/printer_data/config/backups/backup-${TIMESTAMP}.tar.gz *.cfg *.conf
+
+CFG_ARG='*.cfg'
+CONF_ARG=''
+ls *.conf > /dev/null 2>&1
+# straight from a factory reset, there will be no conf files
+if [ $? -eq 0 ]; then
+    CONF_ARG='*.conf'
+fi
+tar -zcf /usr/data/printer_data/config/backups/backup-${TIMESTAMP}.tar.gz *.cfg $CFG_ARG $CONF_ARG
 cd - > /dev/null
 sync
 
