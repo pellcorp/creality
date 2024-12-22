@@ -12,7 +12,7 @@
             "default_macros": {
                 "cooldown": "SET_HEATER_TEMPERATURE HEATER=extruder TARGET=0\nSET_HEATER_TEMPERATURE HEATER=heater_bed TARGET=0",
                 "load_filament": "LOAD_MATERIAL",
-                "unload_filament": "QUIT_MATERIAL",
+                "unload_filament": "UNLOAD_MATERIAL",
                 "belts_shaper_calibration": "BELTS_SHAPER_CALIBRATION",
                 "excitate_axis_at_frequency": "EXCITATE_AXIS_AT_FREQUENCY"
             },
