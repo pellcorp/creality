@@ -794,6 +794,9 @@ install_klipper() {
         # start and end print and warp stabilisation if needed
         $CONFIG_HELPER --remove-section "idle_timeout"
 
+        # just in case its missing from stock printer.cfg make sure it gets added
+        $CONFIG_HELPER --add-section "exclude_object"
+
         echo "klipper" >> /usr/data/pellcorp.done
         sync
 
