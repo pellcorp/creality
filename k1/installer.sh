@@ -1079,11 +1079,19 @@ setup_microprobe() {
 }
 
 set_serial_cartotouch() {
-    CARTO_SERIAL_ID=$(ls /dev/serial/by-id/usb-Cartographer* | head -1)
-    if [ -n "$CARTO_SERIAL_ID" ]; then
-        $CONFIG_HELPER --file cartotouch.cfg --replace-section-entry "scanner" "serial" "$CARTO_SERIAL_ID" || exit $?
+    local SERIAL_ID=$(ls /dev/serial/by-id/usb-Cartographer* | head -1)
+    if [ -n "$SERIAL_ID" ]; then
+        local EXISTING_SERIAL_ID=$($CONFIG_HELPER --file cartotouch.cfg --get-section-entry "scanner" "serial")
+        if [ "$EXISTING_SERIAL_ID" != "$SERIAL_ID" ]; then
+            $CONFIG_HELPER --file cartotouch.cfg --replace-section-entry "scanner" "serial" "$SERIAL_ID" || exit $?
+            return 1
+        else
+            echo "Serial value is unchanged"
+            return 0
+        fi
     else
         echo "WARNING: There does not seem to be a cartographer attached - skipping auto configuration"
+        return 0
     fi
 }
 
@@ -1152,11 +1160,19 @@ setup_cartotouch() {
 }
 
 set_serial_beacon() {
-    BEACON_SERIAL_ID=$(ls /dev/serial/by-id/usb-Beacon_Beacon* | head -1)
-    if [ -n "$BEACON_SERIAL_ID" ]; then
-        $CONFIG_HELPER --file beacon.cfg --replace-section-entry "beacon" "serial" "$BEACON_SERIAL_ID" || exit $?
+    local SERIAL_ID=$(ls /dev/serial/by-id/usb-Beacon_Beacon* | head -1)
+    if [ -n "$SERIAL_ID" ]; then
+        local EXISTING_SERIAL_ID=$($CONFIG_HELPER --file beacon.cfg --get-section-entry "beacon" "serial")
+        if [ "$EXISTING_SERIAL_ID" != "$SERIAL_ID" ]; then
+            $CONFIG_HELPER --file beacon.cfg --replace-section-entry "beacon" "serial" "$SERIAL_ID" || exit $?
+            return 1
+        else
+            echo "Serial value is unchanged"
+            return 0
+        fi
     else
         echo "WARNING: There does not seem to be a beacon attached - skipping auto configuration"
+        return 0
     fi
 }
 
@@ -1213,11 +1229,19 @@ setup_beacon() {
 }
 
 set_serial_btteddy() {
-    BTTEDDY_SERIAL_ID=$(ls /dev/serial/by-id/usb-Klipper_rp2040* | head -1)
-    if [ -n "$BTTEDDY_SERIAL_ID" ]; then
-        $CONFIG_HELPER --file btteddy.cfg --replace-section-entry "mcu eddy" "serial" "$BTTEDDY_SERIAL_ID" || exit $?
+    local SERIAL_ID=$(ls /dev/serial/by-id/usb-Klipper_rp2040* | head -1)
+    if [ -n "$SERIAL_ID" ]; then
+        local EXISTING_SERIAL_ID=$($CONFIG_HELPER --file btteddy.cfg --get-section-entry "mcu eddy" "serial")
+        if [ "$EXISTING_SERIAL_ID" != "$SERIAL_ID" ]; then
+            $CONFIG_HELPER --file btteddy.cfg --replace-section-entry "mcu eddy" "serial" "$SERIAL_ID" || exit $?
+            return 1
+        else
+            echo "Serial value is unchanged"
+            return 0
+        fi
     else
         echo "WARNING: There does not seem to be a btt eddy attached - skipping auto configuration"
+        return 0
     fi
 }
 
@@ -1348,7 +1372,6 @@ echo
 
 if [ "$probe" = "cartographer" ]; then
   echo "ERROR: Cartographer for 4.0.0 firmware is no longer supported!"
-  echo "Perhaps you meant to run an $0 --${mode} cartotouch"
   exit 1
 fi
 
@@ -1356,18 +1379,27 @@ if [ "$mode" = "fix-serial" ]; then
     if [ -f /usr/data/pellcorp.done ]; then
         if [ "$probe" = "cartotouch" ]; then
             set_serial_cartotouch
+            set_serial=$?
         elif [ "$probe" = "beacon" ]; then
             set_serial_beacon
+            set_serial=$?
         elif [ "$probe" = "btteddy" ]; then
             set_serial_btteddy
+            set_serial=$?
         else
             echo "ERROR: Fix serial not supported for $probe"
             exit 1
         fi
 
-        # FIXME - only restart if the value changed
-        echo "INFO: Restarting Klipper ..."
-        /etc/init.d/S55klipper_service restart
+        if [ $set_serial -ne 0 ]; then
+            if [ "$client" = "cli" ]; then
+                echo
+                echo "INFO: Restarting Klipper ..."
+                /etc/init.d/S55klipper_service restart
+            else
+                echo "WARNING: Klipper restart required"
+            fi
+        fi
         exit 0
     else
         echo "ERROR: No installation found"
@@ -1437,7 +1469,6 @@ sync
 
 if [ "$mode" = "reinstall" ] || [ "$mode" = "update" ]; then
     if [ "$skip_overrides" != "true" ]; then
-        echo
         if [ -f /usr/data/pellcorp-backups/printer.cfg ]; then
           /usr/data/pellcorp/k1/config-overrides.sh
         elif [ -f /usr/data/pellcorp.done ]; then # for a factory reset this warning is superfluous
