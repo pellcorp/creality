@@ -912,19 +912,25 @@ install_cartographer_klipper() {
             echo "INFO: Installing cartographer-klipper ..."
             git clone https://github.com/pellcorp/cartographer-klipper.git /usr/data/cartographer-klipper || exit $?
         else
-          cd /usr/data/cartographer-klipper
-          REMOTE_URL=$(git remote get-url origin)
-          if [ "$REMOTE_URL" != "https://github.com/pellcorp/cartographer-klipper.git" ]; then
-            echo "INFO: Switching cartographer-klipper to pellcorp fork"
-            git remote set-url origin https://github.com/pellcorp/cartographer-klipper.git
-            git fetch origin
-          fi
-          revision=$(git rev-parse --short HEAD)
-          # reset our branch back to mainstream
-          if [ "$revision" = "303ea63" ]; then
-            git fetch origin
-            git reset --hard v1.0.5
-          fi
+            cd /usr/data/cartographer-klipper
+            REMOTE_URL=$(git remote get-url origin)
+            if [ "$REMOTE_URL" != "https://github.com/pellcorp/cartographer-klipper.git" ]; then
+                echo "INFO: Switching cartographer-klipper to pellcorp fork"
+                git remote set-url origin https://github.com/pellcorp/cartographer-klipper.git
+                git fetch origin
+            fi
+
+            branch=$(git rev-parse --abbrev-ref HEAD)
+            # do not stuff up a different branch
+            if [ "$branch" = "master" ]; then
+                revision=$(git rev-parse --short HEAD)
+                # reset our branch or update from v1.0.5
+                if [ "$revision" = "303ea63" ] || [ "$revision" = "8324877" ]; then
+                    echo "INFO: Forcing cartographer-klipper update"
+                    git fetch origin
+                    git reset --hard v1.1.0
+                fi
+            fi
         fi
         cd - > /dev/null
 
