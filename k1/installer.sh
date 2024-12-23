@@ -1364,6 +1364,10 @@ if [ "$mode" = "fix-serial" ]; then
             echo "ERROR: Fix serial not supported for $probe"
             exit 1
         fi
+
+        # FIXME - only restart if the value changed
+        echo "INFO: Restarting Klipper ..."
+        /etc/init.d/S55klipper_service restart
         exit 0
     else
         echo "ERROR: No installation found"
