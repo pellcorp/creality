@@ -46,6 +46,12 @@
                     "display_name": "Bed",
                     "controllable": true,
                     "color": "purple"
+                },
+                {
+                    "color": "blue",
+                    "controllable": false,
+                    "display_name": "Chamber",
+                    "id": "temperature_sensor chamber_temp"
                 }
             ]
         }
