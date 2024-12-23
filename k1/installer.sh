@@ -324,7 +324,6 @@ install_webcam() {
             /opt/bin/opkg install mjpg-streamer mjpg-streamer-input-http mjpg-streamer-input-uvc mjpg-streamer-output-http mjpg-streamer-www || exit $?
         fi
 
-        echo
         echo "INFO: Updating webcam config ..."
         # we do not want to start the entware version of the service ever
         if [ -f /opt/etc/init.d/S96mjpg-streamer ]; then
@@ -993,6 +992,12 @@ cleanup_probe() {
     if [ -f /usr/data/printer_data/config/${probe}.conf ]; then
         rm /usr/data/printer_data/config/${probe}.conf
     fi
+
+    # if switching from btt eddy remove this file
+    if [ "$probe" = "btteddy" ] && [ -f /usr/data/printer_data/config/variables.cfg ]; then
+        rm /usr/data/printer_data/config/variables.cfg
+    fi
+
     $CONFIG_HELPER --file moonraker.conf --remove-include "${probe}.conf" || exit $?
 
     if [ -f /usr/data/printer_data/config/${probe}_calibrate.cfg ]; then
@@ -1073,6 +1078,15 @@ setup_microprobe() {
     return 0
 }
 
+set_serial_cartotouch() {
+    CARTO_SERIAL_ID=$(ls /dev/serial/by-id/usb-Cartographer* | head -1)
+    if [ -n "$CARTO_SERIAL_ID" ]; then
+        $CONFIG_HELPER --file cartotouch.cfg --replace-section-entry "scanner" "serial" "$CARTO_SERIAL_ID" || exit $?
+    else
+        echo "WARNING: There does not seem to be a cartographer attached - skipping auto configuration"
+    fi
+}
+
 setup_cartotouch() {
     grep -q "cartotouch-probe" /usr/data/pellcorp.done
     if [ $? -ne 0 ]; then
@@ -1095,15 +1109,10 @@ setup_cartotouch() {
         cp /usr/data/pellcorp/k1/cartotouch.cfg /usr/data/printer_data/config/ || exit $?
         $CONFIG_HELPER --add-include "cartotouch.cfg" || exit $?
 
+        set_serial_cartotouch
+
         # a slight change to the way cartotouch is configured
         $CONFIG_HELPER --remove-section "force_move" || exit $?
-
-        CARTO_SERIAL_ID=$(ls /dev/serial/by-id/usb-Cartographer* | head -1)
-        if [ -n "$CARTO_SERIAL_ID" ]; then
-            $CONFIG_HELPER --file cartotouch.cfg --replace-section-entry "scanner" "serial" "$CARTO_SERIAL_ID" || exit $?
-        else
-            echo "WARNING: There does not seem to be a cartographer attached - skipping auto configuration"
-        fi
 
         # as we are referencing the included cartographer now we want to remove the included value
         # from any previous installation
@@ -1142,6 +1151,15 @@ setup_cartotouch() {
     return 0
 }
 
+set_serial_beacon() {
+    BEACON_SERIAL_ID=$(ls /dev/serial/by-id/usb-Beacon_Beacon* | head -1)
+    if [ -n "$BEACON_SERIAL_ID" ]; then
+        $CONFIG_HELPER --file beacon.cfg --replace-section-entry "beacon" "serial" "$BEACON_SERIAL_ID" || exit $?
+    else
+        echo "WARNING: There does not seem to be a beacon attached - skipping auto configuration"
+    fi
+}
+
 setup_beacon() {
     grep -q "beacon-probe" /usr/data/pellcorp.done
     if [ $? -ne 0 ]; then
@@ -1164,12 +1182,7 @@ setup_beacon() {
         cp /usr/data/pellcorp/k1/beacon.cfg /usr/data/printer_data/config/ || exit $?
         $CONFIG_HELPER --add-include "beacon.cfg" || exit $?
 
-        BEACON_SERIAL_ID=$(ls /dev/serial/by-id/usb-Beacon_Beacon* | head -1)
-        if [ -n "$BEACON_SERIAL_ID" ]; then
-            $CONFIG_HELPER --file beacon.cfg --replace-section-entry "beacon" "serial" "$BEACON_SERIAL_ID" || exit $?
-        else
-            echo "WARNING: There does not seem to be a beacon attached - skipping auto configuration"
-        fi
+        set_serial_beacon
 
         # as we are referencing the included cartographer now we want to remove the included value
         # from any previous installation
@@ -1199,6 +1212,15 @@ setup_beacon() {
     return 0
 }
 
+set_serial_btteddy() {
+    BTTEDDY_SERIAL_ID=$(ls /dev/serial/by-id/usb-Klipper_rp2040* | head -1)
+    if [ -n "$BTTEDDY_SERIAL_ID" ]; then
+        $CONFIG_HELPER --file btteddy.cfg --replace-section-entry "mcu eddy" "serial" "$BTTEDDY_SERIAL_ID" || exit $?
+    else
+        echo "WARNING: There does not seem to be a btt eddy attached - skipping auto configuration"
+    fi
+}
+
 setup_btteddy() {
     grep -q "btteddy-probe" /usr/data/pellcorp.done
     if [ $? -ne 0 ]; then
@@ -1211,14 +1233,10 @@ setup_btteddy() {
         cleanup_probe beacon
 
         cp /usr/data/pellcorp/k1/btteddy.cfg /usr/data/printer_data/config/ || exit $?
-        
-        BTTEDDY_SERIAL_ID=$(ls /dev/serial/by-id/usb-Klipper_rp2040* | head -1)
-        if [ -n "$BTTEDDY_SERIAL_ID" ]; then
-            $CONFIG_HELPER --file btteddy.cfg --replace-section-entry "mcu eddy" "serial" "$BTTEDDY_SERIAL_ID" || exit $?
-        else
-            echo "WARNING: There does not seem to be a btt eddy attached - skipping auto configuration"
-        fi
         $CONFIG_HELPER --add-include "btteddy.cfg" || exit $?
+
+        set_serial_btteddy
+
         cp /usr/data/pellcorp/k1/btteddy_macro.cfg /usr/data/printer_data/config/ || exit $?
         $CONFIG_HELPER --add-include "btteddy_macro.cfg" || exit $?
 
@@ -1266,6 +1284,93 @@ function apply_overrides() {
     return $return_status
 }
 
+# figure out what existing probe if any is being used
+probe=
+if [ -f /usr/data/printer_data/config/bltouch-k1.cfg ] || [ -f /usr/data/printer_data/config/bltouch-k1m.cfg ]; then
+    probe=bltouch
+elif [ -f /usr/data/printer_data/config/cartotouch.cfg ]; then
+    probe=cartotouch
+elif [ -f /usr/data/printer_data/config/beacon.cfg ]; then
+    probe=beacon
+elif grep -q "\[scanner\]" /usr/data/printer_data/config/printer.cfg; then
+    probe=cartotouch
+elif [ -f /usr/data/printer_data/config/microprobe-k1.cfg ] || [ -f /usr/data/printer_data/config/microprobe-k1m.cfg ]; then
+    probe=microprobe
+elif [ -f /usr/data/printer_data/config/btteddy-k1.cfg ] || [ -f /usr/data/printer_data/config/btteddy-k1m.cfg ]; then
+    probe=btteddy
+elif [ -f /usr/data/printer_data/config/cartographer-k1.cfg ] || [ -f /usr/data/printer_data/config/cartographer-k1m.cfg ]; then
+    probe=cartographer
+fi
+
+client=cli
+mode=install
+skip_overrides=false
+# parse arguments here
+
+while true; do
+    if [ "$1" = "--fix-serial" ] || [ "$1" = "--install" ] || [ "$1" = "--update" ] || [ "$1" = "--reinstall" ] || [ "$1" = "--clean-install" ] || [ "$1" = "--clean-update" ] || [ "$1" = "--clean-reinstall" ]; then
+        mode=$(echo $1 | sed 's/--//g')
+        shift
+        if [ "$mode" = "clean-install" ] || [ "$mode" = "clean-reinstall" ] || [ "$mode" = "clean-update" ]; then
+            skip_overrides=true
+            mode=$(echo $mode | sed 's/clean-//g')
+        fi
+    elif [ "$1" = "--client" ]; then
+        shift
+        client=$1
+        shift
+    elif [ "$1" = "microprobe" ] || [ "$1" = "bltouch" ] || [ "$1" = "beacon" ] || [ "$1" = "cartographer" ] || [ "$1" = "cartotouch" ] || [ "$1" = "btteddy" ]; then
+        if [ "$mode" = "fix-serial" ]; then
+            echo "ERROR: Switching probes is not supported while trying to fix serial!"
+            exit 1
+        fi
+        if [ -n "$probe" ] && [ "$1" != "$probe" ]; then
+          echo "WARNING: About to switch from $probe to $1!"
+        fi
+        probe=$1
+        shift
+    elif [ -n "$1" ]; then # no more valid parameters
+        break
+    else # no more parameters
+        break
+    fi
+done
+
+if [ -z "$probe" ]; then
+    echo "ERROR: You must specify a probe you want to configure"
+    echo "One of: [microprobe, bltouch, cartotouch, btteddy, beacon]"
+    exit 1
+fi
+
+echo "INFO: Mode is $mode"
+echo "INFO: Probe is $probe"
+echo
+
+if [ "$probe" = "cartographer" ]; then
+  echo "ERROR: Cartographer for 4.0.0 firmware is no longer supported!"
+  echo "Perhaps you meant to run an $0 --${mode} cartotouch"
+  exit 1
+fi
+
+if [ "$mode" = "fix-serial" ]; then
+    if [ -f /usr/data/pellcorp.done ]; then
+        if [ "$probe" = "cartotouch" ]; then
+            set_serial_cartotouch
+        elif [ "$probe" = "beacon" ]; then
+            set_serial_beacon
+        elif [ "$probe" = "btteddy" ]; then
+            set_serial_btteddy
+        else
+            echo "ERROR: Fix serial not supported for $probe"
+            exit 1
+        fi
+        exit 0
+    else
+        echo "ERROR: No installation found"
+        exit 1
+    fi
+fi
+
 # to avoid cluttering the printer_data/config directory lets move stuff
 mkdir -p /usr/data/printer_data/config/backups/
 mv /usr/data/printer_data/config/*.bkp /usr/data/printer_data/config/backups/ 2> /dev/null
@@ -1303,72 +1408,7 @@ if [ -f /usr/data/pellcorp-backups/printer.pellcorp.cfg ]; then
     mv /usr/data/pellcorp-backups/printer.pellcorp.cfg /usr/data/pellcorp-backups/printer.cfg
 fi
 
-# figure out what existing probe if any is being used
-probe=
-if [ -f /usr/data/printer_data/config/bltouch-k1.cfg ] || [ -f /usr/data/printer_data/config/bltouch-k1m.cfg ]; then
-    probe=bltouch
-elif [ -f /usr/data/printer_data/config/cartotouch.cfg ]; then
-    probe=cartotouch
-elif [ -f /usr/data/printer_data/config/beacon.cfg ]; then
-    probe=beacon
-elif grep -q "\[scanner\]" /usr/data/printer_data/config/printer.cfg; then
-    probe=cartotouch
-elif [ -f /usr/data/printer_data/config/microprobe-k1.cfg ] || [ -f /usr/data/printer_data/config/microprobe-k1m.cfg ]; then
-    probe=microprobe
-elif [ -f /usr/data/printer_data/config/btteddy-k1.cfg ] || [ -f /usr/data/printer_data/config/btteddy-k1m.cfg ]; then
-    probe=btteddy
-elif [ -f /usr/data/printer_data/config/cartographer-k1.cfg ] || [ -f /usr/data/printer_data/config/cartographer-k1m.cfg ]; then
-    probe=cartographer
-fi
-
-client=cli
-mode=install
-skip_overrides=false
-# parse arguments here
-while true; do
-    if [ "$1" = "--install" ] || [ "$1" = "--update" ] || [ "$1" = "--reinstall" ] || [ "$1" = "--clean-install" ] || [ "$1" = "--clean-update" ] || [ "$1" = "--clean-reinstall" ]; then
-        mode=$(echo $1 | sed 's/--//g')
-        shift
-        if [ "$mode" = "clean-install" ] || [ "$mode" = "clean-reinstall" ] || [ "$mode" = "clean-update" ]; then
-            skip_overrides=true
-            mode=$(echo $mode | sed 's/clean-//g')
-        fi
-    elif [ "$1" = "--client" ]; then
-        shift
-        client=$1
-        shift
-    elif [ "$1" = "microprobe" ] || [ "$1" = "bltouch" ] || [ "$1" = "beacon" ] || [ "$1" = "cartographer" ] || [ "$1" = "cartotouch" ] || [ "$1" = "btteddy" ]; then
-        if [ -n "$probe" ] && [ "$1" != "$probe" ]; then
-          echo "WARNING: About to switch from $probe to $1!"
-        fi
-        probe=$1
-        shift
-    elif [ -n "$1" ]; then # no more valid parameters
-        break
-    else # no more parameters
-        break
-    fi
-done
-
-if [ -z "$probe" ]; then
-    echo "ERROR: You must specify a probe you want to configure"
-    echo "One of: [microprobe, bltouch, cartotouch, btteddy, beacon]"
-    exit 1
-fi
-
-echo
-echo "INFO: Mode is $mode"
-echo "INFO: Probe is $probe"
-
-if [ "$probe" = "cartographer" ]; then
-  echo
-  echo "ERROR: Cartographer for 4.0.0 firmware is no longer supported!"
-  echo "Perhaps you meant to run an $0 --${mode} cartotouch"
-  exit 1
-fi
-
 if [ "$skip_overrides" = "true" ]; then
-    echo
     echo "INFO: Configuration overrides will not be saved or applied"
 fi
 
