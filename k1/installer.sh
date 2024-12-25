@@ -819,7 +819,7 @@ install_guppyscreen() {
         fi
 
         # check for non pellcorp guppyscreen and force an update
-        if [ -f /usr/data/guppyscreen/.version ]; then
+        if [ ! -f /usr/data/guppyscreen/guppyscreen.json ]; then
             echo
             echo "INFO: Forcing update of guppyscreen"
             rm -rf /usr/data/guppyscreen
