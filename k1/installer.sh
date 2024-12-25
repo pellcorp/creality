@@ -1205,6 +1205,26 @@ setup_beacon() {
         cp /usr/data/pellcorp/k1/beacon.cfg /usr/data/printer_data/config/ || exit $?
         $CONFIG_HELPER --add-include "beacon.cfg" || exit $?
 
+        # for beacon can't use homing override
+        $CONFIG_HELPER --file sensorless.cfg --remove-section "homing_override"
+        # beacon homes z separately
+        $CONFIG_HELPER --file sensorless.cfg --remove-section "gcode_macro _HOME_Z"
+        $CONFIG_HELPER --file sensorless.cfg --remove-section-entry "gcode_macro _SENSORLESS_PARAMS" "variable_safe_z"
+        $CONFIG_HELPER --file sensorless.cfg --remove-section-entry "gcode_macro _SENSORLESS_PARAMS" "variable_force_move"
+        $CONFIG_HELPER --file sensorless.cfg --remove-section-entry "gcode_macro _SENSORLESS_PARAMS" "variable_move_centre"
+
+        y_position_max=$($CONFIG_HELPER --get-section-entry "stepper_y" "position_max")
+        # make sure to remove any floating point portion
+        y_position_max=$(printf '%0.f' "$y_position_max")
+        x_position_max=$($CONFIG_HELPER --get-section-entry "stepper_x" "position_max")
+        # make sure to remove any floating point portion
+        x_position_max=$(printf '%0.f' "$x_position_max")
+
+        y_position_mid=$((y_position_max/2))
+        x_position_mid=$((x_position_max/2))
+
+        $CONFIG_HELPER --file beacon.cfg --replace-section-entry "beacon" "home_xy_position" "$x_position_mid,$y_position_mid" || exit $?
+
         set_serial_beacon
 
         # as we are referencing the included cartographer now we want to remove the included value
@@ -1222,7 +1242,6 @@ setup_beacon() {
         cp /usr/data/pellcorp/k1/beacon-${model}.cfg /usr/data/printer_data/config/ || exit $?
         $CONFIG_HELPER --add-include "beacon-${model}.cfg" || exit $?
 
-        position_max=$($CONFIG_HELPER --get-section-entry "stepper_y" "position_max")
         # 25mm for safety in case someone is using a RevD or low profile, lots of space to reclaim
         # if you are using the side mount
         position_max=$((position_max-25))
