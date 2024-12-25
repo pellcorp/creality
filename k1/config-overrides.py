@@ -105,7 +105,7 @@ def main():
                     continue
 
                 # do not save the serial field
-                if (section_name == 'scanner' or section_name == 'cartographer' or section_name == 'mcu eddy') and key == 'serial':
+                if (section_name == 'beacon' or section_name == 'scanner' or section_name == 'cartographer' or section_name == 'mcu eddy') and key == 'serial':
                     continue
 
                 # do not add a new value that was missing from original unless this is for printer.cfg or the special is_non_critical field
