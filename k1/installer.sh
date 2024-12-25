@@ -1348,9 +1348,12 @@ while true; do
             mode=$(echo $mode | sed 's/clean-//g')
         fi
     elif [ "$1" = "--mount" ]; then
-      shift
-      mount=$1
-      shift
+        shift
+        mount=$1
+        if [ -z "$mount" ]; then
+            mount=unknown
+        fi
+        shift
     elif [ "$1" = "--client" ]; then
         shift
         client=$1
