@@ -836,7 +836,6 @@ install_guppyscreen() {
 
         echo "INFO: Updating guppyscreen config ..."
         cp /usr/data/pellcorp/k1/services/S99guppyscreen /etc/init.d/ || exit $?
-        cp /usr/data/pellcorp/k1/guppyconfig.json /usr/data/guppyscreen || exit $?
 
         if [ ! -d "/usr/lib/python3.8/site-packages/matplotlib-2.2.3-py3.8.egg-info" ]; then
             echo "WARNING: Not replacing mathplotlib ft2font module. PSD graphs might not work!"
@@ -1597,8 +1596,8 @@ if [ -f /usr/data/pellcorp-backups/printer.factory.cfg ]; then
         fi
     done
 
-    if [ -f /usr/data/guppyscreen/guppyconfig.json ]; then
-      cp /usr/data/guppyscreen/guppyconfig.json /usr/data/pellcorp-backups/
+    if [ -f /usr/data/guppyscreen/guppyscreen.json ]; then
+      cp /usr/data/guppyscreen/guppyscreen.json /usr/data/pellcorp-backups/
     fi
 
     if [ "$skip_overrides" != "true" ]; then

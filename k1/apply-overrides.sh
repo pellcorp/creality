@@ -31,10 +31,10 @@ function apply_overrides() {
             if [ "$file" = "moonraker.secrets" ]; then
                 echo "Restoring /usr/data/printer_data/$file ..."
                 cp $overrides_dir/$file /usr/data/printer_data/
-            elif [ "$file" = "guppyconfig.json" ]; then
+            elif [ "$file" = "guppyscreen.json" ]; then
               command=""
               for entry in display_brightness invert_z_icon display_sleep_sec theme; do
-                  value=$(cat /usr/data/pellcorp-overrides/guppyconfig.json | grep "${entry}=" | awk -F '=' '{print $2}')
+                  value=$(cat /usr/data/pellcorp-overrides/guppyscreen.json | grep "${entry}=" | awk -F '=' '{print $2}')
                   if [ -n "$value" ]; then
                       if [ -n "$command" ]; then
                           command="$command | "
@@ -46,8 +46,8 @@ function apply_overrides() {
                       fi
                   fi
               done
-              echo "Applying overrides /usr/data/guppyscreen/guppyconfig.json ..."
-              jq "$command" /usr/data/pellcorp/k1/guppyconfig.json > /usr/data/guppyscreen/guppyconfig.json
+              echo "Applying overrides /usr/data/guppyscreen/guppyscreen.json ..."
+              jq "$command" /usr/data/pellcorp/k1/guppyscreen.json > /usr/data/guppyscreen/guppyscreen.json
             elif [ -L /usr/data/printer_data/config/$file ] || [ "$file" = "guppyscreen.cfg" ]; then
                 echo "Ignoring $file ..."
             elif [ -f "/usr/data/pellcorp-backups/$file" ] || [ -f "/usr/data/pellcorp/k1/$file" ]; then
