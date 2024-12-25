@@ -41,17 +41,17 @@ setup_git_repo() {
 override_json_file() {
     local file=$1
 
-    if [ "$file" = "guppyconfig.json" ] && [ -f /usr/data/pellcorp-backups/guppyconfig.json ] && [ -f /usr/data/guppyscreen/guppyconfig.json ]; then
+    if [ "$file" = "guppyscreen.json" ] && [ -f /usr/data/pellcorp-backups/guppyscreen.json ] && [ -f /usr/data/guppyscreen/guppyscreen.json ]; then
         for entry in display_brightness invert_z_icon display_sleep_sec theme; do
-            stock_value=$(jq -cr ".$entry" /usr/data/pellcorp-backups/guppyconfig.json)
-            new_value=$(jq -cr ".$entry" /usr/data/guppyscreen/guppyconfig.json)
+            stock_value=$(jq -cr ".$entry" /usr/data/pellcorp-backups/guppyscreen.json)
+            new_value=$(jq -cr ".$entry" /usr/data/guppyscreen/guppyscreen.json)
             # you know what its not an actual json file its just the properties we support updating
             if [ "$stock_value" != "null" ] && [ "$new_value" != "null" ] && [ "$stock_value" != "$new_value" ]; then
-                echo "$entry=$new_value" >> /usr/data/pellcorp-overrides/guppyconfig.json
+                echo "$entry=$new_value" >> /usr/data/pellcorp-overrides/guppyscreen.json
             fi
         done
-        if [ -f /usr/data/pellcorp-overrides/guppyconfig.json ]; then
-            echo "INFO: Saving overrides to /usr/data/pellcorp-overrides/guppyconfig.json"
+        if [ -f /usr/data/pellcorp-overrides/guppyscreen.json ]; then
+            echo "INFO: Saving overrides to /usr/data/pellcorp-overrides/guppyscreen.json"
             sync
         fi
     else
@@ -176,8 +176,8 @@ else
     override_file $file
   done
 
-  # we will support some limited overrides of values in guppyconfig.json
-  override_json_file guppyconfig.json
+  # we will support some limited overrides of values in guppyscreen.json
+  override_json_file guppyscreen.json
 fi
 
 cd /usr/data/pellcorp-overrides
