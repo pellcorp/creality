@@ -1,31 +1,27 @@
-# https://github.com/tlace17/K1-Linear-Rail-Gantry/blob/main/STLs/Probe%20Mounts/Rail%20Carriage%20Carto%20Mount.stl
+# https://github.com/tlace17/K1-Linear-Rail-Gantry/blob/main/STLs/Probe%20Mounts/Rail%20Carriage%20Microprobe%20Mount.stl
 
--- cartotouch.cfg
-[scanner]
+-- microprobe.cfg
+[probe]
 x_offset: 0.0
 y_offset: 20.0
 
--- cartographer-k1.cfg
+-- microprobe-k1.cfg
 [bed_mesh]
-mesh_min: 10,10
-mesh_max: 200,200
+mesh_min: 20, 20
+mesh_max: 200, 200
 
+# FIXME - config for screw tilt adjust for gantry
 [screws_tilt_adjust]
-screw1: 25,0
-screw2: 195,0
-screw3: 195,170
-screw4: 25,170
+__action__: DELETED
 
--- cartographer-k1m.cfg
+-- microprobe-k1m.cfg
 [bed_mesh]
 mesh_min: 10,10
 mesh_max: 280,280
 
+# FIXME - config for screw tilt adjust for gantry
 [screws_tilt_adjust]
-screw1: 19,3
-screw2: 278,3
-screw3: 248,252
-screw4: 48,252
+__action__: DELETED
 
 -- printer-k1.cfg
 [stepper_x]

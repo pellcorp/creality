@@ -10,10 +10,18 @@ y_offset: 0.0
 mesh_min: 30,25
 mesh_max: 220,200
 
+# FIXME - config for screw tilt adjust
+[screws_tilt_adjust]
+__action__: DELETED
+
 -- beacon-k1m.cfg
 [bed_mesh]
 mesh_min: 30,25
 mesh_max: 287,287
+
+# FIXME - config for screw tilt adjust
+[screws_tilt_adjust]
+__action__: DELETED
 
 -- printer-k1.cfg
 [stepper_y]
