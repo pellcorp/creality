@@ -34,17 +34,13 @@ position_endstop: 226.5
 position_max: 226.5
 
 [stepper_y]
-position_min: -0.5
-position_endstop: 204
 position_max: 204
 
 -- printer-k1m.cfg
 [stepper_x]
-position_min: 0.5
+position_min: -2.5
 position_endstop: 303.5
 position_max: 303.5
 
 [stepper_y]
-position_min: 0.5
-position_endstop: 284
 position_max: 284

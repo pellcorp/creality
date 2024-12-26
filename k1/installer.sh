@@ -1615,9 +1615,8 @@ if [ -f /usr/data/pellcorp-backups/printer.factory.cfg ]; then
     fi
 
     if [ -n "$mount" ]; then
-        echo "WARNING: Applying mount overrides is disabled for the moment"
-        # /usr/data/pellcorp/k1/apply-mount-overrides.sh $probe $mount
-        #apply_mount_overrides=$?
+        /usr/data/pellcorp/k1/apply-mount-overrides.sh $probe $mount
+        apply_mount_overrides=$?
     fi
 
     if [ "$skip_overrides" != "true" ]; then

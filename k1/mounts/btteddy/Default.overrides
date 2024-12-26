@@ -29,10 +29,8 @@ screw4: 71,272
 
 -- printer-k1.cfg
 [stepper_y]
-position_endstop: 226
 position_max: 226
 
 -- printer-k1m.cfg
 [stepper_y]
-position_endstop: 306
 position_max: 306
