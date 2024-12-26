@@ -1450,6 +1450,12 @@ cd - > /dev/null
 sync
 
 mkdir -p /usr/data/pellcorp-backups
+
+# the pellcorp-backups do not need .pellcorp extension, so this is to fix backwards compatible
+if [ -f /usr/data/pellcorp-backups/printer.pellcorp.cfg ]; then
+    mv /usr/data/pellcorp-backups/printer.pellcorp.cfg /usr/data/pellcorp-backups/printer.cfg
+fi
+
 # so if the installer has never been run we should grab a backup of the printer.cfg
 if [ ! -f /usr/data/pellcorp.done ] && [ ! -f /usr/data/pellcorp-backups/printer.factory.cfg ]; then
     # just to make sure we don't accidentally copy printer.cfg to backup if the backup directory
@@ -1461,11 +1467,6 @@ if [ ! -f /usr/data/pellcorp.done ] && [ ! -f /usr/data/pellcorp-backups/printer
       echo "ERROR: No pristine factory printer.cfg available - config overrides are disabled!!!!!!!!!"
       echo "ERROR ERROR ERROR ERROR ERROR ERROR ERROR ERROR ERROR ERROR ERROR ERROR ERROR ERROR ERROR"
     fi
-fi
-
-# the pellcorp-backups do not need .pellcorp extension, so this is to fix backwards compatible
-if [ -f /usr/data/pellcorp-backups/printer.pellcorp.cfg ]; then
-    mv /usr/data/pellcorp-backups/printer.pellcorp.cfg /usr/data/pellcorp-backups/printer.cfg
 fi
 
 if [ "$skip_overrides" = "true" ]; then
@@ -1614,8 +1615,9 @@ if [ -f /usr/data/pellcorp-backups/printer.factory.cfg ]; then
     fi
 
     if [ -n "$mount" ]; then
-        /usr/data/pellcorp/k1/apply-mount-overrides.sh $probe $mount
-        apply_mount_overrides=$?
+        echo "WARNING: Applying mount overrides is disabled for the moment"
+        # /usr/data/pellcorp/k1/apply-mount-overrides.sh $probe $mount
+        #apply_mount_overrides=$?
     fi
 
     if [ "$skip_overrides" != "true" ]; then
