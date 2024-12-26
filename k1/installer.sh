@@ -1511,12 +1511,6 @@ if [ "$mode" = "reinstall" ] || [ "$mode" = "update" ]; then
         cp /usr/data/pellcorp-backups/printer.factory.cfg /usr/data/printer_data/config/printer.cfg
         DATE_TIME=$(date +"%Y-%m-%d %H:%M:%S")
         sed -i "1s/^/# Modified by Simple AF ${DATE_TIME}\n/" /usr/data/printer_data/config/printer.cfg
-
-        for file in printer.cfg moonraker.conf; do
-            if [ -f /usr/data/pellcorp-backups/$file ]; then
-                rm /usr/data/pellcorp-backups/$file
-            fi
-        done
     elif [ "$mode" = "update" ]; then
         echo "ERROR: Update mode is not available as pristine factory printer.cfg is missing"
         exit 1
