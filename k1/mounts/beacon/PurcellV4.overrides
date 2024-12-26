@@ -1,0 +1,24 @@
+# https://www.printables.com/model/1071641-beacon-probe-mounts-for-creality-k1-series
+
+-- beacon.cfg
+[scanner]
+x_offset: 20.0
+y_offset: 0.0
+
+-- beacon-k1.cfg
+[bed_mesh]
+mesh_min: 30,25
+mesh_max: 220,200
+
+-- beacon-k1m.cfg
+[bed_mesh]
+mesh_min: 30,25
+mesh_max: 287,287
+
+-- printer-k1.cfg
+[stepper_y]
+position_max: 226
+
+-- printer-k1m.cfg
+[stepper_y]
+position_max: 306

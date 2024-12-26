@@ -33,5 +33,4 @@ position_max: 226
 
 -- printer-k1m.cfg
 [stepper_y]
-
 position_max: 306
