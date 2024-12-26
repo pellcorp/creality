@@ -71,9 +71,8 @@ if [ "$1" = "--verify" ]; then
     shift
 fi
 
-# note for cartotouch we pass in 'cartographer' as the mount
 if [ $# -eq 0 ]; then
-    echo "Usage: $0 <cartotouch|btteddy|microprobe|bltouch> <mount>"
+    echo "Usage: $0 <cartotouch|btteddy|microprobe|bltouch|beacon> <mount>"
     exit 0
 fi
 
@@ -92,11 +91,18 @@ if [ "$mode" = "verify" ]; then
             echo "The following mounts are available:"
             echo
 
+            if [ -f /usr/data/pellcorp/k1/mounts/$probe/Default.overrides ]; then
+                comment=$(cat /usr/data/pellcorp/k1/mounts/$probe/Default.overrides | grep "^#" | head -1 | sed 's/#\s*//g')
+                echo "  * Default - $comment"
+            fi
+
             files=$(find /usr/data/pellcorp/k1/mounts/$probe -maxdepth 1 -name "*.overrides")
             for file in $files; do
                 comment=$(cat $file | grep "^#" | head -1 | sed 's/#\s*//g')
                 file=$(basename $file .overrides)
-                echo "  * $file - $comment"
+                if [ "$file" != "Default" ]; then
+                    echo "  * $file - $comment"
+                fi
             done
             echo
             echo "WARNING: Please verify the mount configuration is correct before homing your printer, performing a bed mesh or using Screws Tilt Calculate"
