@@ -19,7 +19,7 @@ screw4: 42,190
 -- cartographer-k1m.cfg
 [bed_mesh]
 mesh_min: 10,10
-mesh_max: 290,280
+mesh_max: 287,287
 
 [screws_tilt_adjust]
 screw1: 35,23
