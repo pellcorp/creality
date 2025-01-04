@@ -797,10 +797,10 @@ install_klipper() {
 
         # moving idle timeout to start_end.cfg so we can have some integration with
         # start and end print and warp stabilisation if needed
-        $CONFIG_HELPER --remove-section "idle_timeout"
+        $CONFIG_HELPER --remove-section "idle_timeout" || exit $?
 
         # just in case its missing from stock printer.cfg make sure it gets added
-        $CONFIG_HELPER --add-section "exclude_object"
+        $CONFIG_HELPER --add-section "exclude_object" || exit $?
 
         echo "klipper" >> /usr/data/pellcorp.done
         sync
