@@ -829,6 +829,10 @@ install_guppyscreen() {
             echo
             echo "INFO: Forcing update of guppyscreen"
             rm -rf /usr/data/guppyscreen
+        elif grep -q "log_path" /usr/data/guppyscreen/guppyscreen.json; then
+            echo
+            echo "INFO: Forcing update of guppyscreen"
+            rm -rf /usr/data/guppyscreen
         fi
 
         if [ ! -d /usr/data/guppyscreen ]; then
