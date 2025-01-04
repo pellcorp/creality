@@ -701,7 +701,7 @@ install_klipper() {
             cd - > /dev/null
             if [ "$remote_repo" = "klipper" ] && [ "$last_revision_year" = "2024" ]; then
                 echo "INFO: Forcing update of klipper to latest master"
-                update_repo /usr/data/klipper || exit $?
+                update_repo /usr/data/klipper master || exit $?
             fi
         fi
 
