@@ -694,9 +694,15 @@ install_klipper() {
                 git clone https://github.com/pellcorp/${klipper_repo}.git /usr/data/klipper || exit $?
             fi
             [ -d /usr/share/klipper ] && rm -rf /usr/share/klipper
-        elif ! grep -q "rotate-log-at-restart" /usr/data/klipper/klippy/klippy.py ; then
-          echo "INFO: Forcing update of klipper for rotate log at restart feature"
-          update_repo /usr/data/klipper || exit $?
+        else
+            cd /usr/data/klipper/
+            remote_repo=$(git remote get-url origin | awk -F '/' '{print $NF}' | sed 's/.git//g')
+            last_revision_year=$(git log -1 --format="%at" | xargs -I{} date -d @{} +%Y)
+            cd - > /dev/null
+            if [ "$remote_repo" = "klipper" ] && [ "$last_revision_year" = "2024" ]; then
+                echo "INFO: Forcing update of klipper to latest master"
+                update_repo /usr/data/klipper || exit $?
+            fi
         fi
 
         echo "INFO: Updating klipper config ..."
