@@ -11,7 +11,7 @@ start_server() {
 
     export HOME=/root
     sync && echo 3 > /proc/sys/vm/drop_caches
-    start-stop-daemon -S -b -m -p $PID_FILE --exec $GUPPYSCREEN
+    start-stop-daemon -v -S -b -m -p $PID_FILE --exec /bin/bash -- -c "exec $GUPPYSCREEN >> /usr/data/printer_data/logs/guppyscreen.log 2>&1"
 }
 
 stop_server() {
