@@ -32,7 +32,13 @@ def get_section_value(updater, section_name, key):
         if section:
             current_value = section.get(key, None)
             if current_value:
-                return current_value.value.split('#', 1)[0].strip()
+                value = current_value.value
+                if '#' in value:
+                    return value.split('#', 1)[0].strip()
+                elif ';' in value:
+                    return value.split(';', 1)[0].strip()
+                else:
+                    return value
     return None
 
 
@@ -206,6 +212,11 @@ def main():
     opts.add_option("", "--remove-section", dest="remove_section", nargs=1, type="string")
     opts.add_option("", "--remove-section-entry", dest="remove_section_entry", nargs=2, type="string")
     opts.add_option("", "--get-section-entry", dest="get_section_entry", nargs=2, type="string")
+    # all these are for --get-section-entry only, saves me doing bash arithmetic
+    opts.add_option("", "--integer", dest="integer", default=False, action='store_true')
+    opts.add_option("", "--divisor", dest="divisor", nargs=1, type="int")
+    opts.add_option("", "--minus", dest="minus", nargs=1, type="int")
+    opts.add_option("", "--plus", dest="plus", nargs=1, type="int")
     opts.add_option("", "--replace-section-entry", dest="replace_section_entry", nargs=3, type="string")
     opts.add_option("", "--remove-include", dest="remove_include", nargs=1, type="string")
     opts.add_option("", "--add-include", dest="add_include", nargs=1, type="string")
@@ -257,6 +268,21 @@ def main():
     elif options.get_section_entry:
         value = get_section_value(updater, options.get_section_entry[0], options.get_section_entry[1])
         if value:
+            if options.integer or options.divisor or options.plus or options.minus:
+                value = float(value)
+
+            if options.divisor:
+                value = value / options.divisor
+
+            if options.plus:
+                value = value + int(options.plus)
+
+            if options.minus:
+                value = value - int(options.minus)
+
+            if options.integer:
+                value = int(value)
+
             print(value)
         else:
             exit_code = 1
