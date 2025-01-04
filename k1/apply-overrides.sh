@@ -32,23 +32,7 @@ function apply_overrides() {
                 echo "INFO: Restoring /usr/data/printer_data/$file ..."
                 cp $overrides_dir/$file /usr/data/printer_data/
             elif [ "$file" = "guppyscreen.json" ]; then
-              command=""
-              for entry in display_brightness invert_z_icon display_sleep_sec theme; do
-                  value=$(cat /usr/data/pellcorp-overrides/guppyscreen.json | grep "${entry}=" | awk -F '=' '{print $2}')
-                  if [ -n "$value" ]; then
-                      if [ -n "$command" ]; then
-                          command="$command | "
-                      fi
-                      if [ "$entry" = "theme" ]; then
-                          command="${command}.${entry} = \"$value\""
-                      else
-                          command="${command}.${entry} = $value"
-                      fi
-                  fi
-              done
-              echo "Applying overrides /usr/data/guppyscreen/guppyscreen.json ..."
-              jq "$command" /usr/data/guppyscreen/guppyscreen.json > /usr/data/guppyscreen/guppyscreen.json.$$
-              mv /usr/data/guppyscreen/guppyscreen.json.$$ /usr/data/guppyscreen/guppyscreen.json
+                /usr/data/pellcorp/k1/update-guppyscreen.sh --apply-overrides
             elif [ -L /usr/data/printer_data/config/$file ] || [ "$file" = "guppyscreen.cfg" ]; then
                 echo "WARN: Ignoring $file ..."
             elif [ -f "/usr/data/pellcorp-backups/$file" ] || [ -f "/usr/data/pellcorp/k1/$file" ]; then
