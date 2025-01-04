@@ -47,7 +47,8 @@ function apply_overrides() {
                   fi
               done
               echo "Applying overrides /usr/data/guppyscreen/guppyscreen.json ..."
-              jq "$command" /usr/data/pellcorp/k1/guppyscreen.json > /usr/data/guppyscreen/guppyscreen.json
+              jq "$command" /usr/data/guppyscreen/guppyscreen.json > /usr/data/guppyscreen/guppyscreen.json.$$
+              mv /usr/data/guppyscreen/guppyscreen.json.$$ /usr/data/guppyscreen/guppyscreen.json
             elif [ -L /usr/data/printer_data/config/$file ] || [ "$file" = "guppyscreen.cfg" ]; then
                 echo "WARN: Ignoring $file ..."
             elif [ -f "/usr/data/pellcorp-backups/$file" ] || [ -f "/usr/data/pellcorp/k1/$file" ]; then
