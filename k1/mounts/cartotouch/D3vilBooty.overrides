@@ -3,18 +3,18 @@
 -- cartotouch.cfg
 [scanner]
 x_offset: 0.0
-y_offset: 20.0
+y_offset: 18.7
 
 -- cartographer-k1.cfg
 [bed_mesh]
-mesh_min: 10,22
+mesh_min: 10,20
 mesh_max: 200,200
 
 [screws_tilt_adjust]
-screw1: 25,0
-screw2: 195,0
-screw3: 195,170
-screw4: 25,170
+screw1: 25,1.3
+screw2: 195,1.3
+screw3: 195,171.3
+screw4: 25,171.3
 
 -- cartographer-k1m.cfg
 [bed_mesh]
@@ -22,10 +22,10 @@ mesh_min: 10,10
 mesh_max: 280,280
 
 [screws_tilt_adjust]
-screw1: 19,3
-screw2: 278,3
-screw3: 248,252
-screw4: 48,252
+screw1: 19,4.3
+screw2: 278,4.3
+screw3: 248,253.3
+screw4: 48,253.3
 
 -- printer-k1.cfg
 [stepper_x]
