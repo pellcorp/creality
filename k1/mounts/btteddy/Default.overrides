@@ -2,8 +2,8 @@
 
 -- btteddy.cfg
 [probe_eddy_current btt_eddy]
-x_offset: 0.0
-y_offset: -23.0
+x_offset: -23.0
+y_offset: 0.0
 
 -- btteddy-k1.cfg
 [bed_mesh]
