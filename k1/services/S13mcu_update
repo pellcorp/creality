@@ -120,7 +120,7 @@ auto_update() {
     local fw_dir=
     case $board in
         "CR4CU220812S10" | "CR4CU220812S11" | "CR4CU220812S12")
-            if [ "$model" = "CR-K1" -o "$model" = "K1C" \
+            if [ "$model" = "CR-K1" -o "$model" = "K1C" -o "$model" = "K1 SE" \
                 -o "$model" = "CR-K1 Max" -o "$model" = "K1 Max SE" ]; then
                 fw_dir=K1
                 write_log "The directory selected for this hardware is: $fw_dir"
