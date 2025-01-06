@@ -759,9 +759,23 @@ install_klipper() {
 
         cp /usr/data/pellcorp/k1/start_end.cfg /usr/data/printer_data/config/ || exit $?
         $CONFIG_HELPER --add-include "start_end.cfg" || exit $?
+        if [ "$MODEL" = "K1 SE" ]; then
+            sed -i '/SET_FAN_SPEED FAN=chamber.*/d' /usr/data/printer_data/config/start_end.cfg
+        fi
 
         cp /usr/data/pellcorp/k1/fan_control.cfg /usr/data/printer_data/config || exit $?
         $CONFIG_HELPER --add-include "fan_control.cfg" || exit $?
+
+        # K1 SE has no chamber fan
+        if [ "$MODEL" = "K1 SE" ]; then
+            sed -i '/SET_FAN_SPEED FAN=chamber.*/d' /usr/data/printer_data/config/fan_control.cfg
+            $CONFIG_HELPER --file fan_control.cfg --remove-section "gcode_macro M191" || exit $?
+            $CONFIG_HELPER --file fan_control.cfg --remove-section "gcode_macro M141" || exit $?
+            $CONFIG_HELPER --file fan_control.cfg --remove-section "temperature_sensor chamber_temp" || exit $?
+            $CONFIG_HELPER --file fan_control.cfg --remove-section "temperature_fan chamber_fan" || exit $?
+            $CONFIG_HELPER --file fan_control.cfg --remove-section "fan_generic chamber" || exit $?
+            $CONFIG_HELPER --file fan_control.cfg --replace-section-entry "duplicate_pin_override" "pins" "PC5" || exit $?
+        fi
 
         $CONFIG_HELPER --remove-section "output_pin fan0" || exit $?
         $CONFIG_HELPER --remove-section "output_pin fan1" || exit $?
@@ -1299,6 +1313,11 @@ setup_btteddy() {
 
         cp /usr/data/pellcorp/k1/btteddy_macro.cfg /usr/data/printer_data/config/ || exit $?
         $CONFIG_HELPER --add-include "btteddy_macro.cfg" || exit $?
+
+        # K1 SE has no chamber fan
+        if [ "$MODEL" = "K1 SE" ]; then
+            sed -i '/SET_FAN_SPEED FAN=chamber.*/d' /usr/data/printer_data/config/btteddy_macro.cfg
+        fi
 
         $CONFIG_HELPER --remove-section "probe_eddy_current btt_eddy" || exit $?
         $CONFIG_HELPER --add-section "probe_eddy_current btt_eddy" || exit $?
