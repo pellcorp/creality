@@ -3,25 +3,29 @@
 -- microprobe.cfg
 [probe]
 x_offset: 0.0
-y_offset: 20.0
+y_offset: 18.7
 
 -- microprobe-k1.cfg
 [bed_mesh]
-mesh_min: 20, 20
-mesh_max: 200, 200
+mesh_min: 10,20
+mesh_max: 200,200
 
-# FIXME - config for screw tilt adjust for gantry
 [screws_tilt_adjust]
-__action__: DELETED
+screw1: 25,1.3
+screw2: 195,1.3
+screw3: 195,171.3
+screw4: 25,171.3
 
 -- microprobe-k1m.cfg
 [bed_mesh]
 mesh_min: 10,10
 mesh_max: 280,280
 
-# FIXME - config for screw tilt adjust for gantry
 [screws_tilt_adjust]
-__action__: DELETED
+screw1: 19,4.3
+screw2: 278,4.3
+screw3: 248,253.3
+screw4: 48,253.3
 
 -- printer-k1.cfg
 [stepper_x]
