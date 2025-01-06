@@ -12,7 +12,10 @@ mesh_max: 210,210
 
 # FIXME - config for screw tilt adjust
 [screws_tilt_adjust]
-__action__: DELETED
+screw1: 110,110
+screw2: 110,110
+screw3: 110,110
+screw4: 110,110
 
 -- beacon-k1m.cfg
 [bed_mesh]
@@ -21,7 +24,10 @@ mesh_max: 288,280
 
 # FIXME - config for screw tilt adjust
 [screws_tilt_adjust]
-__action__: DELETED
+screw1: 150,150
+screw2: 150,150
+screw3: 150,150
+screw4: 150,150
 
 -- printer-k1.cfg
 [stepper_y]
