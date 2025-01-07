@@ -22,7 +22,7 @@ mesh_min: 10,10
 mesh_max: 280,280
 
 [screws_tilt_adjust]
-screw1: 42,23
+crew1: 42,23
 screw2: 301,23
 screw3: 271,272
 screw4: 71,272
