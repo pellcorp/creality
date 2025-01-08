@@ -32,7 +32,11 @@ def get_section_value(updater, section_name, key):
         if section:
             current_value = section.get(key, None)
             if current_value:
-                return current_value.value.split('#', 1)[0].strip()
+                value = current_value.value
+                if '#' in value:
+                    return value.split('#', 1)[0].strip()
+                elif ';' in value:
+                    return value.split(';', 1)[0].strip()
     return None
 
 
