@@ -654,6 +654,18 @@ install_kamp() {
     return 0
 }
 
+cleanup_klipper() {
+    if [ -f /etc/init.d/S55klipper_service ]; then
+        /etc/init.d/S55klipper_service stop
+    fi
+    rm -rf /usr/data/klipper
+
+    # a reinstall should reset the choice of what klipper to run
+    if [ -f /usr/data/pellcorp.klipper ]; then
+      rm /usr/data/pellcorp.klipper
+    fi
+}
+
 install_klipper() {
     local mode=$1
     local probe=$2
@@ -663,23 +675,12 @@ install_klipper() {
         echo
 
         klipper_repo=klipper
-
         existing_klipper_repo=$(cat /usr/data/pellcorp.klipper 2> /dev/null)
         if [ "$mode" = "update" ] && [ "$existing_klipper_repo" = "k1-carto-klipper" ]; then
             echo "INFO: Forcing Klipper repo to be switched from pellcorp/${existing_klipper_repo} to pellcorp/${klipper_repo}"
-            mode=install
-        fi
-
-        if [ "$mode" != "update" ] && [ -d /usr/data/klipper ]; then
-            if [ -f /etc/init.d/S55klipper_service ]; then
-                /etc/init.d/S55klipper_service stop
-            fi
-            rm -rf /usr/data/klipper
-
-            # a reinstall should reset the choice of what klipper to run
-            if [ -f /usr/data/pellcorp.klipper ]; then
-              rm /usr/data/pellcorp.klipper
-            fi
+            cleanup_klipper
+        elif [ "$mode" != "update" ] && [ -d /usr/data/klipper ]; then
+            cleanup_klipper
         fi
 
         # switch to required klipper version except where there is a flag file indicating we explicitly
