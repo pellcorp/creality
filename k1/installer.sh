@@ -542,11 +542,10 @@ install_fluidd() {
             git clone https://github.com/fluidd-core/fluidd-config.git /usr/data/fluidd-config || exit $?
         fi
 
-        echo "INFO: Updating client config ..."
-        [ -e /usr/data/printer_data/config/fluidd.cfg ] && rm /usr/data/printer_data/config/fluidd.cfg
+        echo "INFO: Updating fluidd config ..."
+        [ -f /usr/data/printer_data/config/fluidd.cfg ] && rm /usr/data/printer_data/config/fluidd.cfg
 
-        ln -sf /usr/data/fluidd-config/client.cfg /usr/data/printer_data/config/
-        $CONFIG_HELPER --add-include "client.cfg" || exit $?
+        ln -sf /usr/data/fluidd-config/client.cfg /usr/data/printer_data/config/fluidd.cfg
 
         # for moonraker to be able to use moonraker fluidd client.cfg out of the box need to
         ln -sf /usr/data/printer_data/ /root
@@ -557,6 +556,8 @@ install_fluidd() {
         $CONFIG_HELPER --remove-section "virtual_sdcard" || exit $?
 
         $CONFIG_HELPER --replace-section-entry "filament_switch_sensor filament_sensor" "runout_gcode" "_ON_FILAMENT_RUNOUT" || exit $?
+
+        $CONFIG_HELPER --add-include "fluidd.cfg" || exit $?
 
         echo "fluidd" >> /usr/data/pellcorp.done
         sync
@@ -640,8 +641,6 @@ install_kamp() {
         # lower and longer purge line
         $CONFIG_HELPER --file KAMP_Settings.cfg --replace-section-entry "gcode_macro _KAMP_Settings" variable_purge_height 0.5
         $CONFIG_HELPER --file KAMP_Settings.cfg --replace-section-entry "gcode_macro _KAMP_Settings" variable_purge_amount 48
-        # same setting as cancel_retract in start_end.cfg
-        $CONFIG_HELPER --file KAMP_Settings.cfg --replace-section-entry "gcode_macro _KAMP_Settings" variable_tip_distance 5.0
 
         cp /usr/data/printer_data/config/KAMP_Settings.cfg /usr/data/pellcorp-backups/
 
@@ -844,8 +843,6 @@ install_guppyscreen() {
 
     grep -q "guppyscreen" /usr/data/pellcorp.done
     if [ $? -ne 0 ]; then
-        echo
-
         if [ "$mode" != "update" ] && [ -d /usr/data/guppyscreen ]; then
             if [ -f /etc/init.d/S99guppyscreen ]; then
               /etc/init.d/S99guppyscreen stop  > /dev/null 2>&1
@@ -856,6 +853,7 @@ install_guppyscreen() {
 
         # check for non pellcorp guppyscreen and force an update
         if [ ! -f /usr/data/guppyscreen/guppyscreen.json ]; then
+            echo
             echo "INFO: Forcing update of guppyscreen"
             rm -rf /usr/data/guppyscreen
         elif grep -q "log_path" /usr/data/guppyscreen/guppyscreen.json; then
@@ -865,6 +863,7 @@ install_guppyscreen() {
         fi
 
         if [ ! -d /usr/data/guppyscreen ]; then
+            echo
             echo "INFO: Installing guppyscreen ..."
 
             curl -L "https://github.com/pellcorp/guppyscreen/releases/download/nightly/guppyscreen.tar.gz" -o /usr/data/guppyscreen.tar.gz || exit $?
@@ -1251,8 +1250,16 @@ setup_beacon() {
         $CONFIG_HELPER --file sensorless.cfg --remove-section-entry "gcode_macro _SENSORLESS_PARAMS" "variable_force_move"
         $CONFIG_HELPER --file sensorless.cfg --remove-section-entry "gcode_macro _SENSORLESS_PARAMS" "variable_move_centre"
 
-        y_position_mid=$($CONFIG_HELPER --get-section-entry "stepper_y" "position_max" --divisor 2 --integer)
-        x_position_mid=$($CONFIG_HELPER --get-section-entry "stepper_x" "position_max" --divisor 2 --integer)
+        y_position_max=$($CONFIG_HELPER --get-section-entry "stepper_y" "position_max")
+        # make sure to remove any floating point portion
+        y_position_max=$(printf '%0.f' "$y_position_max")
+        x_position_max=$($CONFIG_HELPER --get-section-entry "stepper_x" "position_max")
+        # make sure to remove any floating point portion
+        x_position_max=$(printf '%0.f' "$x_position_max")
+
+        y_position_mid=$((y_position_max/2))
+        x_position_mid=$((x_position_max/2))
+
         $CONFIG_HELPER --file beacon.cfg --replace-section-entry "beacon" "home_xy_position" "$x_position_mid,$y_position_mid" || exit $?
 
         set_serial_beacon
@@ -1369,59 +1376,6 @@ function apply_overrides() {
     return $return_status
 }
 
-# the start_end.cfg CLIENT_VARIABLE configuration must be based on the printer.cfg max positions after
-# mount overrides and user overrides have been applied
-function fixup_client_variables_config() {
-    echo
-    echo "INFO: Fixing up client variables ..."
-
-    changed=0
-    position_max_x=$($CONFIG_HELPER --get-section-entry "stepper_x" "position_max" --integer)
-    variable_custom_park_x=$($CONFIG_HELPER --file start_end.cfg --get-section-entry "gcode_macro _CLIENT_VARIABLE" "variable_custom_park_x" --integer)
-    if [ $variable_custom_park_x -eq 0 ] || [ $variable_custom_park_x -ge $position_max_x ]; then
-        pause_park_x=$((position_max_x - 10))
-        if [ $custom_park_y -ne $variable_park_at_cancel_y ]; then
-            echo "Overriding variable_custom_park_x to $pause_park_x (was $variable_custom_park_x)"
-            $CONFIG_HELPER --file start_end.cfg --replace-section-entry "gcode_macro _CLIENT_VARIABLE" "variable_custom_park_x" $pause_park_x
-            changed=1
-        fi
-    fi
-
-    position_min_y=$($CONFIG_HELPER --get-section-entry "stepper_y" "position_min" --integer)
-    variable_custom_park_y=$($CONFIG_HELPER --file start_end.cfg --get-section-entry "gcode_macro _CLIENT_VARIABLE" "variable_custom_park_y" --integer)
-    if [ $variable_custom_park_y -eq 0 ] || [ $variable_custom_park_y -le $position_min_y ]; then
-        pause_park_y=$(($position_min_y + 10))
-        if [ $pause_park_y -ne $variable_custom_park_y ]; then
-            echo "Overriding variable_custom_park_y to $pause_park_y (was $variable_custom_park_y)"
-            $CONFIG_HELPER --file start_end.cfg --replace-section-entry "gcode_macro _CLIENT_VARIABLE" "variable_custom_park_y" $pause_park_y
-            changed=1
-        fi
-    fi
-
-    variable_park_at_cancel_x=$($CONFIG_HELPER --file start_end.cfg --get-section-entry "gcode_macro _CLIENT_VARIABLE" "variable_park_at_cancel_x" --integer)
-    # as long as parking has not been overriden
-    if [ $variable_park_at_cancel_x -eq 0 ] || [ $variable_park_at_cancel_x -ge $position_max_x ]; then
-        custom_park_x=$((position_max_x - 10))
-        if [ $custom_park_x -ne $variable_park_at_cancel_x ]; then
-            echo "Overriding variable_park_at_cancel_x to $custom_park_x (was $variable_park_at_cancel_x)"
-            $CONFIG_HELPER --file start_end.cfg --replace-section-entry "gcode_macro _CLIENT_VARIABLE" "variable_park_at_cancel_x" $custom_park_x
-            changed=1
-        fi
-    fi
-
-    position_max_y=$($CONFIG_HELPER --get-section-entry "stepper_y" "position_max" --integer)
-    variable_park_at_cancel_y=$($CONFIG_HELPER --file start_end.cfg --get-section-entry "gcode_macro _CLIENT_VARIABLE" "variable_park_at_cancel_y" --integer)
-    if [ $variable_park_at_cancel_y -eq 0 ] || [ $variable_park_at_cancel_y -ge $position_max_y ]; then
-        custom_park_y=$((position_max_y - 10))
-        if [ $custom_park_y -ne $variable_park_at_cancel_y ]; then
-            echo "Overriding variable_park_at_cancel_y to $custom_park_y (was $variable_park_at_cancel_y)"
-            $CONFIG_HELPER --file start_end.cfg --replace-section-entry "gcode_macro _CLIENT_VARIABLE" "variable_park_at_cancel_y" $custom_park_y
-            changed=1
-        fi
-    fi
-    return $changed
-}
-
 # figure out what existing probe if any is being used
 probe=
 if [ -f /usr/data/printer_data/config/bltouch-k1.cfg ] || [ -f /usr/data/printer_data/config/bltouch-k1m.cfg ]; then
@@ -1447,7 +1401,7 @@ mount=
 # parse arguments here
 
 while true; do
-    if [ "$1" = "--fix-client-variables" ] || [ "$1" = "--fix-serial" ] || [ "$1" = "--install" ] || [ "$1" = "--update" ] || [ "$1" = "--reinstall" ] || [ "$1" = "--clean-install" ] || [ "$1" = "--clean-update" ] || [ "$1" = "--clean-reinstall" ]; then
+    if [ "$1" = "--fix-serial" ] || [ "$1" = "--install" ] || [ "$1" = "--update" ] || [ "$1" = "--reinstall" ] || [ "$1" = "--clean-install" ] || [ "$1" = "--clean-update" ] || [ "$1" = "--clean-reinstall" ]; then
         mode=$(echo $1 | sed 's/--//g')
         shift
         if [ "$mode" = "clean-install" ] || [ "$mode" = "clean-reinstall" ] || [ "$mode" = "clean-update" ]; then
@@ -1530,26 +1484,6 @@ if [ "$mode" = "fix-serial" ]; then
             else
                 echo "WARNING: Klipper restart required"
             fi
-        fi
-        exit 0
-    else
-        echo "ERROR: No installation found"
-        exit 1
-    fi
-elif [ "$mode" = "fix-client-variables" ]; then
-    if [ -f /usr/data/pellcorp.done ]; then
-        fixup_client_variables_config
-        fixup_client_variables_config=$?
-        if [ $fixup_client_variables_config -ne 0 ]; then
-            if [ "$client" = "cli" ]; then
-                echo
-                echo "INFO: Restarting Klipper ..."
-                /etc/init.d/S55klipper_service restart
-            else
-                echo "WARNING: Klipper restart required"
-            fi
-        else
-            echo "INFO: No changes made"
         fi
         exit 0
     else
@@ -1719,13 +1653,8 @@ else
     exit 1
 fi
 
-apply_mount_overrides=0
-if [ -n "$mount" ]; then
-    /usr/data/pellcorp/k1/apply-mount-overrides.sh $probe $mount
-    apply_mount_overrides=$?
-fi
-
 apply_overrides=0
+apply_mount_overrides=0
 # there will be no support for generating pellcorp-overrides unless you have done a factory reset
 if [ -f /usr/data/pellcorp-backups/printer.factory.cfg ]; then
     probe_model=${probe}
@@ -1746,14 +1675,16 @@ if [ -f /usr/data/pellcorp-backups/printer.factory.cfg ]; then
       cp /usr/data/guppyscreen/guppyscreen.json /usr/data/pellcorp-backups/
     fi
 
+    if [ -n "$mount" ]; then
+        /usr/data/pellcorp/k1/apply-mount-overrides.sh $probe $mount
+        apply_mount_overrides=$?
+    fi
+
     if [ "$skip_overrides" != "true" ]; then
         apply_overrides
         apply_overrides=$?
     fi
 fi
-
-fixup_client_variables_config
-fixup_client_variables_config=$?
 
 /usr/data/pellcorp/k1/update-ip-address.sh
 update_ip_address=$?
@@ -1776,7 +1707,7 @@ if [ $install_moonraker -ne 0 ] || [ $install_nginx -ne 0 ] || [ $install_fluidd
     fi
 fi
 
-if [ $fixup_client_variables_config -ne 0 ] || [ $apply_overrides -ne 0 ] || [ $apply_mount_overrides -ne 0 ] || [ $install_cartographer_klipper -ne 0 ] || [ $install_beacon_klipper -ne 0 ] || [ $install_kamp -ne 0 ] || [ $install_klipper -ne 0 ] || [ $setup_probe -ne 0 ] || [ $setup_probe_specific -ne 0 ]; then
+if [ $apply_overrides -ne 0 ] || [ $apply_mount_overrides -ne 0 ] || [ $install_cartographer_klipper -ne 0 ] || [ $install_beacon_klipper -ne 0 ] || [ $install_kamp -ne 0 ] || [ $install_klipper -ne 0 ] || [ $setup_probe -ne 0 ] || [ $setup_probe_specific -ne 0 ]; then
     if [ "$client" = "cli" ]; then
         echo
         echo "INFO: Restarting Klipper ..."
