@@ -173,6 +173,11 @@ elif [ "$1" = "--klipper-branch" ]; then # convenience for testing new features
 elif [ "$1" = "--klipper-repo" ]; then # convenience for testing new features
     if [ -n "$2" ]; then
         klipper_repo=$2
+        if [ "$klipper_repo" = "k1-carto-klipper" ]; then
+            echo "ERROR: Switching to k1-carto-klipper is no longer supported"
+            exit 1
+        fi
+
         if [ -d /usr/data/klipper/.git ]; then
             cd /usr/data/klipper/
             remote_repo=$(git remote get-url origin | awk -F '/' '{print $NF}' | sed 's/.git//g')
@@ -658,6 +663,13 @@ install_klipper() {
         echo
 
         klipper_repo=klipper
+
+        existing_klipper_repo=$(cat /usr/data/pellcorp.klipper 2> /dev/null)
+        if [ "$mode" = "update" ] && [ "$existing_klipper_repo" = "k1-carto-klipper" ]; then
+            echo "INFO: Forcing Klipper repo to be switched from pellcorp/${existing_klipper_repo} to pellcorp/${klipper_repo}"
+            mode=install
+        fi
+
         if [ "$mode" != "update" ] && [ -d /usr/data/klipper ]; then
             if [ -f /etc/init.d/S55klipper_service ]; then
                 /etc/init.d/S55klipper_service stop
@@ -677,7 +689,7 @@ install_klipper() {
             remote_repo=$(git remote get-url origin | awk -F '/' '{print $NF}' | sed 's/.git//g')
             cd - > /dev/null
             if [ "$remote_repo" != "$klipper_repo" ]; then
-                echo "INFO: Forcing Klipper repo to be switched to pellcorp/${klipper_repo}"
+                echo "INFO: Forcing Klipper repo to be switched from pellcorp/${remote_repo} to pellcorp/${klipper_repo}"
                 rm -rf /usr/data/klipper/
             fi
         fi
