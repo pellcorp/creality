@@ -51,7 +51,7 @@ sync
 CONFIG_HELPER="/usr/data/pellcorp/k1/config-helper.py"
 
 # thanks to @Nestaa51 for the timeout changes to not wait forever for moonraker
-restart_moonraker() {
+function restart_moonraker() {
     echo
     echo "INFO: Restarting Moonraker ..."
     /etc/init.d/S56moonraker_service restart
@@ -78,7 +78,7 @@ restart_moonraker() {
     done
 }
 
-update_repo() {
+function update_repo() {
     local repo_dir=$1
     local branch=$2
 
@@ -128,86 +128,7 @@ function update_klipper() {
   return $?
 }
 
-# special mode to update the repo only
-if [ "$1" = "--update-repo" ] || [ "$1" = "--update-branch" ]; then
-    update_repo /usr/data/pellcorp
-    exit $?
-elif [ "$1" = "--branch" ] && [ -n "$2" ]; then # convenience for testing new features
-    update_repo /usr/data/pellcorp $2 || exit $?
-    exit $?
-elif [ "$1" = "--cartographer-branch" ]; then
-    shift
-    if [ -d /usr/data/cartographer-klipper ]; then
-        branch=master
-        channel=stable
-        if [ "$1" = "stable" ]; then
-            branch=master
-        elif [ "$1" = "beta" ]; then
-            branch=beta
-            channel=dev
-        else
-            branch=$1
-            channel=dev
-        fi
-        update_repo /usr/data/cartographer-klipper $branch || exit $?
-        update_klipper || exit $?
-        if [ -f /usr/data/printer_data/config/cartographer.conf ]; then
-            $CONFIG_HELPER --file cartographer.conf --replace-section-entry 'update_manager cartographer' channel $channel || exit $?
-            $CONFIG_HELPER --file cartographer.conf --replace-section-entry 'update_manager cartographer' primary_branch $branch || exit $?
-            restart_moonraker || exit $?
-        fi
-    else
-        echo "Error cartographer-klipper repo does not exist"
-        exit 1
-    fi
-    exit 0
-elif [ "$1" = "--klipper-branch" ]; then # convenience for testing new features
-    if [ -n "$2" ]; then
-        update_repo /usr/data/klipper $2 || exit $?
-        update_klipper || exit $?
-        exit 0
-    else
-        echo "Error invalid branch specified"
-        exit 1
-    fi
-elif [ "$1" = "--klipper-repo" ]; then # convenience for testing new features
-    if [ -n "$2" ]; then
-        klipper_repo=$2
-        if [ "$klipper_repo" = "k1-carto-klipper" ]; then
-            echo "ERROR: Switching to k1-carto-klipper is no longer supported"
-            exit 1
-        fi
-
-        if [ -d /usr/data/klipper/.git ]; then
-            cd /usr/data/klipper/
-            remote_repo=$(git remote get-url origin | awk -F '/' '{print $NF}' | sed 's/.git//g')
-            cd - > /dev/null
-            if [ "$remote_repo" != "$klipper_repo" ]; then
-                echo "INFO: Switching klipper from pellcorp/$remote_repo to pellcorp/${klipper_repo} ..."
-                rm -rf /usr/data/klipper
-
-                echo "$klipper_repo" > /usr/data/pellcorp.klipper
-            fi
-        fi
-
-        if [ ! -d /usr/data/klipper ]; then
-            git clone https://github.com/pellcorp/${klipper_repo}.git /usr/data/klipper || exit $?
-            if [ -n "$3" ]; then
-              cd /usr/data/klipper && git switch $3 && cd - > /dev/null
-            fi
-        else
-            update_repo /usr/data/klipper $3 || exit $?
-        fi
-
-        update_klipper || exit $?
-        exit 0
-    else
-        echo "Error invalid klipper repo specified"
-        exit 1
-    fi
-fi
-
-install_config_updater() {
+function install_config_updater() {
     python3 -c 'from configupdater import ConfigUpdater' 2> /dev/null
     if [ $? -ne 0 ]; then
         echo
@@ -228,7 +149,7 @@ install_config_updater() {
     sync
 }
 
-disable_creality_services() {
+function disable_creality_services() {
     if [ ! -L /etc/boot-display/part0 ]; then
       # clean up failed installation of custom boot display
       rm -rf /overlay/upper/etc/boot-display/*
@@ -298,7 +219,7 @@ disable_creality_services() {
     sync
 }
 
-install_boot_display() {
+function install_boot_display() {
   grep -q "boot-display" /usr/data/pellcorp.done
   if [ $? -ne 0 ]; then
     echo
@@ -318,7 +239,7 @@ install_boot_display() {
   return 0
 }
 
-install_webcam() {
+function install_webcam() {
     local mode=$1
     
     grep -q "webcam" /usr/data/pellcorp.done
@@ -366,7 +287,7 @@ install_webcam() {
     return 0
 }
 
-install_moonraker() {
+function install_moonraker() {
     local mode=$1
 
     grep -q "moonraker" /usr/data/pellcorp.done
@@ -466,7 +387,7 @@ install_moonraker() {
     return 0
 }
 
-install_nginx() {
+function install_nginx() {
     local mode=$1
 
     grep -q "nginx" /usr/data/pellcorp.done
@@ -516,7 +437,7 @@ install_nginx() {
     return 0
 }
 
-install_fluidd() {
+function install_fluidd() {
     local mode=$1
 
     grep -q "fluidd" /usr/data/pellcorp.done
@@ -568,7 +489,7 @@ install_fluidd() {
     return 0
 }
 
-install_mainsail() {
+function install_mainsail() {
     local mode=$1
 
     grep -q "mainsail" /usr/data/pellcorp.done
@@ -601,7 +522,7 @@ install_mainsail() {
     return 0
 }
 
-install_kamp() {
+function install_kamp() {
     local mode=$1
 
     grep -q "KAMP" /usr/data/pellcorp.done
@@ -653,7 +574,7 @@ install_kamp() {
     return 0
 }
 
-cleanup_klipper() {
+function cleanup_klipper() {
     if [ -f /etc/init.d/S55klipper_service ]; then
         /etc/init.d/S55klipper_service stop
     fi
@@ -665,7 +586,7 @@ cleanup_klipper() {
     fi
 }
 
-install_klipper() {
+function install_klipper() {
     local mode=$1
     local probe=$2
 
@@ -838,7 +759,7 @@ install_klipper() {
     return 0
 }
 
-install_guppyscreen() {
+function install_guppyscreen() {
     local mode=$1
 
     grep -q "guppyscreen" /usr/data/pellcorp.done
@@ -906,7 +827,7 @@ install_guppyscreen() {
     return 0
 }
 
-setup_probe() {
+function setup_probe() {
     grep -q "probe" /usr/data/pellcorp.done
     if [ $? -ne 0 ]; then
         echo
@@ -934,7 +855,7 @@ setup_probe() {
     return 0
 }
 
-install_cartographer_klipper() {
+function install_cartographer_klipper() {
     local mode=$1
 
     grep -q "cartographer-klipper" /usr/data/pellcorp.done
@@ -982,7 +903,7 @@ install_cartographer_klipper() {
     return 0
 }
 
-install_beacon_klipper() {
+function install_beacon_klipper() {
     local mode=$1
 
     grep -q "beacon-klipper" /usr/data/pellcorp.done
@@ -1009,7 +930,7 @@ install_beacon_klipper() {
     return 0
 }
 
-cleanup_probe() {
+function cleanup_probe() {
     local probe=$1
 
     if [ -f /usr/data/printer_data/config/${probe}_macro.cfg ]; then
@@ -1051,7 +972,7 @@ cleanup_probe() {
     $CONFIG_HELPER --remove-include "$probe-${model}.cfg" || exit $?
 }
 
-setup_bltouch() {
+function setup_bltouch() {
     grep -q "bltouch-probe" /usr/data/pellcorp.done
     if [ $? -ne 0 ]; then
         echo
@@ -1089,7 +1010,7 @@ setup_bltouch() {
     return 0
 }
 
-setup_microprobe() {
+function setup_microprobe() {
     grep -q "microprobe-probe" /usr/data/pellcorp.done
     if [ $? -ne 0 ]; then
         echo
@@ -1122,7 +1043,7 @@ setup_microprobe() {
     return 0
 }
 
-set_serial_cartotouch() {
+function set_serial_cartotouch() {
     local SERIAL_ID=$(ls /dev/serial/by-id/usb-Cartographer* | head -1)
     if [ -n "$SERIAL_ID" ]; then
         local EXISTING_SERIAL_ID=$($CONFIG_HELPER --file cartotouch.cfg --get-section-entry "scanner" "serial")
@@ -1139,7 +1060,7 @@ set_serial_cartotouch() {
     fi
 }
 
-setup_cartotouch() {
+function setup_cartotouch() {
     grep -q "cartotouch-probe" /usr/data/pellcorp.done
     if [ $? -ne 0 ]; then
         echo
@@ -1203,7 +1124,7 @@ setup_cartotouch() {
     return 0
 }
 
-set_serial_beacon() {
+function set_serial_beacon() {
     local SERIAL_ID=$(ls /dev/serial/by-id/usb-Beacon_Beacon* | head -1)
     if [ -n "$SERIAL_ID" ]; then
         local EXISTING_SERIAL_ID=$($CONFIG_HELPER --file beacon.cfg --get-section-entry "beacon" "serial")
@@ -1220,7 +1141,7 @@ set_serial_beacon() {
     fi
 }
 
-setup_beacon() {
+function setup_beacon() {
     grep -q "beacon-probe" /usr/data/pellcorp.done
     if [ $? -ne 0 ]; then
         echo
@@ -1291,7 +1212,7 @@ setup_beacon() {
     return 0
 }
 
-set_serial_btteddy() {
+function set_serial_btteddy() {
     local SERIAL_ID=$(ls /dev/serial/by-id/usb-Klipper_rp2040* | head -1)
     if [ -n "$SERIAL_ID" ]; then
         local EXISTING_SERIAL_ID=$($CONFIG_HELPER --file btteddy.cfg --get-section-entry "mcu eddy" "serial")
@@ -1308,7 +1229,7 @@ set_serial_btteddy() {
     fi
 }
 
-setup_btteddy() {
+function setup_btteddy() {
     grep -q "btteddy-probe" /usr/data/pellcorp.done
     if [ $? -ne 0 ]; then
         echo
@@ -1353,7 +1274,7 @@ setup_btteddy() {
     return 0
 }
 
-install_entware() {
+function install_entware() {
     local mode=$1
     if ! grep -q "entware" /usr/data/pellcorp.done; then
         echo
@@ -1375,6 +1296,85 @@ function apply_overrides() {
     fi
     return $return_status
 }
+
+# special mode to update the repo only
+if [ "$1" = "--update-repo" ] || [ "$1" = "--update-branch" ]; then
+    update_repo /usr/data/pellcorp
+    exit $?
+elif [ "$1" = "--branch" ] && [ -n "$2" ]; then # convenience for testing new features
+    update_repo /usr/data/pellcorp $2 || exit $?
+    exit $?
+elif [ "$1" = "--cartographer-branch" ]; then
+    shift
+    if [ -d /usr/data/cartographer-klipper ]; then
+        branch=master
+        channel=stable
+        if [ "$1" = "stable" ]; then
+            branch=master
+        elif [ "$1" = "beta" ]; then
+            branch=beta
+            channel=dev
+        else
+            branch=$1
+            channel=dev
+        fi
+        update_repo /usr/data/cartographer-klipper $branch || exit $?
+        update_klipper || exit $?
+        if [ -f /usr/data/printer_data/config/cartographer.conf ]; then
+            $CONFIG_HELPER --file cartographer.conf --replace-section-entry 'update_manager cartographer' channel $channel || exit $?
+            $CONFIG_HELPER --file cartographer.conf --replace-section-entry 'update_manager cartographer' primary_branch $branch || exit $?
+            restart_moonraker || exit $?
+        fi
+    else
+        echo "Error cartographer-klipper repo does not exist"
+        exit 1
+    fi
+    exit 0
+elif [ "$1" = "--klipper-branch" ]; then # convenience for testing new features
+    if [ -n "$2" ]; then
+        update_repo /usr/data/klipper $2 || exit $?
+        update_klipper || exit $?
+        exit 0
+    else
+        echo "Error invalid branch specified"
+        exit 1
+    fi
+elif [ "$1" = "--klipper-repo" ]; then # convenience for testing new features
+    if [ -n "$2" ]; then
+        klipper_repo=$2
+        if [ "$klipper_repo" = "k1-carto-klipper" ]; then
+            echo "ERROR: Switching to k1-carto-klipper is no longer supported"
+            exit 1
+        fi
+
+        if [ -d /usr/data/klipper/.git ]; then
+            cd /usr/data/klipper/
+            remote_repo=$(git remote get-url origin | awk -F '/' '{print $NF}' | sed 's/.git//g')
+            cd - > /dev/null
+            if [ "$remote_repo" != "$klipper_repo" ]; then
+                echo "INFO: Switching klipper from pellcorp/$remote_repo to pellcorp/${klipper_repo} ..."
+                rm -rf /usr/data/klipper
+
+                echo "$klipper_repo" > /usr/data/pellcorp.klipper
+            fi
+        fi
+
+        if [ ! -d /usr/data/klipper ]; then
+            git clone https://github.com/pellcorp/${klipper_repo}.git /usr/data/klipper || exit $?
+            if [ -n "$3" ]; then
+              cd /usr/data/klipper && git switch $3 && cd - > /dev/null
+            fi
+        else
+            update_repo /usr/data/klipper $3 || exit $?
+        fi
+
+        update_klipper || exit $?
+        exit 0
+    else
+        echo "Error invalid klipper repo specified"
+        exit 1
+    fi
+fi
 
 # figure out what existing probe if any is being used
 probe=
@@ -1506,7 +1506,7 @@ ls *.conf > /dev/null 2>&1
 if [ $? -eq 0 ]; then
     CONF_ARG='*.conf'
 fi
-tar -zcf /usr/data/printer_data/config/backups/backup-${TIMESTAMP}.tar.gz *.cfg $CFG_ARG $CONF_ARG
+tar -zcf /usr/data/printer_data/config/backups/backup-${TIMESTAMP}.tar.gz $CFG_ARG $CONF_ARG
 cd - > /dev/null
 sync
 
