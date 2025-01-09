@@ -1297,7 +1297,7 @@ function apply_overrides() {
     return $return_status
 }
 
-# special mode to update the repo only
+# this stuff we do not want to have a log file for
 if [ "$1" = "--update-repo" ] || [ "$1" = "--update-branch" ]; then
     update_repo /usr/data/pellcorp
     exit $?
@@ -1376,358 +1376,367 @@ elif [ "$1" = "--klipper-repo" ]; then # convenience for testing new features
     fi
 fi
 
-# figure out what existing probe if any is being used
-probe=
-if [ -f /usr/data/printer_data/config/bltouch-k1.cfg ] || [ -f /usr/data/printer_data/config/bltouch-k1m.cfg ]; then
-    probe=bltouch
-elif [ -f /usr/data/printer_data/config/cartotouch.cfg ]; then
-    probe=cartotouch
-elif [ -f /usr/data/printer_data/config/beacon.cfg ]; then
-    probe=beacon
-elif grep -q "\[scanner\]" /usr/data/printer_data/config/printer.cfg; then
-    probe=cartotouch
-elif [ -f /usr/data/printer_data/config/microprobe-k1.cfg ] || [ -f /usr/data/printer_data/config/microprobe-k1m.cfg ]; then
-    probe=microprobe
-elif [ -f /usr/data/printer_data/config/btteddy-k1.cfg ] || [ -f /usr/data/printer_data/config/btteddy-k1m.cfg ]; then
-    probe=btteddy
-elif [ -f /usr/data/printer_data/config/cartographer-k1.cfg ] || [ -f /usr/data/printer_data/config/cartographer-k1m.cfg ]; then
-    probe=cartographer
-fi
+# want to make sure to we delete log files older than 2 days old
+find /usr/data/printer_data/logs -name "installer-*.log" -type f -mtime +2 -exec rm {} \;
+sync
 
-client=cli
-mode=install
-skip_overrides=false
-mount=
-# parse arguments here
+export TIMESTAMP=$(date +"%Y%m%d_%H%M%S")
+LOG_FILE=/usr/data/printer_data/logs/installer-$TIMESTAMP.log
 
-while true; do
-    if [ "$1" = "--fix-serial" ] || [ "$1" = "--install" ] || [ "$1" = "--update" ] || [ "$1" = "--reinstall" ] || [ "$1" = "--clean-install" ] || [ "$1" = "--clean-update" ] || [ "$1" = "--clean-reinstall" ]; then
-        mode=$(echo $1 | sed 's/--//g')
-        shift
-        if [ "$mode" = "clean-install" ] || [ "$mode" = "clean-reinstall" ] || [ "$mode" = "clean-update" ]; then
-            skip_overrides=true
-            mode=$(echo $mode | sed 's/clean-//g')
-        fi
-    elif [ "$1" = "--mount" ]; then
-        shift
-        mount=$1
-        if [ -z "$mount" ]; then
-            mount=unknown
-        fi
-        shift
-    elif [ "$1" = "--client" ]; then
-        shift
-        client=$1
-        shift
-    elif [ "$1" = "microprobe" ] || [ "$1" = "bltouch" ] || [ "$1" = "beacon" ] || [ "$1" = "cartographer" ] || [ "$1" = "cartotouch" ] || [ "$1" = "btteddy" ]; then
-        if [ "$mode" = "fix-serial" ]; then
-            echo "ERROR: Switching probes is not supported while trying to fix serial!"
-            exit 1
-        fi
-        if [ -n "$probe" ] && [ "$1" != "$probe" ]; then
-          echo "WARNING: About to switch from $probe to $1!"
-        fi
-        probe=$1
-        shift
-    elif [ -n "$1" ]; then # no more valid parameters
-        break
-    else # no more parameters
-        break
+{
+    # figure out what existing probe if any is being used
+    probe=
+    if [ -f /usr/data/printer_data/config/bltouch-k1.cfg ] || [ -f /usr/data/printer_data/config/bltouch-k1m.cfg ]; then
+        probe=bltouch
+    elif [ -f /usr/data/printer_data/config/cartotouch.cfg ]; then
+        probe=cartotouch
+    elif [ -f /usr/data/printer_data/config/beacon.cfg ]; then
+        probe=beacon
+    elif grep -q "\[scanner\]" /usr/data/printer_data/config/printer.cfg; then
+        probe=cartotouch
+    elif [ -f /usr/data/printer_data/config/microprobe-k1.cfg ] || [ -f /usr/data/printer_data/config/microprobe-k1m.cfg ]; then
+        probe=microprobe
+    elif [ -f /usr/data/printer_data/config/btteddy-k1.cfg ] || [ -f /usr/data/printer_data/config/btteddy-k1m.cfg ]; then
+        probe=btteddy
+    elif [ -f /usr/data/printer_data/config/cartographer-k1.cfg ] || [ -f /usr/data/printer_data/config/cartographer-k1m.cfg ]; then
+        probe=cartographer
     fi
-done
 
-if [ -z "$probe" ]; then
-    echo "ERROR: You must specify a probe you want to configure"
-    echo "One of: [microprobe, bltouch, cartotouch, btteddy, beacon]"
-    exit 1
-fi
+    client=cli
+    mode=install
+    skip_overrides=false
+    mount=
+    # parse arguments here
 
-echo "INFO: Mode is $mode"
-echo "INFO: Probe is $probe"
-
-if [ -n "$mount" ]; then
-    /usr/data/pellcorp/k1/apply-mount-overrides.sh --verify $probe $mount
-    if [ $? -eq 0 ]; then
-        echo "INFO: Mount is $mount"
-    else
-        exit 1
-    fi
-fi
-echo
-
-if [ "$probe" = "cartographer" ]; then
-  echo "ERROR: Cartographer for 4.0.0 firmware is no longer supported!"
-  exit 1
-fi
-
-if [ "$mode" = "fix-serial" ]; then
-    if [ -f /usr/data/pellcorp.done ]; then
-        if [ "$probe" = "cartotouch" ]; then
-            set_serial_cartotouch
-            set_serial=$?
-        elif [ "$probe" = "beacon" ]; then
-            set_serial_beacon
-            set_serial=$?
-        elif [ "$probe" = "btteddy" ]; then
-            set_serial_btteddy
-            set_serial=$?
-        else
-            echo "ERROR: Fix serial not supported for $probe"
-            exit 1
-        fi
-
-        if [ $set_serial -ne 0 ]; then
-            if [ "$client" = "cli" ]; then
-                echo
-                echo "INFO: Restarting Klipper ..."
-                /etc/init.d/S55klipper_service restart
-            else
-                echo "WARNING: Klipper restart required"
+    while true; do
+        if [ "$1" = "--fix-serial" ] || [ "$1" = "--install" ] || [ "$1" = "--update" ] || [ "$1" = "--reinstall" ] || [ "$1" = "--clean-install" ] || [ "$1" = "--clean-update" ] || [ "$1" = "--clean-reinstall" ]; then
+            mode=$(echo $1 | sed 's/--//g')
+            shift
+            if [ "$mode" = "clean-install" ] || [ "$mode" = "clean-reinstall" ] || [ "$mode" = "clean-update" ]; then
+                skip_overrides=true
+                mode=$(echo $mode | sed 's/clean-//g')
             fi
-        fi
-        exit 0
-    else
-        echo "ERROR: No installation found"
-        exit 1
-    fi
-fi
-
-# to avoid cluttering the printer_data/config directory lets move stuff
-mkdir -p /usr/data/printer_data/config/backups/
-mv /usr/data/printer_data/config/*.bkp /usr/data/printer_data/config/backups/ 2> /dev/null
-
-TIMESTAMP=$(date +"%Y%m%d_%H%M%S")
-cd /usr/data/printer_data/config/
-
-CFG_ARG='*.cfg'
-CONF_ARG=''
-ls *.conf > /dev/null 2>&1
-# straight from a factory reset, there will be no conf files
-if [ $? -eq 0 ]; then
-    CONF_ARG='*.conf'
-fi
-tar -zcf /usr/data/printer_data/config/backups/backup-${TIMESTAMP}.tar.gz $CFG_ARG $CONF_ARG
-cd - > /dev/null
-sync
-
-mkdir -p /usr/data/pellcorp-backups
-
-# the pellcorp-backups do not need .pellcorp extension, so this is to fix backwards compatible
-if [ -f /usr/data/pellcorp-backups/printer.pellcorp.cfg ]; then
-    mv /usr/data/pellcorp-backups/printer.pellcorp.cfg /usr/data/pellcorp-backups/printer.cfg
-fi
-
-# so if the installer has never been run we should grab a backup of the printer.cfg
-if [ ! -f /usr/data/pellcorp.done ] && [ ! -f /usr/data/pellcorp-backups/printer.factory.cfg ]; then
-    # just to make sure we don't accidentally copy printer.cfg to backup if the backup directory
-    # is deleted, add a stamp to config files to we can know for sure.
-    if ! grep -q "# Modified by Simple AF " /usr/data/printer_data/config/printer.cfg; then
-        cp /usr/data/printer_data/config/printer.cfg /usr/data/pellcorp-backups/printer.factory.cfg
-    else
-      echo "WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING"
-      echo "WARNING: No pristine factory printer.cfg available - config overrides are disabled!"
-      echo "WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING"
-    fi
-fi
-
-if [ "$skip_overrides" = "true" ]; then
-    echo "INFO: Configuration overrides will not be saved or applied"
-fi
-
-# we want to disable creality services at the very beginning otherwise shit gets weird
-# if the crazy creality S55klipper_service is still copying files
-disable_creality_services
-
-install_config_updater
-
-# completely remove all iterations of zero SimpleAddon
-for dir in addons SimpleAddon; do
-  if [ -d /usr/data/printer_data/config/$dir ]; then
-    rm -rf /usr/data/printer_data/config/$dir
-  fi
-done
-for file in save-zoffset.cfg eddycalibrate.cfg quickstart.cfg cartographer_calibrate.cfg btteddy_calibrate.cfg; do
-  $CONFIG_HELPER --remove-include "SimpleAddon/$file"
-  sync
-done
-$CONFIG_HELPER --remove-include "addons/*.cfg"
-sync
-
-if [ "$mode" = "reinstall" ] || [ "$mode" = "update" ]; then
-    if [ "$skip_overrides" != "true" ]; then
-        if [ -f /usr/data/pellcorp-backups/printer.cfg ]; then
-            /usr/data/pellcorp/k1/config-overrides.sh
-        elif [ -f /usr/data/pellcorp.done ]; then # for a factory reset this warning is superfluous
-          echo "WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING"
-          echo "WARNING: No /usr/data/pellcorp-backups/printer.cfg - config overrides won't be generated!"
-          echo "WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING"
-        fi
-    fi
-
-    if [ -f /usr/data/pellcorp.done ]; then
-      rm /usr/data/pellcorp.done
-    fi
-
-    # if we took a post factory reset backup for a reinstall restore it now
-    if [ -f /usr/data/pellcorp-backups/printer.factory.cfg ]; then
-        cp /usr/data/pellcorp-backups/printer.factory.cfg /usr/data/printer_data/config/printer.cfg
-        DATE_TIME=$(date +"%Y-%m-%d %H:%M:%S")
-        sed -i "1s/^/# Modified by Simple AF ${DATE_TIME}\n/" /usr/data/printer_data/config/printer.cfg
-    elif [ "$mode" = "update" ]; then
-        echo "ERROR: Update mode is not available as pristine factory printer.cfg is missing"
-        exit 1
-    fi
-fi
-sync
-
-# add a service to take care of updating various config files if ip address changes
-cp /usr/data/pellcorp/k1/services/S96ipaddress /etc/init.d/
-
-if [ -L /usr/data/printer_data/logs/messages ]; then
-  rm /usr/data/printer_data/logs/messages
-fi
-ln -sf /var/log/messages /usr/data/printer_data/logs/messages.log
-
-# lets make sure we are not stranded in some repo dir
-cd /root
-
-touch /usr/data/pellcorp.done
-sync
-
-install_entware $mode
-install_webcam $mode
-install_boot_display
-
-install_moonraker $mode
-install_moonraker=$?
-
-install_nginx $mode
-install_nginx=$?
-
-install_fluidd $mode
-install_fluidd=$?
-
-install_mainsail $mode
-install_mainsail=$?
-
-# KAMP is in the moonraker.conf file so it must be installed before moonraker is first started
-install_kamp $mode
-install_kamp=$?
-
-install_klipper $mode $probe
-install_klipper=$?
-
-install_cartographer_klipper=0
-install_beacon_klipper=0
-if [ "$probe" = "cartographer" ] || [ "$probe" = "cartotouch" ]; then
-  install_cartographer_klipper $mode
-  install_cartographer_klipper=$?
-elif [ "$probe" = "beacon" ]; then
-  install_beacon_klipper $mode
-  install_beacon_klipper=$?
-fi
-
-install_guppyscreen $mode
-install_guppyscreen=$?
-
-setup_probe
-setup_probe=$?
-
-if [ "$probe" = "cartotouch" ]; then
-    setup_cartotouch
-    setup_probe_specific=$?
-elif [ "$probe" = "bltouch" ]; then
-    setup_bltouch
-    setup_probe_specific=$?
-elif [ "$probe" = "btteddy" ]; then
-    setup_btteddy
-    setup_probe_specific=$?
-elif [ "$probe" = "microprobe" ]; then
-    setup_microprobe
-    setup_probe_specific=$?
-elif [ "$probe" = "beacon" ]; then
-    setup_beacon
-    setup_probe_specific=$?
-else
-    echo "ERROR: Probe $probe not supported"
-    exit 1
-fi
-
-apply_mount_overrides=0
-if [ -n "$mount" ]; then
-    /usr/data/pellcorp/k1/apply-mount-overrides.sh $probe $mount
-    apply_mount_overrides=$?
-fi
-
-apply_overrides=0
-# there will be no support for generating pellcorp-overrides unless you have done a factory reset
-if [ -f /usr/data/pellcorp-backups/printer.factory.cfg ]; then
-    probe_model=${probe}
-
-    if [ "$probe" = "cartotouch" ]; then
-        probe_model=cartographer
-    fi
-
-    # we want a copy of the file before config overrides are re-applied so we can correctly generate diffs
-    # against different generations of the original file
-    for file in printer.cfg start_end.cfg fan_control.cfg useful_macros.cfg $probe_model.conf moonraker.conf webcam.conf sensorless.cfg ${probe}_macro.cfg ${probe}.cfg ${probe_model}-${model}.cfg; do
-        if [ -f /usr/data/printer_data/config/$file ]; then
-            cp /usr/data/printer_data/config/$file /usr/data/pellcorp-backups/$file
+        elif [ "$1" = "--mount" ]; then
+            shift
+            mount=$1
+            if [ -z "$mount" ]; then
+                mount=unknown
+            fi
+            shift
+        elif [ "$1" = "--client" ]; then
+            shift
+            client=$1
+            shift
+        elif [ "$1" = "microprobe" ] || [ "$1" = "bltouch" ] || [ "$1" = "beacon" ] || [ "$1" = "cartographer" ] || [ "$1" = "cartotouch" ] || [ "$1" = "btteddy" ]; then
+            if [ "$mode" = "fix-serial" ]; then
+                echo "ERROR: Switching probes is not supported while trying to fix serial!"
+                exit 1
+            fi
+            if [ -n "$probe" ] && [ "$1" != "$probe" ]; then
+              echo "WARNING: About to switch from $probe to $1!"
+            fi
+            probe=$1
+            shift
+        elif [ -n "$1" ]; then # no more valid parameters
+            break
+        else # no more parameters
+            break
         fi
     done
 
-    if [ -f /usr/data/guppyscreen/guppyscreen.json ]; then
-      cp /usr/data/guppyscreen/guppyscreen.json /usr/data/pellcorp-backups/
+    if [ -z "$probe" ]; then
+        echo "ERROR: You must specify a probe you want to configure"
+        echo "One of: [microprobe, bltouch, cartotouch, btteddy, beacon]"
+        exit 1
     fi
 
-    if [ "$skip_overrides" != "true" ]; then
-        apply_overrides
-        apply_overrides=$?
+    echo "INFO: Mode is $mode"
+    echo "INFO: Probe is $probe"
+
+    if [ -n "$mount" ]; then
+        /usr/data/pellcorp/k1/apply-mount-overrides.sh --verify $probe $mount
+        if [ $? -eq 0 ]; then
+            echo "INFO: Mount is $mount"
+        else
+            exit 1
+        fi
     fi
-fi
+    echo
 
-/usr/data/pellcorp/k1/update-ip-address.sh
-update_ip_address=$?
+    if [ "$probe" = "cartographer" ]; then
+      echo "ERROR: Cartographer for 4.0.0 firmware is no longer supported!"
+      exit 1
+    fi
 
-if [ $apply_overrides -ne 0 ] || [ $install_moonraker -ne 0 ] || [ $install_cartographer_klipper -ne 0 ] || [ $install_beacon_klipper -ne 0 ] || [ $update_ip_address -ne 0 ]; then
-    if [ "$client" = "cli" ]; then
-        restart_moonraker
+    if [ "$mode" = "fix-serial" ]; then
+        if [ -f /usr/data/pellcorp.done ]; then
+            if [ "$probe" = "cartotouch" ]; then
+                set_serial_cartotouch
+                set_serial=$?
+            elif [ "$probe" = "beacon" ]; then
+                set_serial_beacon
+                set_serial=$?
+            elif [ "$probe" = "btteddy" ]; then
+                set_serial_btteddy
+                set_serial=$?
+            else
+                echo "ERROR: Fix serial not supported for $probe"
+                exit 1
+            fi
+
+            if [ $set_serial -ne 0 ]; then
+                if [ "$client" = "cli" ]; then
+                    echo
+                    echo "INFO: Restarting Klipper ..."
+                    /etc/init.d/S55klipper_service restart
+                else
+                    echo "WARNING: Klipper restart required"
+                fi
+            fi
+            exit 0
+        else
+            echo "ERROR: No installation found"
+            exit 1
+        fi
+    fi
+
+    # to avoid cluttering the printer_data/config directory lets move stuff
+    mkdir -p /usr/data/printer_data/config/backups/
+    mv /usr/data/printer_data/config/*.bkp /usr/data/printer_data/config/backups/ 2> /dev/null
+
+    TIMESTAMP=$(date +"%Y%m%d_%H%M%S")
+    cd /usr/data/printer_data/config/
+
+    CFG_ARG='*.cfg'
+    CONF_ARG=''
+    ls *.conf > /dev/null 2>&1
+    # straight from a factory reset, there will be no conf files
+    if [ $? -eq 0 ]; then
+        CONF_ARG='*.conf'
+    fi
+    tar -zcf /usr/data/printer_data/config/backups/backup-${TIMESTAMP}.tar.gz $CFG_ARG $CONF_ARG
+    cd - > /dev/null
+    sync
+
+    mkdir -p /usr/data/pellcorp-backups
+
+    # the pellcorp-backups do not need .pellcorp extension, so this is to fix backwards compatible
+    if [ -f /usr/data/pellcorp-backups/printer.pellcorp.cfg ]; then
+        mv /usr/data/pellcorp-backups/printer.pellcorp.cfg /usr/data/pellcorp-backups/printer.cfg
+    fi
+
+    # so if the installer has never been run we should grab a backup of the printer.cfg
+    if [ ! -f /usr/data/pellcorp.done ] && [ ! -f /usr/data/pellcorp-backups/printer.factory.cfg ]; then
+        # just to make sure we don't accidentally copy printer.cfg to backup if the backup directory
+        # is deleted, add a stamp to config files to we can know for sure.
+        if ! grep -q "# Modified by Simple AF " /usr/data/printer_data/config/printer.cfg; then
+            cp /usr/data/printer_data/config/printer.cfg /usr/data/pellcorp-backups/printer.factory.cfg
+        else
+          echo "WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING"
+          echo "WARNING: No pristine factory printer.cfg available - config overrides are disabled!"
+          echo "WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING"
+        fi
+    fi
+
+    if [ "$skip_overrides" = "true" ]; then
+        echo "INFO: Configuration overrides will not be saved or applied"
+    fi
+
+    # we want to disable creality services at the very beginning otherwise shit gets weird
+    # if the crazy creality S55klipper_service is still copying files
+    disable_creality_services
+
+    install_config_updater
+
+    # completely remove all iterations of zero SimpleAddon
+    for dir in addons SimpleAddon; do
+      if [ -d /usr/data/printer_data/config/$dir ]; then
+        rm -rf /usr/data/printer_data/config/$dir
+      fi
+    done
+    for file in save-zoffset.cfg eddycalibrate.cfg quickstart.cfg cartographer_calibrate.cfg btteddy_calibrate.cfg; do
+      $CONFIG_HELPER --remove-include "SimpleAddon/$file"
+      sync
+    done
+    $CONFIG_HELPER --remove-include "addons/*.cfg"
+    sync
+
+    if [ "$mode" = "reinstall" ] || [ "$mode" = "update" ]; then
+        if [ "$skip_overrides" != "true" ]; then
+            if [ -f /usr/data/pellcorp-backups/printer.cfg ]; then
+                /usr/data/pellcorp/k1/config-overrides.sh
+            elif [ -f /usr/data/pellcorp.done ]; then # for a factory reset this warning is superfluous
+              echo "WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING"
+              echo "WARNING: No /usr/data/pellcorp-backups/printer.cfg - config overrides won't be generated!"
+              echo "WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING"
+            fi
+        fi
+
+        if [ -f /usr/data/pellcorp.done ]; then
+          rm /usr/data/pellcorp.done
+        fi
+
+        # if we took a post factory reset backup for a reinstall restore it now
+        if [ -f /usr/data/pellcorp-backups/printer.factory.cfg ]; then
+            cp /usr/data/pellcorp-backups/printer.factory.cfg /usr/data/printer_data/config/printer.cfg
+            DATE_TIME=$(date +"%Y-%m-%d %H:%M:%S")
+            sed -i "1s/^/# Modified by Simple AF ${DATE_TIME}\n/" /usr/data/printer_data/config/printer.cfg
+        elif [ "$mode" = "update" ]; then
+            echo "ERROR: Update mode is not available as pristine factory printer.cfg is missing"
+            exit 1
+        fi
+    fi
+    sync
+
+    # add a service to take care of updating various config files if ip address changes
+    cp /usr/data/pellcorp/k1/services/S96ipaddress /etc/init.d/
+
+    if [ -L /usr/data/printer_data/logs/messages ]; then
+      rm /usr/data/printer_data/logs/messages
+    fi
+    ln -sf /var/log/messages /usr/data/printer_data/logs/messages.log
+
+    # lets make sure we are not stranded in some repo dir
+    cd /root
+
+    touch /usr/data/pellcorp.done
+    sync
+
+    install_entware $mode
+    install_webcam $mode
+    install_boot_display
+
+    install_moonraker $mode
+    install_moonraker=$?
+
+    install_nginx $mode
+    install_nginx=$?
+
+    install_fluidd $mode
+    install_fluidd=$?
+
+    install_mainsail $mode
+    install_mainsail=$?
+
+    # KAMP is in the moonraker.conf file so it must be installed before moonraker is first started
+    install_kamp $mode
+    install_kamp=$?
+
+    install_klipper $mode $probe
+    install_klipper=$?
+
+    install_cartographer_klipper=0
+    install_beacon_klipper=0
+    if [ "$probe" = "cartographer" ] || [ "$probe" = "cartotouch" ]; then
+      install_cartographer_klipper $mode
+      install_cartographer_klipper=$?
+    elif [ "$probe" = "beacon" ]; then
+      install_beacon_klipper $mode
+      install_beacon_klipper=$?
+    fi
+
+    install_guppyscreen $mode
+    install_guppyscreen=$?
+
+    setup_probe
+    setup_probe=$?
+
+    if [ "$probe" = "cartotouch" ]; then
+        setup_cartotouch
+        setup_probe_specific=$?
+    elif [ "$probe" = "bltouch" ]; then
+        setup_bltouch
+        setup_probe_specific=$?
+    elif [ "$probe" = "btteddy" ]; then
+        setup_btteddy
+        setup_probe_specific=$?
+    elif [ "$probe" = "microprobe" ]; then
+        setup_microprobe
+        setup_probe_specific=$?
+    elif [ "$probe" = "beacon" ]; then
+        setup_beacon
+        setup_probe_specific=$?
     else
-        echo "WARNING: Moonraker restart required"
+        echo "ERROR: Probe $probe not supported"
+        exit 1
     fi
-fi
 
-if [ $install_moonraker -ne 0 ] || [ $install_nginx -ne 0 ] || [ $install_fluidd -ne 0 ] || [ $install_mainsail -ne 0 ]; then
-    if [ "$client" = "cli" ]; then
-        echo
-        echo "INFO: Restarting Nginx ..."
-        /etc/init.d/S50nginx_service restart
-    else
-        echo "WARNING: NGINX restart required"
+    apply_mount_overrides=0
+    if [ -n "$mount" ]; then
+        /usr/data/pellcorp/k1/apply-mount-overrides.sh $probe $mount
+        apply_mount_overrides=$?
     fi
-fi
 
-if [ $apply_overrides -ne 0 ] || [ $apply_mount_overrides -ne 0 ] || [ $install_cartographer_klipper -ne 0 ] || [ $install_beacon_klipper -ne 0 ] || [ $install_kamp -ne 0 ] || [ $install_klipper -ne 0 ] || [ $setup_probe -ne 0 ] || [ $setup_probe_specific -ne 0 ]; then
-    if [ "$client" = "cli" ]; then
-        echo
-        echo "INFO: Restarting Klipper ..."
-        /etc/init.d/S55klipper_service restart
-    else
-        echo "WARNING: Klipper restart required"
+    apply_overrides=0
+    # there will be no support for generating pellcorp-overrides unless you have done a factory reset
+    if [ -f /usr/data/pellcorp-backups/printer.factory.cfg ]; then
+        probe_model=${probe}
+
+        if [ "$probe" = "cartotouch" ]; then
+            probe_model=cartographer
+        fi
+
+        # we want a copy of the file before config overrides are re-applied so we can correctly generate diffs
+        # against different generations of the original file
+        for file in printer.cfg start_end.cfg fan_control.cfg useful_macros.cfg $probe_model.conf moonraker.conf webcam.conf sensorless.cfg ${probe}_macro.cfg ${probe}.cfg ${probe_model}-${model}.cfg; do
+            if [ -f /usr/data/printer_data/config/$file ]; then
+                cp /usr/data/printer_data/config/$file /usr/data/pellcorp-backups/$file
+            fi
+        done
+
+        if [ -f /usr/data/guppyscreen/guppyscreen.json ]; then
+          cp /usr/data/guppyscreen/guppyscreen.json /usr/data/pellcorp-backups/
+        fi
+
+        if [ "$skip_overrides" != "true" ]; then
+            apply_overrides
+            apply_overrides=$?
+        fi
     fi
-fi
 
-if [ $apply_overrides -ne 0 ] || [ $install_guppyscreen -ne 0 ]; then
-    if [ "$client" = "cli" ]; then
-        echo
-        echo "INFO: Restarting Guppyscreen ..."
-        /etc/init.d/S99guppyscreen restart
-    else
-        echo "WARNING: Guppyscreen restart required"
+    /usr/data/pellcorp/k1/update-ip-address.sh
+    update_ip_address=$?
+
+    if [ $apply_overrides -ne 0 ] || [ $install_moonraker -ne 0 ] || [ $install_cartographer_klipper -ne 0 ] || [ $install_beacon_klipper -ne 0 ] || [ $update_ip_address -ne 0 ]; then
+        if [ "$client" = "cli" ]; then
+            restart_moonraker
+        else
+            echo "WARNING: Moonraker restart required"
+        fi
     fi
-fi
 
-echo
-/usr/data/pellcorp/k1/tools/check-firmware.sh
+    if [ $install_moonraker -ne 0 ] || [ $install_nginx -ne 0 ] || [ $install_fluidd -ne 0 ] || [ $install_mainsail -ne 0 ]; then
+        if [ "$client" = "cli" ]; then
+            echo
+            echo "INFO: Restarting Nginx ..."
+            /etc/init.d/S50nginx_service restart
+        else
+            echo "WARNING: NGINX restart required"
+        fi
+    fi
 
-exit 0
+    if [ $apply_overrides -ne 0 ] || [ $apply_mount_overrides -ne 0 ] || [ $install_cartographer_klipper -ne 0 ] || [ $install_beacon_klipper -ne 0 ] || [ $install_kamp -ne 0 ] || [ $install_klipper -ne 0 ] || [ $setup_probe -ne 0 ] || [ $setup_probe_specific -ne 0 ]; then
+        if [ "$client" = "cli" ]; then
+            echo
+            echo "INFO: Restarting Klipper ..."
+            /etc/init.d/S55klipper_service restart
+        else
+            echo "WARNING: Klipper restart required"
+        fi
+    fi
+
+    if [ $apply_overrides -ne 0 ] || [ $install_guppyscreen -ne 0 ]; then
+        if [ "$client" = "cli" ]; then
+            echo
+            echo "INFO: Restarting Guppyscreen ..."
+            /etc/init.d/S99guppyscreen restart
+        else
+            echo "WARNING: Guppyscreen restart required"
+        fi
+    fi
+
+    echo
+    /usr/data/pellcorp/k1/tools/check-firmware.sh
+
+    exit 0
+} 2>&1 | tee -a $LOG_FILE
