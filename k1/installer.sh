@@ -1377,7 +1377,7 @@ elif [ "$1" = "--klipper-repo" ]; then # convenience for testing new features
 fi
 
 # want to make sure to we delete log files older than 2 days old
-find /usr/data/printer_data/logs -name "installer-*.log" -type f -mtime +2 -exec rm {} \;
+find /usr/data/printer_data/logs -name "installer-*.log" -type f -mtime +7 -exec rm {} \;
 sync
 
 export TIMESTAMP=$(date +"%Y%m%d_%H%M%S")
