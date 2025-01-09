@@ -7,8 +7,8 @@ y_offset:-22
 
 -- cartographer-k1.cfg
 [bed_mesh]
-mesh_min:5,5
-mesh_max:220,200
+mesh_min:10,5
+mesh_max:210,200
 
 [screws_tilt_adjust]
 screw1:26,42
