@@ -1653,8 +1653,13 @@ else
     exit 1
 fi
 
-apply_overrides=0
 apply_mount_overrides=0
+if [ -n "$mount" ]; then
+    /usr/data/pellcorp/k1/apply-mount-overrides.sh $probe $mount
+    apply_mount_overrides=$?
+fi
+
+apply_overrides=0
 # there will be no support for generating pellcorp-overrides unless you have done a factory reset
 if [ -f /usr/data/pellcorp-backups/printer.factory.cfg ]; then
     probe_model=${probe}
@@ -1673,11 +1678,6 @@ if [ -f /usr/data/pellcorp-backups/printer.factory.cfg ]; then
 
     if [ -f /usr/data/guppyscreen/guppyscreen.json ]; then
       cp /usr/data/guppyscreen/guppyscreen.json /usr/data/pellcorp-backups/
-    fi
-
-    if [ -n "$mount" ]; then
-        /usr/data/pellcorp/k1/apply-mount-overrides.sh $probe $mount
-        apply_mount_overrides=$?
     fi
 
     if [ "$skip_overrides" != "true" ]; then
