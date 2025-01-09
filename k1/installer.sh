@@ -1524,9 +1524,9 @@ if [ ! -f /usr/data/pellcorp.done ] && [ ! -f /usr/data/pellcorp-backups/printer
     if ! grep -q "# Modified by Simple AF " /usr/data/printer_data/config/printer.cfg; then
         cp /usr/data/printer_data/config/printer.cfg /usr/data/pellcorp-backups/printer.factory.cfg
     else
-      echo "ERROR ERROR ERROR ERROR ERROR ERROR ERROR ERROR ERROR ERROR ERROR ERROR ERROR ERROR ERROR"
-      echo "ERROR: No pristine factory printer.cfg available - config overrides are disabled!!!!!!!!!"
-      echo "ERROR ERROR ERROR ERROR ERROR ERROR ERROR ERROR ERROR ERROR ERROR ERROR ERROR ERROR ERROR"
+      echo "WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING"
+      echo "WARNING: No pristine factory printer.cfg available - config overrides are disabled!"
+      echo "WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING"
     fi
 fi
 
@@ -1556,7 +1556,7 @@ sync
 if [ "$mode" = "reinstall" ] || [ "$mode" = "update" ]; then
     if [ "$skip_overrides" != "true" ]; then
         if [ -f /usr/data/pellcorp-backups/printer.cfg ]; then
-          /usr/data/pellcorp/k1/config-overrides.sh
+            /usr/data/pellcorp/k1/config-overrides.sh
         elif [ -f /usr/data/pellcorp.done ]; then # for a factory reset this warning is superfluous
           echo "WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING"
           echo "WARNING: No /usr/data/pellcorp-backups/printer.cfg - config overrides won't be generated!"

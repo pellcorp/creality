@@ -107,6 +107,7 @@ if [ "$1" = "--repo" ] || [ "$1" = "--clean-repo" ]; then
         exit 1
     fi
 else
+
   # there will be no support for generating pellcorp-overrides unless you have done a factory reset
   if [ -f /usr/data/pellcorp-backups/printer.factory.cfg ]; then
       # the pellcorp-backups do not need .pellcorp extension, so this is to fix backwards compatible
@@ -123,6 +124,19 @@ else
   if [ -f /usr/data/pellcorp-overrides.cfg ]; then
       echo "ERROR: /usr/data/pellcorp-overrides.cfg exists!"
       exit 1
+  fi
+
+  if [ ! -f /usr/data/pellcorp.done ]; then
+      echo "ERROR: No installation found"
+      exit 1
+  fi
+
+  if [ $(grep "probe" /usr/data/pellcorp.done | wc -l) -lt 2 ]; then
+    echo "ERROR: Previous partial installation detected, configuration overrides will not be generated"
+    if [ -d /usr/data/pellcorp-overrides ]; then
+        echo "INFO: Previous configuration overrides will be used instead"
+    fi
+    exit 1
   fi
 
   mkdir -p /usr/data/pellcorp-overrides
