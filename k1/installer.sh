@@ -38,6 +38,35 @@ fi
 
 # kill pip cache to free up overlayfs
 rm -rf /root/.cache
+sync
+
+REMAINING_ROOT_DISK=$(df -m / | tail -1 | awk '{print $4}')
+if [ $REMAINING_ROOT_DISK -gt 25 ]; then
+    echo "INFO: There is $(df -h / | tail -1 | awk '{print $4}') remaining on your / partition"
+else
+    echo "CRITICAL: Remaining / space is critically low!"
+    echo "CRITICAL: There is $(df -h / | tail -1 | awk '{print $4}') remaining on your / partition"
+    exit 1
+fi
+
+REMAINING_TMP_DISK=$(df -m / | tail -1 | awk '{print $4}')
+if [ $REMAINING_TMP_DISK -gt 25 ]; then
+    echo "INFO: There is $(df -h /tmp | tail -1 | awk '{print $4}') remaining on your /tmp partition"
+else
+    echo "CRITICAL: Remaining /tmp space is critically low!"
+    echo "CRITICAL: There is $(df -h /tmp | tail -1 | awk '{print $4}') remaining on your /tmp partition"
+    exit 1
+fi
+
+REMAINING_DATA_DISK=$(df -m /usr/data | tail -1 | awk '{print $4}')
+if [ $REMAINING_DATA_DISK -gt 1000 ]; then
+    echo "INFO: There is $(df -h /usr/data | tail -1 | awk '{print $4}') remaining on your /usr/data partition"
+else
+    echo "CRITICAL: Remaining disk space is critically low!"
+    echo "CRITICAL: There is $(df -h /usr/data | tail -1 | awk '{print $4}') remaining on your /usr/data partition"
+    exit 1
+fi
+echo
 
 cp /usr/data/pellcorp/k1/services/S58factoryreset /etc/init.d || exit $?
 cp /usr/data/pellcorp/k1/services/S50dropbear /etc/init.d/ || exit $?
