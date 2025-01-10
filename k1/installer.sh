@@ -49,7 +49,7 @@ else
     exit 1
 fi
 
-REMAINING_TMP_DISK=$(df -m / | tail -1 | awk '{print $4}')
+REMAINING_TMP_DISK=$(df -m /tmp | tail -1 | awk '{print $4}')
 if [ $REMAINING_TMP_DISK -gt 25 ]; then
     echo "INFO: There is $(df -h /tmp | tail -1 | awk '{print $4}') remaining on your /tmp partition"
 else
@@ -68,13 +68,14 @@ else
 fi
 echo
 
+cp /usr/data/pellcorp/k1/services/S45cleanup /etc/init.d || exit $?
 cp /usr/data/pellcorp/k1/services/S58factoryreset /etc/init.d || exit $?
 cp /usr/data/pellcorp/k1/services/S50dropbear /etc/init.d/ || exit $?
 sync
 
 # for k1 the installed curl does not do ssl, so we replace it first
 # and we can then make use of it going forward
-cp /usr/data/pellcorp/k1/tools/curl /usr/bin/curl
+cp /usr/data/pellcorp/k1/tools/curl /usr/bin/curl || exit $?
 sync
 
 CONFIG_HELPER="/usr/data/pellcorp/k1/config-helper.py"
@@ -1404,10 +1405,6 @@ elif [ "$1" = "--klipper-repo" ]; then # convenience for testing new features
         exit 1
     fi
 fi
-
-# want to make sure to we delete log files older than 2 days old
-find /usr/data/printer_data/logs -name "installer-*.log" -type f -mtime +7 -exec rm {} \;
-sync
 
 export TIMESTAMP=$(date +"%Y%m%d_%H%M%S")
 LOG_FILE=/usr/data/printer_data/logs/installer-$TIMESTAMP.log

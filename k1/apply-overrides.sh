@@ -43,7 +43,6 @@ function apply_overrides() {
                 fi
 
                 echo "INFO: Applying overrides for /usr/data/printer_data/config/$file ..."
-                cp /usr/data/printer_data/config/$file /usr/data/printer_data/config/backups/${file}.override.bkp
                 $CONFIG_HELPER --file $file --overrides $overrides_dir/$file || exit $?
 
                 if [ "$file" = "guppyscreen.cfg" ]; then  # we removed guppy module loader completely
