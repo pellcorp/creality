@@ -1206,11 +1206,6 @@ function setup_beacon() {
 
         # for beacon can't use homing override
         $CONFIG_HELPER --file sensorless.cfg --remove-section "homing_override"
-        # beacon homes z separately
-        $CONFIG_HELPER --file sensorless.cfg --remove-section "gcode_macro _HOME_Z"
-        $CONFIG_HELPER --file sensorless.cfg --remove-section-entry "gcode_macro _SENSORLESS_PARAMS" "variable_safe_z"
-        $CONFIG_HELPER --file sensorless.cfg --remove-section-entry "gcode_macro _SENSORLESS_PARAMS" "variable_force_move"
-        $CONFIG_HELPER --file sensorless.cfg --remove-section-entry "gcode_macro _SENSORLESS_PARAMS" "variable_move_centre"
 
         y_position_max=$($CONFIG_HELPER --get-section-entry "stepper_y" "position_max")
         # make sure to remove any floating point portion
