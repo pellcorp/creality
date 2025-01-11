@@ -15,7 +15,7 @@ start() {
       [ -d $PRINTER_LOGS_DIR ] || mkdir -p $PRINTER_LOGS_DIR
       [ -d $GCODE_FILES_DIR ] || mkdir -p $GCODE_FILES_DIR
 
-      HOME=/root start-stop-daemon -S -q -b -m -p $PID_FILE \
+      TMPDIR=/usr/data/tmp HOME=/root start-stop-daemon -S -q -b -m -p $PID_FILE \
             --exec $PROG -- $PY_SCRIPT \
             $PRINTER_CONFIG_DIR/printer.cfg \
             -l $PRINTER_LOGS_DIR/klippy.log \
