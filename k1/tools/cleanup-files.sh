@@ -44,6 +44,10 @@ while true; do
     fi
 done
 
+# this is required because K series boards do not have a RTC, so it 2020 when it
+# gets turned on until ntp gets started, so we are looking for a massive drift jump
+# to know that ntp kicked in and finished its sync.   This script gets started
+# well before ntp does.
 if [ "$dryrun" != "true" ] || [ "$client" != "true" ]; then
     # this is jan 10 2025
     if [ $start_timestamp -lt 1583064047 ]; then
@@ -70,6 +74,18 @@ if [ $REMAINING_DISK -lt 1000 ]; then
         delete $file
     done
 fi
+sync
+
+# clear out tmp dir
+files=$(find /usr/data/tmp/ -type f -mtime 0 -print)
+for file in $files; do
+    filename=$(basename $file)
+    if [ "$filename" = "moonraker_instance_ids" ]; then
+        log "Skipped $file"
+    else
+        delete $file
+    fi
+done
 sync
 
 # we no longer create old style backups
