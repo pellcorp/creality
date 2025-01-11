@@ -29,6 +29,15 @@ if [ -d /usr/data/helper-script ] || [ -f /usr/data/fluidd.sh ] || [ -f /usr/dat
     exit 1
 fi
 
+# if we have not even started a new installation of simple af just double check there is no save config in the
+# printer.cfg as this is a sure sign someone has forgot to do a factory reset
+if [ -f /etc/init.d/S99start_app ]; then
+    if grep -q "#*# <---------------------- SAVE_CONFIG ---------------------->" /usr/data/printer_data/config/printer.cfg; then
+        echo "You must factory reset the printer before installing Simple AF!"
+        exit 1
+    fi
+fi
+
 # everything else in the script assumes its cloned to /usr/data/pellcorp
 # so we must verify this or shit goes wrong
 if [ "$(dirname $(readlink -f $0))" != "/usr/data/pellcorp/k1" ]; then
@@ -1606,6 +1615,12 @@ LOG_FILE=/usr/data/printer_data/logs/installer-$TIMESTAMP.log
 
         # if we took a post factory reset backup for a reinstall restore it now
         if [ -f /usr/data/pellcorp-backups/printer.factory.cfg ]; then
+            # lets just repair existing printer.factory.cfg if someone failed to factory reset, we will get them next time
+            # but config overrides should generally work even if its not truly a factory config file
+            if grep -q "#*# <---------------------- SAVE_CONFIG ---------------------->" /usr/data/pellcorp-backups/printer.factory.cfg; then
+                sed -i '/^#*#/d' /usr/data/pellcorp-backups/printer.factory.cfg
+            fi
+
             cp /usr/data/pellcorp-backups/printer.factory.cfg /usr/data/printer_data/config/printer.cfg
             DATE_TIME=$(date +"%Y-%m-%d %H:%M:%S")
             sed -i "1s/^/# Modified by Simple AF ${DATE_TIME}\n/" /usr/data/printer_data/config/printer.cfg
