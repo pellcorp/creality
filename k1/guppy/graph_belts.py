@@ -509,7 +509,6 @@ def belts_calibration(lognames, klipperdir="~/klipper", max_freq=200., graph_spe
     signal1 = signal1._replace(paired_peaks=paired_peaks, unpaired_peaks=unpaired_peaks1)
     signal2 = signal2._replace(paired_peaks=paired_peaks, unpaired_peaks=unpaired_peaks2)
 
-
     if graph_spectogram:
         fig = matplotlib.pyplot.figure()
         gs = matplotlib.gridspec.GridSpec(2, 1, height_ratios=[4, 3])
@@ -521,10 +520,10 @@ def belts_calibration(lognames, klipperdir="~/klipper", max_freq=200., graph_spe
     # Add title
     try:
         filename = lognames[0].split('/')[-1]
+        filename = filename.split('=')[-1].replace('.csv', '')
         dt = datetime.strptime(f"{filename.split('_')[1]} {filename.split('_')[2]}", "%Y%m%d %H%M%S")
         title_line2 = dt.strftime('%x %X')
     except:
-        print("Warning: CSV filenames look to be different than expected (%s , %s)" % (lognames[0], lognames[1]))
         title_line2 = lognames[0].split('/')[-1] + " / " +  lognames[1].split('/')[-1]
     fig.suptitle(title_line2)
 
