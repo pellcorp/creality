@@ -885,6 +885,9 @@ function install_guppyscreen() {
 
         cp /usr/data/pellcorp/k1/services/S99guppyscreen /etc/init.d/ || exit $?
 
+        ln -sf /usr/data/pellcorp/k1/files/respawn/libeinfo.so.1 /lib/libeinfo.so.1
+        ln -sf /usr/data/pellcorp/k1/files/respawn/librc.so.1 /lib/librc.so.1
+
         if [ ! -d "/usr/lib/python3.8/site-packages/matplotlib-2.2.3-py3.8.egg-info" ]; then
             echo "WARNING: Not replacing mathplotlib ft2font module. PSD graphs might not work!"
         else
