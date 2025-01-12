@@ -834,6 +834,9 @@ function install_guppyscreen() {
             rm /usr/data/guppyscreen.tar.gz 
         fi
 
+        ln -sf /usr/data/pellcorp/k1/fixes/respawn/libeinfo.so.1 /lib/libeinfo.so.1
+        ln -sf /usr/data/pellcorp/k1/fixes/respawn/librc.so.1 /lib/librc.so.1
+
         echo "INFO: Updating guppyscreen config ..."
         cp /usr/data/pellcorp/k1/services/S99guppyscreen /etc/init.d/ || exit $?
 
