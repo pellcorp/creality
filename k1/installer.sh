@@ -670,11 +670,12 @@ function install_klipper() {
         else
             cd /usr/data/klipper/
             remote_repo=$(git remote get-url origin | awk -F '/' '{print $NF}' | sed 's/.git//g')
-            last_revision_date=$(git log -1 --format="%at" | xargs -I{} date -d @{} +%Y%m%d)
+            git log | grep -q "CLEAR for SET_KINEMATIC_POSITION"
+            klipper_status=$?
             cd - > /dev/null
 
-            # force update of klipper to one with TMPDIR support
-            if [ "$remote_repo" = "klipper" ] && [ $last_revision_date -lt 20250111 ]; then
+            # force klipper update to get set kinematic position feature
+            if [ "$remote_repo" = "klipper" ] && [ $klipper_status -ne 0 ]; then
                 echo "INFO: Forcing update of klipper to latest master"
                 update_repo /usr/data/klipper master || exit $?
             fi
