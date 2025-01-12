@@ -808,10 +808,16 @@ function install_guppyscreen() {
     if [ $? -ne 0 ]; then
         if [ "$mode" != "update" ] && [ -d /usr/data/guppyscreen ]; then
             if [ -f /etc/init.d/S99guppyscreen ]; then
-              /etc/init.d/S99guppyscreen stop  > /dev/null 2>&1
+              /etc/init.d/S99guppyscreen stop > /dev/null 2>&1
               killall -q guppyscreen > /dev/null 2>&1
             fi
             rm -rf /usr/data/guppyscreen
+        elif [ -f /etc/init.d/S99guppyscreen ]; then
+            # stop it for the last time before we migrate
+            if grep -q "start-stop-daemon" /etc/init.d/S99guppyscreen; then
+                /etc/init.d/S99guppyscreen stop > /dev/null 2>&1
+                killall -q guppyscreen > /dev/null 2>&1
+            fi
         fi
 
         # check for non pellcorp guppyscreen and force an update
