@@ -1785,17 +1785,8 @@ LOG_FILE=/usr/data/printer_data/logs/installer-$TIMESTAMP.log
         exit 1
     fi
 
-    apply_mount_overrides=0
-    if [ -n "$mount" ]; then
-        /usr/data/pellcorp/k1/apply-mount-overrides.sh $probe $mount
-        apply_mount_overrides=$?
-    fi
-
-    apply_overrides=0
-    # there will be no support for generating pellcorp-overrides unless you have done a factory reset
     if [ -f /usr/data/pellcorp-backups/printer.factory.cfg ]; then
         probe_model=${probe}
-
         if [ "$probe" = "cartotouch" ]; then
             probe_model=cartographer
         fi
@@ -1811,7 +1802,17 @@ LOG_FILE=/usr/data/printer_data/logs/installer-$TIMESTAMP.log
         if [ -f /usr/data/guppyscreen/guppyscreen.json ]; then
           cp /usr/data/guppyscreen/guppyscreen.json /usr/data/pellcorp-backups/
         fi
+    fi
+    
+    apply_mount_overrides=0
+    if [ -n "$mount" ]; then
+        /usr/data/pellcorp/k1/apply-mount-overrides.sh $probe $mount
+        apply_mount_overrides=$?
+    fi
 
+    apply_overrides=0
+    # there will be no support for generating pellcorp-overrides unless you have done a factory reset
+    if [ -f /usr/data/pellcorp-backups/printer.factory.cfg ]; then
         if [ "$skip_overrides" != "true" ]; then
             apply_overrides
             apply_overrides=$?
