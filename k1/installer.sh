@@ -351,7 +351,7 @@ function install_moonraker() {
 
         if [ "$mode" != "update" ] && [ -d /usr/data/moonraker-env ]; then
             rm -rf /usr/data/moonraker-env
-        elif [ ! -d /usr/data/moonraker-env/lib/python3.8/site-packages/dbus_fast ]; then
+        elif [ ! -d /usr/data/moonraker-env/lib/python3.8/site-packages/dbus_fast ] || [ -d /usr/data/moonraker-env/lib/python3.8/site-packages/apprise-1.7.1.dist-info ]; then
             echo "INFO: Forcing recreation of moonraker-env ..."
             rm -rf /usr/data/moonraker-env
         fi
