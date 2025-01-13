@@ -1343,13 +1343,20 @@ function fixup_client_variables_config() {
 
     changed=0
     position_min_x=$($CONFIG_HELPER --get-section-entry "stepper_x" "position_min" --integer)
+    position_min_y=$($CONFIG_HELPER --get-section-entry "stepper_y" "position_min" --integer)
     position_max_x=$($CONFIG_HELPER --get-section-entry "stepper_x" "position_max" --integer)
+    position_max_y=$($CONFIG_HELPER --get-section-entry "stepper_y" "position_max" --integer)
+    variable_custom_park_y=$($CONFIG_HELPER --file start_end.cfg --get-section-entry "gcode_macro _CLIENT_VARIABLE" "variable_custom_park_y" --integer)
+    variable_custom_park_x=$($CONFIG_HELPER --file start_end.cfg --get-section-entry "gcode_macro _CLIENT_VARIABLE" "variable_custom_park_x" --integer)
+    variable_park_at_cancel_y=$($CONFIG_HELPER --file start_end.cfg --get-section-entry "gcode_macro _CLIENT_VARIABLE" "variable_park_at_cancel_y" --integer)
+    variable_park_at_cancel_x=$($CONFIG_HELPER --file start_end.cfg --get-section-entry "gcode_macro _CLIENT_VARIABLE" "variable_park_at_cancel_x" --integer)
+
     # this is a bit of sanity checking, although it should in practive never happen
     if [ $position_max_x -le $position_min_x ]; then
         echo "ERROR: The stepper_x position_max seems to be incorrect: $position_max_x"
         return 0
     fi
-    variable_custom_park_x=$($CONFIG_HELPER --file start_end.cfg --get-section-entry "gcode_macro _CLIENT_VARIABLE" "variable_custom_park_x" --integer)
+
     if [ $variable_custom_park_x -eq 0 ] || [ $variable_custom_park_x -ge $position_max_x ] || [ $variable_custom_park_x -le $position_min_x ]; then
         pause_park_x=$((position_max_x - 10))
         if [ $pause_park_x -ne $variable_custom_park_x ]; then
@@ -1359,8 +1366,6 @@ function fixup_client_variables_config() {
         fi
     fi
 
-    position_min_y=$($CONFIG_HELPER --get-section-entry "stepper_y" "position_min" --integer)
-    variable_custom_park_y=$($CONFIG_HELPER --file start_end.cfg --get-section-entry "gcode_macro _CLIENT_VARIABLE" "variable_custom_park_y" --integer)
     if [ $variable_custom_park_y -eq 0 ] || [ $variable_custom_park_y -le $position_min_y ]; then
         pause_park_y=$(($position_min_y + 10))
         if [ $pause_park_y -ne $variable_custom_park_y ]; then
@@ -1370,7 +1375,6 @@ function fixup_client_variables_config() {
         fi
     fi
 
-    variable_park_at_cancel_x=$($CONFIG_HELPER --file start_end.cfg --get-section-entry "gcode_macro _CLIENT_VARIABLE" "variable_park_at_cancel_x" --integer)
     # as long as parking has not been overriden
     if [ $variable_park_at_cancel_x -eq 0 ] || [ $variable_park_at_cancel_x -ge $position_max_x ]; then
         custom_park_x=$((position_max_x - 10))
@@ -1381,13 +1385,12 @@ function fixup_client_variables_config() {
         fi
     fi
 
-    position_max_y=$($CONFIG_HELPER --get-section-entry "stepper_y" "position_max" --integer)
     # this is a bit of sanity checking, although it should in practive never happen
     if [ $position_max_y -le $position_min_y ]; then
         echo "ERROR: The stepper_y position_max seems to be incorrect: $position_max_y"
         return 0
     fi
-    variable_park_at_cancel_y=$($CONFIG_HELPER --file start_end.cfg --get-section-entry "gcode_macro _CLIENT_VARIABLE" "variable_park_at_cancel_y" --integer)
+
     if [ $variable_park_at_cancel_y -eq 0 ] || [ $variable_park_at_cancel_y -ge $position_max_y ]; then
         custom_park_y=$((position_max_y - 10))
         if [ $custom_park_y -ne $variable_park_at_cancel_y ]; then
