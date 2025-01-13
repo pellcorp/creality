@@ -1351,9 +1351,28 @@ function fixup_client_variables_config() {
     variable_park_at_cancel_y=$($CONFIG_HELPER --file start_end.cfg --get-section-entry "gcode_macro _CLIENT_VARIABLE" "variable_park_at_cancel_y" --integer)
     variable_park_at_cancel_x=$($CONFIG_HELPER --file start_end.cfg --get-section-entry "gcode_macro _CLIENT_VARIABLE" "variable_park_at_cancel_x" --integer)
 
-    # this is a bit of sanity checking, although it should in practive never happen
     if [ $position_max_x -le $position_min_x ]; then
         echo "ERROR: The stepper_x position_max seems to be incorrect: $position_max_x"
+        return 0
+    fi
+    if [ $position_max_y -le $position_min_y ]; then
+        echo "ERROR: The stepper_y position_max seems to be incorrect: $position_max_y"
+        return 0
+    fi
+    if [ -z "$variable_custom_park_y" ]; then
+        echo "ERROR: The variable_custom_park_y has no value"
+        return 0
+    fi
+    if [ -z "$variable_custom_park_x" ]; then
+        echo "ERROR: The variable_custom_park_x has no value"
+        return 0
+    fi
+    if [ -z "$variable_park_at_cancel_y" ]; then
+        echo "ERROR: The variable_park_at_cancel_y has no value"
+        return 0
+    fi
+    if [ -z "$variable_park_at_cancel_x" ]; then
+        echo "ERROR: The variable_park_at_cancel_x has no value"
         return 0
     fi
 
@@ -1383,12 +1402,6 @@ function fixup_client_variables_config() {
             $CONFIG_HELPER --file start_end.cfg --replace-section-entry "gcode_macro _CLIENT_VARIABLE" "variable_park_at_cancel_x" $custom_park_x
             changed=1
         fi
-    fi
-
-    # this is a bit of sanity checking, although it should in practive never happen
-    if [ $position_max_y -le $position_min_y ]; then
-        echo "ERROR: The stepper_y position_max seems to be incorrect: $position_max_y"
-        return 0
     fi
 
     if [ $variable_park_at_cancel_y -eq 0 ] || [ $variable_park_at_cancel_y -ge $position_max_y ]; then
