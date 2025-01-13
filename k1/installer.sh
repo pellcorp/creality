@@ -1412,6 +1412,8 @@ function fixup_client_variables_config() {
             changed=1
         fi
     fi
+
+    sync
     return $changed
 }
 
