@@ -1241,7 +1241,7 @@ function setup_beacon() {
 
         # 25mm for safety in case someone is using a RevD or low profile, lots of space to reclaim
         # if you are using the side mount
-        position_max=$((position_max-25))
+        position_max=$($CONFIG_HELPER --get-section-entry "stepper_y" "position_max" --minus 25 --integer)
         $CONFIG_HELPER --replace-section-entry "stepper_y" "position_max" "$position_max" || exit $?
 
         echo "beacon-probe" >> /usr/data/pellcorp.done
