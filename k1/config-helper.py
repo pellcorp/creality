@@ -38,7 +38,7 @@ def get_section_value(updater, section_name, key):
                 elif ';' in value:
                     return value.split(';', 1)[0].strip()
                 else:
-                    return value
+                    return value.strip()
     return None
 
 
