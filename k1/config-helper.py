@@ -317,15 +317,12 @@ def main():
         if options.output:
             with open(options.output, 'w') as file:
                 updater.write(file)
-            os.system("sync")
         else:
             with open(config_file, 'w') as file:
                 updater.write(file)
-            os.system("sync")
     elif not read_only and options.output:
         with open(options.output, 'w') as file:
             updater.write(file)
-        os.system("sync")
 
     sys.exit(exit_code)
 
