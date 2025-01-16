@@ -44,6 +44,10 @@ while true; do
     fi
 done
 
+# kill pip cache to free up overlayfs
+rm -rf /root/.cache
+sync
+
 # this is required because K series boards do not have a RTC, so it 2020 when it
 # gets turned on until ntp gets started, so we are looking for a massive drift jump
 # to know that ntp kicked in and finished its sync.   This script gets started

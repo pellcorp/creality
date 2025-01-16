@@ -1497,8 +1497,12 @@ elif [ "$1" = "--klipper-repo" ]; then # convenience for testing new features
     fi
 fi
 
-export TIMESTAMP=$(date +"%Y%m%d_%H%M%S")
+export TIMESTAMP=$(date +"%Y-%m-%d_%H-%M-%S")
 LOG_FILE=/usr/data/printer_data/logs/installer-$TIMESTAMP.log
+
+cd /usr/data/pellcorp
+PELLCORP_GIT_SHA=$(git rev-parse HEAD)
+cd - > /dev/null
 
 {
     # figure out what existing probe if any is being used
@@ -1638,24 +1642,15 @@ LOG_FILE=/usr/data/printer_data/logs/installer-$TIMESTAMP.log
 
     # to avoid cluttering the printer_data/config directory lets move stuff
     mkdir -p /usr/data/printer_data/config/backups/
-    mv /usr/data/printer_data/config/*.bkp /usr/data/printer_data/config/backups/ 2> /dev/null
 
-    TIMESTAMP=$(date +"%Y%m%d_%H%M%S")
-    cd /usr/data/printer_data/config/
+    # we don't do these kinds of backups anymore
+    rm /usr/data/printer_data/config/*.bkp 2> /dev/null
 
-    CFG_ARG='*.cfg'
-    CONF_ARG=''
-    ls *.conf > /dev/null 2>&1
-    # straight from a factory reset, there will be no conf files
-    if [ $? -eq 0 ]; then
-        CONF_ARG='*.conf'
-    fi
-    tar -zcf /usr/data/printer_data/config/backups/backup-${TIMESTAMP}.tar.gz $CFG_ARG $CONF_ARG
-    cd - > /dev/null
-    sync
+    echo "INFO: Backing up existing configuration ..."
+    /usr/data/pellcorp/k1/tools/backups.sh --create
+    echo
 
     mkdir -p /usr/data/pellcorp-backups
-
     # the pellcorp-backups do not need .pellcorp extension, so this is to fix backwards compatible
     if [ -f /usr/data/pellcorp-backups/printer.pellcorp.cfg ]; then
         mv /usr/data/pellcorp-backups/printer.pellcorp.cfg /usr/data/pellcorp-backups/printer.cfg
@@ -1887,5 +1882,6 @@ LOG_FILE=/usr/data/printer_data/logs/installer-$TIMESTAMP.log
     echo
     /usr/data/pellcorp/k1/tools/check-firmware.sh
 
+    echo "installed_sha=$PELLCORP_GIT_SHA" >> /usr/data/pellcorp.done
     exit 0
 } 2>&1 | tee -a $LOG_FILE
