@@ -356,6 +356,16 @@ function install_moonraker() {
             rm -rf /usr/data/moonraker-env
         fi
 
+        if [ -d /usr/data/moonraker/.git ]; then
+            cd /usr/data/moonraker
+            MOONRAKER_URL=$(git remote get-url origin)
+            cd - > /dev/null
+            if [ "$MOONRAKER_URL" != "https://github.com/pellcorp/moonraker.git" ]; then
+                echo "INFO: Forcing moonraker to switch to pellcorp/moonraker"
+                rm -rf /usr/data/moonraker
+            fi
+        fi
+
         if [ ! -d /usr/data/moonraker/.git ]; then
             echo "INFO: Installing moonraker ..."
         
@@ -363,7 +373,7 @@ function install_moonraker() {
             [ -d /usr/data/moonraker-env ] && rm -rf /usr/data/moonraker-env
 
             echo
-            git clone https://github.com/Arksine/moonraker /usr/data/moonraker || exit $?
+            git clone https://github.com/pellcorp/moonraker /usr/data/moonraker || exit $?
 
             if [ -f /usr/data/moonraker-database.tar.gz ]; then
                 echo
