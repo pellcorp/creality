@@ -40,10 +40,31 @@ fi
 if [ -f /usr/data/printer_data/config/support.tar.gz ]; then
     rm /usr/data/printer_data/config/support.tar.gz
 fi
+
+if [ -f /usr/data/support.log ]; then
+    rm /usr/data/support.log
+fi
+
+DATE_TIME=$(date +"%Y-%m-%d %H:%M:%S")
+echo "----------------------------------------------------------------------------" >> /usr/data/support.log
+echo "Simple AF installation details ${DATE_TIME}" >> /usr/data/support.log
+echo "---------------- top -------------------------------------------------------" >> /usr/data/support.log
+top -b -n 1 >> /usr/data/support.log
+echo "---------------- free ------------------------------------------------------" >> /usr/data/support.log
+free >> /usr/data/support.log
+echo "---------------- lsusb -----------------------------------------------------" >> /usr/data/support.log
+lsusb >> /usr/data/support.log
+echo "---------------- ls -la /etc/init.d ----------------------------------------" >> /usr/data/support.log
+ls -la /etc/init.d >> /usr/data/support.log
+echo "---------------- ls -laR /usr/data -----------------------------------------" >> /usr/data/support.log
+ls -laR /usr/data >> /usr/data/support.log
+echo "----------------------------------------------------------------------------" >> /usr/data/support.log
+
 cd /usr/data
-tar -zcf /usr/data/printer_data/config/support.tar.gz printer_data/config/backups/backup-latest.tar.gz $latest_tar_ball printer_data/logs/installer-*.log printer_data/logs/klippy.log printer_data/logs/moonraker.log printer_data/logs/guppyscreen.log /var/log/messages 2> /dev/null
+tar -zcf /usr/data/printer_data/config/support.tar.gz support.log printer_data/config/backups/backup-latest.tar.gz $latest_tar_ball printer_data/logs/installer-*.log printer_data/logs/klippy.log printer_data/logs/moonraker.log printer_data/logs/guppyscreen.log /var/log/messages 2> /dev/null
 cd - > /dev/null
 
+rm /usr/data/support.log
 rm /usr/data/printer_data/config/backups/backup-latest.tar.gz
 if [ -f /usr/data/printer_data/config/support.tar.gz ]; then
     echo "Upload the support.tar.gz to discord"
