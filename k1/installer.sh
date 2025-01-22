@@ -1432,6 +1432,34 @@ function fixup_client_variables_config() {
     return $changed
 }
 
+function fix_custom_config() {
+    changed=0
+    custom_configs=$(find /usr/data/printer_data/config/ -maxdepth 1 -exec grep -l "\[gcode_macro M109\]" {} \;)
+    if [ -n "$custom_configs" ]; then
+        for custom_config in $custom_configs; do
+            filename=$(basename $custom_config)
+            if [ "$filename" != "useful_macros.cfg" ]; then
+                echo "INFO: Deleting M109 macro from $custom_config"
+                $CONFIG_HELPER --file $filename --remove-section "gcode_macro M109"
+                changed=1
+            fi
+        done
+    fi
+    custom_configs=$(find /usr/data/printer_data/config/ -maxdepth 1 -exec grep -l "\[gcode_macro M190\]" {} \;)
+    if [ -n "$custom_configs" ]; then
+        for custom_config in $custom_configs; do
+            filename=$(basename $custom_config)
+            if [ "$filename" != "useful_macros.cfg" ]; then
+                echo "INFO: Deleting M190 macro from $custom_config"
+                $CONFIG_HELPER --file $filename --remove-section "gcode_macro M190"
+                changed=1
+            fi
+        done
+    fi
+    sync
+    return $changed
+}
+
 # special mode to update the repo only
 # this stuff we do not want to have a log file for
 if [ "$1" = "--update-repo" ] || [ "$1" = "--update-branch" ]; then
@@ -1865,6 +1893,10 @@ cd - > /dev/null
         fi
     fi
 
+    # cleanup any M109 or M190 redefined
+    fix_custom_config
+    fix_custom_config=$?
+
     fixup_client_variables_config
     fixup_client_variables_config=$?
     if [ $fixup_client_variables_config -eq 0 ]; then
@@ -1892,7 +1924,7 @@ cd - > /dev/null
         fi
     fi
 
-    if [ $fixup_client_variables_config -ne 0 ] || [ $apply_overrides -ne 0 ] || [ $apply_mount_overrides -ne 0 ] || [ $install_cartographer_klipper -ne 0 ] || [ $install_beacon_klipper -ne 0 ] || [ $install_kamp -ne 0 ] || [ $install_klipper -ne 0 ] || [ $setup_probe -ne 0 ] || [ $setup_probe_specific -ne 0 ]; then
+    if [ $fix_custom_config -ne 0 ] || [ $fixup_client_variables_config -ne 0 ] || [ $apply_overrides -ne 0 ] || [ $apply_mount_overrides -ne 0 ] || [ $install_cartographer_klipper -ne 0 ] || [ $install_beacon_klipper -ne 0 ] || [ $install_kamp -ne 0 ] || [ $install_klipper -ne 0 ] || [ $setup_probe -ne 0 ] || [ $setup_probe_specific -ne 0 ]; then
         if [ "$client" = "cli" ]; then
             echo
             echo "INFO: Restarting Klipper ..."
