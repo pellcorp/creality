@@ -126,6 +126,11 @@ function update_repo() {
         branch_ref=$(git rev-parse --abbrev-ref HEAD)
         if [ -n "$branch_ref" ]; then
             git fetch
+            if [ $? -ne 0 ]; then
+                cd - > /dev/null
+                echo "ERROR: Failed to pull latest changes!"
+                return 1
+            fi
 
             if [ -z "$branch" ]; then
                 git reset --hard origin/$branch_ref
@@ -139,11 +144,11 @@ function update_repo() {
             sync
         else
             cd - > /dev/null
-            echo "Failed to detect current branch!"
+            echo "ERROR: Failed to detect current branch!"
             return 1
         fi
     else
-        echo "Invalid $repo_dir specified"
+        echo "ERROR: Invalid $repo_dir specified"
         return 1
     fi
     return 0
