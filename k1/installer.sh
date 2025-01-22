@@ -378,7 +378,7 @@ function install_moonraker() {
             [ -d /usr/data/moonraker-env ] && rm -rf /usr/data/moonraker-env
 
             echo
-            git clone https://github.com/pellcorp/moonraker /usr/data/moonraker || exit $?
+            git clone https://github.com/pellcorp/moonraker.git /usr/data/moonraker || exit $?
 
             if [ -f /usr/data/moonraker-database.tar.gz ]; then
                 echo
