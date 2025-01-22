@@ -1599,6 +1599,24 @@ cd - > /dev/null
       exit 1
     fi
 
+    if [ "$mode" = "install" ] && [ -f /usr/data/pellcorp.done ]; then
+        PELLCORP_GIT_SHA=$(cat /usr/data/pellcorp.done | grep "installed_sha" | awk -F '=' '{print $2}')
+        if [ -n "$PELLCORP_GIT_SHA" ]; then
+            echo "ERROR: Installation has already completed"
+
+            cd /usr/data/pellcorp
+            CURRENT_REVISION=$(git rev-parse HEAD)
+            cd - > /dev/null
+            if [ "$PELLCORP_GIT_SHA" != "$CURRENT_REVISION" ]; then
+                echo "Perhaps you meant to execute an --update or a --reinstall instead!"
+                echo "  https://pellcorp.github.io/creality-wiki/misc/#updating"
+                echo "  https://pellcorp.github.io/creality-wiki/misc/#reinstalling"
+            fi
+            echo
+            exit 1
+        fi
+    fi
+
     if [ "$mode" = "fix-serial" ]; then
         if [ -f /usr/data/pellcorp.done ]; then
             if [ "$probe" = "cartotouch" ]; then
