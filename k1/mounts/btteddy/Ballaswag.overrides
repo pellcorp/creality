@@ -1,0 +1,38 @@
+# https://makerworld.com/en/models/494931
+
+-- btteddy.cfg
+[probe_eddy_current btt_eddy]
+x_offset: -38.5
+y_offset: 11.8
+
+-- btteddy-k1.cfg
+[bed_mesh]
+mesh_min: 5, 30
+mesh_max: 185, 215
+
+# FIXME - config for screw tilt adjust
+[screws_tilt_adjust]
+screw1: 110,110
+screw2: 110,110
+screw3: 110,110
+screw4: 110,110
+
+-- btteddy-k1m.cfg
+[bed_mesh]
+mesh_min: 5, 30
+mesh_max: 262, 295
+
+# FIXME - config for screw tilt adjust
+[screws_tilt_adjust]
+screw1: 150,150
+screw2: 150,150
+screw3: 150,150
+screw4: 150,150
+
+-- printer-k1.cfg
+[stepper_y]
+position_max: 226
+
+-- printer-k1m.cfg
+[stepper_y]
+position_max: 306
