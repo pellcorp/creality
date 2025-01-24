@@ -16,7 +16,7 @@ while true; do
   if [ "$MODEL" = "CR-K1 Max" ]; then
       CURRENT_IP_ADDRESS=$(ip a | grep "inet" | grep -v "host lo" | grep "eth0" | awk '{ print $2 }' | awk -F '/' '{print $1}' | tail -1)
       if [ -z "$CURRENT_IP_ADDRESS" ]; then
-          echo "No Ethernet Address available, trying WIFI" | tee -a /usr/data/ipaddress.log
+          echo "No Ethernet Address available, trying WIFI" > /usr/data/ipaddress.log
           CURRENT_IP_ADDRESS=$(ip a | grep "inet" | grep -v "host lo" | grep "wlan0" | awk '{ print $2 }' | awk -F '/' '{print $1}' | tail -1)
       fi
   else

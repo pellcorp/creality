@@ -689,7 +689,7 @@ function install_klipper() {
         else
             cd /usr/data/klipper/
             remote_repo=$(git remote get-url origin | awk -F '/' '{print $NF}' | sed 's/.git//g')
-            git log | grep -q "Revert \"force_move: Implement CLEAR for SET_KINEMATIC_POSITION"
+            git log | grep -q "add SET_KINEMATIC_POSITION CLEAR=Z feature to allow us to clear z in sensorless.cfg"
             klipper_status=$?
             cd - > /dev/null
 
@@ -1903,6 +1903,7 @@ cd - > /dev/null
         echo "INFO: No changes made"
     fi
 
+    echo
     /usr/data/pellcorp/k1/update-ip-address.sh
     update_ip_address=$?
 

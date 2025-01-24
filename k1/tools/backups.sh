@@ -116,7 +116,7 @@ elif [ "$mode" = "list" ]; then
         exit 1
     fi
 elif [ "$mode" = "restore" ] && [ -f /usr/data/printer_data/config/backups/$restore ]; then
-    echo "INFO: Attempting to restore /usr/data/printer_data/config/backups/$restore ..."
+    echo "INFO: Restoring /usr/data/printer_data/config/backups/$restore ..."
 
     # ensure the backup file is suitable for an automatic restore, older backups which do not include
     # pellcorp-overrides, pellcorp.done and pellcorp-backups are not suitable for an automatic restore
@@ -161,9 +161,16 @@ elif [ "$mode" = "restore" ] && [ -f /usr/data/printer_data/config/backups/$rest
     echo "Restoring $restore ..."
     tar -zxf /usr/data/printer_data/config/backups/$restore -C /usr/data
     sync
+
+    echo "Restarting Klippper ..."
     /etc/init.d/S55klipper_service restart
+    echo "Restarting Moonraker ..."
     /etc/init.d/S56moonraker_service restart
 else
-    echo "Usage: backups.sh <--create|--latest>"
+    echo "You have the following options for using:"
+    echo "  $0 --create"
+    echo "  $0 --latest"
+    echo "  $0 --list"
+    echo "  $0 --restore <backup file|latest>"
     exit 1
 fi
