@@ -61,7 +61,7 @@ ls -laR /usr/data >> /usr/data/support.log
 echo "----------------------------------------------------------------------------" >> /usr/data/support.log
 
 cd /usr/data
-tar -zcf /usr/data/printer_data/config/support.tar.gz support.log printer_data/config/backups/backup-latest.tar.gz $latest_tar_ball printer_data/logs/installer-*.log printer_data/logs/klippy.log printer_data/logs/moonraker.log printer_data/logs/guppyscreen.log /var/log/messages 2> /dev/null
+tar -zcf /usr/data/printer_data/config/support.tar.gz support.log printer_data/config/backups/*.tar.gz printer_data/logs/installer-*.log printer_data/logs/klippy.log printer_data/logs/moonraker.log printer_data/logs/guppyscreen.log /var/log/messages 2> /dev/null
 cd - > /dev/null
 
 rm /usr/data/support.log
