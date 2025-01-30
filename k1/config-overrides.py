@@ -109,7 +109,7 @@ def main():
                     continue
 
                 # do not add a new value that was missing from original unless this is for printer.cfg or the special is_non_critical field
-                if original_value or printer_cfg or key == 'is_non_critical':
+                if original_value or printer_cfg or fan_control or key == 'is_non_critical':
                     if (not original_value and updated_value and updated_value.value) or (original_value and original_value.value and updated_value and updated_value.value and original_value.value != updated_value.value):
                         if not overrides.has_section(section_name):
                             if len(overrides.sections()) > 0:
