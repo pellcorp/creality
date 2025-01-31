@@ -36,8 +36,17 @@ def main():
     moonraker_conf = 'moonraker.conf' == os.path.basename(args.original)
     fan_control = 'fan_control.cfg' == os.path.basename(args.original)
 
-    # only support deleting sections from printer.cfg or fan_control.cfg for now
+    deleted_sections = []
     for section_name in original.sections():
+        if section_name not in updated.sections() and (printer_cfg or fan_control):
+            deleted_sections.append(section_name)
+
+    # as a safety mechanism refuse to delete both static_digital_output mcu_fan_always_on and controller_fan mcu
+    if fan_control and 'static_digital_output mcu_fan_always_on' in deleted_sections and 'controller_fan mcu' in deleted_sections:
+        deleted_sections.remove('static_digital_output mcu_fan_always_on')
+
+    # only support deleting sections from printer.cfg or fan_control.cfg for now
+    for section_name in deleted_sections:
         if section_name not in updated.sections() and (printer_cfg or fan_control):
             if len(overrides.sections()) > 0:
                 overrides[overrides.sections()[-1]].add_after.space().section(section_name)
