@@ -25,8 +25,11 @@ factory_reset() {
     /bin/sync >/dev/null 2>&1
     /usr/bin/find /usr/data/ \
         -path '/usr/data/creality' -prune -o \
+        -path '/usr/data/printer_data' -prune -o \
         -path '/usr/data/wpa_supplicant.conf' -prune -o \
         -path '/usr/data/pellcorp-overrides.cfg' -prune -o \
+        -path '/usr/data/macaddr.txt' -prune -o \
+        -path '/usr/data/ethmacaddr.txt' -prune -o \
         -path '/usr/data/pellcorp-overrides' -prune -o \
         -path '/usr/data/machine_production_info' -prune -o \
         -path '/usr/data/' -o -print \
@@ -37,6 +40,19 @@ factory_reset() {
         -path '/usr/data/creality/userdata/user_agree_root' -prune -o \
         -path '/usr/data/creality/userdata' -o -type d -o -print \
         -exec rm {} \; >/dev/null 2>&1
+    /bin/sync >/dev/null 2>&1
+    # cleanup all but logs for printer_data
+    /usr/bin/find /usr/data/printer_data/ \
+            -path '/usr/data/printer_data/logs' -prune -o \
+            -path '/usr/data/printer_data/' -o -print \
+            -exec rm -rf {} \; >/dev/null 2>&1
+    /bin/sync >/dev/null 2>&1
+    # cleanup the logs all except for guppyscreen and factoryreset logs
+    /usr/bin/find /usr/data/printer_data/logs \
+                -path '/usr/data/printer_data/logs/guppyscreen.log' -prune -o \
+                -path '/usr/data/printer_data/logs/factoryreset.log' -prune -o \
+                -path '/usr/data/printer_data/logs' -o -type d -o -print \
+                -exec rm {} \; >/dev/null 2>&1
     /bin/sync >/dev/null 2>&1
     rm -rf /overlay/upper/usr/data/
     /bin/sync >/dev/null 2>&1
@@ -65,6 +81,8 @@ case "$1" in
           FLAG_FILE=$(echo $FLAG_FILE | awk '{print $1}')
           echo "INFO: Executing factory reset..."
           mv "$FLAG_FILE" "${FLAG_FILE}.old" >/dev/null 2>&1
+          echo "Factory reset triggered by flag file $FLAG_FILE" > /usr/data/printer_data/logs/factoryreset.log
+          /bin/sync >/dev/null 2>&1
 
           # we want to unmount the device cleanly
           MOUNT_DEVICE=$(echo $FLAG_FILE | awk -F '/' '{print $4}')
@@ -86,9 +104,10 @@ case "$1" in
             echo "INFO: Copying $0 to /etc/init.d/S58factoryreset ..."
             cp $0 /etc/init.d/S58factoryreset
             chmod 777 /etc/init.d/S58factoryreset
-            sync
+            /bin/sync >/dev/null 2>&1
         fi
 
+        echo "Factory reset triggered by command" > /usr/data/printer_data/logs/factoryreset.log
         echo "INFO: Executing factory reset..."
         factory_reset
     ;;
