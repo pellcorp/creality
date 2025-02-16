@@ -1181,9 +1181,8 @@ function setup_cartotouch() {
         position_max=$($CONFIG_HELPER --get-section-entry "stepper_y" "position_max" --minus 16 --integer)
         $CONFIG_HELPER --replace-section-entry "stepper_y" "position_max" "$position_max" || exit $?
 
-        # temp disable macros until they are updated
-        #cp /usr/data/pellcorp/k1/cartographer_calibrate.cfg /usr/data/printer_data/config/ || exit $?
-        #$CONFIG_HELPER --add-include "cartographer_calibrate.cfg" || exit $?
+        cp /usr/data/pellcorp/k1/cartographer_calibrate.cfg /usr/data/printer_data/config/ || exit $?
+        $CONFIG_HELPER --add-include "cartographer_calibrate.cfg" || exit $?
 
         echo "cartotouch-probe" >> /usr/data/pellcorp.done
         sync
