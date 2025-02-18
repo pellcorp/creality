@@ -1877,12 +1877,6 @@ cd - > /dev/null
           cp /usr/data/guppyscreen/guppyscreen.json /usr/data/pellcorp-backups/
         fi
     fi
-    
-    apply_mount_overrides=0
-    if [ -n "$mount" ]; then
-        /usr/data/pellcorp/k1/apply-mount-overrides.sh $probe $mount
-        apply_mount_overrides=$?
-    fi
 
     apply_overrides=0
     # there will be no support for generating pellcorp-overrides unless you have done a factory reset
@@ -1891,6 +1885,12 @@ cd - > /dev/null
             apply_overrides
             apply_overrides=$?
         fi
+    fi
+
+    apply_mount_overrides=0
+    if [ -n "$mount" ]; then
+        /usr/data/pellcorp/k1/apply-mount-overrides.sh $probe $mount
+        apply_mount_overrides=$?
     fi
 
     # cleanup any M109 or M190 redefined
