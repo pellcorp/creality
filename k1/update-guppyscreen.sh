@@ -38,7 +38,7 @@ fi
 
 if [ "$update_guppyscreen" = "true" ]; then
     target=main
-    if [ -n "$1" ]; then
+    if [ -n "$1" ] && [ "$1" != "nightly" ]; then
       target=$1
     fi
     curl -L "https://github.com/pellcorp/guppyscreen/releases/download/$target/guppyscreen.tar.gz" -o /usr/data/guppyscreen.tar.gz || exit $?
