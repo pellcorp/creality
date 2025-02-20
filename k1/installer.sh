@@ -1016,18 +1016,20 @@ function cleanup_probe() {
     fi
     $CONFIG_HELPER --remove-include "$probe.cfg" || exit $?
 
+    # if switching from btt eddy remove this file
+    if [ "$probe" = "btteddy" ] && [ -f /usr/data/printer_data/config/variables.cfg ]; then
+        rm /usr/data/printer_data/config/variables.cfg
+    fi
+
     # we use the cartographer includes
     if [ "$probe" = "cartotouch" ]; then
         probe=cartographer
+    elif [ "$probe" = "eddyng" ]; then
+        probe=btteddy
     fi
 
     if [ -f /usr/data/printer_data/config/${probe}.conf ]; then
         rm /usr/data/printer_data/config/${probe}.conf
-    fi
-
-    # if switching from btt eddy remove this file
-    if [ "$probe" = "btteddy" ] && [ -f /usr/data/printer_data/config/variables.cfg ]; then
-        rm /usr/data/printer_data/config/variables.cfg
     fi
 
     $CONFIG_HELPER --file moonraker.conf --remove-include "${probe}.conf" || exit $?
@@ -1049,6 +1051,7 @@ function setup_bltouch() {
 
         cleanup_probe microprobe
         cleanup_probe btteddy
+        cleanup_probe eddyng
         cleanup_probe cartotouch
         cleanup_probe beacon
 
@@ -1086,6 +1089,7 @@ function setup_microprobe() {
 
         cleanup_probe bltouch
         cleanup_probe btteddy
+        cleanup_probe eddyng
         cleanup_probe cartotouch
         cleanup_probe beacon
 
@@ -1137,6 +1141,7 @@ function setup_cartotouch() {
         cleanup_probe bltouch
         cleanup_probe microprobe
         cleanup_probe btteddy
+        cleanup_probe eddyng
         cleanup_probe beacon
 
         cp /usr/data/pellcorp/k1/cartographer.conf /usr/data/printer_data/config/ || exit $?
@@ -1217,6 +1222,7 @@ function setup_beacon() {
         cleanup_probe bltouch
         cleanup_probe microprobe
         cleanup_probe btteddy
+        cleanup_probe eddyng
         cleanup_probe cartotouch
 
         cp /usr/data/pellcorp/k1/beacon.conf /usr/data/printer_data/config/ || exit $?
@@ -1293,6 +1299,7 @@ function setup_btteddy() {
         cleanup_probe microprobe
         cleanup_probe cartotouch
         cleanup_probe beacon
+        cleanup_probe eddyng
 
         cp /usr/data/pellcorp/k1/btteddy.cfg /usr/data/printer_data/config/ || exit $?
         $CONFIG_HELPER --add-include "btteddy.cfg" || exit $?
@@ -1321,6 +1328,60 @@ function setup_btteddy() {
         $CONFIG_HELPER --add-include "btteddy_calibrate.cfg" || exit $?
 
         echo "btteddy-probe" >> /usr/data/pellcorp.done
+        sync
+        return 1
+    fi
+    return 0
+}
+
+function set_serial_eddyng() {
+    local SERIAL_ID=$(ls /dev/serial/by-id/usb-Klipper_rp2040* | head -1)
+    if [ -n "$SERIAL_ID" ]; then
+        local EXISTING_SERIAL_ID=$($CONFIG_HELPER --file eddyng.cfg --get-section-entry "mcu eddy" "serial")
+        if [ "$EXISTING_SERIAL_ID" != "$SERIAL_ID" ]; then
+            $CONFIG_HELPER --file eddyng.cfg --replace-section-entry "mcu eddy" "serial" "$SERIAL_ID" || exit $?
+            return 1
+        else
+            echo "Serial value is unchanged"
+            return 0
+        fi
+    else
+        echo "WARNING: There does not seem to be a btt eddy ng attached - skipping auto configuration"
+        return 0
+    fi
+}
+
+function setup_eddyng() {
+    grep -q "eddyng-probe" /usr/data/pellcorp.done
+    if [ $? -ne 0 ]; then
+        echo
+        echo "INFO: Setting up btt eddy-ng ..."
+
+        cleanup_probe bltouch
+        cleanup_probe microprobe
+        cleanup_probe cartotouch
+        cleanup_probe beacon
+        cleanup_probe btteddy
+
+        cp /usr/data/pellcorp/k1/eddyng.cfg /usr/data/printer_data/config/ || exit $?
+        $CONFIG_HELPER --add-include "eddyng.cfg" || exit $?
+
+        set_serial_eddyng
+
+        cp /usr/data/pellcorp/k1/eddyng_macro.cfg /usr/data/printer_data/config/ || exit $?
+        $CONFIG_HELPER --add-include "eddyng_macro.cfg" || exit $?
+
+        $CONFIG_HELPER --remove-section "probe_eddy_ng btt_eddy" || exit $?
+        $CONFIG_HELPER --add-section "probe_eddy_ng btt_eddy" || exit $?
+
+        cp /usr/data/pellcorp/k1/btteddy-${model}.cfg /usr/data/printer_data/config/ || exit $?
+        $CONFIG_HELPER --add-include "btteddy-${model}.cfg" || exit $?
+
+        # because the model sits out the back we do need to set position max back
+        position_max=$($CONFIG_HELPER --get-section-entry "stepper_y" "position_max" --minus 16 --integer)
+        $CONFIG_HELPER --replace-section-entry "stepper_y" "position_max" "$position_max" || exit $?
+
+        echo "eddyng-probe" >> /usr/data/pellcorp.done
         sync
         return 1
     fi
@@ -1556,6 +1617,8 @@ cd - > /dev/null
         probe=cartotouch
     elif [ -f /usr/data/printer_data/config/beacon.cfg ]; then
         probe=beacon
+    elif [ -f /usr/data/printer_data/config/eddyng.cfg ]; then
+        probe=eddyng
     elif grep -q "\[scanner\]" /usr/data/printer_data/config/printer.cfg; then
         probe=cartotouch
     elif [ -f /usr/data/printer_data/config/microprobe-k1.cfg ] || [ -f /usr/data/printer_data/config/microprobe-k1m.cfg ]; then
@@ -1591,7 +1654,7 @@ cd - > /dev/null
             shift
             client=$1
             shift
-        elif [ "$1" = "microprobe" ] || [ "$1" = "bltouch" ] || [ "$1" = "beacon" ] || [ "$1" = "cartographer" ] || [ "$1" = "cartotouch" ] || [ "$1" = "btteddy" ]; then
+        elif [ "$1" = "microprobe" ] || [ "$1" = "bltouch" ] || [ "$1" = "beacon" ] || [ "$1" = "cartographer" ] || [ "$1" = "cartotouch" ] || [ "$1" = "btteddy" ] || [ "$1" = "eddyng" ]; then
             if [ "$mode" = "fix-serial" ]; then
                 echo "ERROR: Switching probes is not supported while trying to fix serial!"
                 exit 1
@@ -1610,7 +1673,7 @@ cd - > /dev/null
 
     if [ -z "$probe" ]; then
         echo "ERROR: You must specify a probe you want to configure"
-        echo "One of: [microprobe, bltouch, cartotouch, btteddy, beacon]"
+        echo "One of: [microprobe, bltouch, cartotouch, btteddy, eddyng, beacon]"
         exit 1
     fi
 
@@ -1660,6 +1723,9 @@ cd - > /dev/null
                 set_serial=$?
             elif [ "$probe" = "btteddy" ]; then
                 set_serial_btteddy
+                set_serial=$?
+            elif [ "$probe" = "eddyng" ]; then
+                set_serial_eddyng
                 set_serial=$?
             else
                 echo "ERROR: Fix serial not supported for $probe"
@@ -1848,6 +1914,9 @@ cd - > /dev/null
     elif [ "$probe" = "btteddy" ]; then
         setup_btteddy
         setup_probe_specific=$?
+    elif [ "$probe" = "eddyng" ]; then
+        setup_eddyng
+        setup_probe_specific=$?
     elif [ "$probe" = "microprobe" ]; then
         setup_microprobe
         setup_probe_specific=$?
@@ -1863,6 +1932,8 @@ cd - > /dev/null
         probe_model=${probe}
         if [ "$probe" = "cartotouch" ]; then
             probe_model=cartographer
+        elif [ "$probe" = "eddyng" ]; then
+            probe_model=btteddy
         fi
 
         # we want a copy of the file before config overrides are re-applied so we can correctly generate diffs
