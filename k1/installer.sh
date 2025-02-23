@@ -429,6 +429,9 @@ function install_moonraker() {
         ln -sf /usr/data/moonraker-timelapse/klipper_macro/timelapse.cfg /usr/data/printer_data/config/ || exit $?
         cp /usr/data/pellcorp/k1/timelapse.conf /usr/data/printer_data/config/ || exit $?
 
+        ln -sf /usr/data/pellcorp/k1/spoolman.cfg /usr/data/printer_data/config/ || exit $?
+        cp /usr/data/pellcorp/k1/spoolman.conf /usr/data/printer_data/config/ || exit $?
+
         # after an initial install do not overwrite notifier.conf or moonraker.secrets
         if [ ! -f /usr/data/printer_data/config/notifier.conf ]; then
             cp /usr/data/pellcorp/k1/notifier.conf /usr/data/printer_data/config/ || exit $?
@@ -1946,7 +1949,7 @@ cd - > /dev/null
     if [ -f /usr/data/pellcorp-backups/printer.factory.cfg ]; then
         # we want a copy of the file before config overrides are re-applied so we can correctly generate diffs
         # against different generations of the original file
-        for file in printer.cfg start_end.cfg fan_control.cfg useful_macros.cfg $probe_model.conf moonraker.conf webcam.conf sensorless.cfg ${probe}_macro.cfg ${probe}.cfg ${probe_model}-${model}.cfg; do
+        for file in printer.cfg start_end.cfg fan_control.cfg useful_macros.cfg $probe_model.conf spoolman.conf timelapse.conf moonraker.conf webcam.conf sensorless.cfg ${probe}_macro.cfg ${probe}.cfg ${probe_model}-${model}.cfg; do
             if [ -f /usr/data/printer_data/config/$file ]; then
                 cp /usr/data/printer_data/config/$file /usr/data/pellcorp-backups/$file
             fi
