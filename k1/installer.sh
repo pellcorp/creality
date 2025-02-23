@@ -19,6 +19,8 @@ if [ "$MODEL" = "CR-K1" ] || [ "$MODEL" = "K1C" ] || [ "$MODEL" = "K1 SE" ]; the
   model=k1
 elif [ "$MODEL" = "CR-K1 Max" ] || [ "$MODEL" = "K1 Max SE" ]; then
   model=k1m
+elif [ "$MODEL" = "F004" ]; then
+  model=bfp
 else
   echo "This script is not supported for $MODEL!"
   exit 1
@@ -1677,6 +1679,19 @@ cd - > /dev/null
         exit 1
     fi
 
+    probe_model=${probe}
+    if [ "$probe" = "cartotouch" ]; then
+        probe_model=cartographer
+    elif [ "$probe" = "eddyng" ]; then
+        probe_model=btteddy
+    fi
+
+    # some newer printers we support might not support all probes out of the box
+    if [ ! -f /usr/data/pellcorp/k1/${probe_model}-${model}.cfg ]; then
+        echo "ERROR: Model $MODEL not supported for $probe"
+        exit 1
+    fi
+
     echo "INFO: Mode is $mode"
     echo "INFO: Probe is $probe"
 
@@ -1929,13 +1944,6 @@ cd - > /dev/null
     fi
 
     if [ -f /usr/data/pellcorp-backups/printer.factory.cfg ]; then
-        probe_model=${probe}
-        if [ "$probe" = "cartotouch" ]; then
-            probe_model=cartographer
-        elif [ "$probe" = "eddyng" ]; then
-            probe_model=btteddy
-        fi
-
         # we want a copy of the file before config overrides are re-applied so we can correctly generate diffs
         # against different generations of the original file
         for file in printer.cfg start_end.cfg fan_control.cfg useful_macros.cfg $probe_model.conf moonraker.conf webcam.conf sensorless.cfg ${probe}_macro.cfg ${probe}.cfg ${probe_model}-${model}.cfg; do
