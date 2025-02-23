@@ -1613,7 +1613,7 @@ cd - > /dev/null
 {
     # figure out what existing probe if any is being used
     probe=
-    if [ -f /usr/data/printer_data/config/bltouch-k1.cfg ] || [ -f /usr/data/printer_data/config/bltouch-k1m.cfg ]; then
+    if [ -f /usr/data/printer_data/config/bltouch-${model}.cfg ]; then
         probe=bltouch
     elif [ -f /usr/data/printer_data/config/cartotouch.cfg ]; then
         probe=cartotouch
@@ -1623,11 +1623,11 @@ cd - > /dev/null
         probe=eddyng
     elif grep -q "\[scanner\]" /usr/data/printer_data/config/printer.cfg; then
         probe=cartotouch
-    elif [ -f /usr/data/printer_data/config/microprobe-k1.cfg ] || [ -f /usr/data/printer_data/config/microprobe-k1m.cfg ]; then
+    elif [ -f /usr/data/printer_data/config/microprobe-${model}.cfg ]; then
         probe=microprobe
-    elif [ -f /usr/data/printer_data/config/btteddy-k1.cfg ] || [ -f /usr/data/printer_data/config/btteddy-k1m.cfg ]; then
+    elif [ -f /usr/data/printer_data/config/btteddy-${model}.cfg ]; then
         probe=btteddy
-    elif [ -f /usr/data/printer_data/config/cartographer-k1.cfg ] || [ -f /usr/data/printer_data/config/cartographer-k1m.cfg ]; then
+    elif [ -f /usr/data/printer_data/config/cartographer-${model}.cfg ]; then
         probe=cartographer
     fi
 
