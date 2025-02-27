@@ -52,11 +52,11 @@ override_file() {
     
     if [ -f "/usr/data/pellcorp-backups/$file" ]; then
         original_file="/usr/data/pellcorp-backups/$file"
-    elif [ "$file" = "printer.cfg" ] || [ "$file" = "beacon.conf" ] || [ "$file" = "cartographer.conf" ] || [ "$file" = "moonraker.conf" ] || [ "$file" = "start_end.cfg" ] || [ "$file" = "useful_macros.cfg" ] || [ "$file" = "fan_control.cfg" ]; then
-        # for printer.cfg, useful_macros.cfg, start_end.cfg, fan_control.cfg and moonraker.conf - there must be an pellcorp-backups file
+    elif [ "$file" = "guppyscreen.cfg" ] || [ "$file" = "internal_macros.cfg" ] || [ "$file" = "useful_macros.cfg" ]; then
         echo "INFO: Overrides not supported for $file"
         return 0
-    elif [ "$file" = "guppyscreen.cfg" ]; then
+    elif [ "$file" = "printer.cfg" ] || [ "$file" = "beacon.conf" ] || [ "$file" = "cartographer.conf" ] || [ "$file" = "moonraker.conf" ] || [ "$file" = "start_end.cfg" ] || [ "$file" = "fan_control.cfg" ]; then
+        # for printer.cfg, useful_macros.cfg, start_end.cfg, fan_control.cfg and moonraker.conf - there must be an pellcorp-backups file
         echo "INFO: Overrides not supported for $file"
         return 0
     elif [ ! -f "/usr/data/pellcorp/k1/$file" ]; then

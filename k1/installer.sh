@@ -6,24 +6,27 @@ if [ ! -f /usr/data/printer_data/config/printer.cfg ]; then
   exit 1
 fi
 
-# 6. prefix is the prefix I use for pre-rooted firmware
-ota_version=$(cat /etc/ota_info | grep ota_version | awk -F '=' '{print $2}' | sed 's/^6.//g' | tr -d '.')
-if [ -z "$ota_version" ] || [ $ota_version -lt 1335 ]; then
-  echo "ERROR: Firmware is too old, you must update to at least version 1.3.3.5 of Creality OS"
-  echo "https://www.creality.com/pages/download-k1-flagship"
-  exit 1
-fi
-
 MODEL=$(/usr/bin/get_sn_mac.sh model)
 if [ "$MODEL" = "CR-K1" ] || [ "$MODEL" = "K1C" ] || [ "$MODEL" = "K1 SE" ]; then
   model=k1
 elif [ "$MODEL" = "CR-K1 Max" ] || [ "$MODEL" = "K1 Max SE" ]; then
   model=k1m
 elif [ "$MODEL" = "F004" ]; then
-  model=bfp
+  model=f004
 else
   echo "This script is not supported for $MODEL!"
   exit 1
+fi
+
+# we only need to verify we are not trying to install on really old k1 firmware
+if [ "$MODEL" != "F004" ]; then
+    # 6. prefix is the prefix I use for pre-rooted firmware
+    ota_version=$(cat /etc/ota_info | grep ota_version | awk -F '=' '{print $2}' | sed 's/^6.//g' | tr -d '.')
+    if [ -z "$ota_version" ] || [ $ota_version -lt 1335 ]; then
+      echo "ERROR: Firmware is too old, you must update to at least version 1.3.3.5 of Creality OS"
+      echo "https://www.creality.com/pages/download-k1-flagship"
+      exit 1
+    fi
 fi
 
 if [ -d /usr/data/helper-script ] || [ -f /usr/data/fluidd.sh ] || [ -f /usr/data/mainsail.sh ]; then
@@ -716,9 +719,24 @@ function install_klipper() {
 
         cp /usr/data/pellcorp/k1/services/S55klipper_service /etc/init.d/ || exit $?
 
-        cp /usr/data/pellcorp/k1/services/S13mcu_update /etc/init.d/ || exit $?
+        # currently no support for updating firmware on Ender 5 Max :-(
+        if [ "$MODEL" != "F004" ]; then
+            cp /usr/data/pellcorp/k1/services/S13mcu_update /etc/init.d/ || exit $?
+        fi
 
         cp /usr/data/pellcorp/k1/sensorless.cfg /usr/data/printer_data/config/ || exit $?
+        $CONFIG_HELPER --add-include "sensorless.cfg" || exit $?
+
+        # for Ender 5 Max we need to disable sensorless homing, reversing homing order and do not repeat homing
+        # but we are still going to use homing override even though the max has physical endstops to make things a bit easier
+        if [ "$MODEL" = "F004" ]; then
+            $CONFIG_HELPER --file sensorless.cfg --replace-section-entry "gcode_macro _SENSORLESS_PARAMS" "variable_sensorless_homing" "False" || exit $?
+            $CONFIG_HELPER --file sensorless.cfg --replace-section-entry "gcode_macro _SENSORLESS_PARAMS" "variable_home_y_before_x" "True" || exit $?
+            $CONFIG_HELPER --file sensorless.cfg --replace-section-entry "gcode_macro _SENSORLESS_PARAMS" "variable_repeat_home_xy" "False" || exit $?
+        fi
+
+        cp /usr/data/pellcorp/k1/internal_macros.cfg /usr/data/printer_data/config/ || exit $?
+        $CONFIG_HELPER --add-include "internal_macros.cfg" || exit $?
 
         cp /usr/data/pellcorp/k1/useful_macros.cfg /usr/data/printer_data/config/ || exit $?
         $CONFIG_HELPER --add-include "useful_macros.cfg" || exit $?
@@ -726,9 +744,27 @@ function install_klipper() {
         # the klipper_mcu is not even used, so just get rid of it
         $CONFIG_HELPER --remove-section "mcu rpi" || exit $?
 
+        # ender 5 max
+       if [ "$MODEL" = "F004" ]; then
+            $CONFIG_HELPER --remove-section "Height_module2" || exit $?
+            $CONFIG_HELPER --remove-section "z_compensate" || exit $?
+            $CONFIG_HELPER --remove-section "output_pin aobi" || exit $?
+            $CONFIG_HELPER --remove-section "output_pin USB_EN" || exit $?
+            $CONFIG_HELPER --remove-section "hx711s" || exit $?
+            $CONFIG_HELPER --remove-section "filter" || exit $?
+            $CONFIG_HELPER --remove-section "dirzctl" || exit $?
+
+            # for ender 5 max we can't use on board adxl and only beacon and cartotouch support
+            # configuring separate adxl
+            if [ "probe" != "beacon" ] && [ "probe" != "cartotouch" ]; then
+                $CONFIG_HELPER --remove-section "adxl345" || exit $?
+                $CONFIG_HELPER --remove-section "resonance_tester" || exit $?
+            fi
+        fi
+
+        $CONFIG_HELPER --remove-section "mcu leveling_mcu" || exit $?
         $CONFIG_HELPER --remove-section "bl24c16f" || exit $?
         $CONFIG_HELPER --remove-section "prtouch_v2" || exit $?
-        $CONFIG_HELPER --remove-section "mcu leveling_mcu" || exit $?
         $CONFIG_HELPER --remove-section "output_pin power" || exit $?
         $CONFIG_HELPER --remove-section-entry "printer" "square_corner_max_velocity" || exit $?
         $CONFIG_HELPER --remove-section-entry "printer" "max_accel_to_decel" || exit $?
@@ -759,22 +795,29 @@ function install_klipper() {
 
         cp /usr/data/pellcorp/k1/start_end.cfg /usr/data/printer_data/config/ || exit $?
         $CONFIG_HELPER --add-include "start_end.cfg" || exit $?
-        if [ "$MODEL" = "K1 SE" ]; then
-            sed -i '/SET_FAN_SPEED FAN=chamber.*/d' /usr/data/printer_data/config/start_end.cfg
-        fi
 
-        cp /usr/data/pellcorp/k1/fan_control.cfg /usr/data/printer_data/config || exit $?
+        if [ -f /usr/data/pellcorp/k1/fan_control.${model}.cfg ]; then
+            cp /usr/data/pellcorp/k1/fan_control.${model}.cfg /usr/data/printer_data/config || exit $?
+        else
+            cp /usr/data/pellcorp/k1/fan_control.cfg /usr/data/printer_data/config || exit $?
+        fi
         $CONFIG_HELPER --add-include "fan_control.cfg" || exit $?
 
         # K1 SE has no chamber fan
         if [ "$MODEL" = "K1 SE" ]; then
-            sed -i '/SET_FAN_SPEED FAN=chamber.*/d' /usr/data/printer_data/config/fan_control.cfg
             $CONFIG_HELPER --file fan_control.cfg --remove-section "gcode_macro M191" || exit $?
             $CONFIG_HELPER --file fan_control.cfg --remove-section "gcode_macro M141" || exit $?
             $CONFIG_HELPER --file fan_control.cfg --remove-section "temperature_sensor chamber_temp" || exit $?
             $CONFIG_HELPER --file fan_control.cfg --remove-section "temperature_fan chamber_fan" || exit $?
             $CONFIG_HELPER --file fan_control.cfg --remove-section "fan_generic chamber" || exit $?
             $CONFIG_HELPER --file fan_control.cfg --replace-section-entry "duplicate_pin_override" "pins" "PC5" || exit $?
+        elif [ "$MODEL" = "F004" ]; then
+            $CONFIG_HELPER --remove-section "output_pin MainBoardFan" || exit $?
+            $CONFIG_HELPER --remove-section "output_pin en_nozzle_fan" || exit $?
+            $CONFIG_HELPER --remove-section "output_pin en_fan0" || exit $?
+            $CONFIG_HELPER --remove-section "output_pin col_pwm" || exit $?
+            $CONFIG_HELPER --remove-section "output_pin col" || exit $?
+            $CONFIG_HELPER --remove-section "heater_fan nozzle_fan" || exit $?
         fi
 
         $CONFIG_HELPER --remove-section "output_pin fan0" || exit $?
@@ -859,9 +902,14 @@ function install_guppyscreen() {
         if [ ! -d /usr/data/guppyscreen ]; then
             echo "INFO: Installing grumpyscreen ..."
 
-            curl -L "https://github.com/pellcorp/guppyscreen/releases/download/main/guppyscreen.tar.gz" -o /usr/data/guppyscreen.tar.gz || exit $?
+            asset_name=guppyscreen.tar.gz
+            # Ender 5 Max has a smaller screen
+            if [ "$MODEL" = "F004" ]; then
+                asset_name=guppyscreen-smallscreen.tar.gz
+            fi
+            curl -L "https://github.com/pellcorp/guppyscreen/releases/download/main/${asset_name}" -o /usr/data/guppyscreen.tar.gz || exit $?
             tar xf /usr/data/guppyscreen.tar.gz -C /usr/data/ || exit $?
-            rm /usr/data/guppyscreen.tar.gz 
+            rm /usr/data/guppyscreen.tar.gz
         fi
 
         ln -sf /usr/data/pellcorp/k1/fixes/respawn/libeinfo.so.1 /lib/libeinfo.so.1
@@ -1194,6 +1242,17 @@ function setup_cartotouch() {
         cp /usr/data/pellcorp/k1/cartographer_calibrate.cfg /usr/data/printer_data/config/ || exit $?
         $CONFIG_HELPER --add-include "cartographer_calibrate.cfg" || exit $?
 
+        # Ender 5 Max we don't have firmware for it, so need to configure cartographer instead for adxl
+        if [ "$MODEL" = "F004" ]; then
+            $CONFIG_HELPER --replace-section-entry "adxl345" "cs_pin" "scanner:PA3" || exit $?
+            $CONFIG_HELPER --replace-section-entry "adxl345" "spi_bus" "spi13" || exit $?
+            $CONFIG_HELPER --replace-section-entry "adxl345" "axes_map" "x, y, z" || exit $?
+            $CONFIG_HELPER --remove-section-entry "adxl345" "spi_speed" || exit $?
+            $CONFIG_HELPER --remove-section-entry "adxl345" "spi_software_sclk_pin" || exit $?
+            $CONFIG_HELPER --remove-section-entry "adxl345" "spi_software_mosi_pin" || exit $?
+            $CONFIG_HELPER --remove-section-entry "adxl345" "spi_software_miso_pin" || exit $?
+        fi
+
         echo "cartotouch-probe" >> /usr/data/pellcorp.done
         sync
         return 1
@@ -1247,6 +1306,11 @@ function setup_beacon() {
         y_position_mid=$($CONFIG_HELPER --get-section-entry "stepper_y" "position_max" --divisor 2 --integer)
         x_position_mid=$($CONFIG_HELPER --get-section-entry "stepper_x" "position_max" --divisor 2 --integer)
         $CONFIG_HELPER --file beacon.cfg --replace-section-entry "beacon" "home_xy_position" "$x_position_mid,$y_position_mid" || exit $?
+
+        # for Ender 5 Max need to swap homing order for beacon
+        if [ "$MODEL" = "F004" ]; then
+            $CONFIG_HELPER --file beacon.cfg --replace-section-entry "beacon" "home_y_before_x" "True" || exit $?
+        fi
 
         set_serial_beacon
 
@@ -1949,7 +2013,7 @@ cd - > /dev/null
     if [ -f /usr/data/pellcorp-backups/printer.factory.cfg ]; then
         # we want a copy of the file before config overrides are re-applied so we can correctly generate diffs
         # against different generations of the original file
-        for file in printer.cfg start_end.cfg fan_control.cfg useful_macros.cfg $probe_model.conf spoolman.conf timelapse.conf moonraker.conf webcam.conf sensorless.cfg ${probe}_macro.cfg ${probe}.cfg ${probe_model}-${model}.cfg; do
+        for file in printer.cfg start_end.cfg fan_control.cfg $probe_model.conf spoolman.conf timelapse.conf moonraker.conf webcam.conf sensorless.cfg ${probe}_macro.cfg ${probe}.cfg ${probe_model}-${model}.cfg; do
             if [ -f /usr/data/printer_data/config/$file ]; then
                 cp /usr/data/printer_data/config/$file /usr/data/pellcorp-backups/$file
             fi
