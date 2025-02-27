@@ -1,5 +1,13 @@
 #!/bin/sh
 
+MODEL=$(/usr/bin/get_sn_mac.sh model)
+
+# Ender 5 Max does not have any firmware we can upgrade as yet
+if [ "$MODEL" = "F004" ]; then
+    echo "INFO: Your MCU Firmware is up to date!"
+    exit 0
+fi
+
 VERSION_FILE=/usr/data/mcu.versions
 FW_DIR=/usr/data/klipper/fw/K1
 
