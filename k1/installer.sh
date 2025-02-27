@@ -859,9 +859,14 @@ function install_guppyscreen() {
         if [ ! -d /usr/data/guppyscreen ]; then
             echo "INFO: Installing guppyscreen ..."
 
-            curl -L "https://github.com/pellcorp/guppyscreen/releases/download/main/guppyscreen.tar.gz" -o /usr/data/guppyscreen.tar.gz || exit $?
+            asset_name=guppyscreen.tar.gz
+            # counterintuitive that bfp has a small screen
+            if [ "$model" = "bfp" ]; then
+                asset_name=guppyscreen-smallscreen.tar.gz
+            fi
+            curl -L "https://github.com/pellcorp/guppyscreen/releases/download/main/${asset_name}" -o /usr/data/guppyscreen.tar.gz || exit $?
             tar xf /usr/data/guppyscreen.tar.gz -C /usr/data/ || exit $?
-            rm /usr/data/guppyscreen.tar.gz 
+            rm /usr/data/guppyscreen.tar.gz
         fi
 
         ln -sf /usr/data/pellcorp/k1/fixes/respawn/libeinfo.so.1 /lib/libeinfo.so.1

@@ -1,8 +1,21 @@
 #!/bin/sh
 
+MODEL=$(/usr/bin/get_sn_mac.sh model)
+if [ "$MODEL" = "CR-K1" ] || [ "$MODEL" = "K1C" ] || [ "$MODEL" = "K1 SE" ]; then
+  model=k1
+elif [ "$MODEL" = "CR-K1 Max" ] || [ "$MODEL" = "K1 Max SE" ]; then
+  model=k1m
+elif [ "$MODEL" = "F004" ]; then
+  model=bfp
+else
+  echo "This script is not supported for $MODEL!"
+  exit 1
+fi
+
 config_overrides=true
 apply_overrides=true
 update_guppyscreen=true
+
 while true; do
     if [ "$1" = "--config-overrides" ]; then
         apply_overrides=false
@@ -41,7 +54,13 @@ if [ "$update_guppyscreen" = "true" ]; then
     if [ -n "$1" ] && [ "$1" != "nightly" ]; then
       target=$1
     fi
-    curl -L "https://github.com/pellcorp/guppyscreen/releases/download/$target/guppyscreen.tar.gz" -o /usr/data/guppyscreen.tar.gz || exit $?
+
+    asset_name=guppyscreen.tar.gz
+    # counterintuitive that bfp has a small screen
+    if [ "$model" = "bfp" ]; then
+        asset_name=guppyscreen-smallscreen.tar.gz
+    fi
+    curl -L "https://github.com/pellcorp/guppyscreen/releases/download/$target/$asset_name" -o /usr/data/guppyscreen.tar.gz || exit $?
     tar xf /usr/data/guppyscreen.tar.gz -C /usr/data/ || exit $?
     rm /usr/data/guppyscreen.tar.gz
 fi
