@@ -33,7 +33,10 @@ function apply_overrides() {
                 cp $overrides_dir/$file /usr/data/printer_data/
             elif [ "$file" = "guppyscreen.json" ]; then
                 /usr/data/pellcorp/k1/update-guppyscreen.sh --apply-overrides
-            elif [ -L /usr/data/printer_data/config/$file ] || [ "$file" = "guppyscreen.cfg" ]; then
+            elif [ -L /usr/data/printer_data/config/$file ] || [ "$file" = "useful_macros.cfg" ] || [ "$file" = "internal_macros.cfg" ] || [ "$file" = "guppyscreen.cfg" ]; then
+                if [ "$file" = "guppyscreen.cfg" ]; then  # we removed guppy module loader completely
+                    /usr/data/pellcorp/k1/config-helper.py --file guppyscreen.cfg --remove-section guppy_module_loader
+                fi
                 echo "WARN: Ignoring $file ..."
             elif [ -f "/usr/data/pellcorp-backups/$file" ] || [ -f "/usr/data/pellcorp/k1/$file" ]; then
               if [ -f /usr/data/printer_data/config/$file ]; then
@@ -45,9 +48,7 @@ function apply_overrides() {
                 echo "INFO: Applying overrides for /usr/data/printer_data/config/$file ..."
                 $CONFIG_HELPER --file $file --overrides $overrides_dir/$file || exit $?
 
-                if [ "$file" = "guppyscreen.cfg" ]; then  # we removed guppy module loader completely
-                    /usr/data/pellcorp/k1/config-helper.py --file guppyscreen.cfg --remove-section guppy_module_loader
-                elif [ "$file" = "moonraker.conf" ]; then  # we moved cartographer to a separate cartographer.conf include
+                if [ "$file" = "moonraker.conf" ]; then  # we moved cartographer to a separate cartographer.conf include
                     /usr/data/pellcorp/k1/config-helper.py --file moonraker.conf --remove-section "update_manager cartographer"
                 fi
               else # if switching probes we might run into this
