@@ -7,6 +7,8 @@ if [ "$MODEL" = "CR-K1" ] || [ "$MODEL" = "K1C" ] || [ "$MODEL" = "K1 SE" ]; the
     model=k1
 elif [ "$MODEL" = "CR-K1 Max" ] || [ "$MODEL" = "K1 Max SE" ]; then
     model=k1m
+elif [ "$MODEL" = "F004" ]; then
+    model=f004
 else
     echo "This script is not supported for $MODEL!"
     exit 1
