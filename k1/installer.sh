@@ -846,18 +846,18 @@ function install_guppyscreen() {
             fi
         fi
 
-        # check for non pellcorp guppyscreen and force an update
+        # check for non pellcorp grumpyscreen and force an update
         if [ ! -f /usr/data/guppyscreen/guppyscreen.json ]; then
-            echo "INFO: Forcing update of guppyscreen"
+            echo "INFO: Forcing update of grumpyscreen"
             rm -rf /usr/data/guppyscreen
         elif grep -q "log_path" /usr/data/guppyscreen/guppyscreen.json; then
             echo
-            echo "INFO: Forcing update of guppyscreen"
+            echo "INFO: Forcing update of grumpyscreen"
             rm -rf /usr/data/guppyscreen
         fi
 
         if [ ! -d /usr/data/guppyscreen ]; then
-            echo "INFO: Installing guppyscreen ..."
+            echo "INFO: Installing grumpyscreen ..."
 
             curl -L "https://github.com/pellcorp/guppyscreen/releases/download/main/guppyscreen.tar.gz" -o /usr/data/guppyscreen.tar.gz || exit $?
             tar xf /usr/data/guppyscreen.tar.gz -C /usr/data/ || exit $?
@@ -867,7 +867,7 @@ function install_guppyscreen() {
         ln -sf /usr/data/pellcorp/k1/fixes/respawn/libeinfo.so.1 /lib/libeinfo.so.1
         ln -sf /usr/data/pellcorp/k1/fixes/respawn/librc.so.1 /lib/librc.so.1
 
-        echo "INFO: Updating guppyscreen config ..."
+        echo "INFO: Updating grumpyscreen config ..."
         cp /usr/data/pellcorp/k1/services/S99guppyscreen /etc/init.d/ || exit $?
 
         if [ ! -d "/usr/lib/python3.8/site-packages/matplotlib-2.2.3-py3.8.egg-info" ]; then
@@ -876,7 +876,7 @@ function install_guppyscreen() {
             cp /usr/data/pellcorp/k1/fixes/ft2font.cpython-38-mipsel-linux-gnu.so /usr/lib/python3.8/site-packages/matplotlib/ || exit $?
         fi
 
-        # remove all excludes from guppyscreen
+        # remove all excludes from grumpyscreen
         for file in gcode_shell_command.py guppy_config_helper.py calibrate_shaper_config.py guppy_module_loader.py tmcstatus.py; do
             if grep -q "klippy/extras/${file}" "/usr/data/klipper/.git/info/exclude"; then
                 sed -i "/klippy\/extras\/$file$/d" "/usr/data/klipper/.git/info/exclude"
@@ -2020,10 +2020,10 @@ cd - > /dev/null
     if [ $apply_overrides -ne 0 ] || [ $install_guppyscreen -ne 0 ]; then
         if [ "$client" = "cli" ]; then
             echo
-            echo "INFO: Restarting Guppyscreen ..."
+            echo "INFO: Restarting Gumpyscreen ..."
             /etc/init.d/S99guppyscreen restart
         else
-            echo "WARNING: Guppyscreen restart required"
+            echo "WARNING: Gumpyscreen restart required"
         fi
     fi
 

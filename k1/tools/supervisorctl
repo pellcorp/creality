@@ -31,6 +31,8 @@ get_pid_file() {
 
 is_running() {
   service="$1"
+
+  [ $service == "grumpyscreen" ] && service="guppyscreen"
   pid_file="$(get_pid_file "$service")"
 
   # Check for PID file
@@ -47,20 +49,23 @@ is_running() {
 
 print_process_status() {
   if is_running "$service"; then
+    [ $service == "guppyscreen" ] && service="grumpyscreen"
     printf "%-33s$GREEN""RUNNING$ENDCOLOR\n" "$service"
   else
+    [ $service == "guppyscreen" ] && service="grumpyscreen"
     printf "%-33s$RED""STOPPED$ENDCOLOR\n" "$service"
   fi
 }
 
 print_usage() {
-  echo "supervisorctl shim - provide minimal support for moonraker so CrealityOS moonraker can start/stop without systemd"
+  echo "supervisorctl shim - provide minimal support for moonraker so SimpleAF moonraker can start/stop without systemd"
   echo "Usage: $0 [command] <service>"
   echo "commands include status stop start restart"
 } 
 
 get_script_path() {
   service="$1"
+  [ $service == "grumpyscreen" ] && service="guppyscreen"
   script_path="$(ls -1 /etc/init.d/S[0-9][0-9]${service}_service /etc/init.d/S[0-9][0-9]${service}* 2>/dev/null|head -1)"
   echo "$script_path"
 }
