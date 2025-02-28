@@ -2020,10 +2020,10 @@ cd - > /dev/null
     if [ $apply_overrides -ne 0 ] || [ $install_guppyscreen -ne 0 ]; then
         if [ "$client" = "cli" ]; then
             echo
-            echo "INFO: Restarting Gumpyscreen ..."
+            echo "INFO: Restarting Grumpyscreen ..."
             /etc/init.d/S99guppyscreen restart
         else
-            echo "WARNING: Gumpyscreen restart required"
+            echo "WARNING: Grumpyscreen restart required"
         fi
     fi
 
