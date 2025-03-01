@@ -1,8 +1,11 @@
 #!/bin/sh
 
+MODEL=$(/usr/bin/get_sn_mac.sh model)
+
 config_overrides=true
 apply_overrides=true
 update_guppyscreen=true
+
 while true; do
     if [ "$1" = "--config-overrides" ]; then
         apply_overrides=false
@@ -41,7 +44,13 @@ if [ "$update_guppyscreen" = "true" ]; then
     if [ -n "$1" ] && [ "$1" != "nightly" ]; then
       target=$1
     fi
-    curl -L "https://github.com/pellcorp/guppyscreen/releases/download/$target/guppyscreen.tar.gz" -o /usr/data/guppyscreen.tar.gz || exit $?
+
+    asset_name=guppyscreen.tar.gz
+    # Ender 5 Max has a smaller screen
+    if [ "$MODEL" = "F004" ]; then
+        asset_name=guppyscreen-smallscreen.tar.gz
+    fi
+    curl -L "https://github.com/pellcorp/guppyscreen/releases/download/$target/$asset_name" -o /usr/data/guppyscreen.tar.gz || exit $?
     tar xf /usr/data/guppyscreen.tar.gz -C /usr/data/ || exit $?
     rm /usr/data/guppyscreen.tar.gz
 fi
