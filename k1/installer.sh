@@ -380,7 +380,14 @@ function install_moonraker() {
             [ -d /usr/data/moonraker-env ] && rm -rf /usr/data/moonraker-env
 
             echo
-            git clone https://github.com/pellcorp/moonraker.git /usr/data/moonraker || exit $?
+            if [ "$AF_GIT_CLONE" = "ssh" ]; then
+                export GIT_SSH_IDENTITY=moonraker
+                export GIT_SSH=/usr/data/pellcorp/k1/ssh/git-ssh.sh
+                git clone git@github.com:pellcorp/moonraker.git /usr/data/moonraker || exit $?
+                cd /usr/data/moonraker && git remote set-url origin https://github.com/pellcorp/moonraker.git && cd - > /dev/null
+            else
+                git clone https://github.com/pellcorp/moonraker.git /usr/data/moonraker || exit $?
+            fi
 
             if [ -f /usr/data/moonraker-database.tar.gz ]; then
                 echo
