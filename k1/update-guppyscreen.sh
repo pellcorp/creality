@@ -19,11 +19,13 @@ done
 if [ "$config_overrides" = "true" ]; then
     if [ -f /usr/data/pellcorp-backups/guppyscreen.json ] && [ -f /usr/data/guppyscreen/guppyscreen.json ]; then
         [ -f /usr/data/pellcorp-overrides/guppyscreen.json ] && rm /usr/data/pellcorp-overrides/guppyscreen.json
-        for entry in display_brightness invert_z_icon display_sleep_sec theme; do
+        for entry in display_brightness invert_z_icon display_sleep_sec theme touch_calibration_coeff; do
             stock_value=$(jq -cr ".$entry" /usr/data/pellcorp-backups/guppyscreen.json)
             new_value=$(jq -cr ".$entry" /usr/data/guppyscreen/guppyscreen.json)
             # you know what its not an actual json file its just the properties we support updating
-            if [ "$stock_value" != "null" ] && [ "$new_value" != "null" ] && [ "$stock_value" != "$new_value" ]; then
+            if [ "$entry" = "touch_calibration_coeff" ] && [ "$new_value" != "null" ]; then
+                echo "$entry=$new_value" >> /usr/data/pellcorp-overrides/guppyscreen.json
+            elif [ "$stock_value" != "null" ] && [ "$new_value" != "null" ] && [ "$stock_value" != "$new_value" ]; then
                 echo "$entry=$new_value" >> /usr/data/pellcorp-overrides/guppyscreen.json
             fi
         done
@@ -48,7 +50,7 @@ fi
 
 if [ "$apply_overrides" = "true" ] && [ -f /usr/data/pellcorp-overrides/guppyscreen.json ]; then
     command=""
-    for entry in display_brightness invert_z_icon display_sleep_sec theme; do
+    for entry in display_brightness invert_z_icon display_sleep_sec theme touch_calibration_coeff; do
       value=$(cat /usr/data/pellcorp-overrides/guppyscreen.json | grep "${entry}=" | awk -F '=' '{print $2}')
       if [ -n "$value" ]; then
           if [ -n "$command" ]; then
