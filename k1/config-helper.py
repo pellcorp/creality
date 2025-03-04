@@ -185,7 +185,7 @@ def override_cfg(updater, override_cfg_file,
                 include = section_name.replace('include ', '')
                 if add_include(updater, include):
                     updated = True
-            elif 'gcode_macro' not in section_name and 'gcode_shell_command' not in section_name and (fan_control or printer_cfg or moonraker_conf):
+            elif 'gcode_macro' not in section_name and 'gcode_shell_command' not in section_name and allow_new_section:
                 new_section = overrides.get_section(section_name, None)
                 if new_section:
                     last_section = _last_section(updater)
