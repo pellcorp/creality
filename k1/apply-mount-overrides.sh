@@ -56,7 +56,7 @@ function apply_mount_overrides() {
 
       if [ -f /usr/data/printer_data/config/$target_file ]; then
           echo "Applying mount overrides for $target_file ..."
-          $CONFIG_HELPER --file $target_file --overrides $overrides_dir/$file || exit $?
+          $CONFIG_HELPER --file $target_file --patches $overrides_dir/$file || exit $?
       fi
       return_status=1
   done
