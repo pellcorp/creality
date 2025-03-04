@@ -154,11 +154,10 @@ def add_section(updater, section_name):
     return True
 
 
-def override_cfg(updater, override_cfg_file, config_file, after_section=None):
-    printer_cfg = 'printer.cfg' == os.path.basename(config_file)
-    moonraker_conf = 'moonraker.conf' == os.path.basename(config_file)
-    fan_control = 'fan_control.cfg' == os.path.basename(config_file)
-
+def override_cfg(updater, override_cfg_file,
+                 allow_delete_section=True,
+                 allow_delete_entry=True,
+                 allow_new_section=True):
     overrides = ConfigUpdater(strict=False, allow_no_value=True, space_around_delimiters=False, delimiters=(':'))
     updated = False
     with open(override_cfg_file, 'r') as file:
@@ -166,7 +165,7 @@ def override_cfg(updater, override_cfg_file, config_file, after_section=None):
         for section_name in overrides.sections():
             section = overrides.get_section(section_name, None)
             section_action = section.get('__action__', None)
-            if (printer_cfg or fan_control) and section_action and section_action.value == 'DELETED':
+            if allow_delete_section and section_action and section_action.value == 'DELETED':
                 if updater.has_section(section_name):
                     if remove_section(updater, section_name):
                         updated = True
@@ -174,8 +173,7 @@ def override_cfg(updater, override_cfg_file, config_file, after_section=None):
                 for entry in section:
                     value = section.get(entry, None)
                     if value and value.value == '__DELETED__':
-                        # only support deletion of entries from printer.cfg
-                        if printer_cfg and remove_section_value(updater, section_name, entry):
+                        if allow_delete_entry and remove_section_value(updater, section_name, entry):
                             updated = True
                     elif value and len(value.lines) > 1:
                         if replace_section_multiline_value(updater, section_name, entry, value.lines):
@@ -190,16 +188,11 @@ def override_cfg(updater, override_cfg_file, config_file, after_section=None):
             elif 'gcode_macro' not in section_name and 'gcode_shell_command' not in section_name and (fan_control or printer_cfg or moonraker_conf):
                 new_section = overrides.get_section(section_name, None)
                 if new_section:
-                    if after_section and updater.has_section(after_section):
-                        updater[after_section].add_after.section(new_section.detach()).space()
-                        # ok now we want the next section to be overridden to be after the section we just added
-                        after_section = section_name
-                    else:
-                        last_section = _last_section(updater)
-                        if last_section:
-                            updater[last_section].add_before.section(new_section.detach()).space()
-                        else:  # file is basically empty
-                            updater.add_section(new_section.detach())
+                    last_section = _last_section(updater)
+                    if last_section:
+                        updater[last_section].add_before.section(new_section.detach()).space()
+                    else:  # file is basically empty
+                        updater.add_section(new_section.detach())
                     updated = True
     return updated
 
@@ -225,7 +218,7 @@ def main():
     opts.add_option("", "--add-section", dest="add_section", nargs=1, type="string")
     opts.add_option("", "--ignore-missing", dest="ignore_missing", default=False, action='store_true')
     opts.add_option("", "--overrides", dest="overrides", nargs=1, type="string")
-    opts.add_option("", "--after", dest="after", nargs=1, type="string")
+    opts.add_option("", "--patches", dest="patches", nargs=1, type="string")
     options, _ = opts.parse_args()
 
     if os.path.exists(options.config_file):
@@ -259,6 +252,8 @@ def main():
             updater.read_file(file)
     
     printer_cfg = 'printer.cfg' == os.path.basename(config_file)
+    moonraker_conf = 'moonraker.conf' == os.path.basename(config_file)
+    fan_control = 'fan_control.cfg' == os.path.basename(config_file)
 
     updated = False
     if options.remove_section:
@@ -304,9 +299,20 @@ def main():
         updated = add_include(updater, options.add_include, printer_cfg=printer_cfg)
     elif options.add_section:
         updated = add_section(updater, options.add_section)
+    elif options.patches:
+        if os.path.exists(options.patches):
+            updated = override_cfg(updater, options.patches, True, True, True)
+        else:
+            raise Exception(f"Patches Config File {options.overrides} not found")
     elif options.overrides:
         if os.path.exists(options.overrides):
-            updated = override_cfg(updater, options.overrides, after_section=options.after, config_file=os.path.basename(config_file))
+            allow_delete_section = (printer_cfg or fan_control)
+            allow_delete_entry = printer_cfg
+            allow_new_section = (fan_control or printer_cfg or moonraker_conf)
+            updated = override_cfg(updater, options.overrides,
+                                   allow_delete_section=allow_delete_section,
+                                   allow_delete_entry=allow_delete_entry,
+                                   allow_new_section=allow_new_section)
         else:
             raise Exception(f"Overrides Config File {options.overrides} not found")
     else:
