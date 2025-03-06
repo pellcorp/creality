@@ -21,14 +21,29 @@ setup_git_repo() {
     git config user.name "$GITHUB_USERNAME" || exit $?
     git config user.email "$EMAIL_ADDRESS" || exit $?
 
+    if [ -z "$GITHUB_BRANCH" ]; then
+        export GITHUB_BRANCH=main
+    fi
+
+    branch=$(git rev-parse --abbrev-ref HEAD)
+    if [ "$branch" != "$GITHUB_BRANCH" ]; then
+      git switch $GITHUB_BRANCH 2>/dev/null
+      if [ $? -eq 0 ]; then
+        echo "Switched to branch $GITHUB_BRANCH"
+      else
+        git switch --orphan $GITHUB_BRANCH
+        echo "Switched to new branch $GITHUB_BRANCH"
+      fi
+    fi
+
     # is this a brand new repo, setup a simple readme as the first commit
     if [ $(ls | wc -l) -eq 0 ]; then
         echo "# simple af pellcorp-overrides" >> README.md
-        echo "https://github.com/pellcorp/creality/wiki/K1-Stock-Mainboard-Less-Creality#git-backups-for-configuration-overrides" >> README.md
+        echo "https://pellcorp.github.io/creality-wiki/config_overrides/#git-backups-for-configuration-overrides" >> README.md
         git add README.md || exit $?
         git commit -m "initial commit" || exit $?
-        git branch -M main || exit $?
-        git push -u origin main || exit $?
+        git branch -M $GITHUB_BRANCH || exit $?
+        git push -u origin $GITHUB_BRANCH || exit $?
     fi
 
     # the rest of the script will actually push the changes if needed
@@ -89,8 +104,17 @@ override_file() {
 # make sure we are outside of the /usr/data/pellcorp-overrides directory
 cd /root/
 
-if [ "$1" = "--repo" ] || [ "$1" = "--clean-repo" ]; then
+if [ "$1" = "--help" ]; then
+  echo "Use '$(basename $0) --repo' to create a new git repo in /usr/data/pellcorp-overrides"
+  echo "Use '$(basename $0) --clean-repo' to create a new git repo in /usr/data/pellcorp-overrides and ignore local files"
+  exit 0
+elif [ "$1" = "--repo" ] || [ "$1" = "--clean-repo" ]; then
   if [ -n "$GITHUB_USERNAME" ] && [ -n "$EMAIL_ADDRESS" ] && [ -n "$GITHUB_TOKEN" ] && [ -n "$GITHUB_REPO" ]; then
+        if [ -d /usr/data/pellcorp-overrides/.git ]; then
+          echo "ERROR: Repo dir /usr/data/pellcorp-overrides/.git exists"
+          exit 1
+        fi
+
         if [ "$1" = "--clean-repo" ] && [ -d /usr/data/pellcorp-overrides ]; then
           echo "INFO: Deleting existing /usr/data/pellcorp-overrides"
           rm -rf /usr/data/pellcorp-overrides
@@ -98,16 +122,18 @@ if [ "$1" = "--repo" ] || [ "$1" = "--clean-repo" ]; then
         setup_git_repo
     else
         echo "You must define these environment variables:"
-        echo "GITHUB_USERNAME"
-        echo "EMAIL_ADDRESS"
-        echo "GITHUB_TOKEN"
-        echo "GITHUB_REPO"
-        echo ""
-        echo "https://github.com/pellcorp/creality/wiki/K1-Stock-Mainboard-Less-Creality#git-backups-for-configuration-overrides"
+        echo "  GITHUB_USERNAME"
+        echo "  EMAIL_ADDRESS"
+        echo "  GITHUB_TOKEN"
+        echo "  GITHUB_REPO"
+        echo
+        echo "Optionally if you want to use a branch other than 'main':"
+        echo "  GITHUB_BRANCH"
+        echo
+        echo "https://pellcorp.github.io/creality-wiki/config_overrides/#git-backups-for-configuration-overrides"
         exit 1
     fi
 else
-
   # there will be no support for generating pellcorp-overrides unless you have done a factory reset
   if [ -f /usr/data/pellcorp-backups/printer.factory.cfg ]; then
       # the pellcorp-backups do not need .pellcorp extension, so this is to fix backwards compatible
