@@ -52,6 +52,8 @@ function apply_mount_overrides() {
           target_file=printer.cfg
       elif [ "$file" = "printer-${model}.cfg" ]; then
           target_file=printer.cfg
+      elif [ "$file" = "klicky_macro-${model}.cfg" ]; then # special case for _KLICKY_VARIABLES
+        target_file=klicky_macro.cfg
       else
           target_file=$file
       fi
