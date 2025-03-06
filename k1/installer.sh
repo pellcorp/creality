@@ -143,6 +143,9 @@ function update_repo() {
                 git switch $branch
                 if [ $? -eq 0 ]; then
                   git reset --hard origin/$branch
+                else
+                  echo "ERROR: Failed to switch branches!"
+                  return 1
                 fi
             fi
             cd - > /dev/null
