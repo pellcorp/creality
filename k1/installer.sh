@@ -215,11 +215,6 @@ function disable_creality_services() {
         echo
         echo "INFO: Disabling some creality services ..."
 
-        # remove the old gcode files provided by creality as they should not be printed
-        if [ -d /usr/data/printer_data/gcodes/ ]; then
-            rm /usr/data/printer_data/gcodes/*.gcode
-        fi
-
         if [ -f /etc/init.d/S99start_app ]; then
             echo "INFO: If you reboot the printer before installing guppyscreen, the screen will be blank - this is to be expected!"
             /etc/init.d/S99start_app stop > /dev/null 2>&1
@@ -258,6 +253,20 @@ function disable_creality_services() {
         log_main_pid=$(ps -ef | grep log_main | grep -v "grep" | awk '{print $1}')
         if [ -n "$log_main_pid" ]; then
             kill -9 $log_main_pid
+        fi
+
+        # remove the old gcode files provided by creality as they should not be printed
+        if [ -d /usr/data/printer_data/gcodes/ ]; then
+            rm /usr/data/printer_data/gcodes/*.gcode
+        fi
+
+        # move rubbish to delete
+        if [ -d /usr/data/creality/userdata/log ]; then
+          rm -rf /usr/data/creality/userdata/log
+        fi
+
+        if [ -d /usr/data/creality/upgrade ]; then
+          rm -rf /usr/data/creality/upgrade
         fi
     fi
 
