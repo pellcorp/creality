@@ -14,6 +14,8 @@ def main():
     parser.add_argument("-o", "--original", type=str, required=True)
     parser.add_argument("-u", "--updated", type=str, required=True)
     parser.add_argument("-v", "--overrides", type=str, required=True)
+    parser.add_argument("-x", "--exclude-sections", dest="exclude_sections")
+    parser.add_argument("-i", "--include-sections", dest="include_sections")
     args = parser.parse_args()
 
     if not os.path.exists(args.original):
@@ -30,7 +32,10 @@ def main():
         updated.read_file(file)
 
     overrides = ConfigUpdater(strict=False, allow_no_value=True, space_around_delimiters=False, delimiters=(":", "="))
-    
+
+    include_sections = args.include_sections.split(',') if args.include_sections else None
+    exclude_sections = args.exclude_sections.split(',') if args.exclude_sections else None
+
     update_overrides = False
     printer_cfg = 'printer.cfg' == os.path.basename(args.original)
     moonraker_conf = 'moonraker.conf' == os.path.basename(args.original)
@@ -47,6 +52,9 @@ def main():
 
     # only support deleting sections from printer.cfg or fan_control.cfg for now
     for section_name in deleted_sections:
+        if (exclude_sections and section_name in exclude_sections) or (include_sections and section_name not in include_sections):
+            continue
+
         if section_name not in updated.sections() and (printer_cfg or fan_control):
             if len(overrides.sections()) > 0:
                 overrides[overrides.sections()[-1]].add_after.space().section(section_name)
@@ -56,6 +64,9 @@ def main():
             update_overrides = True
 
     for section_name in updated.sections():
+        if (exclude_sections and section_name in exclude_sections) or (include_sections and section_name not in include_sections):
+            continue
+
         # so for printer.cfg, moonraker.conf or fan_control a new section can be saved, but it can't be a gcode macro
         # and we are ignoring a new scanner section in config overrides due to migrating to cartotouch.cfg
         if section_name != 'scanner' and 'gcode_macro' not in section_name and (printer_cfg or moonraker_conf or fan_control):
@@ -78,6 +89,9 @@ def main():
                 update_overrides = True
 
     for section_name in updated.sections():
+        if (exclude_sections and section_name in exclude_sections) or (include_sections and section_name not in include_sections):
+            continue
+
         original_section = original.get_section(section_name, None)
         updated_section = updated.get_section(section_name, None)
         if original_section and updated_section:
@@ -140,7 +154,7 @@ def main():
         print(f"INFO: Saving overrides to {args.overrides} ...")
         with open(args.overrides, 'w') as file:
             overrides.write(file)
-            
+
 
 if __name__ == '__main__':
     main()

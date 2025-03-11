@@ -2,6 +2,18 @@
 
 CONFIG_OVERRIDES="/usr/data/pellcorp/k1/config-overrides.py"
 
+MODEL=$(/usr/bin/get_sn_mac.sh model)
+if [ "$MODEL" = "CR-K1" ] || [ "$MODEL" = "K1C" ] || [ "$MODEL" = "K1 SE" ]; then
+    model=k1
+elif [ "$MODEL" = "CR-K1 Max" ] || [ "$MODEL" = "K1 Max SE" ]; then
+    model=k1m
+elif [ "$MODEL" = "F004" ]; then
+    model=f004
+else
+    echo "This script is not supported for $MODEL!"
+    exit 1
+fi
+
 setup_git_repo() {
     if [ -d /usr/data/pellcorp-overrides ]; then
         cd /usr/data/pellcorp-overrides
@@ -79,7 +91,20 @@ override_file() {
         cp  /usr/data/printer_data/config/$file /usr/data/pellcorp-overrides/
         return 0
     fi
-    $CONFIG_OVERRIDES --original "$original_file" --updated "$updated_file" --overrides "$overrides_file" || exit $?
+    if [ "$file" = "printer.cfg" ]; then
+      $CONFIG_OVERRIDES --original "$original_file" --updated "$updated_file" --overrides "$overrides_file" --exclude-sections bltouch,probe || exit $?
+
+      # the printer.cfg will always be done last so if there is already a overrides file for bltouch or microprobe we don't need to do it again
+      if [ -f /usr/data/printer_data/config/bltouch-${model}.cfg ] && [ ! -f /usr/data/printer_data/config/bltouch.cfg ] && [ ! -f /usr/data/pellcorp-overrides/bltouch.cfg ]; then
+        overrides_file="/usr/data/pellcorp-overrides/bltouch.cfg"
+        $CONFIG_OVERRIDES --original "$original_file" --updated "$updated_file" --overrides "$overrides_file" --include-sections bltouch || exit $?
+      elif [ -f /usr/data/printer_data/config/microprobe-${model}.cfg ] && [ ! -f /usr/data/printer_data/config/microprobe.cfg ] && [ ! -f /usr/data/pellcorp-overrides/microprobe.cfg ]; then
+          overrides_file="/usr/data/pellcorp-overrides/microprobe.cfg"
+          $CONFIG_OVERRIDES --original "$original_file" --updated "$updated_file" --overrides "$overrides_file" --include-sections probe || exit $?
+      fi
+    else
+      $CONFIG_OVERRIDES --original "$original_file" --updated "$updated_file" --overrides "$overrides_file" || exit $?
+    fi
 
     # we renamed the SENSORLESS_PARAMS to hide it
     if [ -f /usr/data/pellcorp-overrides/sensorless.cfg ]; then
@@ -191,8 +216,12 @@ else
   files=$(find /usr/data/printer_data/config/ -maxdepth 1 ! -name 'printer-*.cfg' -a ! -name ".printer.cfg" -a -name "*.cfg" -o -name "*.conf")
   for file in $files; do
     file=$(basename $file)
-    override_file $file
+    if [ "$file" != "printer.cfg" ]; then
+      override_file $file
+    fi
   done
+  # we want the printer.cfg to be done last
+  override_file printer.cfg
 
   /usr/data/pellcorp/k1/update-guppyscreen.sh --config-overrides
 fi
