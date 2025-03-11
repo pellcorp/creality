@@ -46,8 +46,16 @@ function apply_overrides() {
                 fi
 
                 echo "INFO: Applying overrides for /usr/data/printer_data/config/$file ..."
-                $CONFIG_HELPER --file $file --overrides $overrides_dir/$file || exit $?
 
+                # we are migrating the bltouch and microprobe sections from printer.cfg to their own files, so we need to
+                # ignore any existing config overrides for these sections from printer.cfg, we won't try and automatically
+                # migrate them, as we have already done that for generating config overrides so the only time this
+                # will be an issue is for a factory reset with old overrides!
+                if [ "$file" = "printer.cfg" ]; then
+                  $CONFIG_HELPER --file $file --overrides $overrides_dir/$file --exclude-sections probe,bltouch || exit $?
+                else
+                  $CONFIG_HELPER --file $file --overrides $overrides_dir/$file || exit $?
+                fi
                 if [ "$file" = "moonraker.conf" ]; then  # we moved cartographer to a separate cartographer.conf include
                     /usr/data/pellcorp/k1/config-helper.py --file moonraker.conf --remove-section "update_manager cartographer"
                 fi

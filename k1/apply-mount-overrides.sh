@@ -46,11 +46,7 @@ function apply_mount_overrides() {
   for file in $files; do
       file=$(basename $file)
 
-      if [ "$file" = "bltouch.cfg" ] && [ "$probe" = "bltouch" ]; then # bltouch.cfg is merged into printer.cfg
-          target_file=printer.cfg
-      elif [ "$file" = "microprobe.cfg" ] && [ "$probe" = "microprobe" ]; then # microprobe.cfg is merged into printer.cfg
-          target_file=printer.cfg
-      elif [ "$file" = "printer-${model}.cfg" ]; then
+      if [ "$file" = "printer-${model}.cfg" ]; then
           target_file=printer.cfg
       elif [ "$file" = "klicky_macro-${model}.cfg" ]; then # special case for _KLICKY_VARIABLES
         target_file=klicky_macro.cfg

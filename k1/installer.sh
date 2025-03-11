@@ -1130,18 +1130,24 @@ function setup_bltouch() {
         cleanup_probe beacon
         cleanup_probe klicky
 
-        # we merge bltouch.cfg into printer.cfg so that z_offset can be set
-        if [ -f /usr/data/printer_data/config/bltouch.cfg ]; then
-          rm /usr/data/printer_data/config/bltouch.cfg
-        fi
-        $CONFIG_HELPER --remove-include "bltouch.cfg" || exit $?
-        $CONFIG_HELPER --overrides "/usr/data/pellcorp/k1/bltouch.cfg" || exit $?
+        cp /usr/data/pellcorp/k1/bltouch.cfg /usr/data/printer_data/config/ || exit $?
+        $CONFIG_HELPER --add-include "bltouch.cfg" || exit $?
 
         cp /usr/data/pellcorp/k1/bltouch_macro.cfg /usr/data/printer_data/config/ || exit $?
         $CONFIG_HELPER --add-include "bltouch_macro.cfg" || exit $?
 
         cp /usr/data/pellcorp/k1/bltouch-${model}.cfg /usr/data/printer_data/config/ || exit $?
         $CONFIG_HELPER --add-include "bltouch-${model}.cfg" || exit $?
+
+        # need to add a empty bltouch section for baby stepping to work
+        $CONFIG_HELPER --remove-section "bltouch" || exit $?
+        $CONFIG_HELPER --add-section "bltouch" || exit $?
+        z_offset=$($CONFIG_HELPER --ignore-missing --file /usr/data/pellcorp-overrides/printer.cfg.save_config --get-section-entry bltouch z_offset)
+        if [ -n "$z_offset" ]; then
+          $CONFIG_HELPER --replace-section-entry "bltouch" "# z_offset" "0.0" || exit $?
+        else
+          $CONFIG_HELPER --replace-section-entry "bltouch" "z_offset" "0.0" || exit $?
+        fi
 
         # because the model sits out the back we do need to set position max back
         position_max=$($CONFIG_HELPER --get-section-entry "stepper_y" "position_max" --minus 17 --integer)
@@ -1169,18 +1175,27 @@ function setup_microprobe() {
         cleanup_probe beacon
         cleanup_probe klicky
 
-        # we merge microprobe.cfg into printer.cfg so that z_offset can be set
-        if [ -f /usr/data/printer_data/config/microprobe.cfg ]; then
-          rm /usr/data/printer_data/config/microprobe.cfg
-        fi
-        $CONFIG_HELPER --remove-include "microprobe.cfg" || exit $?
-        $CONFIG_HELPER --overrides "/usr/data/pellcorp/k1/microprobe.cfg" || exit $?
+        cp /usr/data/pellcorp/k1/microprobe.cfg /usr/data/printer_data/config/ || exit $?
+        $CONFIG_HELPER --add-include "microprobe.cfg" || exit $?
 
         cp /usr/data/pellcorp/k1/microprobe_macro.cfg /usr/data/printer_data/config/ || exit $?
         $CONFIG_HELPER --add-include "microprobe_macro.cfg" || exit $?
 
         cp /usr/data/pellcorp/k1/microprobe-${model}.cfg /usr/data/printer_data/config/ || exit $?
         $CONFIG_HELPER --add-include "microprobe-${model}.cfg" || exit $?
+
+        # remove previous directly imported microprobe config
+        $CONFIG_HELPER --remove-section "output_pin probe_enable" || exit $?
+
+        # need to add a empty probe section for baby stepping to work
+        $CONFIG_HELPER --remove-section "probe" || exit $?
+        $CONFIG_HELPER --add-section "probe" || exit $?
+        z_offset=$($CONFIG_HELPER --ignore-missing --file /usr/data/pellcorp-overrides/printer.cfg.save_config --get-section-entry probe z_offset)
+        if [ -n "$z_offset" ]; then
+          $CONFIG_HELPER --replace-section-entry "probe" "# z_offset" "0.0" || exit $?
+        else
+          $CONFIG_HELPER --replace-section-entry "probe" "z_offset" "0.0" || exit $?
+        fi
 
         echo "microprobe-probe" >> /usr/data/pellcorp.done
         sync
@@ -1208,6 +1223,7 @@ function setup_klicky() {
         $CONFIG_HELPER --add-include "klicky.cfg" || exit $?
 
         # need to add a empty probe section for baby stepping to work
+        $CONFIG_HELPER --remove-section "probe" || exit $?
         $CONFIG_HELPER --add-section "probe" || exit $?
         z_offset=$($CONFIG_HELPER --ignore-missing --file /usr/data/pellcorp-overrides/printer.cfg.save_config --get-section-entry probe z_offset)
         if [ -n "$z_offset" ]; then
