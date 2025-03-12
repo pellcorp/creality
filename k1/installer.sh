@@ -1113,7 +1113,9 @@ function cleanup_probe() {
     fi
     $CONFIG_HELPER --remove-include "${probe}_calibrate.cfg" || exit $?
 
-    [ -f /usr/data/printer_data/config/$probe-${model}.cfg ] && rm /usr/data/printer_data/config/$probe-${model}.cfg
+    if [ -f /usr/data/printer_data/config/$probe-${model}.cfg ]; then
+        rm /usr/data/printer_data/config/$probe-${model}.cfg
+    fi
     $CONFIG_HELPER --remove-include "$probe-${model}.cfg" || exit $?
 }
 
@@ -1148,10 +1150,6 @@ function setup_bltouch() {
         else
           $CONFIG_HELPER --replace-section-entry "bltouch" "z_offset" "0.0" || exit $?
         fi
-
-        # because the model sits out the back we do need to set position max back
-        position_max=$($CONFIG_HELPER --get-section-entry "stepper_y" "position_max" --minus 17 --integer)
-        $CONFIG_HELPER --replace-section-entry "stepper_y" "position_max" "$position_max" || exit $?
 
         echo "bltouch-probe" >> /usr/data/pellcorp.done
         sync
@@ -1315,12 +1313,6 @@ function setup_cartotouch() {
         cp /usr/data/pellcorp/k1/cartographer-${model}.cfg /usr/data/printer_data/config/ || exit $?
         $CONFIG_HELPER --add-include "cartographer-${model}.cfg" || exit $?
 
-        if [ "$MODEL" != "F004" ]; then
-            # because the model sits out the back we do need to set position max back
-            position_max=$($CONFIG_HELPER --get-section-entry "stepper_y" "position_max" --minus 16 --integer)
-            $CONFIG_HELPER --replace-section-entry "stepper_y" "position_max" "$position_max" || exit $?
-        fi
-
         cp /usr/data/pellcorp/k1/cartographer_calibrate.cfg /usr/data/printer_data/config/ || exit $?
         $CONFIG_HELPER --add-include "cartographer_calibrate.cfg" || exit $?
 
@@ -1410,13 +1402,6 @@ function setup_beacon() {
         cp /usr/data/pellcorp/k1/beacon-${model}.cfg /usr/data/printer_data/config/ || exit $?
         $CONFIG_HELPER --add-include "beacon-${model}.cfg" || exit $?
 
-        if [ "$MODEL" != "F004" ]; then
-            # 25mm for safety in case someone is using a RevD or low profile, lots of space to reclaim
-            # if you are using the side mount
-            position_max=$($CONFIG_HELPER --get-section-entry "stepper_y" "position_max" --minus 25 --integer)
-            $CONFIG_HELPER --replace-section-entry "stepper_y" "position_max" "$position_max" || exit $?
-        fi
-
         echo "beacon-probe" >> /usr/data/pellcorp.done
         sync
         return 1
@@ -1473,10 +1458,6 @@ function setup_btteddy() {
         cp /usr/data/pellcorp/k1/btteddy-${model}.cfg /usr/data/printer_data/config/ || exit $?
         $CONFIG_HELPER --add-include "btteddy-${model}.cfg" || exit $?
 
-        # because the model sits out the back we do need to set position max back
-        position_max=$($CONFIG_HELPER --get-section-entry "stepper_y" "position_max" --minus 16 --integer)
-        $CONFIG_HELPER --replace-section-entry "stepper_y" "position_max" "$position_max" || exit $?
-
         cp /usr/data/pellcorp/k1/btteddy_calibrate.cfg /usr/data/printer_data/config/ || exit $?
         $CONFIG_HELPER --add-include "btteddy_calibrate.cfg" || exit $?
 
@@ -1529,10 +1510,6 @@ function setup_eddyng() {
 
         cp /usr/data/pellcorp/k1/btteddy-${model}.cfg /usr/data/printer_data/config/ || exit $?
         $CONFIG_HELPER --add-include "btteddy-${model}.cfg" || exit $?
-
-        # because the model sits out the back we do need to set position max back
-        position_max=$($CONFIG_HELPER --get-section-entry "stepper_y" "position_max" --minus 16 --integer)
-        $CONFIG_HELPER --replace-section-entry "stepper_y" "position_max" "$position_max" || exit $?
 
         echo "eddyng-probe" >> /usr/data/pellcorp.done
         sync
@@ -1764,8 +1741,11 @@ cd - > /dev/null
 {
     # figure out what existing probe if any is being used
     probe=
-    if [ -f /usr/data/printer_data/config/bltouch-${model}.cfg ]; then
+
+    if [ -f /usr/data/printer_data/config/bltouch.cfg ]; then
         probe=bltouch
+    elif [ -f /usr/data/printer_data/config/microprobe.cfg ]; then
+        probe=microprobe
     elif [ -f /usr/data/printer_data/config/cartotouch.cfg ]; then
         probe=cartotouch
     elif [ -f /usr/data/printer_data/config/beacon.cfg ]; then
@@ -1776,12 +1756,12 @@ cd - > /dev/null
         probe=eddyng
     elif grep -q "\[scanner\]" /usr/data/printer_data/config/printer.cfg; then
         probe=cartotouch
+    elif [ -f /usr/data/printer_data/config/bltouch-${model}.cfg ]; then
+        probe=bltouch
     elif [ -f /usr/data/printer_data/config/microprobe-${model}.cfg ]; then
         probe=microprobe
     elif [ -f /usr/data/printer_data/config/btteddy-${model}.cfg ]; then
         probe=btteddy
-    elif [ -f /usr/data/printer_data/config/cartographer-${model}.cfg ]; then
-        probe=cartographer
     fi
 
     client=cli
@@ -1809,7 +1789,7 @@ cd - > /dev/null
             shift
             client=$1
             shift
-        elif [ "$1" = "microprobe" ] || [ "$1" = "bltouch" ] || [ "$1" = "beacon" ] || [ "$1" = "klicky" ] || [ "$1" = "cartographer" ] || [ "$1" = "cartotouch" ] || [ "$1" = "btteddy" ] || [ "$1" = "eddyng" ]; then
+        elif [ "$1" = "microprobe" ] || [ "$1" = "bltouch" ] || [ "$1" = "beacon" ] || [ "$1" = "klicky" ] || [ "$1" = "cartotouch" ] || [ "$1" = "btteddy" ] || [ "$1" = "eddyng" ]; then
             if [ "$mode" = "fix-serial" ]; then
                 echo "ERROR: Switching probes is not supported while trying to fix serial!"
                 exit 1
@@ -1845,6 +1825,7 @@ cd - > /dev/null
         exit 1
     fi
 
+
     echo "INFO: Mode is $mode"
     echo "INFO: Probe is $probe"
 
@@ -1855,13 +1836,11 @@ cd - > /dev/null
         else
             exit 1
         fi
+    elif [ "$mode" = "install" ] || [ "$mode" = "reinstall" ] || [ "$skip_overrides" = "true" ]; then
+        echo "ERROR: Mount option must be specified for an --install, --clean-install, --reinstall, --clean-reinstall or --clean-update"
+        exit 1
     fi
     echo
-
-    if [ "$probe" = "cartographer" ]; then
-      echo "ERROR: Cartographer for 4.0.0 firmware is no longer supported!"
-      exit 1
-    fi
 
     if [ "$mode" = "install" ] && [ -f /usr/data/pellcorp.done ]; then
         PELLCORP_GIT_SHA=$(cat /usr/data/pellcorp.done | grep "installed_sha" | awk -F '=' '{print $2}')
@@ -1873,8 +1852,8 @@ cd - > /dev/null
             cd - > /dev/null
             if [ "$PELLCORP_GIT_SHA" != "$CURRENT_REVISION" ]; then
                 echo "Perhaps you meant to execute an --update or a --reinstall instead!"
-                echo "  https://pellcorp.github.io/creality-wiki/misc/#updating"
-                echo "  https://pellcorp.github.io/creality-wiki/misc/#reinstalling"
+                echo "  https://pellcorp.github.io/creality-wiki/updating/#updating"
+                echo "  https://pellcorp.github.io/creality-wiki/updating/#reinstalling"
             fi
             echo
             exit 1
