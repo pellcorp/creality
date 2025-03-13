@@ -87,9 +87,14 @@ override_file() {
         echo "INFO: Overrides not supported for $file"
         return 0
     elif [ ! -f "/usr/data/pellcorp/k1/$file" ]; then
-        echo "INFO: Backing up /usr/data/printer_data/config/$file ..."
-        cp  /usr/data/printer_data/config/$file /usr/data/pellcorp-overrides/
-        return 0
+        if ! echo $file | grep -qE "printer([0-9]+).cfg"; then
+            echo "INFO: Backing up /usr/data/printer_data/config/$file ..."
+            cp  /usr/data/printer_data/config/$file /usr/data/pellcorp-overrides/
+            return 0
+        else
+            echo "INFO: Ignoring /usr/data/printer_data/config/$file ..."
+            return 0
+        fi
     fi
     if [ "$file" = "printer.cfg" ]; then
       $CONFIG_OVERRIDES --original "$original_file" --updated "$updated_file" --overrides "$overrides_file" --exclude-sections bltouch,probe || exit $?

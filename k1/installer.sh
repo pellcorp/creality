@@ -1123,18 +1123,23 @@ function cleanup_probe() {
     $CONFIG_HELPER --remove-include "$probe-${model}.cfg" || exit $?
 }
 
+function cleanup_probes() {
+  cleanup_probe microprobe
+  cleanup_probe btteddy
+  cleanup_probe eddyng
+  cleanup_probe cartotouch
+  cleanup_probe beacon
+  cleanup_probe klicky
+  cleanup_probe bltouch
+}
+
 function setup_bltouch() {
     grep -q "bltouch-probe" /usr/data/pellcorp.done
     if [ $? -ne 0 ]; then
         echo
         echo "INFO: Setting up bltouch/crtouch/3dtouch ..."
 
-        cleanup_probe microprobe
-        cleanup_probe btteddy
-        cleanup_probe eddyng
-        cleanup_probe cartotouch
-        cleanup_probe beacon
-        cleanup_probe klicky
+        cleanup_probes
 
         cp /usr/data/pellcorp/k1/bltouch.cfg /usr/data/printer_data/config/ || exit $?
         $CONFIG_HELPER --add-include "bltouch.cfg" || exit $?
@@ -1170,12 +1175,7 @@ function setup_microprobe() {
         echo
         echo "INFO: Setting up microprobe ..."
 
-        cleanup_probe bltouch
-        cleanup_probe btteddy
-        cleanup_probe eddyng
-        cleanup_probe cartotouch
-        cleanup_probe beacon
-        cleanup_probe klicky
+        cleanup_probes
 
         cp /usr/data/pellcorp/k1/microprobe.cfg /usr/data/printer_data/config/ || exit $?
         $CONFIG_HELPER --add-include "microprobe.cfg" || exit $?
@@ -1214,12 +1214,7 @@ function setup_klicky() {
         echo
         echo "INFO: Setting up klicky ..."
 
-        cleanup_probe bltouch
-        cleanup_probe btteddy
-        cleanup_probe eddyng
-        cleanup_probe cartotouch
-        cleanup_probe beacon
-        cleanup_probe microprobe
+        cleanup_probes
 
         cp /usr/data/pellcorp/k1/klicky.cfg /usr/data/printer_data/config/ || exit $?
         $CONFIG_HELPER --add-include "klicky.cfg" || exit $?
@@ -1272,12 +1267,7 @@ function setup_cartotouch() {
         echo
         echo "INFO: Setting up carto touch ..."
 
-        cleanup_probe bltouch
-        cleanup_probe microprobe
-        cleanup_probe btteddy
-        cleanup_probe eddyng
-        cleanup_probe beacon
-        cleanup_probe klicky
+        cleanup_probes
 
         cp /usr/data/pellcorp/k1/cartographer.conf /usr/data/printer_data/config/ || exit $?
         $CONFIG_HELPER --file moonraker.conf --add-include "cartographer.conf" || exit $?
@@ -1361,12 +1351,7 @@ function setup_beacon() {
         echo
         echo "INFO: Setting up beacon ..."
 
-        cleanup_probe bltouch
-        cleanup_probe microprobe
-        cleanup_probe btteddy
-        cleanup_probe eddyng
-        cleanup_probe cartotouch
-        cleanup_probe klicky
+        cleanup_probes
 
         cp /usr/data/pellcorp/k1/beacon.conf /usr/data/printer_data/config/ || exit $?
         $CONFIG_HELPER --file moonraker.conf --add-include "beacon.conf" || exit $?
@@ -1436,12 +1421,7 @@ function setup_btteddy() {
         echo
         echo "INFO: Setting up btteddy ..."
 
-        cleanup_probe bltouch
-        cleanup_probe microprobe
-        cleanup_probe cartotouch
-        cleanup_probe beacon
-        cleanup_probe eddyng
-        cleanup_probe klicky
+        cleanup_probes
 
         cp /usr/data/pellcorp/k1/btteddy.cfg /usr/data/printer_data/config/ || exit $?
         $CONFIG_HELPER --add-include "btteddy.cfg" || exit $?
@@ -1495,11 +1475,7 @@ function setup_eddyng() {
         echo
         echo "INFO: Setting up btt eddy-ng ..."
 
-        cleanup_probe bltouch
-        cleanup_probe microprobe
-        cleanup_probe cartotouch
-        cleanup_probe beacon
-        cleanup_probe btteddy
+        cleanup_probes
 
         cp /usr/data/pellcorp/k1/eddyng.cfg /usr/data/printer_data/config/ || exit $?
         $CONFIG_HELPER --add-include "eddyng.cfg" || exit $?
@@ -1771,8 +1747,13 @@ cd - > /dev/null
     client=cli
     mode=install
     skip_overrides=false
+    probe_switch=false
     mount=
     # parse arguments here
+
+    if [ -f /usr/data/pellcorp.done ]; then
+        install_mount=$(cat /usr/data/pellcorp.done | grep "mount=" | awk -F '=' '{print $2}')
+    fi
 
     while true; do
         if [ "$1" = "--fix-client-variables" ] || [ "$1" = "--fix-serial" ] || [ "$1" = "--install" ] || [ "$1" = "--update" ] || [ "$1" = "--reinstall" ] || [ "$1" = "--clean-install" ] || [ "$1" = "--clean-update" ] || [ "$1" = "--clean-reinstall" ]; then
@@ -1800,6 +1781,7 @@ cd - > /dev/null
             fi
             if [ -n "$probe" ] && [ "$1" != "$probe" ]; then
               echo "WARNING: About to switch from $probe to $1!"
+              probe_switch=true
             fi
             probe=$1
             shift
@@ -1823,15 +1805,19 @@ cd - > /dev/null
         probe_model=btteddy
     fi
 
+    echo "INFO: Mode is $mode"
+    echo "INFO: Probe is $probe"
+
+    # for a partial install where we selected a mount, we can grab it from the pellcorp.done file
+    if [ -z "$mount" ] && [ -n "$install_mount" ]; then
+        mount=$install_mount
+    fi
+
     # some newer printers we support might not support all probes out of the box
     if [ ! -f /usr/data/pellcorp/k1/${probe_model}-${model}.cfg ]; then
         echo "ERROR: Model $MODEL not supported for $probe"
         exit 1
     fi
-
-
-    echo "INFO: Mode is $mode"
-    echo "INFO: Probe is $probe"
 
     if [ -n "$mount" ]; then
         /usr/data/pellcorp/k1/apply-mount-overrides.sh --verify $probe $mount
@@ -1840,9 +1826,18 @@ cd - > /dev/null
         else
             exit 1
         fi
-    elif [ "$mode" = "install" ] || [ "$mode" = "reinstall" ] || [ "$skip_overrides" = "true" ]; then
-        echo "ERROR: Mount option must be specified for an --install, --clean-install, --reinstall, --clean-reinstall or --clean-update"
+    elif [ ! -d /usr/data/pellcorp-overrides ]; then
+      echo "ERROR: Mount option must be specified"
+      exit 1
+    elif [ "$skip_overrides" = "true" ] || [ "$mode" = "install" ] || [ "$mode" = "reinstall" ]; then
+        echo "ERROR: Mount option must be specified"
         exit 1
+    elif [ -f /usr/data/pellcorp.done ]; then
+        MOUNT=$(cat /usr/data/pellcorp.done | grep "mount=" | awk -F '=' '{print $2}')
+        if [ -z "$MOUNT" ]; then
+            echo "ERROR: Mount option must be specified"
+            exit 1
+        fi
     fi
     echo
 
@@ -1983,6 +1978,11 @@ cd - > /dev/null
 
         if [ -f /usr/data/pellcorp.done ]; then
           rm /usr/data/pellcorp.done
+        fi
+
+        # we need a flag to know what mount we are using
+        if [ -n "$mount" ]; then
+            echo "mount=$mount" > /usr/data/pellcorp.done
         fi
 
         # if we took a post factory reset backup for a reinstall restore it now
