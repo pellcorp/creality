@@ -20,8 +20,8 @@ function apply_mount_overrides() {
 
     return_status=0
     overrides_dir=/usr/data/pellcorp/k1/mounts/$probe/$mount
-    if [ ! -f /usr/data/pellcorp/k1/mounts/$probe/${mount}.overrides ]; then
-        echo "ERROR: Probe and Mount combination not found"
+    if [ ! -f /usr/data/pellcorp/k1/mounts/$probe/${mount}-${model}.overrides ]; then
+        echo "ERROR: Probe (${probe}), Mount (${mount}) and Model (${model}) combination not found"
         exit 0 # FIXME unfortunately we are using this exit code to know overrides were applied
     fi
 
@@ -40,23 +40,15 @@ function apply_mount_overrides() {
         elif [ -n "$file" ] && [ -f $overrides_dir/$file ]; then
             echo "$line" >> $overrides_dir/$file
         fi
-    done < "/usr/data/pellcorp/k1/mounts/$probe/${mount}.overrides"
+    done < "/usr/data/pellcorp/k1/mounts/$probe/${mount}-${model}.overrides"
 
   files=$(find $overrides_dir -maxdepth 1 -name "*.cfg")
   for file in $files; do
       file=$(basename $file)
 
-      if [ "$file" = "printer-${model}.cfg" ]; then
-          target_file=printer.cfg
-      elif [ "$file" = "klicky_macro-${model}.cfg" ]; then # special case for _KLICKY_VARIABLES
-        target_file=klicky_macro.cfg
-      else
-          target_file=$file
-      fi
-
-      if [ -f /usr/data/printer_data/config/$target_file ]; then
-          echo "Applying mount overrides for $target_file ..."
-          $CONFIG_HELPER --file $target_file --patches $overrides_dir/$file || exit $?
+      if [ -f /usr/data/printer_data/config/$file ]; then
+          echo "Applying mount overrides for $file ..."
+          $CONFIG_HELPER --file $file --patches $overrides_dir/$file || exit $?
       fi
       return_status=1
   done
@@ -81,25 +73,25 @@ mount=$2
 
 if [ "$mode" = "verify" ]; then
     if [ -d /usr/data/pellcorp/k1/mounts/$probe ]; then
-        if [ -f /usr/data/pellcorp/k1/mounts/$probe/${mount}.overrides ]; then
+        if [ -f /usr/data/pellcorp/k1/mounts/$probe/${mount}-${model}.overrides ]; then
             exit 0
         else
             if [ -n "$mount" ]; then
-                echo "ERROR: Invalid $probe mount $mount specified!"
+                echo "ERROR: Invalid Probe (${probe}), Mount (${mount}) and Model (${model}) combination"
             fi
             echo
             echo "The following mounts are available:"
             echo
 
-            if [ -f /usr/data/pellcorp/k1/mounts/$probe/Default.overrides ]; then
-                comment=$(cat /usr/data/pellcorp/k1/mounts/$probe/Default.overrides | grep "^#" | head -1 | sed 's/#\s*//g')
+            if [ -f /usr/data/pellcorp/k1/mounts/$probe/Default-${model}.overrides ]; then
+                comment=$(cat /usr/data/pellcorp/k1/mounts/$probe/Default-${model}.overrides | grep "^#" | head -1 | sed 's/#\s*//g')
                 echo "  * Default - $comment"
             fi
 
-            files=$(find /usr/data/pellcorp/k1/mounts/$probe -maxdepth 1 -name "*.overrides")
+            files=$(find /usr/data/pellcorp/k1/mounts/$probe -maxdepth 1 -name "*-${model}.overrides")
             for file in $files; do
                 comment=$(cat $file | grep "^#" | head -1 | sed 's/#\s*//g')
-                file=$(basename $file .overrides)
+                file=$(basename $file .overrides | sed "s/-${model}//g")
                 if [ "$file" != "Default" ]; then
                     echo "  * $file - $comment"
                 fi

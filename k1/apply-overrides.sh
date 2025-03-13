@@ -2,6 +2,18 @@
 
 CONFIG_HELPER="/usr/data/pellcorp/k1/config-helper.py"
 
+MODEL=$(/usr/bin/get_sn_mac.sh model)
+if [ "$MODEL" = "CR-K1" ] || [ "$MODEL" = "K1C" ] || [ "$MODEL" = "K1 SE" ]; then
+    model=k1
+elif [ "$MODEL" = "CR-K1 Max" ] || [ "$MODEL" = "K1 Max SE" ]; then
+    model=k1m
+elif [ "$MODEL" = "F004" ]; then
+    model=f004
+else
+    echo "This script is not supported for $MODEL!"
+    exit 1
+fi
+
 function apply_overrides() {
     return_status=0
     if [ -f /usr/data/pellcorp-overrides.cfg ] || [ -d /usr/data/pellcorp-overrides ]; then
@@ -59,8 +71,22 @@ function apply_overrides() {
                 if [ "$file" = "moonraker.conf" ]; then  # we moved cartographer to a separate cartographer.conf include
                     /usr/data/pellcorp/k1/config-helper.py --file moonraker.conf --remove-section "update_manager cartographer"
                 fi
-              else # if switching probes we might run into this
-                echo "WARN: Ignoring overrides for missing /usr/data/printer_data/config/$file"
+              else
+                # check to see if we need to handle any legacy -k1.cfg / -k1m.cfg / -f004.cfg overrides
+                base_file=$(echo "$file" | sed "s/-${model}//g")
+                if [ "$base_file" = "cartographer.cfg" ] && [ -f /usr/data/printer_data/config/cartotouch.cfg ]; then
+                  base_file=cartotouch.cfg
+                elif [ "$base_file" = "btteddy.cfg" ] && [ -f /usr/data/printer_data/config/eddyng.cfg ]; then
+                  base_file=eddyng.cfg
+                fi
+
+                # also apply overrides from the original -k1 / -k1m / -f004 file
+                if [ -f /usr/data/printer_data/config/${base_file} ]; then
+                  echo "INFO: Applying overrides for /usr/data/printer_data/config/$base_file ..."
+                  $CONFIG_HELPER --file ${base_file} --overrides $overrides_dir/$file || exit $?
+                else
+                  echo "WARN: Ignoring overrides for missing /usr/data/printer_data/config/$file"
+                fi
               fi
             elif [ "$file" != "printer.cfg.save_config" ]; then
                 echo "INFO: Restoring /usr/data/printer_data/config/$file ..."

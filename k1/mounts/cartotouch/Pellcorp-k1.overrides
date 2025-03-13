@@ -1,0 +1,25 @@
+# Rear quick mounted for right angle for testing only
+
+-- cartotouch.cfg
+[scanner]
+x_offset: 0.0
+y_offset: 16.86
+
+[bed_mesh]
+mesh_min: 30,25
+mesh_max: 210,210
+
+[screws_tilt_adjust]
+screw1: 25,3
+screw2: 195,3
+screw3: 195,173
+screw4: 25,173
+
+[axis_twist_compensation]
+calibrate_start_x: 30
+calibrate_end_x: 210
+calibrate_y: 105
+
+-- printer.cfg
+[stepper_y]
+position_max: 208
