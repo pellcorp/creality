@@ -1,0 +1,25 @@
+# https://www.printables.com/model/1073375-cr-touch-mount-k1-k1maxk1c-zero-y-offset
+
+-- bltouch.cfg
+[bltouch]
+x_offset: -37
+y_offset: 0
+
+[bed_mesh]
+mesh_min: 3,5
+mesh_max: 192,215
+
+[screws_tilt_adjust]
+screw1: 62,20
+screw2: 232,20
+screw3: 232,190
+screw4: 62,190
+
+[axis_twist_compensation]
+calibrate_start_x: 30
+calibrate_end_x: 210
+calibrate_y: 105
+
+-- printer.cfg
+[stepper_y]
+position_max: 226

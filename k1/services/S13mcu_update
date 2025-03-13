@@ -172,7 +172,10 @@ auto_update() {
     fi
 
     if [ -f $VERSION_FILE ]; then
-      rm $VERSION_FILE
+      # only clear out the file if at least one mcu can be flashed
+      if [ $mcu_ready = "true" ] || [ $noz_ready = "true" ]; then
+        rm $VERSION_FILE
+      fi
     fi
 
     # Flashing

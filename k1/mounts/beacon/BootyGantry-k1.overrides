@@ -1,0 +1,30 @@
+# https://github.com/tlace17/K1-Linear-Rail-Gantry/blob/main/STLs/Probe%20Mounts/Rail%20Carriage%20Carto%20Mount.stl
+
+-- beacon.cfg
+[beacon]
+x_offset: 0.0
+y_offset: 18.7
+
+[bed_mesh]
+mesh_min: 10,25
+mesh_max: 200,200
+
+[screws_tilt_adjust]
+screw1: 25,1.3
+screw2: 195,1.3
+screw3: 195,171.3
+screw4: 25,171.3
+
+[axis_twist_compensation]
+calibrate_start_x: 30
+calibrate_end_x: 210
+calibrate_y: 105
+
+-- printer.cfg
+[stepper_x]
+position_min: -2.5
+position_endstop: 226.5
+position_max: 226.5
+
+[stepper_y]
+position_max: 204

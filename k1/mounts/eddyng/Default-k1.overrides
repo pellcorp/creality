@@ -1,0 +1,25 @@
+# https://www.printables.com/model/1012524-btteddy-creality-k1-k1c-k1-max-mount
+
+-- eddyng.cfg
+[probe_eddy_ng btt_eddy]
+x_offset: -23.0
+y_offset: 0.0
+
+[bed_mesh]
+mesh_min: 10, 10
+mesh_max: 205, 210
+
+[screws_tilt_adjust]
+screw1: 48,20
+screw2: 218,20
+screw3: 218,190
+screw4: 48,190
+
+[axis_twist_compensation]
+calibrate_start_x: 30
+calibrate_end_x: 210
+calibrate_y: 105
+
+-- printer.cfg
+[stepper_y]
+position_max: 226
