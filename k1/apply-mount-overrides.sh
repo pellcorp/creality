@@ -72,7 +72,7 @@ if [ "$1" = "--verify" ]; then
 fi
 
 if [ $# -eq 0 ]; then
-    echo "Usage: $0 <cartotouch|btteddy|eddyng|microprobe|bltouch|beacon> <mount>"
+    echo "Usage: $0 <cartotouch|btteddy|eddyng|microprobe|bltouch|beacon|klicky> <mount>"
     exit 0
 fi
 
