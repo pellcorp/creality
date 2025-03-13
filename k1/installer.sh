@@ -746,6 +746,10 @@ function install_klipper() {
         cp /usr/data/pellcorp/k1/sensorless.cfg /usr/data/printer_data/config/ || exit $?
         $CONFIG_HELPER --add-include "sensorless.cfg" || exit $?
 
+        # just make sure the baud is written
+        $CONFIG_HELPER --replace-section-entry "mcu" "baud" 230400 || exit $?
+        $CONFIG_HELPER --replace-section-entry "mcu nozzle_mcu" "baud" 230400 || exit $?
+
         # for Ender 5 Max we need to disable sensorless homing, reversing homing order,don't move away and do not repeat homing
         # but we are still going to use homing override even though the max has physical endstops to make things a bit easier
         if [ "$MODEL" = "F004" ]; then
