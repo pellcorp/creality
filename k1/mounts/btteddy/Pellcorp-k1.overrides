@@ -1,0 +1,22 @@
+# https://www.printables.com/model/965667-wip-k1-btt-eddy-rear-mount-v4
+
+-- btteddy.cfg
+[probe_eddy_current btt_eddy]
+x_offset: 0.0
+y_offset: 24.82
+
+[bed_mesh]
+mesh_min: 10, 30
+mesh_max: 205, 210
+
+[screws_tilt_adjust]
+__action__: DELETED
+
+[axis_twist_compensation]
+calibrate_start_x: 30
+calibrate_end_x: 210
+calibrate_y: 105
+
+-- printer.cfg
+[stepper_y]
+position_max: 210

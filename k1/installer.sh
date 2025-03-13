@@ -1145,9 +1145,6 @@ function setup_bltouch() {
         cp /usr/data/pellcorp/k1/bltouch_macro.cfg /usr/data/printer_data/config/ || exit $?
         $CONFIG_HELPER --add-include "bltouch_macro.cfg" || exit $?
 
-        cp /usr/data/pellcorp/k1/bltouch-${model}.cfg /usr/data/printer_data/config/ || exit $?
-        $CONFIG_HELPER --add-include "bltouch-${model}.cfg" || exit $?
-
         # need to add a empty bltouch section for baby stepping to work
         $CONFIG_HELPER --remove-section "bltouch" || exit $?
         $CONFIG_HELPER --add-section "bltouch" || exit $?
@@ -1180,9 +1177,6 @@ function setup_microprobe() {
 
         cp /usr/data/pellcorp/k1/microprobe_macro.cfg /usr/data/printer_data/config/ || exit $?
         $CONFIG_HELPER --add-include "microprobe_macro.cfg" || exit $?
-
-        cp /usr/data/pellcorp/k1/microprobe-${model}.cfg /usr/data/printer_data/config/ || exit $?
-        $CONFIG_HELPER --add-include "microprobe-${model}.cfg" || exit $?
 
         # remove previous directly imported microprobe config
         $CONFIG_HELPER --remove-section "output_pin probe_enable" || exit $?
@@ -1230,9 +1224,6 @@ function setup_klicky() {
         cp /usr/data/pellcorp/k1/klicky_macro.cfg /usr/data/printer_data/config/ || exit $?
         $CONFIG_HELPER --add-include "klicky_macro.cfg" || exit $?
 
-        cp /usr/data/pellcorp/k1/klicky-${model}.cfg /usr/data/printer_data/config/ || exit $?
-        $CONFIG_HELPER --add-include "klicky-${model}.cfg" || exit $?
-
         echo "klicky-probe" >> /usr/data/pellcorp.done
         sync
 
@@ -1278,6 +1269,10 @@ function setup_cartotouch() {
         cp /usr/data/pellcorp/k1/cartotouch.cfg /usr/data/printer_data/config/ || exit $?
         $CONFIG_HELPER --add-include "cartotouch.cfg" || exit $?
 
+        y_position_mid=$($CONFIG_HELPER --get-section-entry "stepper_y" "position_max" --divisor 2 --integer)
+        x_position_mid=$($CONFIG_HELPER --get-section-entry "stepper_x" "position_max" --divisor 2 --integer)
+        $CONFIG_HELPER --file cartotouch.cfg --replace-section-entry "bed_mesh" "zero_reference_position" "$x_position_mid,$y_position_mid" || exit $?
+
         set_serial_cartotouch
 
         # a slight change to the way cartotouch is configured
@@ -1301,9 +1296,6 @@ function setup_cartotouch() {
         else
             $CONFIG_HELPER --replace-section-entry "scanner" "mode" "touch" || exit $?
         fi
-
-        cp /usr/data/pellcorp/k1/cartographer-${model}.cfg /usr/data/printer_data/config/ || exit $?
-        $CONFIG_HELPER --add-include "cartographer-${model}.cfg" || exit $?
 
         cp /usr/data/pellcorp/k1/cartographer_calibrate.cfg /usr/data/printer_data/config/ || exit $?
         $CONFIG_HELPER --add-include "cartographer_calibrate.cfg" || exit $?
@@ -1368,6 +1360,7 @@ function setup_beacon() {
         y_position_mid=$($CONFIG_HELPER --get-section-entry "stepper_y" "position_max" --divisor 2 --integer)
         x_position_mid=$($CONFIG_HELPER --get-section-entry "stepper_x" "position_max" --divisor 2 --integer)
         $CONFIG_HELPER --file beacon.cfg --replace-section-entry "beacon" "home_xy_position" "$x_position_mid,$y_position_mid" || exit $?
+        $CONFIG_HELPER --file beacon.cfg --replace-section-entry "bed_mesh" "zero_reference_position" "$x_position_mid,$y_position_mid" || exit $?
 
         # for Ender 5 Max need to swap homing order for beacon
         if [ "$MODEL" = "F004" ]; then
@@ -1385,9 +1378,6 @@ function setup_beacon() {
         else
           $CONFIG_HELPER --replace-section-entry "beacon" "cal_nozzle_z" "0.1" || exit $?
         fi
-
-        cp /usr/data/pellcorp/k1/beacon-${model}.cfg /usr/data/printer_data/config/ || exit $?
-        $CONFIG_HELPER --add-include "beacon-${model}.cfg" || exit $?
 
         echo "beacon-probe" >> /usr/data/pellcorp.done
         sync
@@ -1437,9 +1427,6 @@ function setup_btteddy() {
         $CONFIG_HELPER --remove-section "probe_eddy_current btt_eddy" || exit $?
         $CONFIG_HELPER --add-section "probe_eddy_current btt_eddy" || exit $?
 
-        cp /usr/data/pellcorp/k1/btteddy-${model}.cfg /usr/data/printer_data/config/ || exit $?
-        $CONFIG_HELPER --add-include "btteddy-${model}.cfg" || exit $?
-
 # these guided macros are out of date, removing them temporarily to avoid confusion
 #        cp /usr/data/pellcorp/k1/btteddy_calibrate.cfg /usr/data/printer_data/config/ || exit $?
 #        $CONFIG_HELPER --add-include "btteddy_calibrate.cfg" || exit $?
@@ -1486,9 +1473,6 @@ function setup_eddyng() {
 
         $CONFIG_HELPER --remove-section "probe_eddy_ng btt_eddy" || exit $?
         $CONFIG_HELPER --add-section "probe_eddy_ng btt_eddy" || exit $?
-
-        cp /usr/data/pellcorp/k1/btteddy-${model}.cfg /usr/data/printer_data/config/ || exit $?
-        $CONFIG_HELPER --add-include "btteddy-${model}.cfg" || exit $?
 
         echo "eddyng-probe" >> /usr/data/pellcorp.done
         sync
@@ -1733,6 +1717,8 @@ cd - > /dev/null
         probe=klicky
     elif [ -f /usr/data/printer_data/config/eddyng.cfg ]; then
         probe=eddyng
+    elif [ -f /usr/data/printer_data/config/btteddy.cfg ]; then
+        probe=btteddy
     elif grep -q "\[scanner\]" /usr/data/printer_data/config/printer.cfg; then
         probe=cartotouch
     elif [ -f /usr/data/printer_data/config/bltouch-${model}.cfg ]; then
@@ -1809,15 +1795,17 @@ cd - > /dev/null
 
     # don't try and validate a mount if all we are wanting to do is fix serial
     if [ "$mode" != "fix-serial" ]; then
-      # for a partial install where we selected a mount, we can grab it from the pellcorp.done file
-      if [ -z "$mount" ] && [ -n "$install_mount" ] && [ "$mode" = "install" ] && [ "$probe_switch" != "true" ]; then
+      if [ -z "$mount" ] && [ -n "$install_mount" ] && [ "$probe_switch" != "true" ]; then
+        # for a partial install where we selected a mount, we can grab it from the pellcorp.done file
+        if [ "$mode" = "install" ]; then
           mount=$install_mount
-      fi
-
-      # some newer printers we support might not support all probes out of the box
-      if [ ! -f /usr/data/pellcorp/k1/${probe_model}-${model}.cfg ]; then
-          echo "ERROR: Model $MODEL not supported for $probe"
-          exit 1
+        elif [ -f /usr/data/printer_data/config/${probe_model}-${model}.cfg ]; then
+          # if we are about to migrate an older installation we need to force the reapplication of the mount overrides
+          # mounts which might have had the same config as some default -k1 / -k1m config so there would have been
+          # no mount overrides generated
+          echo "WARNING: Enforcing mount overrides for mount $install_mount for migration"
+          mount=$install_mount
+        fi
       fi
 
       if [ -n "$mount" ]; then
@@ -2090,7 +2078,7 @@ cd - > /dev/null
     if [ -f /usr/data/pellcorp-backups/printer.factory.cfg ]; then
         # we want a copy of the file before config overrides are re-applied so we can correctly generate diffs
         # against different generations of the original file
-        for file in printer.cfg start_end.cfg fan_control.cfg $probe_model.conf spoolman.conf timelapse.conf moonraker.conf webcam.conf sensorless.cfg ${probe}_macro.cfg ${probe}.cfg ${probe_model}-${model}.cfg; do
+        for file in printer.cfg start_end.cfg fan_control.cfg $probe_model.conf spoolman.conf timelapse.conf moonraker.conf webcam.conf sensorless.cfg ${probe}_macro.cfg ${probe}.cfg; do
             if [ -f /usr/data/printer_data/config/$file ]; then
                 cp /usr/data/printer_data/config/$file /usr/data/pellcorp-backups/$file
             fi

@@ -1,0 +1,22 @@
+# https://makerworld.com/en/models/494931
+
+-- btteddy.cfg
+[probe_eddy_current btt_eddy]
+x_offset: -38.5
+y_offset: 11.8
+
+[bed_mesh]
+mesh_min: 5, 30
+mesh_max: 185, 215
+
+[screws_tilt_adjust]
+__action__: DELETED
+
+[axis_twist_compensation]
+calibrate_start_x: 30
+calibrate_end_x: 210
+calibrate_y: 105
+
+-- printer.cfg
+[stepper_y]
+position_max: 226

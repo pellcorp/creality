@@ -1,0 +1,25 @@
+# https://www.printables.com/model/1195575-btt-eddy-mount-for-k1c
+
+-- btteddy.cfg
+[probe_eddy_current btt_eddy]
+x_offset: -23.0
+y_offset: 0.0
+
+[bed_mesh]
+mesh_min: 10,10
+mesh_max: 280,280
+
+[screws_tilt_adjust]
+screw1: 42,23
+screw2: 301,23
+screw3: 271,272
+screw4: 71,272
+
+[axis_twist_compensation]
+calibrate_start_x: 10
+calibrate_end_x: 280
+calibrate_y: 153
+
+-- printer.cfg
+[stepper_y]
+position_max: 306
