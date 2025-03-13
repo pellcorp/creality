@@ -1,0 +1,22 @@
+# Rear quick mounted for right angle for testing only
+
+-- beacon.cfg
+[beacon]
+x_offset: 0.0
+y_offset: 16.86
+
+[bed_mesh]
+mesh_min: 10,22
+mesh_max: 288,280
+
+[screws_tilt_adjust]
+__action__: DELETED
+
+[axis_twist_compensation]
+calibrate_start_x: 10
+calibrate_end_x: 280
+calibrate_y: 153
+
+-- printer.cfg
+[stepper_y]
+position_max: 288

@@ -1,0 +1,30 @@
+# https://github.com/tlace17/K1-Linear-Rail-Gantry/blob/main/STLs/Probe%20Mounts/Rail%20Carriage%20Microprobe%20Mount.stl
+
+-- microprobe.cfg
+[probe]
+x_offset: 0.0
+y_offset: 18.7
+
+[bed_mesh]
+mesh_min: 10,10
+mesh_max: 280,280
+
+[screws_tilt_adjust]
+screw1: 19,4.3
+screw2: 278,4.3
+screw3: 248,253.3
+screw4: 48,253.3
+
+[axis_twist_compensation]
+calibrate_start_x: 10
+calibrate_end_x: 280
+calibrate_y: 153
+
+-- printer.cfg
+[stepper_x]
+position_min: -2.5
+position_endstop: 303.5
+position_max: 303.5
+
+[stepper_y]
+position_max: 284

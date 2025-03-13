@@ -18,7 +18,7 @@ The following files were originally from other projects.  Some of these files ar
 - cartographer_macro.cfg -> https://raw.githubusercontent.com/K1-Klipper/cartographer-klipper/master/cartographer_macro.cfg
 - guppyscreen.cfg -> https://github.com/ballaswag/guppyscreen/blob/main/k1/scripts/guppy_cmd.cfg
 - gcode_shell_command.py -> https://github.com/dw-0/kiauh/blob/master/resources/gcode_shell_command.py
-- btteddy.cfg, bttteddy-k1.cfg, btteddy-k1m.cfg, btteddy_macro.cfg -> https://github.com/ballaswag/creality_k1_klipper_mod/tree/master/printer_configs
+- btteddy.cfg, btteddy_macro.cfg originally from -> https://github.com/ballaswag/creality_k1_klipper_mod/tree/master/printer_configs
 The nginx binaries originally came from:
 https://github.com/Guilouz/Creality-Helper-Script/raw/main/files/moonraker/nginx.tar.gz
 

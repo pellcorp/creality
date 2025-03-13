@@ -1,0 +1,30 @@
+# https://www.printables.com/model/833769-the-skeletor-collection-a-creality-k1k1-maxk1c-coo
+
+-- beacon.cfg
+[beacon]
+x_offset:0
+y_offset:-22
+
+[bed_mesh]
+mesh_min:10,13
+mesh_max:290,273
+
+[screws_tilt_adjust]
+screw1:20,47
+screw2:280,47
+screw3:250,297
+screw4:50,297
+
+[axis_twist_compensation]
+calibrate_start_x: 10
+calibrate_end_x: 280
+calibrate_y: 153
+
+-- printer.cfg
+[stepper_y]
+position_min:-2
+position_max:298
+
+[stepper_x]
+position_min:-2
+position_max:306.5
