@@ -1833,10 +1833,11 @@ cd - > /dev/null
         echo "ERROR: Mount option must be specified"
         exit 1
     elif [ -f /usr/data/pellcorp.done ]; then
-        MOUNT=$(cat /usr/data/pellcorp.done | grep "mount=" | awk -F '=' '{print $2}')
-        if [ -z "$MOUNT" ]; then
+        if [ -z "$install_mount" ]; then
             echo "ERROR: Mount option must be specified"
             exit 1
+        else
+            echo "INFO: Mount is $install_mount"
         fi
     fi
     echo
@@ -1983,6 +1984,8 @@ cd - > /dev/null
         # we need a flag to know what mount we are using
         if [ -n "$mount" ]; then
             echo "mount=$mount" > /usr/data/pellcorp.done
+        elif [ -n "$install_mount" ]; then
+            echo "mount=$install_mount" > /usr/data/pellcorp.done
         fi
 
         # if we took a post factory reset backup for a reinstall restore it now
@@ -2167,5 +2170,7 @@ cd - > /dev/null
     /usr/data/pellcorp/k1/tools/check-firmware.sh
 
     echo "installed_sha=$PELLCORP_GIT_SHA" >> /usr/data/pellcorp.done
+    sync
+
     exit 0
 } 2>&1 | tee -a $LOG_FILE
