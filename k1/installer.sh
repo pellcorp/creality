@@ -1833,7 +1833,7 @@ cd - > /dev/null
         echo "ERROR: Mount option must be specified"
         exit 1
     elif [ -f /usr/data/pellcorp.done ]; then
-        if [ -z "$install_mount" ]; then
+        if [ -z "$install_mount" ] || [ "$probe_switch" = "true" ]; then
             echo "ERROR: Mount option must be specified"
             exit 1
         else
