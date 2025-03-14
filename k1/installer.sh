@@ -1809,7 +1809,7 @@ cd - > /dev/null
     echo "INFO: Probe is $probe"
 
     # for a partial install where we selected a mount, we can grab it from the pellcorp.done file
-    if [ -z "$mount" ] && [ -n "$install_mount" ] && [ "$mode" = "install" ]; then
+    if [ -z "$mount" ] && [ -n "$install_mount" ] && [ "$mode" = "install" ] && [ "$probe_switch" != "true" ]; then
         mount=$install_mount
     fi
 
