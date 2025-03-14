@@ -22,23 +22,16 @@ if [ $REMAINING_DATA_DISK -le 1000 ]; then
     exit 1
 fi
 
-if [ -f /usr/data/printer_data/backups/backup-latest.tar.gz ]; then
-    rm /usr/data/printer_data/config/backups/backup-latest.tar.gz
-fi
-
-cd /usr/data
-latest_tar_ball=$(ls -lt printer_data/config/backups/*.tar.gz 2> /dev/null | head -1 | awk '{print $9}')
-cd - > /dev/null
-
-export TIMESTAMP=latest
-/usr/data/pellcorp/k1/tools/backups.sh --create || exit $?
-if [ ! -f /usr/data/printer_data/config/backups/backup-latest.tar.gz ]; then
-    echo "ERROR: Missing /usr/data/printer_data/config/backups/backup-latest.tar.gz file"
-    exit 1
-fi
+echo "Generating support.zip, please wait..."
 
 if [ -f /usr/data/printer_data/config/support.tar.gz ]; then
     rm /usr/data/printer_data/config/support.tar.gz
+fi
+if [ -f /usr/data/support.zip ]; then
+    rm /usr/data/support.zip
+fi
+if [ -f /usr/data/printer_data/config/support.zip ]; then
+    rm /usr/data/printer_data/config/support.zip
 fi
 
 if [ -f /usr/data/support.log ]; then
@@ -61,13 +54,13 @@ ls -laR /usr/data >> /usr/data/support.log
 echo "----------------------------------------------------------------------------" >> /usr/data/support.log
 
 cd /usr/data
-tar -zcf /usr/data/printer_data/config/support.tar.gz support.log printer_data/config/backups/*.tar.gz printer_data/logs/installer-*.log printer_data/logs/klippy.log printer_data/logs/moonraker.log printer_data/logs/guppyscreen.log /var/log/messages 2> /dev/null
+python3 -m zipfile -c /usr/data/support.zip support.log pellcorp-overrides/ pellcorp-backups/ printer_data/config/ printer_data/logs/installer-*.log printer_data/logs/klippy.log printer_data/logs/moonraker.log printer_data/logs/guppyscreen.log /var/log/messages 2> /dev/null
 cd - > /dev/null
 
 rm /usr/data/support.log
-rm /usr/data/printer_data/config/backups/backup-latest.tar.gz
-if [ -f /usr/data/printer_data/config/support.tar.gz ]; then
-    echo "Upload the support.tar.gz to discord"
+if [ -f /usr/data/support.zip ]; then
+    mv /usr/data/support.zip /usr/data/printer_data/config/
+    echo "Upload the support.zip to discord"
 else
-    echo "ERROR: Failed to create the support.tar.gz file"
+    echo "ERROR: Failed to create the support.zip file"
 fi
