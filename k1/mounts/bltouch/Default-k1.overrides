@@ -1,0 +1,25 @@
+# https://www.printables.com/model/666186-creality-k1-bltouch-adapter
+
+-- bltouch.cfg
+[bltouch]
+x_offset: 0.0
+y_offset: 25.25
+
+[bed_mesh]
+mesh_min: 5,30
+mesh_max: 210,209
+
+[screws_tilt_adjust]
+screw1: 25,0
+screw2: 195,0
+screw3: 195,165
+screw4: 25,165
+
+[axis_twist_compensation]
+calibrate_start_x: 30
+calibrate_end_x: 210
+calibrate_y: 105
+
+-- printer.cfg
+[stepper_y]
+position_max: 210

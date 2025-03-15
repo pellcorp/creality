@@ -1,0 +1,20 @@
+# internal use only for the moment
+
+-- klicky.cfg
+[probe]
+x_offset: 0.2
+y_offset: 16.1
+
+[bed_mesh]
+mesh_min: 1.2,21.1
+mesh_max: 290.2,287.1
+
+[screws_tilt_adjust]
+__action__: DELETED
+
+[axis_twist_compensation]
+__action__: DELETED
+
+-- printer.cfg
+[stepper_y]
+position_max: 226
