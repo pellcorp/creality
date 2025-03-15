@@ -1442,8 +1442,9 @@ function setup_btteddy() {
         cp /usr/data/pellcorp/k1/btteddy-${model}.cfg /usr/data/printer_data/config/ || exit $?
         $CONFIG_HELPER --add-include "btteddy-${model}.cfg" || exit $?
 
-        cp /usr/data/pellcorp/k1/btteddy_calibrate.cfg /usr/data/printer_data/config/ || exit $?
-        $CONFIG_HELPER --add-include "btteddy_calibrate.cfg" || exit $?
+# these guided macros are out of date, removing them temporarily to avoid confusion
+#        cp /usr/data/pellcorp/k1/btteddy_calibrate.cfg /usr/data/printer_data/config/ || exit $?
+#        $CONFIG_HELPER --add-include "btteddy_calibrate.cfg" || exit $?
 
         echo "btteddy-probe" >> /usr/data/pellcorp.done
         sync
