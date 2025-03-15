@@ -756,8 +756,6 @@ function install_klipper() {
             $CONFIG_HELPER --file sensorless.cfg --replace-section-entry "gcode_macro _SENSORLESS_PARAMS" "variable_sensorless_homing" "False" || exit $?
             $CONFIG_HELPER --file sensorless.cfg --replace-section-entry "gcode_macro _SENSORLESS_PARAMS" "variable_home_y_before_x" "True" || exit $?
             $CONFIG_HELPER --file sensorless.cfg --replace-section-entry "gcode_macro _SENSORLESS_PARAMS" "variable_repeat_home_xy" "False" || exit $?
-            $CONFIG_HELPER --file sensorless.cfg --replace-section-entry "gcode_macro _SENSORLESS_PARAMS" "variable_homing_move_away_x" "0" || exit $?
-            $CONFIG_HELPER --file sensorless.cfg --replace-section-entry "gcode_macro _SENSORLESS_PARAMS" "variable_homing_move_away_y" "0" || exit $?
         fi
 
         cp /usr/data/pellcorp/k1/internal_macros.cfg /usr/data/printer_data/config/ || exit $?
