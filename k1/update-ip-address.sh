@@ -13,13 +13,9 @@ MODEL=$(/usr/bin/get_sn_mac.sh model)
 while true; do
   # so depending on how quickly ethernet gets an address there is a chance we pick up a wifi address first
   # but why the f would you enable wifi and ethernet on the printer, that just seems stupid
-  if [ "$MODEL" = "CR-K1 Max" ]; then
-      CURRENT_IP_ADDRESS=$(ip a | grep "inet" | grep -v "host lo" | grep "eth0" | awk '{ print $2 }' | awk -F '/' '{print $1}' | tail -1)
-      if [ -z "$CURRENT_IP_ADDRESS" ]; then
-          echo "No Ethernet Address available, trying WIFI" > /usr/data/ipaddress.log
-          CURRENT_IP_ADDRESS=$(ip a | grep "inet" | grep -v "host lo" | grep "wlan0" | awk '{ print $2 }' | awk -F '/' '{print $1}' | tail -1)
-      fi
-  else
+  CURRENT_IP_ADDRESS=$(ip a | grep "inet" | grep -v "host lo" | grep "eth0" | awk '{ print $2 }' | awk -F '/' '{print $1}' | tail -1)
+  if [ -z "$CURRENT_IP_ADDRESS" ]; then
+      echo "No Ethernet Address available, trying WIFI" > /usr/data/ipaddress.log
       CURRENT_IP_ADDRESS=$(ip a | grep "inet" | grep -v "host lo" | grep "wlan0" | awk '{ print $2 }' | awk -F '/' '{print $1}' | tail -1)
   fi
 
