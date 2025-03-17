@@ -216,7 +216,7 @@ function disable_creality_services() {
         echo "INFO: Disabling some creality services ..."
 
         if [ -f /etc/init.d/S99start_app ]; then
-            echo "INFO: If you reboot the printer before installing guppyscreen, the screen will be blank - this is to be expected!"
+            echo "INFO: If you reboot the printer before installing grumpyscreen, the screen will be blank - this is to be expected!"
             /etc/init.d/S99start_app stop > /dev/null 2>&1
             rm /etc/init.d/S99start_app
         fi
