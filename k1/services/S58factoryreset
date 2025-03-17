@@ -16,6 +16,7 @@ factory_reset() {
     /usr/bin/find /overlay/upper/ \
         -path '/overlay/upper/etc/dropbear' -prune -o \
         -path /overlay/upper/etc/localtime -prune -o \
+        -path /overlay/upper/usr/bin/get_sn_mac.sh -o \  # this allows me to test K1 on my K1M dev box
         -path /overlay/upper/etc/init.d/S58factoryreset -prune -o \
         -exec rm {} \; >/dev/null 2>&1
     /bin/sync >/dev/null 2>&1
