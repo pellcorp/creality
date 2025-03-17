@@ -18,9 +18,9 @@ def main():
     parser.add_argument("-i", "--include-sections", dest="include_sections")
     args = parser.parse_args()
 
-    if not os.path.exists(args.original):
+    if '/' not in args.original or not os.path.exists(args.original):
         raise Exception(f"Config File {args.original} not found")
-    if not os.path.exists(args.updated):
+    if '/' not in args.updated or not os.path.exists(args.updated):
        raise Exception(f"Config File {args.updated} not found")
 
     original = ConfigUpdater(strict=False, allow_no_value=True, space_around_delimiters=False, delimiters=(":", "="))
