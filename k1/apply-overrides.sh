@@ -45,8 +45,6 @@ function apply_overrides() {
                     sed -i 's/gcode_macro SENSORLESS_PARAMS/gcode_macro _SENSORLESS_PARAMS/g' /usr/data/pellcorp-overrides/sensorless.cfg
                 fi
 
-                echo "INFO: Applying overrides for /usr/data/printer_data/config/$file ..."
-
                 # we are migrating the bltouch and microprobe sections from printer.cfg to their own files, so we need to
                 # ignore any existing config overrides for these sections from printer.cfg, we won't try and automatically
                 # migrate them, as we have already done that for generating config overrides so the only time this

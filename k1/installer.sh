@@ -1920,7 +1920,7 @@ cd - > /dev/null
     rm /usr/data/printer_data/config/*.bkp 2> /dev/null
 
     echo "INFO: Backing up existing configuration ..."
-    /usr/data/pellcorp/k1/tools/backups.sh --create
+    TIMESTAMP=${TIMESTAMP} /usr/data/pellcorp/k1/tools/backups.sh --create
     echo
 
     mkdir -p /usr/data/pellcorp-backups
@@ -1996,8 +1996,7 @@ cd - > /dev/null
             fi
 
             cp /usr/data/pellcorp-backups/printer.factory.cfg /usr/data/printer_data/config/printer.cfg
-            DATE_TIME=$(date +"%Y-%m-%d %H:%M:%S")
-            sed -i "1s/^/# Modified by Simple AF ${DATE_TIME}\n/" /usr/data/printer_data/config/printer.cfg
+            sed -i "1s/^/# Modified by Simple AF ${TIMESTAMP}\n/" /usr/data/printer_data/config/printer.cfg
         elif [ "$mode" = "update" ]; then
             echo "ERROR: Update mode is not available as pristine factory printer.cfg is missing"
             exit 1

@@ -4,7 +4,7 @@
 # https://github.com/pyscaffold/configupdater
 #
 
-PRINTER_CONFIG_DIR = "/usr/data/printer_data/config/"
+PRINTER_CONFIG_DIR = "/usr/data/printer_data/config"
 
 import optparse, io, os, sys
 from configupdater import ConfigUpdater
@@ -336,6 +336,10 @@ def main():
                 updater.write(file)
         else:
             with open(config_file, 'w') as file:
+                if options.overrides:
+                    print(f"Applied overrides to {config_file}")
+                elif options.patches:
+                    print(f"Applied mount overrides to {config_file}")
                 updater.write(file)
     elif not read_only and options.output:
         with open(options.output, 'w') as file:
