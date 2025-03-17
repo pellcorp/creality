@@ -228,7 +228,7 @@ def main():
     opts.add_option("", "--patches", dest="patches", nargs=1, type="string")
     options, _ = opts.parse_args()
 
-    if os.path.exists(options.config_file):
+    if '/' in options.config_file and os.path.exists(options.config_file):
         config_file = options.config_file
     elif os.path.exists(f"{PRINTER_CONFIG_DIR}/{options.config_file}"):
         config_file = f"{PRINTER_CONFIG_DIR}/{options.config_file}"
