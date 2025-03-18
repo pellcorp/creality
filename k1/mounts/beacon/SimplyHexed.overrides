@@ -15,7 +15,3 @@ screw1: 35,23
 screw2: 394,23
 screw3: 364,372
 screw4: 64,372
-
--- printer-f004.cfg
-[stepper_y]
-position_max: 385
