@@ -1807,39 +1807,42 @@ cd - > /dev/null
     echo "INFO: Mode is $mode"
     echo "INFO: Probe is $probe"
 
-    # for a partial install where we selected a mount, we can grab it from the pellcorp.done file
-    if [ -z "$mount" ] && [ -n "$install_mount" ] && [ "$mode" = "install" ] && [ "$probe_switch" != "true" ]; then
-        mount=$install_mount
-    fi
+    # don't try and validate a mount if all we are wanting to do is fix serial
+    if [ "$mode" != "fix-serial" ]; then
+      # for a partial install where we selected a mount, we can grab it from the pellcorp.done file
+      if [ -z "$mount" ] && [ -n "$install_mount" ] && [ "$mode" = "install" ] && [ "$probe_switch" != "true" ]; then
+          mount=$install_mount
+      fi
 
-    # some newer printers we support might not support all probes out of the box
-    if [ ! -f /usr/data/pellcorp/k1/${probe_model}-${model}.cfg ]; then
-        echo "ERROR: Model $MODEL not supported for $probe"
-        exit 1
-    fi
+      # some newer printers we support might not support all probes out of the box
+      if [ ! -f /usr/data/pellcorp/k1/${probe_model}-${model}.cfg ]; then
+          echo "ERROR: Model $MODEL not supported for $probe"
+          exit 1
+      fi
 
-    if [ -n "$mount" ]; then
-        /usr/data/pellcorp/k1/apply-mount-overrides.sh --verify $probe $mount
-        if [ $? -eq 0 ]; then
-            echo "INFO: Mount is $mount"
-        else
-            exit 1
-        fi
-    elif [ ! -d /usr/data/pellcorp-overrides ]; then
-      echo "ERROR: Mount option must be specified"
-      exit 1
-    elif [ "$skip_overrides" = "true" ] || [ "$mode" = "install" ] || [ "$mode" = "reinstall" ]; then
+      if [ -n "$mount" ]; then
+          /usr/data/pellcorp/k1/apply-mount-overrides.sh --verify $probe $mount
+          if [ $? -eq 0 ]; then
+              echo "INFO: Mount is $mount"
+          else
+              exit 1
+          fi
+      elif [ ! -d /usr/data/pellcorp-overrides ]; then
         echo "ERROR: Mount option must be specified"
         exit 1
-    elif [ -f /usr/data/pellcorp.done ]; then
-        if [ -z "$install_mount" ] || [ "$probe_switch" = "true" ]; then
-            echo "ERROR: Mount option must be specified"
-            exit 1
-        else
-            echo "INFO: Mount is $install_mount"
-        fi
+      elif [ "$skip_overrides" = "true" ] || [ "$mode" = "install" ] || [ "$mode" = "reinstall" ]; then
+          echo "ERROR: Mount option must be specified"
+          exit 1
+      elif [ -f /usr/data/pellcorp.done ]; then
+          if [ -z "$install_mount" ] || [ "$probe_switch" = "true" ]; then
+              echo "ERROR: Mount option must be specified"
+              exit 1
+          else
+              echo "INFO: Mount is $install_mount"
+          fi
+      fi
+      echo
     fi
-    echo
 
     if [ "$mode" = "install" ] && [ -f /usr/data/pellcorp.done ]; then
         PELLCORP_GIT_SHA=$(cat /usr/data/pellcorp.done | grep "installed_sha" | awk -F '=' '{print $2}')
