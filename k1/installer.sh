@@ -1983,13 +1983,6 @@ cd - > /dev/null
           rm /usr/data/pellcorp.done
         fi
 
-        # we need a flag to know what mount we are using
-        if [ -n "$mount" ]; then
-            echo "mount=$mount" > /usr/data/pellcorp.done
-        elif [ -n "$install_mount" ]; then
-            echo "mount=$install_mount" > /usr/data/pellcorp.done
-        fi
-
         # if we took a post factory reset backup for a reinstall restore it now
         if [ -f /usr/data/pellcorp-backups/printer.factory.cfg ]; then
             # lets just repair existing printer.factory.cfg if someone failed to factory reset, we will get them next time
@@ -2005,7 +1998,15 @@ cd - > /dev/null
             exit 1
         fi
     fi
-    sync
+
+    if [ ! -f /usr/data/pellcorp.done ]; then
+        # we need a flag to know what mount we are using
+        if [ -n "$mount" ]; then
+            echo "mount=$mount" > /usr/data/pellcorp.done
+        elif [ -n "$install_mount" ]; then
+            echo "mount=$install_mount" > /usr/data/pellcorp.done
+        fi
+    fi
 
     # add a service to take care of updating various config files if ip address changes
     cp /usr/data/pellcorp/k1/services/S96ipaddress /etc/init.d/
