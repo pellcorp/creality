@@ -1,11 +1,11 @@
 # https://www.printables.com/model/1209230-ender-5-max-simply-hexed
 
--- cartotouch.cfg
+-- beacon.cfg
 [scanner]
 x_offset: 0.0
 y_offset: -30
 
--- cartographer-f004.cfg
+-- beacon-f004.cfg
 [bed_mesh]
 mesh_min: 15,15
 mesh_max: 370,370
