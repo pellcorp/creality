@@ -18,8 +18,8 @@ screw4: 62,190
 
 -- bltouch-k1m.cfg
 [bed_mesh]
-mesh_min: 3,5
-mesh_max: 192,215
+mesh_min: 5,5
+mesh_max: 258,295
 
 [screws_tilt_adjust]
 screw1: 56,23
