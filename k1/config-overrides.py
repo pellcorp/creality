@@ -85,7 +85,14 @@ def main():
                         overrides[section_name][key] = ''
                         overrides[section_name][key].set_values(lines, indent='', separator='')
                     else:
-                        overrides[section_name][key] = f' {value.value.strip()}'
+                        value = value.value
+                        if '#' in value:
+                            value = value.split('#', 1)[0].strip()
+                        elif ';' in value:
+                            value = value.split(';', 1)[0].strip()
+                        else:
+                            value = value.strip()
+                        overrides[section_name][key] = f' {value}'
                 update_overrides = True
 
     for section_name in updated.sections():
@@ -147,7 +154,14 @@ def main():
                             overrides[section_name][key] = ''
                             overrides[section_name][key].set_values(lines, indent='', separator='')
                         else:
-                            overrides[section_name][key] = f' {updated_value.value.strip()}'
+                            value = updated_value.value
+                            if '#' in value:
+                                value = value.split('#', 1)[0].strip()
+                            elif ';' in value:
+                                value = value.split(';', 1)[0].strip()
+                            else:
+                                value = value.strip()
+                            overrides[section_name][key] = f' {value}'
                         update_overrides = True
 
     if update_overrides:
