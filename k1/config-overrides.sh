@@ -114,6 +114,14 @@ override_file() {
     # we renamed the SENSORLESS_PARAMS to hide it
     if [ -f /usr/data/pellcorp-overrides/sensorless.cfg ]; then
       sed -i 's/gcode_macro SENSORLESS_PARAMS/gcode_macro _SENSORLESS_PARAMS/g' /usr/data/pellcorp-overrides/sensorless.cfg
+    elif [ -f /usr/data/pellcorp-overrides/KAMP_Settings.cfg ]; then
+      # remove any overrides for these values which do not apply to Smart Park and Line Purge
+      sed -i '/variable_verbose_enable/d' /usr/data/pellcorp-overrides/KAMP_Settings.cfg
+      sed -i '/variable_mesh_margin/d' /usr/data/pellcorp-overrides/KAMP_Settings.cfg
+      sed -i '/variable_fuzz_amount/d' /usr/data/pellcorp-overrides/KAMP_Settings.cfg
+      sed -i '/variable_probe_dock_enable/d' /usr/data/pellcorp-overrides/KAMP_Settings.cfg
+      sed -i '/variable_attach_macro/d' /usr/data/pellcorp-overrides/KAMP_Settings.cfg
+      sed -i '/variable_detach_macro/d' /usr/data/pellcorp-overrides/KAMP_Settings.cfg
     fi
 
     if [ "$file" = "printer.cfg" ]; then
