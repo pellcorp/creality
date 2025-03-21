@@ -19,6 +19,7 @@ The following files were originally from other projects.  Some of these files ar
 - guppyscreen.cfg -> https://github.com/ballaswag/guppyscreen/blob/main/k1/scripts/guppy_cmd.cfg
 - gcode_shell_command.py -> https://github.com/dw-0/kiauh/blob/master/resources/gcode_shell_command.py
 - btteddy.cfg, btteddy_macro.cfg originally from -> https://github.com/ballaswag/creality_k1_klipper_mod/tree/master/printer_configs
+- Smart_Park.cfg, Line_Purge.cfg originally from https://github.com/kyleisah/Klipper-Adaptive-Meshing-Purging
 The nginx binaries originally came from:
 https://github.com/Guilouz/Creality-Helper-Script/raw/main/files/moonraker/nginx.tar.gz
 
