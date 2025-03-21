@@ -605,60 +605,6 @@ function install_mainsail() {
     return 0
 }
 
-function install_kamp() {
-    local mode=$1
-
-    grep -q "KAMP" /usr/data/pellcorp.done
-    if [ $? -ne 0 ]; then
-        if [ "$mode" != "update" ] && [ -d /usr/data/KAMP ]; then
-            rm -rf /usr/data/KAMP
-        fi
-        
-        if [ ! -d /usr/data/KAMP/.git ]; then
-            echo
-            echo "INFO: Installing KAMP ..."
-            [ -d /usr/data/KAMP ] && rm -rf /usr/data/KAMP
-
-            if [ "$AF_GIT_CLONE" = "ssh" ]; then
-                export GIT_SSH_IDENTITY=KAMP
-                export GIT_SSH=/usr/data/pellcorp/k1/ssh/git-ssh.sh
-                git clone git@github.com:pellcorp/Klipper-Adaptive-Meshing-Purging.git /usr/data/KAMP || exit $?
-                cd /usr/data/KAMP && git remote set-url origin https://github.com/kyleisah/Klipper-Adaptive-Meshing-Purging.git && cd - > /dev/null
-            else
-                git clone https://github.com/kyleisah/Klipper-Adaptive-Meshing-Purging.git /usr/data/KAMP || exit $?
-            fi
-        fi
-
-        echo "INFO: Updating KAMP config ..."
-        ln -sf /usr/data/KAMP/Configuration /usr/data/printer_data/config/KAMP || exit $?
-
-        cp /usr/data/KAMP/Configuration/KAMP_Settings.cfg /usr/data/printer_data/config/ || exit $?
-
-        $CONFIG_HELPER --add-include "KAMP_Settings.cfg" || exit $?
-
-        # LINE_PURGE
-        sed -i 's:#\[include ./KAMP/Line_Purge.cfg\]:\[include ./KAMP/Line_Purge.cfg\]:g' /usr/data/printer_data/config/KAMP_Settings.cfg
-
-        # SMART_PARK
-        sed -i 's:#\[include ./KAMP/Smart_Park.cfg\]:\[include ./KAMP/Smart_Park.cfg\]:g' /usr/data/printer_data/config/KAMP_Settings.cfg
-
-        # lower and longer purge line
-        $CONFIG_HELPER --file KAMP_Settings.cfg --replace-section-entry "gcode_macro _KAMP_Settings" variable_purge_height 0.5
-        $CONFIG_HELPER --file KAMP_Settings.cfg --replace-section-entry "gcode_macro _KAMP_Settings" variable_purge_amount 48
-        # same setting as cancel_retract in start_end.cfg
-        $CONFIG_HELPER --file KAMP_Settings.cfg --replace-section-entry "gcode_macro _KAMP_Settings" variable_tip_distance 7.0
-
-        cp /usr/data/printer_data/config/KAMP_Settings.cfg /usr/data/pellcorp-backups/
-
-        echo "KAMP" >> /usr/data/pellcorp.done
-        sync
-
-        # means klipper needs to be restarted
-        return 1
-    fi
-    return 0
-}
-
 function cleanup_klipper() {
     if [ -f /etc/init.d/S55klipper_service ]; then
         /etc/init.d/S55klipper_service stop
@@ -725,6 +671,19 @@ function install_klipper() {
                 echo "INFO: Forcing update of klipper to latest master"
                 update_repo /usr/data/klipper master || exit $?
             fi
+        fi
+
+        # get rid of kamp
+        if [ -e /usr/data/printer_data/config/KAMP ]; then
+          rm /usr/data/printer_data/config/KAMP
+        fi
+
+        if [ -f /usr/data/printer_data/config/KAMP_Settings.cfg ]; then
+          rm /usr/data/printer_data/config/KAMP_Settings.cfg
+        fi
+
+        if [ -d /usr/data/KAMP ]; then
+          rm -rf /usr/data/KAMP
         fi
 
         echo "INFO: Updating klipper config ..."
@@ -818,6 +777,12 @@ function install_klipper() {
 
         cp /usr/data/pellcorp/k1/start_end.cfg /usr/data/printer_data/config/ || exit $?
         $CONFIG_HELPER --add-include "start_end.cfg" || exit $?
+
+        ln -sf /usr/data/pellcorp/k1/Line_Purge.cfg /usr/data/printer_data/config/ || exit $?
+        $CONFIG_HELPER --add-include "Line_Purge.cfg" || exit $?
+
+        ln -sf /usr/data/pellcorp/k1/Smart_Park.cfg /usr/data/printer_data/config/ || exit $?
+        $CONFIG_HELPER --add-include "Smart_Park.cfg" || exit $?
 
         if [ -f /usr/data/pellcorp/k1/fan_control.${model}.cfg ]; then
             cp /usr/data/pellcorp/k1/fan_control.${model}.cfg /usr/data/printer_data/config || exit $?
@@ -1588,7 +1553,7 @@ function fixup_client_variables_config() {
 
 function fix_custom_config() {
     changed=0
-    custom_configs=$(find /usr/data/printer_data/config/ -maxdepth 1 -exec grep -l "\[gcode_macro M109\]" {} \;)
+    custom_configs=$(find /usr/data/printer_data/config/ -type f -maxdepth 1 -exec grep -l "\[gcode_macro M109\]" {} \;)
     if [ -n "$custom_configs" ]; then
         for custom_config in $custom_configs; do
             filename=$(basename $custom_config)
@@ -1599,7 +1564,7 @@ function fix_custom_config() {
             fi
         done
     fi
-    custom_configs=$(find /usr/data/printer_data/config/ -maxdepth 1 -exec grep -l "\[gcode_macro M190\]" {} \;)
+    custom_configs=$(find /usr/data/printer_data/config/ -type f -maxdepth 1 -exec grep -l "\[gcode_macro M190\]" {} \;)
     if [ -n "$custom_configs" ]; then
         for custom_config in $custom_configs; do
             filename=$(basename $custom_config)
@@ -2026,10 +1991,6 @@ cd - > /dev/null
     install_mainsail $mode
     install_mainsail=$?
 
-    # KAMP is in the moonraker.conf file so it must be installed before moonraker is first started
-    install_kamp $mode
-    install_kamp=$?
-
     install_klipper $mode $probe
     install_klipper=$?
 
@@ -2136,7 +2097,7 @@ cd - > /dev/null
         fi
     fi
 
-    if [ $fix_custom_config -ne 0 ] || [ $fixup_client_variables_config -ne 0 ] || [ $apply_overrides -ne 0 ] || [ $apply_mount_overrides -ne 0 ] || [ $install_cartographer_klipper -ne 0 ] || [ $install_beacon_klipper -ne 0 ] || [ $install_kamp -ne 0 ] || [ $install_klipper -ne 0 ] || [ $setup_probe -ne 0 ] || [ $setup_probe_specific -ne 0 ]; then
+    if [ $fix_custom_config -ne 0 ] || [ $fixup_client_variables_config -ne 0 ] || [ $apply_overrides -ne 0 ] || [ $apply_mount_overrides -ne 0 ] || [ $install_cartographer_klipper -ne 0 ] || [ $install_beacon_klipper -ne 0 ] || [ $install_klipper -ne 0 ] || [ $setup_probe -ne 0 ] || [ $setup_probe_specific -ne 0 ]; then
         if [ "$client" = "cli" ]; then
             echo
             echo "INFO: Restarting Klipper ..."
