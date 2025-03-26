@@ -36,8 +36,6 @@ if [ "$config_overrides" = "true" ]; then
             echo "INFO: Saving overrides to /usr/data/pellcorp-overrides/guppyscreen.json"
             sync
         fi
-    else
-        echo "INFO: Overrides not supported for $file"
     fi
 fi
 
