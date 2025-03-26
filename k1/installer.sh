@@ -785,7 +785,7 @@ function install_klipper() {
         $CONFIG_HELPER --add-include "Smart_Park.cfg" || exit $?
 
         if [ -f /usr/data/pellcorp/k1/fan_control.${model}.cfg ]; then
-            cp /usr/data/pellcorp/k1/fan_control.${model}.cfg /usr/data/printer_data/config || exit $?
+            cp /usr/data/pellcorp/k1/fan_control.${model}.cfg /usr/data/printer_data/config/fan_control.cfg || exit $?
         else
             cp /usr/data/pellcorp/k1/fan_control.cfg /usr/data/printer_data/config || exit $?
         fi
