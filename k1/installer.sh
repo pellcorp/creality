@@ -877,17 +877,14 @@ function install_guppyscreen() {
             fi
         fi
 
-        # check for non pellcorp grumpyscreen and force an update
-        if [ ! -f /usr/data/guppyscreen/guppyscreen.json ]; then
-            echo "INFO: Forcing update of grumpyscreen"
-            rm -rf /usr/data/guppyscreen
-        elif grep -q "log_path" /usr/data/guppyscreen/guppyscreen.json; then
-            echo
-            echo "INFO: Forcing update of grumpyscreen"
-            rm -rf /usr/data/guppyscreen
+        if [ -d /usr/data/guppyscreen ] && [ ! -f /usr/data/guppyscreen/release.info ]; then
+          echo
+          echo "INFO: Forcing update of grumpyscreen"
+          rm -rf /usr/data/guppyscreen
         fi
 
         if [ ! -d /usr/data/guppyscreen ]; then
+            echo
             echo "INFO: Installing grumpyscreen ..."
 
             asset_name=guppyscreen.tar.gz
@@ -903,6 +900,7 @@ function install_guppyscreen() {
         ln -sf /usr/data/pellcorp/k1/fixes/respawn/libeinfo.so.1 /lib/libeinfo.so.1
         ln -sf /usr/data/pellcorp/k1/fixes/respawn/librc.so.1 /lib/librc.so.1
 
+        echo
         echo "INFO: Updating grumpyscreen config ..."
         cp /usr/data/pellcorp/k1/services/S99guppyscreen /etc/init.d/ || exit $?
 
