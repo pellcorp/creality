@@ -1581,7 +1581,7 @@ function fix_custom_config() {
 
 # special mode to update the repo only
 # this stuff we do not want to have a log file for
-if [ "$1" = "--update-repo" ] || [ "$1" = "--update-branch" ]; then
+if [ "$1" = "--update-branch" ]; then
     update_repo /usr/data/pellcorp
     exit $?
 elif [ "$1" = "--branch" ] && [ -n "$2" ]; then # convenience for testing new features
