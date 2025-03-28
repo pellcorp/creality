@@ -877,10 +877,23 @@ function install_guppyscreen() {
             fi
         fi
 
-        if [ -d /usr/data/guppyscreen ] && [ ! -f /usr/data/guppyscreen/release.info ]; then
-          echo
-          echo "INFO: Forcing update of grumpyscreen"
-          rm -rf /usr/data/guppyscreen
+        # we have logic here to force grumpyscreen to get updated to a minimum required version
+        if [ -d /usr/data/guppyscreen ]; then
+          TIMESTAMP=0
+          if [ -f /usr/data/guppyscreen/release.info ]; then
+            TIMESTAMP=$(cat /usr/data/guppyscreen/release.info | grep TIMESTAMP | awk -F '=' '{print $2}')
+            if [ -z "$TIMESTAMP" ]; then
+              TIMESTAMP=0
+            fi
+          fi
+
+          # this allows us to make changes to Simple AF and grumpyscreen in parallel
+          GRUMPYSCREEN_TIMESTAMP=1743202825
+          if [ $TIMESTAMP -lt $GRUMPYSCREEN_TIMESTAMP ]; then
+            echo
+            echo "INFO: Forcing update of grumpyscreen"
+            rm -rf /usr/data/guppyscreen
+          fi
         fi
 
         if [ ! -d /usr/data/guppyscreen ]; then
