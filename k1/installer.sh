@@ -888,7 +888,7 @@ function install_guppyscreen() {
           fi
 
           # this allows us to make changes to Simple AF and grumpyscreen in parallel
-          GRUMPYSCREEN_TIMESTAMP=1743202825
+          GRUMPYSCREEN_TIMESTAMP=1743214408
           if [ $TIMESTAMP -lt $GRUMPYSCREEN_TIMESTAMP ]; then
             echo
             echo "INFO: Forcing update of grumpyscreen"
@@ -1230,7 +1230,7 @@ function setup_cartotouch() {
     grep -q "cartotouch-probe" /usr/data/pellcorp.done
     if [ $? -ne 0 ]; then
         echo
-        echo "INFO: Setting up carto touch ..."
+        echo "INFO: Setting up cartotouch ..."
 
         cleanup_probes
 
