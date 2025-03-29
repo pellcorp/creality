@@ -11,8 +11,8 @@ mesh_max: 207,215
 
 [screws_tilt_adjust]
 screw1: 43,20
-screw2: 238,20
-screw3: 238,190
+screw2: 213,20
+screw3: 213,190
 screw4: 43,190
 
 [axis_twist_compensation]
