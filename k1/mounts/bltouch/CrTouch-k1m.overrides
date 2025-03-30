@@ -17,7 +17,7 @@ screw4: 85,272
 
 [axis_twist_compensation]
 calibrate_start_x: 10
-calibrate_end_x: 280
+calibrate_end_x: 269
 calibrate_y: 153
 
 -- printer.cfg
