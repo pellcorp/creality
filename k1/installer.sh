@@ -728,6 +728,9 @@ function install_klipper() {
 
         # ender 5 max
        if [ "$MODEL" = "F004" ]; then
+            # the ender 5 max has a beep command
+            sed -i 's:aplay /usr/data/pellcorp/k1/files/empty.mp3:/usr/bin/beep:g' /usr/data/printer_data/config/useful_macros.cfg
+
             $CONFIG_HELPER --remove-section "Height_module2" || exit $?
             $CONFIG_HELPER --remove-section "z_compensate" || exit $?
             $CONFIG_HELPER --remove-section "output_pin aobi" || exit $?
