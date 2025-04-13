@@ -888,7 +888,7 @@ function install_guppyscreen() {
           fi
 
           # this allows us to make changes to Simple AF and grumpyscreen in parallel
-          GRUMPYSCREEN_TIMESTAMP=1743238091
+          GRUMPYSCREEN_TIMESTAMP=1743317935
           if [ $TIMESTAMP -lt $GRUMPYSCREEN_TIMESTAMP ]; then
             echo
             echo "INFO: Forcing update of grumpyscreen"
