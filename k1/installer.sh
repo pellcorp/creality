@@ -1213,7 +1213,7 @@ function setup_klicky() {
 }
 
 function set_serial_cartotouch() {
-    local SERIAL_ID=$(ls /dev/serial/by-id/usb-Cartographer* | head -1)
+    local SERIAL_ID=$(ls /dev/serial/by-id/usb-* | grep "IDM\|Cartographer" | head -1)
     if [ -n "$SERIAL_ID" ]; then
         local EXISTING_SERIAL_ID=$($CONFIG_HELPER --file cartotouch.cfg --get-section-entry "scanner" "serial")
         if [ "$EXISTING_SERIAL_ID" != "$SERIAL_ID" ]; then
