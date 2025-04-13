@@ -891,7 +891,7 @@ function install_guppyscreen() {
           fi
 
           # this allows us to make changes to Simple AF and grumpyscreen in parallel
-          GRUMPYSCREEN_TIMESTAMP=1743317935
+          GRUMPYSCREEN_TIMESTAMP=1743317933
           if [ $TIMESTAMP -lt $GRUMPYSCREEN_TIMESTAMP ]; then
             echo
             echo "INFO: Forcing update of grumpyscreen"
@@ -1680,6 +1680,11 @@ cd /usr/data/pellcorp
 PELLCORP_GIT_SHA=$(git rev-parse HEAD)
 cd - > /dev/null
 
+PELLCORP_UPDATED_SHA=unknown
+if [ -f /usr/data/pellcorp.done ]; then
+    PELLCORP_UPDATED_SHA=$(cat /usr/data/pellcorp.done | grep "installed_sha" | awk -F '=' '{print $2}')
+fi
+
 {
     # figure out what existing probe if any is being used
     probe=
@@ -1710,10 +1715,10 @@ cd - > /dev/null
 
     client=cli
     mode=install
+    force=false
     skip_overrides=false
     probe_switch=false
     mount=
-    # parse arguments here
 
     if [ -f /usr/data/pellcorp.done ]; then
         install_mount=$(cat /usr/data/pellcorp.done | grep "mount=" | awk -F '=' '{print $2}')
@@ -1734,6 +1739,9 @@ cd - > /dev/null
                 mount=unknown
             fi
             shift
+        elif [ "$1" = "--force" ]; then
+          force=true
+          shift
         elif [ "$1" = "--client" ]; then
             shift
             client=$1
@@ -1772,6 +1780,27 @@ cd - > /dev/null
     echo "INFO: Mode is $mode"
     echo "INFO: Probe is $probe"
 
+    if [ -n "$PELLCORP_UPDATED_SHA" ]; then
+        if [ "$mode" = "install" ]; then
+            echo
+            echo "ERROR: Installation has already completed"
+            if [ "$PELLCORP_UPDATED_SHA" != "$PELLCORP_GIT_SHA" ]; then
+              echo "Perhaps you meant to execute an --update or a --reinstall instead!"
+              echo "  https://pellcorp.github.io/creality-wiki/updating/#updating"
+              echo "  https://pellcorp.github.io/creality-wiki/updating/#reinstalling"
+            fi
+            echo
+            exit 1
+        elif [ "$mode" = "update" ] && [ "$PELLCORP_UPDATED_SHA" = "$PELLCORP_GIT_SHA" ] && [ "$probe_switch" != "true" ] && [ "$force" != "true" ] && [ -z "$mount" ]; then
+            echo
+            echo "ERROR: Installation is already up to date"
+            echo "Perhaps you forgot to execute a --branch main first!"
+            echo "  https://pellcorp.github.io/creality-wiki/updating/#updating"
+            echo
+            exit 1
+        fi
+    fi
+
     # don't try and validate a mount if all we are wanting to do is fix serial
     if [ "$mode" != "fix-serial" ]; then
       if [ -z "$mount" ] && [ -n "$install_mount" ] && [ "$probe_switch" != "true" ]; then
@@ -1809,24 +1838,6 @@ cd - > /dev/null
           fi
       fi
       echo
-    fi
-
-    if [ "$mode" = "install" ] && [ -f /usr/data/pellcorp.done ]; then
-        PELLCORP_GIT_SHA=$(cat /usr/data/pellcorp.done | grep "installed_sha" | awk -F '=' '{print $2}')
-        if [ -n "$PELLCORP_GIT_SHA" ]; then
-            echo "ERROR: Installation has already completed"
-
-            cd /usr/data/pellcorp
-            CURRENT_REVISION=$(git rev-parse HEAD)
-            cd - > /dev/null
-            if [ "$PELLCORP_GIT_SHA" != "$CURRENT_REVISION" ]; then
-                echo "Perhaps you meant to execute an --update or a --reinstall instead!"
-                echo "  https://pellcorp.github.io/creality-wiki/updating/#updating"
-                echo "  https://pellcorp.github.io/creality-wiki/updating/#reinstalling"
-            fi
-            echo
-            exit 1
-        fi
     fi
 
     if [ "$mode" = "fix-serial" ]; then
