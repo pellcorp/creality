@@ -30,17 +30,8 @@ if [ "$MODEL" != "F004" ]; then
 fi
 
 if [ -d /usr/data/helper-script ] || [ -f /usr/data/fluidd.sh ] || [ -f /usr/data/mainsail.sh ]; then
-    echo "The Guilouz helper and K1_Series_Annex scripts cannot be installed"
+    echo "You must factory reset the printer before installing Simple AF!"
     exit 1
-fi
-
-# if we have not even started a new installation of simple af just double check there is no save config in the
-# printer.cfg as this is a sure sign someone has forgot to do a factory reset
-if [ -f /etc/init.d/S99start_app ]; then
-    if grep -q "#*# <---------------------- SAVE_CONFIG ---------------------->" /usr/data/printer_data/config/printer.cfg; then
-        echo "You must factory reset the printer before installing Simple AF!"
-        exit 1
-    fi
 fi
 
 # everything else in the script assumes its cloned to /usr/data/pellcorp
@@ -215,11 +206,13 @@ function disable_creality_services() {
         echo
         echo "INFO: Disabling some creality services ..."
 
-        if [ -f /etc/init.d/S99start_app ]; then
-            echo "INFO: If you reboot the printer before installing grumpyscreen, the screen will be blank - this is to be expected!"
-            /etc/init.d/S99start_app stop > /dev/null 2>&1
-            rm /etc/init.d/S99start_app
-        fi
+        # clean out the calibration data from the end of rhe printer.cfg file
+        sed -i '/#\*#.*/d' /usr/data/printer_data/config/printer.cfg
+
+        echo "INFO: If you reboot the printer before installing grumpyscreen, the screen will be blank - this is to be expected!"
+        /etc/init.d/S99start_app stop > /dev/null 2>&1
+        rm /etc/init.d/S99start_app
+
         if [ -f /etc/init.d/S70cx_ai_middleware ]; then
             /etc/init.d/S70cx_ai_middleware stop > /dev/null 2>&1
             rm /etc/init.d/S70cx_ai_middleware
@@ -1680,7 +1673,7 @@ cd /usr/data/pellcorp
 PELLCORP_GIT_SHA=$(git rev-parse HEAD)
 cd - > /dev/null
 
-PELLCORP_UPDATED_SHA=unknown
+PELLCORP_UPDATED_SHA=
 if [ -f /usr/data/pellcorp.done ]; then
     PELLCORP_UPDATED_SHA=$(cat /usr/data/pellcorp.done | grep "installed_sha" | awk -F '=' '{print $2}')
 fi
