@@ -1666,6 +1666,15 @@ elif [ "$1" = "--klipper-repo" ]; then # convenience for testing new features
     fi
 fi
 
+if [ -f /usr/data/pellcorp.done ] && [ ! -L /usr/share/klipper ]; then
+    echo
+    echo "ERROR: Switch to stock has been activated"
+    echo "If you wish to return to SimpleAF you must run: "
+    echo "  /usr/data/pellcorp/k1/switch-to-stock.sh --revert"
+    echo
+    exit 1
+fi
+
 export TIMESTAMP=$(date +"%Y-%m-%d_%H-%M-%S")
 LOG_FILE=/usr/data/printer_data/logs/installer-$TIMESTAMP.log
 
@@ -1904,6 +1913,11 @@ fi
         if [ -f /usr/data/backups/creality-backup.tar.gz ]; then
             rm /usr/data/backups/creality-backup.tar.gz
         fi
+
+        if ! grep "#*#" /usr/data/printer_data/config/printer.cfg | grep -q "SAVE_CONFIG"; then
+          echo "WARN: Stock printer.cfg does not have any self check configuration saved!"
+        fi
+
         # note the filename format is intentional so that the cleanup service and backups tool ignores it
         cd /usr/data
         tar -zcf /usr/data/backups/creality-backup.tar.gz printer_data/config/*.cfg
@@ -1926,6 +1940,7 @@ fi
         # is deleted, add a stamp to config files to we can know for sure.
         if ! grep -q "# Modified by Simple AF " /usr/data/printer_data/config/printer.cfg; then
             cp /usr/data/printer_data/config/printer.cfg /usr/data/pellcorp-backups/printer.factory.cfg
+            sed -i '/^#*#/d' /usr/data/pellcorp-backups/printer.factory.cfg
         else
           echo "WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING"
           echo "WARNING: No pristine factory printer.cfg available - config overrides are disabled!"
@@ -1973,8 +1988,6 @@ fi
 
         # if we took a post factory reset backup for a reinstall restore it now
         if [ -f /usr/data/pellcorp-backups/printer.factory.cfg ]; then
-            # lets just repair existing printer.factory.cfg if someone failed to factory reset, we will get them next time
-            # but config overrides should generally work even if its not truly a factory config file
             if grep -q "#*# <---------------------- SAVE_CONFIG ---------------------->" /usr/data/pellcorp-backups/printer.factory.cfg; then
                 sed -i '/^#*#/d' /usr/data/pellcorp-backups/printer.factory.cfg
             fi
