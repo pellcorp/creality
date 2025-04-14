@@ -93,14 +93,14 @@ done
 sync
 
 # we no longer create old style backups
-files=$(find /usr/data/printer_data/config/backups/ -maxdepth 1 -name "*.override.bkp" -type f -mtime 0 -print)
+files=$(find /usr/data/backups/ -maxdepth 1 -name "*.override.bkp" -type f -mtime 0 -print)
 for file in $files; do
     delete $file
 done
 sync
 
 # we no longer create these old style backup files
-files=$(find /usr/data/printer_data/config/backups/ -maxdepth 1 -name "printer-*.cfg" -type f -mtime 0 -print)
+files=$(find /usr/data/backups/ -maxdepth 1 -name "printer-*.cfg" -type f -mtime 0 -print)
 for file in $files; do
     delete $file
 done
@@ -119,7 +119,7 @@ done
 sync
 
 # clean out backup tar balls
-files=$(find /usr/data/printer_data/config/backups/ -maxdepth 1 -name "backup-*.tar.gz" -type f -mtime +7 -print | sort -r)
+files=$(find /usr/data/backups/ -maxdepth 1 -name "backup-*.tar.gz" -type f -mtime +7 -print | sort -r)
 # for simplicity sake always skip the newest old file in case its the only file left
 skipped=false
 for file in $files; do

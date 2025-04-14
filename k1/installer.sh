@@ -1888,14 +1888,28 @@ fi
     fi
 
     # to avoid cluttering the printer_data/config directory lets move stuff
-    mkdir -p /usr/data/printer_data/config/backups/
+    if [ -d /usr/data/printer_data/config/backups ] && [ ! -d /usr/data/backups ]; then
+        mv /usr/data/printer_data/config/backups /usr/data/
+    fi
+
+    mkdir -p /usr/data/backups
+    ln -sf /usr/data/backups /usr/data/printer_data/config/
 
     # we don't do these kinds of backups anymore
     rm /usr/data/printer_data/config/*.bkp 2> /dev/null
 
     echo "INFO: Backing up existing configuration ..."
-    TIMESTAMP=${TIMESTAMP} /usr/data/pellcorp/k1/tools/backups.sh --create
-    echo
+    if [ -f /etc/init.d/S99start_app ]; then
+        # create a backup of creality config files
+        if [ -f /usr/data/backups/creality-backup.tar.gz ]; then
+            rm /usr/data/backups/creality-backup.tar.gz
+        fi
+        # note the filename format is intentional so that the cleanup service skips this file
+        tar -zcf /usr/data/backups/creality-backup.tar.gz /usr/data/printer_data/config/*.cfg
+    else
+        TIMESTAMP=${TIMESTAMP} /usr/data/pellcorp/k1/tools/backups.sh --create
+        echo
+    fi
 
     mkdir -p /usr/data/pellcorp-backups
     # the pellcorp-backups do not need .pellcorp extension, so this is to fix backwards compatible

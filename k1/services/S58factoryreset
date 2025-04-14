@@ -29,6 +29,7 @@ factory_reset() {
         -path '/usr/data/printer_data' -prune -o \
         -path '/usr/data/wpa_supplicant.conf' -prune -o \
         -path '/usr/data/pellcorp-overrides.cfg' -prune -o \
+        -path '/usr/data/backups' -prune -o \
         -path '/usr/data/macaddr.txt' -prune -o \
         -path '/usr/data/ethmacaddr.txt' -prune -o \
         -path '/usr/data/pellcorp-overrides' -prune -o \
