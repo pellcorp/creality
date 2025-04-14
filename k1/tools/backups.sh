@@ -41,8 +41,8 @@ while true; do
         shift
 
         if [ "$restore" = "latest" ]; then
-            if [ -d /usr/data/backups ] && [ $(ls -lt /usr/data/backups/*.tar.gz 2> /dev/null | wc -l) -gt 0 ]; then
-                restore=$(ls -lt /usr/data/backups/*.tar.gz 2> /dev/null | head -1 | awk '{print $9}' | awk -F '/' '{print $NF}')
+            if [ -d /usr/data/backups ] && [ $(ls -lt /usr/data/backups/backup-*.tar.gz 2> /dev/null | wc -l) -gt 0 ]; then
+                restore=$(ls -lt /usr/data/backups/backup-*.tar.gz 2> /dev/null | head -1 | awk '{print $9}' | awk -F '/' '{print $NF}')
             else
                 echo "ERROR: No backups found"
                 exit 1
@@ -94,8 +94,8 @@ if [ "$mode" = "create" ]; then
     cd - > /dev/null
     exit 0
 elif [ "$mode" = "latest" ]; then
-    if [ -d /usr/data/backups ] && [ $(ls -lt /usr/data/backups/*.tar.gz 2> /dev/null | wc -l) -gt 0 ]; then
-        latest=$(ls -lt /usr/data/backups/*.tar.gz 2> /dev/null | head -1 | awk '{print $9}' | awk -F '/' '{print $NF}')
+    if [ -d /usr/data/backups ] && [ $(ls -lt /usr/data/backups/backup-*.tar.gz 2> /dev/null | wc -l) -gt 0 ]; then
+        latest=$(ls -lt /usr/data/backups/backup-*.tar.gz 2> /dev/null | head -1 | awk '{print $9}' | awk -F '/' '{print $NF}')
         if [ -n "$latest" ]; then
             echo "$latest"
             exit 0
@@ -108,8 +108,8 @@ elif [ "$mode" = "latest" ]; then
         exit 1
     fi
 elif [ "$mode" = "list" ]; then
-    if [ -d /usr/data/backups ] && [ $(ls -lt /usr/data/backups/*.tar.gz 2> /dev/null | wc -l) -gt 0 ]; then
-        ls -lt /usr/data/backups/*.tar.gz 2> /dev/null | awk '{print $9}' | awk -F '/' '{print $NF}'
+    if [ -d /usr/data/backups ] && [ $(ls -lt /usr/data/backups/backup-*.tar.gz 2> /dev/null | wc -l) -gt 0 ]; then
+        ls -lt /usr/data/backups/backup-*.tar.gz 2> /dev/null | awk '{print $9}' | awk -F '/' '{print $NF}'
         exit 0
     else
         echo "ERROR: No backups found"

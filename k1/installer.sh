@@ -1904,8 +1904,11 @@ fi
         if [ -f /usr/data/backups/creality-backup.tar.gz ]; then
             rm /usr/data/backups/creality-backup.tar.gz
         fi
-        # note the filename format is intentional so that the cleanup service skips this file
-        tar -zcf /usr/data/backups/creality-backup.tar.gz /usr/data/printer_data/config/*.cfg
+        # note the filename format is intentional so that the cleanup service and backups tool ignores it
+        cd /usr/data
+        tar -zcf /usr/data/backups/creality-backup.tar.gz printer_data/config/*.cfg
+        sync
+        cd - > /dev/null
     else
         TIMESTAMP=${TIMESTAMP} /usr/data/pellcorp/k1/tools/backups.sh --create
         echo
