@@ -120,6 +120,6 @@ function apply_overrides() {
     return $return_status
 }
 
-mkdir -p /usr/data/printer_data/config/backups/
+mkdir -p /usr/data/backups/
 apply_overrides
 exit $?

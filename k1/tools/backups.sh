@@ -41,16 +41,16 @@ while true; do
         shift
 
         if [ "$restore" = "latest" ]; then
-            if [ -d /usr/data/printer_data/config/backups ] && [ $(ls -lt /usr/data/printer_data/config/backups/*.tar.gz 2> /dev/null | wc -l) -gt 0 ]; then
-                restore=$(ls -lt /usr/data/printer_data/config/backups/*.tar.gz 2> /dev/null | head -1 | awk '{print $9}' | awk -F '/' '{print $7}')
+            if [ -d /usr/data/backups ] && [ $(ls -lt /usr/data/backups/*.tar.gz 2> /dev/null | wc -l) -gt 0 ]; then
+                restore=$(ls -lt /usr/data/backups/*.tar.gz 2> /dev/null | head -1 | awk '{print $9}' | awk -F '/' '{print $NF}')
             else
                 echo "ERROR: No backups found"
                 exit 1
             fi
         fi
 
-        if [ ! -f /usr/data/printer_data/config/backups/$restore ]; then
-            echo "ERROR: Backup /usr/data/printer_data/config/backups/$restore not found!"
+        if [ ! -f /usr/data/backups/$restore ]; then
+            echo "ERROR: Backup /usr/data/backups/$restore not found!"
             exit 1
         fi
 
@@ -88,14 +88,14 @@ if [ "$mode" = "create" ]; then
         PELLCORP_DONE=pellcorp.done
     fi
 
-    tar -zcf /usr/data/printer_data/config/backups/backup-${TIMESTAMP}.tar.gz $CFG_ARG $CONF_ARG $PELLCORP_BACKUPS $PELLCORP_OVERRIDES $PELLCORP_DONE
+    tar -zcf /usr/data/backups/backup-${TIMESTAMP}.tar.gz $CFG_ARG $CONF_ARG $PELLCORP_BACKUPS $PELLCORP_OVERRIDES $PELLCORP_DONE
     sync
 
     cd - > /dev/null
     exit 0
 elif [ "$mode" = "latest" ]; then
-    if [ -d /usr/data/printer_data/config/backups ] && [ $(ls -lt /usr/data/printer_data/config/backups/*.tar.gz 2> /dev/null | wc -l) -gt 0 ]; then
-        latest=$(ls -lt /usr/data/printer_data/config/backups/*.tar.gz 2> /dev/null | head -1 | awk '{print $9}' | awk -F '/' '{print $7}')
+    if [ -d /usr/data/backups ] && [ $(ls -lt /usr/data/backups/*.tar.gz 2> /dev/null | wc -l) -gt 0 ]; then
+        latest=$(ls -lt /usr/data/backups/*.tar.gz 2> /dev/null | head -1 | awk '{print $9}' | awk -F '/' '{print $NF}')
         if [ -n "$latest" ]; then
             echo "$latest"
             exit 0
@@ -108,21 +108,21 @@ elif [ "$mode" = "latest" ]; then
         exit 1
     fi
 elif [ "$mode" = "list" ]; then
-    if [ -d /usr/data/printer_data/config/backups ] && [ $(ls -lt /usr/data/printer_data/config/backups/*.tar.gz 2> /dev/null | wc -l) -gt 0 ]; then
-        ls -lt /usr/data/printer_data/config/backups/*.tar.gz 2> /dev/null | awk '{print $9}' | awk -F '/' '{print $7}'
+    if [ -d /usr/data/backups ] && [ $(ls -lt /usr/data/backups/*.tar.gz 2> /dev/null | wc -l) -gt 0 ]; then
+        ls -lt /usr/data/backups/*.tar.gz 2> /dev/null | awk '{print $9}' | awk -F '/' '{print $NF}'
         exit 0
     else
         echo "ERROR: No backups found"
         exit 1
     fi
-elif [ "$mode" = "restore" ] && [ -f /usr/data/printer_data/config/backups/$restore ]; then
-    echo "INFO: Restoring /usr/data/printer_data/config/backups/$restore ..."
+elif [ "$mode" = "restore" ] && [ -f /usr/data/backups/$restore ]; then
+    echo "INFO: Restoring /usr/data/backups/$restore ..."
 
     # ensure the backup file is suitable for an automatic restore, older backups which do not include
     # pellcorp-overrides, pellcorp.done and pellcorp-backups are not suitable for an automatic restore
     # because they do not restore the entire state of the printer and will result in subsequent updates
     # making matters much much worse.
-    backup_files=$(tar -ztvf /usr/data/printer_data/config/backups/$restore)
+    backup_files=$(tar -ztvf /usr/data/backups/$restore)
     valid_backup=true
     if [ $(echo "$backup_files" | grep "pellcorp-overrides/" | wc -l) -eq 0 ]; then
         echo "ERROR: This backup cannot be used to do a full restoration - it is missing pellcorp-overrides/"
@@ -159,7 +159,7 @@ elif [ "$mode" = "restore" ] && [ -f /usr/data/printer_data/config/backups/$rest
     fi
 
     echo "Restoring $restore ..."
-    tar -zxf /usr/data/printer_data/config/backups/$restore -C /usr/data
+    tar -zxf /usr/data/backups/$restore -C /usr/data
     sync
 
     echo "Restarting Klippper ..."
