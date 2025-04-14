@@ -3,7 +3,7 @@
 PROG=/usr/bin/mcu_util
 VERSION_FILE=/usr/data/mcu.versions
 LOG_FILE=/tmp/mcu_update.log
-FW_ROOT_DIR=/usr/data/klipper/fw
+FW_ROOT_DIR=/usr/share/klipper/fw
 
 RET_SUCCESS=0
 RET_TIMEOUT=1
