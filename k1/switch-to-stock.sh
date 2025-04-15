@@ -5,6 +5,8 @@ if [ "$1" = "--revert" ]; then
     mode=revert
 fi
 
+CONFIG_HELPER="/usr/data/pellcorp/k1/config-helper.py"
+
 # its really important that the creality-backup.tar.gz exists because with
 # switch-to-stock.sh, it does not restore the screen so doing the initial
 # calibration is not enforced
@@ -39,7 +41,13 @@ if [ -f /usr/data/backups/creality-backup.tar.gz ]; then
             cp /usr/data/pellcorp/k1/webcam.conf /usr/data/printer_data/config/
             cp /usr/data/pellcorp/k1/notifier.conf /usr/data/printer_data/config/
 
-            tar -zxvf /usr/data/backups/creality-backup.tar.gz -C /usr/data
+            tar -zxf /usr/data/backups/creality-backup.tar.gz -C /usr/data
+
+            # to support grumpyscreen macros
+            cp /usr/data/pellcorp/k1/guppyscreen-stock.cfg /usr/data/printer_data/config/guppyscreen.cfg
+            $CONFIG_HELPER --add-include "guppyscreen.cfg" || exit $?
+            # so we can have messages in the guppyscreen stock cfg file
+            $CONFIG_HELPER --add-section "respond" || exit $?
             sync
         else
             echo "WARN: Stock is already active"
