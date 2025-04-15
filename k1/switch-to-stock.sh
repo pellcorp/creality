@@ -16,7 +16,7 @@ if [ -f /usr/data/backups/creality-backup.tar.gz ]; then
             echo "Switching to Stock ..."
 
             if [ -f /etc/init.d/S55klipper_service ]; then
-                /etc/init.d/S55klipper_service stop
+                /etc/init.d/S55klipper_service stop 2> /dev/null
             fi
 
             # we want a backup of the latest simple af config so we can quickly switch back
@@ -26,7 +26,13 @@ if [ -f /usr/data/backups/creality-backup.tar.gz ]; then
             rm -rf /overlay/upper/usr/share/klipper
             rm /overlay/upper/etc/init.d/S57klipper_mcu
             rm /overlay/upper/etc/init.d/S55klipper_service
+            rm /overlay/upper/etc/init.d/S99start_app
             mount -o remount /
+
+            # remove a few services that will cause issues
+            [ -f /usr/bin/upgrade-server ] && rm /usr/bin/upgrade-server
+            [ -f /usr/bin/web-server ] && rm /usr/bin/web-server
+            [ -f /usr/bin/Monitor ] && rm /usr/bin/Monitor
 
             # these firmware files are for pre-release boards and confuse the check-firmware.sh
             rm /usr/share/klipper/fw/K1/mcu*110*
@@ -36,18 +42,15 @@ if [ -f /usr/data/backups/creality-backup.tar.gz ]; then
             rm -rf /usr/data/printer_data/config/*.cfg
             rm -rf /usr/data/printer_data/config/*.conf
 
+            # for stock screen grumpyscreen needs to
+            rm /etc/init.d/S99guppyscreen
+
             # need these files restored back so that moonraker starts correctly
             cp /usr/data/pellcorp/k1/moonraker.conf /usr/data/printer_data/config/
             cp /usr/data/pellcorp/k1/webcam.conf /usr/data/printer_data/config/
             cp /usr/data/pellcorp/k1/notifier.conf /usr/data/printer_data/config/
 
             tar -zxf /usr/data/backups/creality-backup.tar.gz -C /usr/data
-
-            # to support grumpyscreen macros
-            cp /usr/data/pellcorp/k1/guppyscreen-stock.cfg /usr/data/printer_data/config/guppyscreen.cfg
-            $CONFIG_HELPER --add-include "guppyscreen.cfg" || exit $?
-            # so we can have messages in the guppyscreen stock cfg file
-            $CONFIG_HELPER --add-section "respond" || exit $?
             sync
         else
             echo "WARN: Stock is already active"
@@ -58,19 +61,23 @@ if [ -f /usr/data/backups/creality-backup.tar.gz ]; then
             echo "Switching to SimpleAF ..."
 
             if [ -f /etc/init.d/S57klipper_mcu ]; then
-                /etc/init.d/S57klipper_mcu stop
+                /etc/init.d/S57klipper_mcu stop 2> /dev/null
+                rm /etc/init.d/S57klipper_mcu
             fi
             if [ -f /etc/init.d/S55klipper_service ]; then
-                /etc/init.d/S55klipper_service stop
+                /etc/init.d/S55klipper_service stop 2> /dev/null
             fi
+            if [ -f /etc/init.d/S99start_app ]; then
+                /etc/init.d/S99start_app stop 2> /dev/null
+                rm /etc/init.d/S99start_app
+            fi
+
             rm -rf /usr/share/klipper
             ln -sf /usr/data/klipper /usr/share/
             rm -rf /usr/data/printer_data/config/*.cfg
             rm -rf /usr/data/printer_data/config/*.conf
             cp /usr/data/pellcorp/k1/services/S55klipper_service /etc/init.d/
-            if [ -f /etc/init.d/S57klipper_mcu ]; then
-                rm /etc/init.d/S57klipper_mcu
-            fi
+            cp /usr/data/pellcorp/k1/services/S99guppyscreen /etc/init.d/
             /usr/data/pellcorp/k1/tools/backups.sh --restore backup-latest.tar.gz
         else
             echo "WARN: Stock is not active"
