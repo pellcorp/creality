@@ -7,9 +7,6 @@ fi
 
 CONFIG_HELPER="/usr/data/pellcorp/k1/config-helper.py"
 
-# its really important that the creality-backup.tar.gz exists because with
-# switch-to-stock.sh, it does not restore the screen so doing the initial
-# calibration is not enforced
 if [ -f /usr/data/backups/creality-backup.tar.gz ]; then
     if [ "$mode" = "stock" ]; then
         if [ -L /usr/share/klipper ]; then
@@ -42,7 +39,7 @@ if [ -f /usr/data/backups/creality-backup.tar.gz ]; then
             rm -rf /usr/data/printer_data/config/*.cfg
             rm -rf /usr/data/printer_data/config/*.conf
 
-            # for stock screen grumpyscreen needs to
+            # for stock screen grumpyscreen needs to be disabled
             rm /etc/init.d/S99guppyscreen
 
             # need these files restored back so that moonraker starts correctly
