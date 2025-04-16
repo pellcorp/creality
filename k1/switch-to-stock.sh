@@ -55,6 +55,11 @@ if [ -f /usr/data/backups/creality-backup.tar.gz ]; then
         fi
     else # revert
         if [ ! -L /usr/share/klipper ] && [ -f /usr/data/backups/backup-latest.tar.gz ]; then
+            if [ -d /usr/data/helper-script ]; then
+                echo "You cannot switch back to SimpleAF as helper-script is not compatible"
+                exit 1
+            fi
+
             echo "Switching to SimpleAF ..."
 
             if [ -f /etc/init.d/S57klipper_mcu ]; then
