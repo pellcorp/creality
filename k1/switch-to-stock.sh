@@ -17,7 +17,7 @@ if [ -f /usr/data/backups/creality-backup.tar.gz ]; then
             fi
 
             # we want a backup of the latest simple af config so we can quickly switch back
-            TIMESTAMP=latest /usr/data/pellcorp/k1/tools/backups.sh --create
+            TIMESTAMP=latest /usr/data/pellcorp/tools/backups.sh --create
 
             rm /usr/share/klipper
             rm -rf /overlay/upper/usr/share/klipper
@@ -80,7 +80,7 @@ if [ -f /usr/data/backups/creality-backup.tar.gz ]; then
             rm -rf /usr/data/printer_data/config/*.conf
             cp /usr/data/pellcorp/k1/services/S55klipper_service /etc/init.d/
             cp /usr/data/pellcorp/k1/services/S99guppyscreen /etc/init.d/
-            /usr/data/pellcorp/k1/tools/backups.sh --restore backup-latest.tar.gz
+            /usr/data/pellcorp/tools/backups.sh --restore backup-latest.tar.gz
         else
             echo "WARN: Stock is not active"
             exit 1

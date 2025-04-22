@@ -3,7 +3,7 @@
 # this is a fake supervisorctl that provides just enough information for moonraker to think it's the real thing.
 # good enough to list the names of services in moonraker.conf, to say whether they're running or not (with false pids and times)
 # and to start and stop them by name, finding and calling the matching init scripts. 
-# installing: put this in in /usr/bin/supervisorctl and then in moonraker.conf in [machine] section, set  "provider: supervisord_cli"
+# installing: put this in /usr/bin/supervisorctl and then in moonraker.conf in [machine] section, set  "provider: supervisord_cli"
 
 if [ -t 1 ]; then  # colorize only if we're on a terminal
   GREEN='\033[32m'

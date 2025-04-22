@@ -14,7 +14,7 @@ else
     exit 1
 fi
 
-setup_git_repo() {
+function setup_git_repo() {
     if [ -d /usr/data/pellcorp-overrides ]; then
         cd /usr/data/pellcorp-overrides
         if ! git status > /dev/null 2>&1; then
@@ -65,7 +65,27 @@ setup_git_repo() {
     fi
 }
 
-override_file() {
+function override_guppyscreen() {
+    if [ -f /usr/data/pellcorp-backups/guppyscreen.json ] && [ -f /usr/data/guppyscreen/guppyscreen.json ]; then
+        [ -f /usr/data/pellcorp-overrides/guppyscreen.json ] && rm /usr/data/pellcorp-overrides/guppyscreen.json
+        for entry in display_brightness invert_z_icon display_sleep_sec theme touch_calibration_coeff; do
+            stock_value=$(jq -cr ".$entry" /usr/data/pellcorp-backups/guppyscreen.json)
+            new_value=$(jq -cr ".$entry" /usr/data/guppyscreen/guppyscreen.json)
+            # you know what its not an actual json file its just the properties we support updating
+            if [ "$entry" = "touch_calibration_coeff" ] && [ "$new_value" != "null" ]; then
+                echo "$entry=$new_value" >> /usr/data/pellcorp-overrides/guppyscreen.json
+            elif [ "$stock_value" != "null" ] && [ "$new_value" != "null" ] && [ "$stock_value" != "$new_value" ]; then
+                echo "$entry=$new_value" >> /usr/data/pellcorp-overrides/guppyscreen.json
+            fi
+        done
+        if [ -f /usr/data/pellcorp-overrides/guppyscreen.json ]; then
+            echo "INFO: Saving overrides to /usr/data/pellcorp-overrides/guppyscreen.json"
+            sync
+        fi
+    fi
+}
+
+function override_file() {
     local file=$1
 
     if [ -L /usr/data/printer_data/config/$file ]; then
@@ -79,7 +99,9 @@ override_file() {
     
     if [ -f "/usr/data/pellcorp-backups/$file" ]; then
         original_file="/usr/data/pellcorp-backups/$file"
-    elif [ "$file" = "guppyscreen.cfg" ] || [ "$file" = "internal_macros.cfg" ] || [ "$file" = "useful_macros.cfg" ]; then
+    elif [ "$file" = "guppyscreen.cfg" ]; then # old file ignore it
+        return 0
+    elif [ "$file" = "belts_calibration.cfg" ] || [ "$file" = "internal_macros.cfg" ] || [ "$file" = "useful_macros.cfg" ]; then
         echo "INFO: Overrides not supported for $file"
         return 0
     elif [ "$file" = "printer.cfg" ] || [ "$file" = "beacon.conf" ] || [ "$file" = "cartographer.conf" ] || [ "$file" = "moonraker.conf" ] || [ "$file" = "start_end.cfg" ] || [ "$file" = "fan_control.cfg" ]; then
@@ -236,7 +258,7 @@ else
   # we want the printer.cfg to be done last
   override_file printer.cfg
 
-  /usr/data/pellcorp/k1/update-guppyscreen.sh --config-overrides
+  override_guppyscreen
 fi
 
 cd /usr/data/pellcorp-overrides

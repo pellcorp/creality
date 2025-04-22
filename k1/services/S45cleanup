@@ -2,6 +2,6 @@
 
 if [ "$1" = "start" ]; then
     # does not wait
-    /usr/data/pellcorp/k1/tools/cleanup-files.sh --execute &
+    /usr/data/pellcorp/tools/cleanup-files.sh --execute &
 fi
 exit 0

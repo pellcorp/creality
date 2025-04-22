@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-###!/usr/data/rootfs/usr/bin/python3
 # Shaper auto-calibration script
 #
 # Copyright (C) 2020  Dmitry Butyugin <dmbutyugin@google.com>

@@ -114,7 +114,7 @@ else
     status=$?
     if [ $status -ne 0 ] && [ "$restart_klipper" = "true" ]; then
       echo "INFO: Restarting Klipper ..."
-      /etc/init.d/S55klipper_service restart
+      sudo systemctl restart klipper
     fi
     exit $status
 fi
