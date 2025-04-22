@@ -17,4 +17,4 @@ else # else fluidd
 fi
 
 echo "Restarting nginx ..."
-/etc/init.d/S50nginx_service restart
+sudo systemctl restart nginx

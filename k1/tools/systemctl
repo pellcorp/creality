@@ -1,7 +1,30 @@
 #!/bin/sh
 
-if [ "$1" == "reboot" ]; then
-  /sbin/reboot
-elif [ "$1" == "poweroff" ]; then
-  /sbin/poweroff
+# K1 compatibility layer for systemctl
+if [ "$1" = "reboot" ]; then
+    /sbin/reboot
+elif [ "$1" = "poweroff" ]; then
+    /sbin/poweroff
+elif [ "$1" = "restart" ] || [ "$1" = "stop" ] || [ "$1" = "start" ]; then
+    if [ "$2" = "klipper" ]; then
+        if [ -f /etc/init.d/S55klipper_service ]; then
+            /etc/init.d/S55klipper_service $1
+        fi
+    elif [ "$2" = "moonraker" ]; then
+        if [ -f /etc/init.d/S56moonraker_service ]; then
+            /etc/init.d/S56moonraker_service $1
+        fi
+    elif [ "$2" = "webcam" ]; then
+        if [ -f /etc/init.d/S50webcam ]; then
+            /etc/init.d/S50webcam $1
+        fi
+    elif [ "$2" = "nginx" ]; then
+        if [ -f /etc/init.d/S50nginx_service ]; then
+            /etc/init.d/S50nginx_service $1
+        fi
+    elif [ "$2" = "grumpyscreen" ]; then
+        if [ -f /etc/init.d/S599guppyscreen ]; then
+            /etc/init.d/S599guppyscreen $1
+        fi
+    fi
 fi

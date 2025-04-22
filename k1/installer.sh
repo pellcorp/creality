@@ -697,9 +697,8 @@ function install_klipper() {
         # the klipper_mcu is not even used, so just get rid of it
         $CONFIG_HELPER --remove-section "mcu rpi" || exit $?
 
-        # the belt shaper calibration macros
-        cp /usr/data/pellcorp/k1/guppyscreen.cfg /usr/data/printer_data/config/ || exit $?
-        $CONFIG_HELPER --add-include "guppyscreen.cfg" || exit $?
+        cp /usr/data/pellcorp/k1/belts_calibration.cfg /usr/data/printer_data/config/ || exit $?
+        $CONFIG_HELPER --add-include "belts_calibration.cfg" || exit $?
 
         # ender 5 max
        if [ "$MODEL" = "F004" ]; then
@@ -911,9 +910,6 @@ function install_guppyscreen() {
             rm /usr/data/guppyscreen.tar.gz
         fi
 
-        ln -sf /usr/data/pellcorp/k1/fixes/respawn/libeinfo.so.1 /lib/libeinfo.so.1
-        ln -sf /usr/data/pellcorp/k1/fixes/respawn/librc.so.1 /lib/librc.so.1
-
         echo
         echo "INFO: Updating grumpyscreen config ..."
         cp /usr/data/pellcorp/k1/services/S99guppyscreen /etc/init.d/ || exit $?
@@ -921,7 +917,7 @@ function install_guppyscreen() {
         if [ ! -d "/usr/lib/python3.8/site-packages/matplotlib-2.2.3-py3.8.egg-info" ]; then
             echo "WARNING: Not replacing mathplotlib ft2font module. PSD graphs might not work!"
         else
-            cp /usr/data/pellcorp/k1/fixes/ft2font.cpython-38-mipsel-linux-gnu.so /usr/lib/python3.8/site-packages/matplotlib/ || exit $?
+            cp /usr/data/pellcorp/k1/files/ft2font.cpython-38-mipsel-linux-gnu.so /usr/lib/python3.8/site-packages/matplotlib/ || exit $?
         fi
 
         # remove all excludes from grumpyscreen
@@ -933,9 +929,7 @@ function install_guppyscreen() {
         
         # get rid of the old guppyscreen config
         [ -d /usr/data/printer_data/config/GuppyScreen ] && rm -rf /usr/data/printer_data/config/GuppyScreen
-
-        # a single local guppyscreen.cfg which references the python files from /usr/data/guppyscreen instead
-        $CONFIG_HELPER --remove-include "GuppyScreen/*.cfg" || exit $?
+        [ -f /usr/data/printer_data/config/guppyscreen.cfg ] && rm /usr/data/printer_data/config/guppyscreen.cfg
 
         echo "guppyscreen" >> /usr/data/pellcorp.done
         sync
@@ -1925,7 +1919,7 @@ fi
         sync
         cd - > /dev/null
     else
-        TIMESTAMP=${TIMESTAMP} /usr/data/pellcorp/k1/tools/backups.sh --create
+        TIMESTAMP=${TIMESTAMP} /usr/data/pellcorp/tools/backups.sh --create
         echo
     fi
 

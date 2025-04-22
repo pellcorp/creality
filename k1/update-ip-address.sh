@@ -43,7 +43,7 @@ if [ -z "$PREVIOUS_IP_ADDRESS" ] || [ "$PREVIOUS_IP_ADDRESS" != "$CURRENT_IP_ADD
 
   if [ "$1" = "--init" ]; then
     # we have to restart moonraker to load the new ip address
-    /etc/init.d/S56moonraker_service restart
+    sudo systemctl restart moonraker
     exit 0
   else
     # a special error code to let installer.sh know that moonraker should be restarted

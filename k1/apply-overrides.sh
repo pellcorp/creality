@@ -14,6 +14,29 @@ else
     exit 1
 fi
 
+function apply_guppyscreen_overrides() {
+    command=""
+    for entry in display_brightness invert_z_icon display_sleep_sec theme touch_calibration_coeff; do
+      value=$(cat /usr/data/pellcorp-overrides/guppyscreen.json | grep "${entry}=" | awk -F '=' '{print $2}')
+      if [ -n "$value" ]; then
+          if [ -n "$command" ]; then
+              command="$command | "
+          fi
+          if [ "$entry" = "theme" ]; then
+              command="${command}.${entry} = \"$value\""
+          else
+              command="${command}.${entry} = $value"
+          fi
+      fi
+    done
+
+    if [ -n "$command" ]; then
+        echo "Applying overrides /usr/data/guppyscreen/guppyscreen.json ..."
+        jq "$command" /usr/data/guppyscreen/guppyscreen.json > /usr/data/guppyscreen/guppyscreen.json.$$
+        mv /usr/data/guppyscreen/guppyscreen.json.$$ /usr/data/guppyscreen/guppyscreen.json
+    fi
+}
+
 function apply_overrides() {
     return_status=0
     if [ -f /usr/data/pellcorp-overrides.cfg ] || [ -d /usr/data/pellcorp-overrides ]; then
@@ -55,7 +78,7 @@ function apply_overrides() {
                 echo "INFO: Restoring /usr/data/printer_data/$file ..."
                 cp $overrides_dir/$file /usr/data/printer_data/
             elif [ "$file" = "guppyscreen.json" ]; then
-                /usr/data/pellcorp/k1/update-guppyscreen.sh --apply-overrides
+                apply_guppyscreen_overrides
             elif [ "$file" = "KAMP_Settings.cfg" ]; then # KAMP_Settings.cfg is gone apply any overrides to start_end.cfg
                 # remove any overrides for these values which do not apply to Smart Park and Line Purge
                 sed -i '/variable_verbose_enable/d' /usr/data/pellcorp-overrides/KAMP_Settings.cfg
@@ -66,10 +89,7 @@ function apply_overrides() {
                 sed -i '/variable_detach_macro/d' /usr/data/pellcorp-overrides/KAMP_Settings.cfg
 
                 $CONFIG_HELPER --file start_end.cfg --overrides $overrides_dir/$file || exit $?
-            elif [ -L /usr/data/printer_data/config/$file ] || [ "$file" = "useful_macros.cfg" ] || [ "$file" = "internal_macros.cfg" ] || [ "$file" = "guppyscreen.cfg" ]; then
-                if [ "$file" = "guppyscreen.cfg" ]; then  # we removed guppy module loader completely
-                    $CONFIG_HELPER --file guppyscreen.cfg --remove-section guppy_module_loader
-                fi
+            elif [ -L /usr/data/printer_data/config/$file ] || [ "$file" = "useful_macros.cfg" ] || [ "$file" = "internal_macros.cfg" ] || [ "$file" = "belts_calibration.cfg" ]; then
                 echo "WARN: Ignoring $file ..."
             elif [ -f "/usr/data/pellcorp-backups/$file" ] || [ -f "/usr/data/pellcorp/k1/$file" ]; then
                 if [ -f /usr/data/printer_data/config/$file ]; then
