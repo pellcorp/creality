@@ -535,10 +535,6 @@ function install_fluidd() {
             unzip -qd /usr/data/fluidd /usr/data/fluidd.zip || exit $?
             rm /usr/data/fluidd.zip
         fi
-        
-        if [ ! -d /usr/data/fluidd-config ]; then
-            git clone https://github.com/fluidd-core/fluidd-config.git /usr/data/fluidd-config || exit $?
-        fi
 
         echo "fluidd" >> /usr/data/pellcorp.done
         sync
@@ -831,6 +827,11 @@ function install_klipper() {
 
         echo
         echo "INFO: Updating client config ..."
+
+        if [ ! -d /usr/data/fluidd-config ]; then
+            git clone https://github.com/fluidd-core/fluidd-config.git /usr/data/fluidd-config || exit $?
+        fi
+
         [ -e /usr/data/printer_data/config/fluidd.cfg ] && rm /usr/data/printer_data/config/fluidd.cfg
 
         ln -sf /usr/data/fluidd-config/client.cfg /usr/data/printer_data/config/
