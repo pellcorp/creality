@@ -540,22 +540,6 @@ function install_fluidd() {
             git clone https://github.com/fluidd-core/fluidd-config.git /usr/data/fluidd-config || exit $?
         fi
 
-        echo "INFO: Updating client config ..."
-        [ -e /usr/data/printer_data/config/fluidd.cfg ] && rm /usr/data/printer_data/config/fluidd.cfg
-
-        ln -sf /usr/data/fluidd-config/client.cfg /usr/data/printer_data/config/
-        $CONFIG_HELPER --add-include "client.cfg" || exit $?
-
-        # for moonraker to be able to use moonraker fluidd client.cfg out of the box need to
-        ln -sf /usr/data/printer_data/ /root
-
-        # these are already defined in fluidd config so get rid of them from printer.cfg
-        $CONFIG_HELPER --remove-section "pause_resume" || exit $?
-        $CONFIG_HELPER --remove-section "display_status" || exit $?
-        $CONFIG_HELPER --remove-section "virtual_sdcard" || exit $?
-
-        $CONFIG_HELPER --replace-section-entry "filament_switch_sensor filament_sensor" "runout_gcode" "_ON_FILAMENT_RUNOUT" || exit $?
-
         echo "fluidd" >> /usr/data/pellcorp.done
         sync
 
@@ -583,8 +567,6 @@ function install_mainsail() {
             unzip -qd /usr/data/mainsail /usr/data/mainsail.zip || exit $?
             rm /usr/data/mainsail.zip
         fi
-
-        echo "INFO: Updating mainsail config ..."
 
         # the mainsail and fluidd client.cfg are exactly the same
         [ -f /usr/data/printer_data/config/mainsail.cfg ] && rm /usr/data/printer_data/config/mainsail.cfg
@@ -846,6 +828,24 @@ function install_klipper() {
 
         # just in case its missing from stock printer.cfg make sure it gets added
         $CONFIG_HELPER --add-section "exclude_object" || exit $?
+
+        echo
+        echo "INFO: Updating client config ..."
+        [ -e /usr/data/printer_data/config/fluidd.cfg ] && rm /usr/data/printer_data/config/fluidd.cfg
+
+        ln -sf /usr/data/fluidd-config/client.cfg /usr/data/printer_data/config/
+        $CONFIG_HELPER --add-include "client.cfg" || exit $?
+
+        # for moonraker to be able to use moonraker fluidd/mainsail client.cfg out of the box need to
+        # have $HOME/printer_data resolve correctly.
+        ln -sf /usr/data/printer_data/ /root
+
+        # these are already defined in fluidd config so get rid of them from printer.cfg
+        $CONFIG_HELPER --remove-section "pause_resume" || exit $?
+        $CONFIG_HELPER --remove-section "display_status" || exit $?
+        $CONFIG_HELPER --remove-section "virtual_sdcard" || exit $?
+
+        $CONFIG_HELPER --replace-section-entry "filament_switch_sensor filament_sensor" "runout_gcode" "_ON_FILAMENT_RUNOUT" || exit $?
 
         echo "klipper" >> /usr/data/pellcorp.done
         sync
