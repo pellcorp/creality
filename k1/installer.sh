@@ -719,6 +719,10 @@ function install_klipper() {
         # the klipper_mcu is not even used, so just get rid of it
         $CONFIG_HELPER --remove-section "mcu rpi" || exit $?
 
+        # the belt shaper calibration macros
+        cp /usr/data/pellcorp/k1/guppyscreen.cfg /usr/data/printer_data/config/ || exit $?
+        $CONFIG_HELPER --add-include "guppyscreen.cfg" || exit $?
+
         # ender 5 max
        if [ "$MODEL" = "F004" ]; then
             # the ender 5 max has a beep command
@@ -929,12 +933,8 @@ function install_guppyscreen() {
         # get rid of the old guppyscreen config
         [ -d /usr/data/printer_data/config/GuppyScreen ] && rm -rf /usr/data/printer_data/config/GuppyScreen
 
-        cp /usr/data/pellcorp/k1/guppyscreen.cfg /usr/data/printer_data/config/ || exit $?
-
         # a single local guppyscreen.cfg which references the python files from /usr/data/guppyscreen instead
         $CONFIG_HELPER --remove-include "GuppyScreen/*.cfg" || exit $?
-
-        $CONFIG_HELPER --add-include "guppyscreen.cfg" || exit $?
 
         echo "guppyscreen" >> /usr/data/pellcorp.done
         sync
