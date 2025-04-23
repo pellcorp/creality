@@ -332,7 +332,7 @@ function install_webcam() {
             rm /usr/data/pellcorp.ipaddress
           fi
         fi
-        cp /usr/data/pellcorp/k1/webcam.conf /usr/data/printer_data/config/ || exit $?
+        cp /usr/data/pellcorp/config/webcam.conf /usr/data/printer_data/config/ || exit $?
 
         echo "webcam" >> /usr/data/pellcorp.done
         sync
@@ -427,7 +427,7 @@ function install_moonraker() {
 
         # an existing bug where the moonraker secrets was not correctly copied
         if [ ! -f /usr/data/printer_data/moonraker.secrets ]; then
-            cp /usr/data/pellcorp/k1/moonraker.secrets /usr/data/printer_data/
+            cp /usr/data/pellcorp/config/moonraker.secrets /usr/data/printer_data/
         fi
 
         ln -sf /usr/data/pellcorp/k1/tools/supervisorctl /usr/bin/ || exit $?
@@ -445,14 +445,14 @@ function install_moonraker() {
         cp /usr/data/pellcorp/k1/timelapse.conf /usr/data/printer_data/config/ || exit $?
 
         ln -sf /usr/data/pellcorp/config/spoolman.cfg /usr/data/printer_data/config/ || exit $?
-        cp /usr/data/pellcorp/k1/spoolman.conf /usr/data/printer_data/config/ || exit $?
+        cp /usr/data/pellcorp/config/spoolman.conf /usr/data/printer_data/config/ || exit $?
 
         # after an initial install do not overwrite notifier.conf or moonraker.secrets
         if [ ! -f /usr/data/printer_data/config/notifier.conf ]; then
-            cp /usr/data/pellcorp/k1/notifier.conf /usr/data/printer_data/config/ || exit $?
+            cp /usr/data/pellcorp/config/notifier.conf /usr/data/printer_data/config/ || exit $?
         fi
         if [ ! -f /usr/data/printer_data/moonraker.secrets ]; then
-            cp /usr/data/pellcorp/k1/moonraker.secrets /usr/data/printer_data/ || exit $?
+            cp /usr/data/pellcorp/config/moonraker.secrets /usr/data/printer_data/ || exit $?
         fi
 
         echo "moonraker" >> /usr/data/pellcorp.done
