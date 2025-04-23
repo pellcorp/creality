@@ -89,7 +89,7 @@ CONFIG_HELPER="/usr/data/pellcorp/tools/config-helper.py"
 function restart_moonraker() {
     echo
     echo "INFO: Restarting Moonraker ..."
-    /etc/init.d/S56moonraker_service restart
+    sudo systemctl restart moonraker
 
     timeout=60
     start_time=$(date +%s)
@@ -166,7 +166,7 @@ function update_klipper() {
   /usr/data/pellcorp/k1/tools/check-firmware.sh --status
   if [ $? -eq 0 ]; then
       echo "INFO: Restarting Klipper ..."
-      /etc/init.d/S55klipper_service restart
+      sudo systemctl restart klipper
   fi
   return $?
 }
@@ -295,7 +295,7 @@ function install_boot_display() {
 
 function install_webcam() {
     local mode=$1
-    
+
     grep -q "webcam" /usr/data/pellcorp.done
     if [ $? -ne 0 ]; then
         if [ "$mode" != "update" ] || [ ! -f /opt/bin/mjpg_streamer ]; then
@@ -347,7 +347,7 @@ function install_moonraker() {
     grep -q "moonraker" /usr/data/pellcorp.done
     if [ $? -ne 0 ]; then
         echo
-        
+
         if [ "$mode" != "update" ] && [ -d /usr/data/moonraker ]; then
             if [ -f /etc/init.d/S56moonraker_service ]; then
                 /etc/init.d/S56moonraker_service stop
@@ -359,7 +359,7 @@ function install_moonraker() {
                 cd /usr/data/printer_data/
 
                 tar -zcf /usr/data/moonraker-database.tar.gz database/
-                cd 
+                cd
             fi
             rm -rf /usr/data/moonraker
         fi
@@ -383,7 +383,7 @@ function install_moonraker() {
 
         if [ ! -d /usr/data/moonraker/.git ]; then
             echo "INFO: Installing moonraker ..."
-        
+
             [ -d /usr/data/moonraker ] && rm -rf /usr/data/moonraker
             [ -d /usr/data/moonraker-env ] && rm -rf /usr/data/moonraker-env
 
@@ -573,18 +573,6 @@ function install_mainsail() {
     return 0
 }
 
-function cleanup_klipper() {
-    if [ -f /etc/init.d/S55klipper_service ]; then
-        /etc/init.d/S55klipper_service stop
-    fi
-    rm -rf /usr/data/klipper
-
-    # a reinstall should reset the choice of what klipper to run
-    if [ -f /usr/data/pellcorp.klipper ]; then
-      rm /usr/data/pellcorp.klipper
-    fi
-}
-
 function install_klipper() {
     local mode=$1
     local probe=$2
@@ -593,38 +581,27 @@ function install_klipper() {
     if [ $? -ne 0 ]; then
         echo
 
-        klipper_repo=klipper
-        existing_klipper_repo=$(cat /usr/data/pellcorp.klipper 2> /dev/null)
-        if [ "$mode" = "update" ] && [ "$existing_klipper_repo" = "k1-carto-klipper" ]; then
-            echo "INFO: Forcing Klipper repo to be switched from pellcorp/${existing_klipper_repo} to pellcorp/${klipper_repo}"
-            cleanup_klipper
-        elif [ "$mode" != "update" ] && [ -d /usr/data/klipper ]; then
-            cleanup_klipper
-        fi
-
-        # switch to required klipper version except where there is a flag file indicating we explicitly
-        # decided to use a particular version of klipper
-        if [ -d /usr/data/klipper/.git ] && [ ! -f /usr/data/pellcorp.klipper ]; then
+        if [ -d /usr/data/klipper/.git ]; then
             cd /usr/data/klipper/
             remote_repo=$(git remote get-url origin | awk -F '/' '{print $NF}' | sed 's/.git//g')
             cd - > /dev/null
-            if [ "$remote_repo" != "$klipper_repo" ]; then
-                echo "INFO: Forcing Klipper repo to be switched from pellcorp/${remote_repo} to pellcorp/${klipper_repo}"
+            if [ "$remote_repo" != "klipper" ]; then
+                echo "INFO: Forcing Klipper repo to be switched from pellcorp/${remote_repo} to pellcorp/klipper"
                 rm -rf /usr/data/klipper/
             fi
         fi
 
         if [ ! -d /usr/data/klipper/.git ]; then
-            echo "INFO: Installing ${klipper_repo} ..."
+            echo "INFO: Installing klipper ..."
 
             if [ "$AF_GIT_CLONE" = "ssh" ]; then
-                export GIT_SSH_IDENTITY=${klipper_repo}
+                export GIT_SSH_IDENTITY=klipper
                 export GIT_SSH=/usr/data/pellcorp/k1/ssh/git-ssh.sh
-                git clone git@github.com:pellcorp/${klipper_repo}.git /usr/data/klipper || exit $?
+                git clone git@github.com:pellcorp/klipper.git /usr/data/klipper || exit $?
                 # reset the origin url to make moonraker happy
-                cd /usr/data/klipper && git remote set-url origin https://github.com/pellcorp/${klipper_repo}.git && cd - > /dev/null
+                cd /usr/data/klipper && git remote set-url origin https://github.com/pellcorp/klipper.git && cd - > /dev/null
             else
-                git clone https://github.com/pellcorp/${klipper_repo}.git /usr/data/klipper || exit $?
+                git clone https://github.com/pellcorp/klipper.git /usr/data/klipper || exit $?
             fi
             [ -d /usr/share/klipper ] && rm -rf /usr/share/klipper
         else
@@ -791,11 +768,11 @@ function install_klipper() {
         $CONFIG_HELPER --remove-section "output_pin PB10" || exit $?
         $CONFIG_HELPER --remove-section "output_pin PC8" || exit $?
         $CONFIG_HELPER --remove-section "output_pin PC9" || exit $?
-        
+
         # duplicate pin can only be assigned once, so we remove it from printer.cfg so we can
         # configure it in fan_control.cfg
         $CONFIG_HELPER --remove-section "duplicate_pin_override" || exit $?
-        
+
         # no longer required as we configure the part fan entirely in fan_control.cfg
         $CONFIG_HELPER --remove-section "static_digital_output my_fan_output_pins" || exit $?
 
@@ -810,7 +787,7 @@ function install_klipper() {
         # just in case anyone manually has added this to printer.cfg
         $CONFIG_HELPER --remove-section "temperature_fan mcu_fan" || exit $?
 
-        # the nozzle should not trigger the MCU anymore        
+        # the nozzle should not trigger the MCU anymore
         $CONFIG_HELPER --remove-section "multi_pin heater_fans" || exit $?
 
         # moving idle timeout to start_end.cfg so we can have some integration with
@@ -924,7 +901,7 @@ function install_guppyscreen() {
                 sed -i "/klippy\/extras\/$file$/d" "/usr/data/klipper/.git/info/exclude"
             fi
         done
-        
+
         # get rid of the old guppyscreen config
         [ -d /usr/data/printer_data/config/GuppyScreen ] && rm -rf /usr/data/printer_data/config/GuppyScreen
         [ -f /usr/data/printer_data/config/guppyscreen.cfg ] && rm /usr/data/printer_data/config/guppyscreen.cfg
@@ -1621,41 +1598,6 @@ elif [ "$1" = "--klipper-branch" ]; then # convenience for testing new features
         echo "Error invalid branch specified"
         exit 1
     fi
-elif [ "$1" = "--klipper-repo" ]; then # convenience for testing new features
-    if [ -n "$2" ]; then
-        klipper_repo=$2
-        if [ "$klipper_repo" = "k1-carto-klipper" ]; then
-            echo "ERROR: Switching to k1-carto-klipper is no longer supported"
-            exit 1
-        fi
-
-        if [ -d /usr/data/klipper/.git ]; then
-            cd /usr/data/klipper/
-            remote_repo=$(git remote get-url origin | awk -F '/' '{print $NF}' | sed 's/.git//g')
-            cd - > /dev/null
-            if [ "$remote_repo" != "$klipper_repo" ]; then
-                echo "INFO: Switching klipper from pellcorp/$remote_repo to pellcorp/${klipper_repo} ..."
-                rm -rf /usr/data/klipper
-
-                echo "$klipper_repo" > /usr/data/pellcorp.klipper
-            fi
-        fi
-
-        if [ ! -d /usr/data/klipper ]; then
-            git clone https://github.com/pellcorp/${klipper_repo}.git /usr/data/klipper || exit $?
-            if [ -n "$3" ]; then
-              cd /usr/data/klipper && git switch $3 && cd - > /dev/null
-            fi
-        else
-            update_repo /usr/data/klipper $3 || exit $?
-        fi
-
-        update_klipper || exit $?
-        exit 0
-    else
-        echo "Error invalid klipper repo specified"
-        exit 1
-    fi
 fi
 
 if [ -f /usr/data/pellcorp.done ] && [ ! -L /usr/share/klipper ]; then
@@ -2121,7 +2063,7 @@ fi
 
     if [ $apply_overrides -ne 0 ] || [ $install_moonraker -ne 0 ] || [ $install_cartographer_klipper -ne 0 ] || [ $install_beacon_klipper -ne 0 ] || [ $update_ip_address -ne 0 ]; then
         if [ "$client" = "cli" ]; then
-            restart_moonraker
+            sudo systemctl restart moonraker
         else
             echo "WARNING: Moonraker restart required"
         fi
@@ -2131,7 +2073,7 @@ fi
         if [ "$client" = "cli" ]; then
             echo
             echo "INFO: Restarting Nginx ..."
-            /etc/init.d/S50nginx_service restart
+            sudo systemctl restart nginx
         else
             echo "WARNING: NGINX restart required"
         fi
@@ -2141,7 +2083,7 @@ fi
         if [ "$client" = "cli" ]; then
             echo
             echo "INFO: Restarting Klipper ..."
-            /etc/init.d/S55klipper_service restart
+            sudo systemctl restart klipper
         else
             echo "WARNING: Klipper restart required"
         fi
@@ -2151,7 +2093,7 @@ fi
         if [ "$client" = "cli" ]; then
             echo
             echo "INFO: Restarting Grumpyscreen ..."
-            /etc/init.d/S99guppyscreen restart
+            sudo systemctl restart grumpyscreen
         else
             echo "WARNING: Grumpyscreen restart required"
         fi
