@@ -1,26 +1,19 @@
 #!/bin/sh
 
-CONFIG_HELPER="/usr/data/pellcorp/k1/config-helper.py"
-
-MODEL=$(/usr/bin/get_sn_mac.sh model)
-if [ "$MODEL" = "CR-K1" ] || [ "$MODEL" = "K1C" ] || [ "$MODEL" = "K1 SE" ]; then
-    model=k1
-elif [ "$MODEL" = "CR-K1 Max" ] || [ "$MODEL" = "K1 Max SE" ]; then
-    model=k1m
-elif [ "$MODEL" = "F004" ]; then
-    model=f004
-else
-    echo "This script is not supported for $MODEL!"
-    exit 1
+BASEDIR=/home/pi
+if grep -Fqs "ID=buildroot" /etc/os-release; then
+    BASEDIR=/usr/data
 fi
+CONFIG_HELPER="$BASEDIR/pellcorp/tools/config-helper.py"
 
 function apply_mount_overrides() {
     local probe=$1
     local mount=$2
+    local model=$3
 
     return_status=0
-    overrides_dir=/usr/data/pellcorp/k1/mounts/$probe/$mount
-    if [ ! -f /usr/data/pellcorp/k1/mounts/$probe/${mount}-${model}.overrides ]; then
+    overrides_dir=$BASEDIR/pellcorp/mounts/$probe/$mount
+    if [ ! -f $BASEDIR/pellcorp/mounts/$probe/${mount}-${model}.overrides ]; then
         echo "ERROR: Probe (${probe}), Mount (${mount}) and Model (${model}) combination not found"
         exit 0 # FIXME unfortunately we are using this exit code to know overrides were applied
     fi
@@ -40,13 +33,13 @@ function apply_mount_overrides() {
         elif [ -n "$file" ] && [ -f $overrides_dir/$file ]; then
             echo "$line" >> $overrides_dir/$file
         fi
-    done < "/usr/data/pellcorp/k1/mounts/$probe/${mount}-${model}.overrides"
+    done < "$BASEDIR/pellcorp/mounts/$probe/${mount}-${model}.overrides"
 
   files=$(find $overrides_dir -maxdepth 1 -name "*.cfg")
   for file in $files; do
       file=$(basename $file)
 
-      if [ -f /usr/data/printer_data/config/$file ]; then
+      if [ -f $BASEDIR/printer_data/config/$file ]; then
           $CONFIG_HELPER --file $file --patches $overrides_dir/$file || exit $?
           return_status=1
       fi
@@ -74,10 +67,11 @@ fi
 
 probe=$1
 mount=$2
+model=$3
 
 if [ "$mode" = "verify" ]; then
-    if [ -d /usr/data/pellcorp/k1/mounts/$probe ]; then
-        if [ -f /usr/data/pellcorp/k1/mounts/$probe/${mount}-${model}.overrides ]; then
+    if [ -d $BASEDIR/pellcorp/mounts/$probe ]; then
+        if [ -f $BASEDIR/pellcorp/mounts/$probe/${mount}-${model}.overrides ]; then
             exit 0
         else
             if [ -n "$mount" ]; then
@@ -87,12 +81,12 @@ if [ "$mode" = "verify" ]; then
             echo "The following mounts are available:"
             echo
 
-            if [ -f /usr/data/pellcorp/k1/mounts/$probe/Default-${model}.overrides ]; then
-                comment=$(cat /usr/data/pellcorp/k1/mounts/$probe/Default-${model}.overrides | grep "^#" | head -1 | sed 's/#\s*//g')
+            if [ -f $BASEDIR/pellcorp/mounts/$probe/Default-${model}.overrides ]; then
+                comment=$(cat $BASEDIR/pellcorp/mounts/$probe/Default-${model}.overrides | grep "^#" | head -1 | sed 's/#\s*//g')
                 echo "  * Default - $comment"
             fi
 
-            files=$(find /usr/data/pellcorp/k1/mounts/$probe -maxdepth 1 -name "*-${model}.overrides")
+            files=$(find $BASEDIR/pellcorp/mounts/$probe -maxdepth 1 -name "*-${model}.overrides")
             for file in $files; do
                 comment=$(cat $file | grep "^#" | head -1 | sed 's/#\s*//g')
                 file=$(basename $file .overrides | sed "s/-${model}//g")
@@ -110,7 +104,7 @@ if [ "$mode" = "verify" ]; then
           exit 1
       fi
 else
-    apply_mount_overrides "$probe" "$mount"
+    apply_mount_overrides "$probe" "$mount" "$model"
     status=$?
     if [ $status -ne 0 ] && [ "$restart_klipper" = "true" ]; then
       echo "INFO: Restarting Klipper ..."

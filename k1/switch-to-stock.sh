@@ -5,7 +5,7 @@ if [ "$1" = "--revert" ]; then
     mode=revert
 fi
 
-CONFIG_HELPER="/usr/data/pellcorp/k1/config-helper.py"
+CONFIG_HELPER="/usr/data/pellcorp/tools/config-helper.py"
 
 if [ -f /usr/data/backups/creality-backup.tar.gz ]; then
     if [ "$mode" = "stock" ]; then
