@@ -522,9 +522,6 @@ function install_fluidd() {
         if [ "$mode" != "update" ] && [ -d /usr/data/fluidd ]; then
             rm -rf /usr/data/fluidd
         fi
-        if [ "$mode" != "update" ] && [ -d /usr/data/fluidd-config ]; then
-            rm -rf /usr/data/fluidd-config
-        fi
 
         if [ ! -d /usr/data/fluidd ]; then
             echo
@@ -826,6 +823,10 @@ function install_klipper() {
         echo
         echo "INFO: Updating client config ..."
 
+        if [ "$mode" != "update" ] && [ -d /usr/data/fluidd-config ]; then
+            rm -rf /usr/data/fluidd-config
+        fi
+
         if [ ! -d /usr/data/fluidd-config ]; then
             git clone https://github.com/fluidd-core/fluidd-config.git /usr/data/fluidd-config || exit $?
         fi
@@ -887,7 +888,7 @@ function install_guppyscreen() {
           fi
 
           # this allows us to make changes to Simple AF and grumpyscreen in parallel
-          GRUMPYSCREEN_TIMESTAMP=1744690345
+          GRUMPYSCREEN_TIMESTAMP=1745381197
           if [ $TIMESTAMP -lt $GRUMPYSCREEN_TIMESTAMP ]; then
             echo
             echo "INFO: Forcing update of grumpyscreen"
