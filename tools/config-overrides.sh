@@ -236,8 +236,8 @@ else
   fi
 
   # special case for moonraker.secrets
-  if [ -f $BASEDIR/printer_data/moonraker.secrets ] && [ -f $BASEDIR/pellcorp/k1/moonraker.secrets ]; then
-      diff $BASEDIR/printer_data/moonraker.secrets $BASEDIR/pellcorp/k1/moonraker.secrets > /dev/null
+  if [ -f $BASEDIR/printer_data/moonraker.secrets ] && [ -f $BASEDIR/pellcorp/config/moonraker.secrets ]; then
+      diff $BASEDIR/printer_data/moonraker.secrets $BASEDIR/pellcorp/config/moonraker.secrets > /dev/null
       if [ $? -ne 0 ]; then
           echo "INFO: Backing up $BASEDIR/printer_data/moonraker.secrets..."
           cp $BASEDIR/printer_data/moonraker.secrets $BASEDIR/pellcorp-overrides/
