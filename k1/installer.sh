@@ -83,7 +83,7 @@ sync
 cp /usr/data/pellcorp/k1/tools/curl /usr/bin/curl || exit $?
 sync
 
-CONFIG_HELPER="/usr/data/pellcorp/k1/config-helper.py"
+CONFIG_HELPER="/usr/data/pellcorp/tools/config-helper.py"
 
 # thanks to @Nestaa51 for the timeout changes to not wait forever for moonraker
 function restart_moonraker() {
@@ -1462,7 +1462,7 @@ function apply_overrides() {
     return_status=0
     grep -q "overrides" /usr/data/pellcorp.done
     if [ $? -ne 0 ]; then
-        /usr/data/pellcorp/k1/apply-overrides.sh
+        /usr/data/pellcorp/tools/apply-overrides.sh
         return_status=$?
         echo "overrides" >> /usr/data/pellcorp.done
         sync
@@ -1813,7 +1813,7 @@ fi
       fi
 
       if [ -n "$mount" ]; then
-          /usr/data/pellcorp/k1/apply-mount-overrides.sh --verify $probe $mount
+          /usr/data/pellcorp/tools/apply-mount-overrides.sh --verify $probe $mount $model
           if [ $? -eq 0 ]; then
               echo "INFO: Mount is $mount"
           else
@@ -1968,7 +1968,7 @@ fi
     if [ "$mode" = "reinstall" ] || [ "$mode" = "update" ]; then
         if [ "$skip_overrides" != "true" ]; then
             if [ -f /usr/data/pellcorp-backups/printer.cfg ]; then
-                /usr/data/pellcorp/k1/config-overrides.sh
+                /usr/data/pellcorp/tools/config-overrides.sh
             elif [ -f /usr/data/pellcorp.done ]; then # for a factory reset this warning is superfluous
               echo "WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING"
               echo "WARNING: No /usr/data/pellcorp-backups/printer.cfg - config overrides won't be generated!"
@@ -2103,7 +2103,7 @@ fi
 
     apply_mount_overrides=0
     if [ -n "$mount" ]; then
-        /usr/data/pellcorp/k1/apply-mount-overrides.sh $probe $mount
+        /usr/data/pellcorp/tools/apply-mount-overrides.sh $probe $mount $model
         apply_mount_overrides=$?
     fi
 

@@ -4,11 +4,14 @@
 # https://github.com/pyscaffold/configupdater
 #
 
-PRINTER_CONFIG_DIR = "/usr/data/printer_data/config"
-
 import optparse, io, os, sys
+import os.path
 from configupdater import ConfigUpdater
 
+if os.path.isfile("/usr/data/pellcorp.done"):
+    PRINTER_CONFIG_DIR = "/usr/data/printer_data/config"
+else:
+    PRINTER_CONFIG_DIR = f"{os.environ['HOME']}/printer_data/config"
 
 def remove_section_value(updater, section_name, key):
     if updater.has_section(section_name):
