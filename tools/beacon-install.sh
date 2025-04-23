@@ -1,7 +1,12 @@
 #!/bin/bash
 
-KDIR="/usr/data/klipper"
-BKDIR="/usr/data/beacon-klipper"
+BASEDIR=/home/pi
+if grep -Fqs "ID=buildroot" /etc/os-release; then
+    BASEDIR=/usr/data
+fi
+
+KDIR="$BASEDIR/klipper"
+BKDIR="$BASEDIR/beacon-klipper"
 
 echo "Beacon: linking modules into klipper"
 for file in beacon.py; do
