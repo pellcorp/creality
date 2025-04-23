@@ -159,7 +159,7 @@ function update_klipper() {
       sync
   fi
   if [ -d /usr/data/beacon-klipper ]; then
-      /usr/data/pellcorp/k1/beacon-install.sh || return $?
+      /usr/data/pellcorp/tools/beacon-install.sh || return $?
       sync
   fi
   /usr/share/klippy-env/bin/python3 -m compileall /usr/data/klipper/klippy || return $?
@@ -1030,8 +1030,7 @@ function install_beacon_klipper() {
             git clone https://github.com/beacon3d/beacon_klipper /usr/data/beacon-klipper || exit $?
         fi
 
-        # FIXME - maybe beacon will accept a PR to make their installer work on k1
-        /usr/data/pellcorp/k1/beacon-install.sh
+        /usr/data/pellcorp/tools/beacon-install.sh || return $?
 
         /usr/share/klippy-env/bin/python3 -m compileall /usr/data/klipper/klippy || exit $?
 
