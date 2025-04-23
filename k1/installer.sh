@@ -910,8 +910,6 @@ function install_guppyscreen() {
             rm /usr/data/guppyscreen.tar.gz
         fi
 
-        echo
-        echo "INFO: Updating grumpyscreen config ..."
         cp /usr/data/pellcorp/k1/services/S99guppyscreen /etc/init.d/ || exit $?
 
         if [ ! -d "/usr/lib/python3.8/site-packages/matplotlib-2.2.3-py3.8.egg-info" ]; then
