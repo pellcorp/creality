@@ -86,7 +86,11 @@ function override_file() {
     fi
 
     overrides_file="$BASEDIR/pellcorp-overrides/$file"
-    original_file="$BASEDIR/pellcorp/k1/$file"
+    if [ -f $BASEDIR/pellcorp/config/$file ]; then
+        original_file="$BASEDIR/pellcorp/config/$file"
+    else
+        original_file="$BASEDIR/pellcorp/k1/$file"
+    fi
     updated_file="$BASEDIR/printer_data/config/$file"
     
     if [ -f "$BASEDIR/pellcorp-backups/$file" ]; then
@@ -100,10 +104,10 @@ function override_file() {
         # for printer.cfg, useful_macros.cfg, start_end.cfg, fan_control.cfg and moonraker.conf - there must be an pellcorp-backups file
         echo "INFO: Overrides not supported for $file"
         return 0
-    elif [ ! -f "$BASEDIR/pellcorp/k1/$file" ]; then
+    elif [ ! -f "$BASEDIR/pellcorp/config/$file" ] && [ ! -f "$BASEDIR/pellcorp/k1/$file" ]; then
         if ! echo $file | grep -qE "printer([0-9]+).cfg"; then
             echo "INFO: Backing up $BASEDIR/printer_data/config/$file ..."
-            cp  $BASEDIR/printer_data/config/$file $BASEDIR/pellcorp-overrides/
+            cp $BASEDIR/printer_data/config/$file $BASEDIR/pellcorp-overrides/
             return 0
         else
             echo "INFO: Ignoring $BASEDIR/printer_data/config/$file ..."

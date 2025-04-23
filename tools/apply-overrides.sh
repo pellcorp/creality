@@ -63,8 +63,9 @@ function apply_overrides() {
                 base_file=eddyng.cfg
             fi
 
-            # special case for moonraker.secrets
             if [ "$file" != "$base_file" ] && [ -f "$BASEDIR/pellcorp/k1/$base_file" ] && [ -f $BASEDIR/printer_data/config/${base_file} ]; then
+                $CONFIG_HELPER --file ${base_file} --overrides $overrides_dir/$file || exit $?
+            elif [ "$file" != "$base_file" ] && [ -f "$BASEDIR/pellcorp/config/$base_file" ] && [ -f $BASEDIR/printer_data/config/${base_file} ]; then
                 $CONFIG_HELPER --file ${base_file} --overrides $overrides_dir/$file || exit $?
             elif [ "$file" = "moonraker.secrets" ]; then
                 echo "INFO: Restoring $BASEDIR/printer_data/$file ..."
@@ -83,7 +84,7 @@ function apply_overrides() {
                 $CONFIG_HELPER --file start_end.cfg --overrides $overrides_dir/$file || exit $?
             elif [ -L $BASEDIR/printer_data/config/$file ] || [ "$file" = "useful_macros.cfg" ] || [ "$file" = "internal_macros.cfg" ] || [ "$file" = "belts_calibration.cfg" ]; then
                 echo "WARN: Ignoring $file ..."
-            elif [ -f "$BASEDIR/pellcorp-backups/$file" ] || [ -f "$BASEDIR/pellcorp/k1/$file" ]; then
+            elif [ -f "$BASEDIR/pellcorp-backups/$file" ] || [ -f "$BASEDIR/pellcorp/config/$file" ] || [ -f "$BASEDIR/pellcorp/k1/$file" ]; then
                 if [ -f $BASEDIR/printer_data/config/$file ]; then
                     # we renamed the SENSORLESS_PARAMS to hide it
                     if [ "$file" = "sensorless.cfg" ]; then

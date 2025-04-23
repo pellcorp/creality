@@ -444,7 +444,7 @@ function install_moonraker() {
         ln -sf /usr/data/moonraker-timelapse/klipper_macro/timelapse.cfg /usr/data/printer_data/config/ || exit $?
         cp /usr/data/pellcorp/k1/timelapse.conf /usr/data/printer_data/config/ || exit $?
 
-        ln -sf /usr/data/pellcorp/k1/spoolman.cfg /usr/data/printer_data/config/ || exit $?
+        ln -sf /usr/data/pellcorp/config/spoolman.cfg /usr/data/printer_data/config/ || exit $?
         cp /usr/data/pellcorp/k1/spoolman.conf /usr/data/printer_data/config/ || exit $?
 
         # after an initial install do not overwrite notifier.conf or moonraker.secrets
@@ -673,7 +673,7 @@ function install_klipper() {
             cp /usr/data/pellcorp/k1/services/S13mcu_update /etc/init.d/ || exit $?
         fi
 
-        cp /usr/data/pellcorp/k1/sensorless.cfg /usr/data/printer_data/config/ || exit $?
+        cp /usr/data/pellcorp/config/sensorless.cfg /usr/data/printer_data/config/ || exit $?
         $CONFIG_HELPER --add-include "sensorless.cfg" || exit $?
 
         # just make sure the baud is written
@@ -691,7 +691,7 @@ function install_klipper() {
         cp /usr/data/pellcorp/k1/internal_macros.cfg /usr/data/printer_data/config/ || exit $?
         $CONFIG_HELPER --add-include "internal_macros.cfg" || exit $?
 
-        cp /usr/data/pellcorp/k1/useful_macros.cfg /usr/data/printer_data/config/ || exit $?
+        cp /usr/data/pellcorp/config/useful_macros.cfg /usr/data/printer_data/config/ || exit $?
         $CONFIG_HELPER --add-include "useful_macros.cfg" || exit $?
 
         # the klipper_mcu is not even used, so just get rid of it
@@ -702,9 +702,6 @@ function install_klipper() {
 
         # ender 5 max
        if [ "$MODEL" = "F004" ]; then
-            # the ender 5 max has a beep command
-            sed -i 's:aplay /usr/data/pellcorp/k1/files/empty.mp3:/usr/bin/beep:g' /usr/data/printer_data/config/useful_macros.cfg
-
             $CONFIG_HELPER --remove-section "Height_module2" || exit $?
             $CONFIG_HELPER --remove-section "z_compensate" || exit $?
             $CONFIG_HELPER --remove-section "output_pin aobi" || exit $?
@@ -719,6 +716,8 @@ function install_klipper() {
                 $CONFIG_HELPER --remove-section "adxl345" || exit $?
                 $CONFIG_HELPER --remove-section "resonance_tester" || exit $?
             fi
+        else
+            cp /usr/data/pellcorp/k1/files/beep /usr/bin/
         fi
 
         $CONFIG_HELPER --remove-section "mcu leveling_mcu" || exit $?
@@ -752,19 +751,19 @@ function install_klipper() {
             rm /usr/data/printer_data/config/factory_printer.cfg
         fi
 
-        cp /usr/data/pellcorp/k1/start_end.cfg /usr/data/printer_data/config/ || exit $?
+        cp /usr/data/pellcorp/config/start_end.cfg /usr/data/printer_data/config/ || exit $?
         $CONFIG_HELPER --add-include "start_end.cfg" || exit $?
 
-        ln -sf /usr/data/pellcorp/k1/Line_Purge.cfg /usr/data/printer_data/config/ || exit $?
+        ln -sf /usr/data/pellcorp/config/Line_Purge.cfg /usr/data/printer_data/config/ || exit $?
         $CONFIG_HELPER --add-include "Line_Purge.cfg" || exit $?
 
-        ln -sf /usr/data/pellcorp/k1/Smart_Park.cfg /usr/data/printer_data/config/ || exit $?
+        ln -sf /usr/data/pellcorp/config/Smart_Park.cfg /usr/data/printer_data/config/ || exit $?
         $CONFIG_HELPER --add-include "Smart_Park.cfg" || exit $?
 
-        if [ -f /usr/data/pellcorp/k1/fan_control.${model}.cfg ]; then
-            cp /usr/data/pellcorp/k1/fan_control.${model}.cfg /usr/data/printer_data/config/fan_control.cfg || exit $?
+        if [ -f /usr/data/pellcorp/config/fan_control.${model}.cfg ]; then
+            cp /usr/data/pellcorp/config/fan_control.${model}.cfg /usr/data/printer_data/config/fan_control.cfg || exit $?
         else
-            cp /usr/data/pellcorp/k1/fan_control.cfg /usr/data/printer_data/config || exit $?
+            cp /usr/data/pellcorp/config/fan_control.cfg /usr/data/printer_data/config || exit $?
         fi
         $CONFIG_HELPER --add-include "fan_control.cfg" || exit $?
 
@@ -950,7 +949,7 @@ function setup_probe() {
         $CONFIG_HELPER --remove-section-entry "stepper_z" "position_endstop" || exit $?
         $CONFIG_HELPER --replace-section-entry "stepper_z" "endstop_pin" "probe:z_virtual_endstop" || exit $?
 
-        cp /usr/data/pellcorp/k1/quickstart.cfg /usr/data/printer_data/config/ || exit $?
+        cp /usr/data/pellcorp/config/quickstart.cfg /usr/data/printer_data/config/ || exit $?
         $CONFIG_HELPER --add-include "quickstart.cfg" || exit $?
 
         # because we are using force move with 3mm, as a safety feature we will lower the position max
