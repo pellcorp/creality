@@ -1105,10 +1105,10 @@ function setup_bltouch() {
 
         cleanup_probes
 
-        cp /usr/data/pellcorp/k1/bltouch.cfg /usr/data/printer_data/config/ || exit $?
+        cp /usr/data/pellcorp/config/bltouch.cfg /usr/data/printer_data/config/ || exit $?
         $CONFIG_HELPER --add-include "bltouch.cfg" || exit $?
 
-        cp /usr/data/pellcorp/k1/bltouch_macro.cfg /usr/data/printer_data/config/ || exit $?
+        cp /usr/data/pellcorp/config/bltouch_macro.cfg /usr/data/printer_data/config/ || exit $?
         $CONFIG_HELPER --add-include "bltouch_macro.cfg" || exit $?
 
         # need to add a empty bltouch section for baby stepping to work
@@ -1138,10 +1138,10 @@ function setup_microprobe() {
 
         cleanup_probes
 
-        cp /usr/data/pellcorp/k1/microprobe.cfg /usr/data/printer_data/config/ || exit $?
+        cp /usr/data/pellcorp/config/microprobe.cfg /usr/data/printer_data/config/ || exit $?
         $CONFIG_HELPER --add-include "microprobe.cfg" || exit $?
 
-        cp /usr/data/pellcorp/k1/microprobe_macro.cfg /usr/data/printer_data/config/ || exit $?
+        cp /usr/data/pellcorp/config/microprobe_macro.cfg /usr/data/printer_data/config/ || exit $?
         $CONFIG_HELPER --add-include "microprobe_macro.cfg" || exit $?
 
         # remove previous directly imported microprobe config
@@ -1174,7 +1174,7 @@ function setup_klicky() {
 
         cleanup_probes
 
-        cp /usr/data/pellcorp/k1/klicky.cfg /usr/data/printer_data/config/ || exit $?
+        cp /usr/data/pellcorp/config/klicky.cfg /usr/data/printer_data/config/ || exit $?
         $CONFIG_HELPER --add-include "klicky.cfg" || exit $?
 
         # need to add a empty probe section for baby stepping to work
@@ -1187,7 +1187,7 @@ function setup_klicky() {
           $CONFIG_HELPER --replace-section-entry "probe" "z_offset" "2.0" || exit $?
         fi
 
-        cp /usr/data/pellcorp/k1/klicky_macro.cfg /usr/data/printer_data/config/ || exit $?
+        cp /usr/data/pellcorp/config/klicky_macro.cfg /usr/data/printer_data/config/ || exit $?
         $CONFIG_HELPER --add-include "klicky_macro.cfg" || exit $?
 
         echo "klicky-probe" >> /usr/data/pellcorp.done
@@ -1227,12 +1227,12 @@ function setup_cartotouch() {
         cp /usr/data/pellcorp/k1/cartographer.conf /usr/data/printer_data/config/ || exit $?
         $CONFIG_HELPER --file moonraker.conf --add-include "cartographer.conf" || exit $?
 
-        cp /usr/data/pellcorp/k1/cartotouch_macro.cfg /usr/data/printer_data/config/ || exit $?
+        cp /usr/data/pellcorp/config/cartotouch_macro.cfg /usr/data/printer_data/config/ || exit $?
         $CONFIG_HELPER --add-include "cartotouch_macro.cfg" || exit $?
 
         $CONFIG_HELPER --replace-section-entry "stepper_z" "homing_retract_dist" "0" || exit $?
 
-        cp /usr/data/pellcorp/k1/cartotouch.cfg /usr/data/printer_data/config/ || exit $?
+        cp /usr/data/pellcorp/config/cartotouch.cfg /usr/data/printer_data/config/ || exit $?
         $CONFIG_HELPER --add-include "cartotouch.cfg" || exit $?
 
         y_position_mid=$($CONFIG_HELPER --get-section-entry "stepper_y" "position_max" --divisor 2 --integer)
@@ -1263,7 +1263,7 @@ function setup_cartotouch() {
             $CONFIG_HELPER --replace-section-entry "scanner" "mode" "touch" || exit $?
         fi
 
-        cp /usr/data/pellcorp/k1/cartographer_calibrate.cfg /usr/data/printer_data/config/ || exit $?
+        cp /usr/data/pellcorp/config/cartographer_calibrate.cfg /usr/data/printer_data/config/ || exit $?
         $CONFIG_HELPER --add-include "cartographer_calibrate.cfg" || exit $?
 
         # Ender 5 Max we don't have firmware for it, so need to configure cartographer instead for adxl
@@ -1312,12 +1312,12 @@ function setup_beacon() {
         cp /usr/data/pellcorp/k1/beacon.conf /usr/data/printer_data/config/ || exit $?
         $CONFIG_HELPER --file moonraker.conf --add-include "beacon.conf" || exit $?
 
-        cp /usr/data/pellcorp/k1/beacon_macro.cfg /usr/data/printer_data/config/ || exit $?
+        cp /usr/data/pellcorp/config/beacon_macro.cfg /usr/data/printer_data/config/ || exit $?
         $CONFIG_HELPER --add-include "beacon_macro.cfg" || exit $?
 
         $CONFIG_HELPER --replace-section-entry "stepper_z" "homing_retract_dist" "0" || exit $?
 
-        cp /usr/data/pellcorp/k1/beacon.cfg /usr/data/printer_data/config/ || exit $?
+        cp /usr/data/pellcorp/config/beacon.cfg /usr/data/printer_data/config/ || exit $?
         $CONFIG_HELPER --add-include "beacon.cfg" || exit $?
 
         # for beacon can't use homing override
@@ -1377,12 +1377,12 @@ function setup_btteddy() {
 
         cleanup_probes
 
-        cp /usr/data/pellcorp/k1/btteddy.cfg /usr/data/printer_data/config/ || exit $?
+        cp /usr/data/pellcorp/config/btteddy.cfg /usr/data/printer_data/config/ || exit $?
         $CONFIG_HELPER --add-include "btteddy.cfg" || exit $?
 
         set_serial_btteddy
 
-        cp /usr/data/pellcorp/k1/btteddy_macro.cfg /usr/data/printer_data/config/ || exit $?
+        cp /usr/data/pellcorp/config/btteddy_macro.cfg /usr/data/printer_data/config/ || exit $?
         $CONFIG_HELPER --add-include "btteddy_macro.cfg" || exit $?
 
         # K1 SE has no chamber fan
@@ -1394,7 +1394,7 @@ function setup_btteddy() {
         $CONFIG_HELPER --add-section "probe_eddy_current btt_eddy" || exit $?
 
 # these guided macros are out of date, removing them temporarily to avoid confusion
-#        cp /usr/data/pellcorp/k1/btteddy_calibrate.cfg /usr/data/printer_data/config/ || exit $?
+#        cp /usr/data/pellcorp/config/btteddy_calibrate.cfg /usr/data/printer_data/config/ || exit $?
 #        $CONFIG_HELPER --add-include "btteddy_calibrate.cfg" || exit $?
 
         echo "btteddy-probe" >> /usr/data/pellcorp.done
@@ -1429,12 +1429,12 @@ function setup_eddyng() {
 
         cleanup_probes
 
-        cp /usr/data/pellcorp/k1/eddyng.cfg /usr/data/printer_data/config/ || exit $?
+        cp /usr/data/pellcorp/config/eddyng.cfg /usr/data/printer_data/config/ || exit $?
         $CONFIG_HELPER --add-include "eddyng.cfg" || exit $?
 
         set_serial_eddyng
 
-        cp /usr/data/pellcorp/k1/eddyng_macro.cfg /usr/data/printer_data/config/ || exit $?
+        cp /usr/data/pellcorp/config/eddyng_macro.cfg /usr/data/printer_data/config/ || exit $?
         $CONFIG_HELPER --add-include "eddyng_macro.cfg" || exit $?
 
         $CONFIG_HELPER --remove-section "probe_eddy_ng btt_eddy" || exit $?
