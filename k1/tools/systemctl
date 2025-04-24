@@ -23,8 +23,8 @@ elif [ "$1" = "restart" ] || [ "$1" = "stop" ] || [ "$1" = "start" ]; then
             /etc/init.d/S50nginx_service $1
         fi
     elif [ "$2" = "grumpyscreen" ]; then
-        if [ -f /etc/init.d/S599guppyscreen ]; then
-            /etc/init.d/S599guppyscreen $1
+        if [ -f /etc/init.d/S99guppyscreen ]; then
+            /etc/init.d/S99guppyscreen $1
         fi
     fi
 fi
