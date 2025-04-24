@@ -1649,7 +1649,6 @@ fi
         probe=btteddy
     fi
 
-    client=cli
     mode=install
     force=false
     skip_overrides=false
@@ -1678,10 +1677,6 @@ fi
         elif [ "$1" = "--force" ]; then
           force=true
           shift
-        elif [ "$1" = "--client" ]; then
-            shift
-            client=$1
-            shift
         elif [ "$1" = "microprobe" ] || [ "$1" = "bltouch" ] || [ "$1" = "beacon" ] || [ "$1" = "klicky" ] || [ "$1" = "cartotouch" ] || [ "$1" = "btteddy" ] || [ "$1" = "eddyng" ]; then
             if [ "$mode" = "fix-serial" ]; then
                 echo "ERROR: Switching probes is not supported while trying to fix serial!"
@@ -1799,13 +1794,8 @@ fi
             exit 1
         fi
         if [ $set_serial -ne 0 ]; then
-            if [ "$client" = "cli" ]; then
-                echo
-                echo "INFO: Restarting Klipper ..."
-                /etc/init.d/S55klipper_service restart
-            else
-                echo "WARNING: Klipper restart required"
-            fi
+            echo "INFO: Restarting Klipper ..."
+            /etc/init.d/S55klipper_service restart
         fi
         exit 0
     elif [ "$mode" = "fix-client-variables" ]; then
@@ -1813,13 +1803,8 @@ fi
             fixup_client_variables_config
             fixup_client_variables_config=$?
             if [ $fixup_client_variables_config -ne 0 ]; then
-                if [ "$client" = "cli" ]; then
-                    echo
-                    echo "INFO: Restarting Klipper ..."
-                    /etc/init.d/S55klipper_service restart
-                else
-                    echo "WARNING: Klipper restart required"
-                fi
+                echo "INFO: Restarting Klipper ..."
+                /etc/init.d/S55klipper_service restart
             else
                 echo "INFO: No changes made"
             fi
@@ -2057,46 +2042,28 @@ fi
         echo "INFO: No changes made"
     fi
 
-    echo
     /usr/data/pellcorp/k1/update-ip-address.sh
     update_ip_address=$?
-
+    echo
+    
     if [ $apply_overrides -ne 0 ] || [ $install_moonraker -ne 0 ] || [ $install_cartographer_klipper -ne 0 ] || [ $install_beacon_klipper -ne 0 ] || [ $update_ip_address -ne 0 ]; then
-        if [ "$client" = "cli" ]; then
-            sudo systemctl restart moonraker
-        else
-            echo "WARNING: Moonraker restart required"
-        fi
+        echo "INFO: Restarting Moonraker ..."
+        sudo systemctl restart moonraker
     fi
 
     if [ $install_moonraker -ne 0 ] || [ $install_nginx -ne 0 ] || [ $install_fluidd -ne 0 ] || [ $install_mainsail -ne 0 ]; then
-        if [ "$client" = "cli" ]; then
-            echo
-            echo "INFO: Restarting Nginx ..."
-            sudo systemctl restart nginx
-        else
-            echo "WARNING: NGINX restart required"
-        fi
+        echo "INFO: Restarting Nginx ..."
+        sudo systemctl restart nginx
     fi
 
     if [ $fix_custom_config -ne 0 ] || [ $fixup_client_variables_config -ne 0 ] || [ $apply_overrides -ne 0 ] || [ $apply_mount_overrides -ne 0 ] || [ $install_cartographer_klipper -ne 0 ] || [ $install_beacon_klipper -ne 0 ] || [ $install_klipper -ne 0 ] || [ $setup_probe -ne 0 ] || [ $setup_probe_specific -ne 0 ]; then
-        if [ "$client" = "cli" ]; then
-            echo
-            echo "INFO: Restarting Klipper ..."
-            sudo systemctl restart klipper
-        else
-            echo "WARNING: Klipper restart required"
-        fi
+        echo "INFO: Restarting Klipper ..."
+        sudo systemctl restart klipper
     fi
 
     if [ $apply_overrides -ne 0 ] || [ $install_guppyscreen -ne 0 ]; then
-        if [ "$client" = "cli" ]; then
-            echo
-            echo "INFO: Restarting Grumpyscreen ..."
-            sudo systemctl restart grumpyscreen
-        else
-            echo "WARNING: Grumpyscreen restart required"
-        fi
+        echo "INFO: Restarting Grumpyscreen ..."
+        sudo systemctl restart grumpyscreen
     fi
 
     echo
