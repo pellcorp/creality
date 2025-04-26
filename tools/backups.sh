@@ -84,7 +84,7 @@ if [ "$mode" = "create" ]; then
     fi
 
     PELLCORP_OVERRIDES=''
-    if [ -d pellcorp-overrides ]; then
+    if [ $(find pellcorp-overrides/ -type f | wc -l) -gt 0 ]; then
         PELLCORP_OVERRIDES='pellcorp-overrides/*'
     fi
 

@@ -1,5 +1,8 @@
 #!/bin/sh
 
+# this allows us to make changes to Simple AF and grumpyscreen in parallel
+GRUMPYSCREEN_TIMESTAMP=1745653215
+
 MODEL=$(/usr/bin/get_sn_mac.sh model)
 if [ "$MODEL" = "CR-K1" ] || [ "$MODEL" = "K1C" ] || [ "$MODEL" = "K1 SE" ]; then
   model=k1
@@ -790,14 +793,14 @@ function install_klipper() {
         # just in case its missing from stock printer.cfg make sure it gets added
         $CONFIG_HELPER --add-section "exclude_object" || exit $?
 
-        echo
-        echo "INFO: Updating client config ..."
-
         if [ "$mode" != "update" ] && [ -d /usr/data/fluidd-config ]; then
             rm -rf /usr/data/fluidd-config
         fi
 
         if [ ! -d /usr/data/fluidd-config ]; then
+            echo
+            echo "INFO: Updating client macros ..."
+
             git clone https://github.com/fluidd-core/fluidd-config.git /usr/data/fluidd-config || exit $?
         fi
 
@@ -857,8 +860,6 @@ function install_guppyscreen() {
             fi
           fi
 
-          # this allows us to make changes to Simple AF and grumpyscreen in parallel
-          GRUMPYSCREEN_TIMESTAMP=1745653223
           if [ $TIMESTAMP -lt $GRUMPYSCREEN_TIMESTAMP ]; then
             echo
             echo "INFO: Forcing update of grumpyscreen"
@@ -1923,6 +1924,9 @@ fi
             echo "mount=$install_mount" > /usr/data/pellcorp.done
         fi
     fi
+
+    # create a directory for pngs to go
+    mkdir -p /usr/data/printer_data/config/images
 
     # add a service to take care of updating various config files if ip address changes
     cp /usr/data/pellcorp/k1/services/S96ipaddress /etc/init.d/
