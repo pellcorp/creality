@@ -1,11 +1,5 @@
 #!/bin/sh
 
-# this is really just for my k1-qemu environment
-if [ ! -f /usr/data/printer_data/config/printer.cfg ]; then
-  >&2 echo "ERROR: Printer data not setup"
-  exit 1
-fi
-
 MODEL=$(/usr/bin/get_sn_mac.sh model)
 if [ "$MODEL" = "CR-K1" ] || [ "$MODEL" = "K1C" ] || [ "$MODEL" = "K1 SE" ]; then
   model=k1
@@ -367,7 +361,6 @@ function install_moonraker() {
         if [ "$mode" != "update" ] && [ -d /usr/data/moonraker-env ]; then
             rm -rf /usr/data/moonraker-env
         elif [ ! -d /usr/data/moonraker-env/lib/python3.8/site-packages/dbus_fast ] || [ -d /usr/data/moonraker-env/lib/python3.8/site-packages/apprise-1.7.1.dist-info ]; then
-            echo "INFO: Forcing recreation of moonraker-env ..."
             rm -rf /usr/data/moonraker-env
         fi
 
@@ -865,7 +858,7 @@ function install_guppyscreen() {
           fi
 
           # this allows us to make changes to Simple AF and grumpyscreen in parallel
-          GRUMPYSCREEN_TIMESTAMP=1745389920
+          GRUMPYSCREEN_TIMESTAMP=1745653223
           if [ $TIMESTAMP -lt $GRUMPYSCREEN_TIMESTAMP ]; then
             echo
             echo "INFO: Forcing update of grumpyscreen"
@@ -1877,18 +1870,21 @@ fi
 
     install_config_updater
 
-    # completely remove all iterations of zero SimpleAddon
-    for dir in addons SimpleAddon; do
-      if [ -d /usr/data/printer_data/config/$dir ]; then
-        rm -rf /usr/data/printer_data/config/$dir
-      fi
-    done
-    for file in save-zoffset.cfg eddycalibrate.cfg quickstart.cfg cartographer_calibrate.cfg btteddy_calibrate.cfg; do
-      $CONFIG_HELPER --remove-include "SimpleAddon/$file"
-      sync
-    done
-    $CONFIG_HELPER --remove-include "addons/*.cfg"
-    sync
+    # no point doing this if its a new installation
+    if [ -f /usr/data/pellcorp.done ]; then
+        # completely remove all iterations of zero SimpleAddon
+        for dir in addons SimpleAddon; do
+          if [ -d /usr/data/printer_data/config/$dir ]; then
+            rm -rf /usr/data/printer_data/config/$dir
+          fi
+        done
+        for file in save-zoffset.cfg eddycalibrate.cfg quickstart.cfg cartographer_calibrate.cfg btteddy_calibrate.cfg; do
+          $CONFIG_HELPER --remove-include "SimpleAddon/$file"
+          sync
+        done
+        $CONFIG_HELPER --remove-include "addons/*.cfg"
+        sync
+    fi
 
     if [ "$mode" = "reinstall" ] || [ "$mode" = "update" ]; then
         if [ "$skip_overrides" != "true" ]; then
