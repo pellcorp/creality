@@ -1,0 +1,18 @@
+# https://www.printables.com/model/1276954-ender-5-max-btt-eddy-and-cartographer-mount
+
+-- eddyng.cfg
+[probe_eddy_ng btt_eddy]
+x_offset: -35.3
+y_offset: 0.0
+
+[bed_mesh]
+mesh_min: 15,15
+mesh_max: 370,370
+
+[screws_tilt_adjust]
+__action__: DELETED
+
+[axis_twist_compensation]
+calibrate_start_x: 10
+calibrate_end_x: 380
+calibrate_y: 203
