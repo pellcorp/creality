@@ -6,7 +6,7 @@ if grep -Fqs "ID=buildroot" /etc/os-release; then
 fi
 CONFIG_HELPER="$BASEDIR/pellcorp/tools/config-helper.py"
 
-function apply_mount_overrides() {
+apply_mount_overrides() {
     local probe=$1
     local mount=$2
     local model=$3

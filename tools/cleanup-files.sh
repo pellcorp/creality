@@ -10,7 +10,7 @@ fi
 # for K1 only we want to get the timestamp before ntp starts
 start_timestamp=$(date +%s)
 
-function log() {
+log() {
     local msg="$1"
     if [ "$client" = "true" ]; then
         echo "$msg" | tee -a $BASEDIR/cleanup.log
@@ -19,7 +19,7 @@ function log() {
     fi
 }
 
-function delete() {
+delete() {
     local file="$1"
 
     if [ "$dryrun" = "true" ]; then

@@ -1,12 +1,14 @@
 #!/bin/sh
 
 BASEDIR=/home/pi
+CONFIG_TYPE=rpi
 if grep -Fqs "ID=buildroot" /etc/os-release; then
     BASEDIR=/usr/data
+    CONFIG_TYPE=k1
 fi
 CONFIG_OVERRIDES="$BASEDIR/pellcorp/tools/config-overrides.py"
 
-function setup_git_repo() {
+setup_git_repo() {
     if [ -d $BASEDIR/pellcorp-overrides ]; then
         cd $BASEDIR/pellcorp-overrides
         if ! git status > /dev/null 2>&1; then
@@ -57,7 +59,7 @@ function setup_git_repo() {
     fi
 }
 
-function override_guppyscreen() {
+override_guppyscreen() {
     if [ -f $BASEDIR/pellcorp-backups/guppyscreen.json ] && [ -f $BASEDIR/guppyscreen/guppyscreen.json ]; then
         [ -f $BASEDIR/pellcorp-overrides/guppyscreen.json ] && rm $BASEDIR/pellcorp-overrides/guppyscreen.json
         for entry in display_brightness invert_z_icon display_sleep_sec theme touch_calibration_coeff; do
@@ -77,7 +79,7 @@ function override_guppyscreen() {
     fi
 }
 
-function override_file() {
+override_file() {
     local file=$1
 
     if [ -L $BASEDIR/printer_data/config/$file ]; then
@@ -89,7 +91,7 @@ function override_file() {
     if [ -f $BASEDIR/pellcorp/config/$file ]; then
         original_file="$BASEDIR/pellcorp/config/$file"
     else
-        original_file="$BASEDIR/pellcorp/k1/$file"
+        original_file="$BASEDIR/pellcorp/${CONFIG_TYPE}/$file"
     fi
     updated_file="$BASEDIR/printer_data/config/$file"
     
@@ -104,7 +106,7 @@ function override_file() {
         # for printer.cfg, useful_macros.cfg, start_end.cfg, fan_control.cfg and moonraker.conf - there must be an pellcorp-backups file
         echo "INFO: Overrides not supported for $file"
         return 0
-    elif [ ! -f "$BASEDIR/pellcorp/config/$file" ] && [ ! -f "$BASEDIR/pellcorp/k1/$file" ]; then
+    elif [ ! -f "$BASEDIR/pellcorp/config/$file" ] && [ ! -f "$BASEDIR/pellcorp/${CONFIG_TYPE}/$file" ]; then
         if ! echo $file | grep -qE "printer([0-9]+).cfg"; then
             echo "INFO: Backing up $BASEDIR/printer_data/config/$file ..."
             cp $BASEDIR/printer_data/config/$file $BASEDIR/pellcorp-overrides/
@@ -158,7 +160,7 @@ function override_file() {
 }
 
 # make sure we are outside of the $BASEDIR/pellcorp-overrides directory
-cd /root/
+cd ~
 
 if [ "$1" = "--help" ]; then
   echo "Use '$(basename $0) --repo' to create a new git repo in $BASEDIR/pellcorp-overrides"

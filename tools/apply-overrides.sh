@@ -6,7 +6,7 @@ if grep -Fqs "ID=buildroot" /etc/os-release; then
 fi
 CONFIG_HELPER="$BASEDIR/pellcorp/tools/config-helper.py"
 
-function apply_guppyscreen_overrides() {
+apply_guppyscreen_overrides() {
     command=""
     for entry in display_brightness invert_z_icon display_sleep_sec theme touch_calibration_coeff; do
       value=$(cat $BASEDIR/pellcorp-overrides/guppyscreen.json | grep "${entry}=" | awk -F '=' '{print $2}')
@@ -29,7 +29,7 @@ function apply_guppyscreen_overrides() {
     fi
 }
 
-function apply_overrides() {
+apply_overrides() {
     return_status=0
     if [ -f $BASEDIR/pellcorp-overrides.cfg ] || [ -d $BASEDIR/pellcorp-overrides ]; then
         echo
