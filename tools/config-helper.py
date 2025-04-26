@@ -8,7 +8,7 @@ import optparse, io, os, sys
 import os.path
 from configupdater import ConfigUpdater
 
-if os.path.isfile("/usr/data/pellcorp.done"):
+if os.path.isdir("/usr/data/printer_data/config"):
     PRINTER_CONFIG_DIR = "/usr/data/printer_data/config"
 else:
     PRINTER_CONFIG_DIR = f"{os.environ['HOME']}/printer_data/config"
