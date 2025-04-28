@@ -1,0 +1,19 @@
+# default ender 3 v3 se crtouch
+
+-- bltouch.cfg
+[bltouch]
+x_offset: -23.0
+# y_offset: -14.5
+
+[bed_mesh]
+mesh_min: 10,10
+mesh_max: 205,215.5
+
+[screws_tilt_adjust]
+screw1: 54.5, 45.5
+screw2: 224.5, 45.5
+screw3: 224.5, 215.5
+screw4: 54.5, 215.5
+
+[axis_twist_compensation]
+__action__: DELETED
