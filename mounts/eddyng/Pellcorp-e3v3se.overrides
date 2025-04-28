@@ -1,0 +1,21 @@
+# https://www.printables.com/model/1202031-ender-3-v3-se-k1-hotend-btt-eddy-mount
+
+-- eddyng.cfg
+[probe_eddy_ng btt_eddy]
+x_offset: -31.5
+y_offset: -14.5
+
+[bed_mesh]
+mesh_min: 15,15
+mesh_max: 194.5,210
+
+[screws_tilt_adjust]
+screw1: 50, 45.5
+screw2: 220, 45.5
+screw3: 220, 215.5
+screw4: 50, 215.5
+
+[axis_twist_compensation]
+calibrate_start_x: 23
+calibrate_end_x: 202
+calibrate_y: 105

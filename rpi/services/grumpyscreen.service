@@ -1,0 +1,17 @@
+[Unit]
+Description=GrumpyScreen
+After=moonraker.service multi-user.target
+StartLimitIntervalSec=0
+ConditionPathExists=/dev/tty1
+
+[Service]
+Type=simple
+Restart=always
+RestartSec=1
+User=pi
+WorkingDirectory=$HOME/guppyscreen
+ExecStartPre="$HOME/guppyscreen/cursor.sh"
+ExecStart="$HOME/guppyscreen/guppyscreen"
+
+[Install]
+WantedBy=multi-user.target
