@@ -264,6 +264,7 @@ def main():
     printer_cfg = 'printer.cfg' == os.path.basename(config_file)
     moonraker_conf = 'moonraker.conf' == os.path.basename(config_file)
     fan_control = 'fan_control.cfg' == os.path.basename(config_file)
+    webcam_conf = 'webcam.conf' == os.path.basename(config_file)
 
     updated = False
     if options.remove_section:
@@ -320,7 +321,7 @@ def main():
             exclude_sections = options.exclude_sections.split(',') if options.exclude_sections else None
             allow_delete_section = (printer_cfg or fan_control)
             allow_delete_entry = printer_cfg
-            allow_new_section = (fan_control or printer_cfg or moonraker_conf)
+            allow_new_section = (fan_control or printer_cfg or moonraker_conf or webcam_conf)
             updated = override_cfg(updater, options.overrides,
                                    allow_delete_section=allow_delete_section,
                                    allow_delete_entry=allow_delete_entry,

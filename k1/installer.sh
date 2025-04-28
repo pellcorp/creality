@@ -329,7 +329,7 @@ function install_webcam() {
             rm /usr/data/pellcorp.ipaddress
           fi
         fi
-        cp /usr/data/pellcorp/config/webcam.conf /usr/data/printer_data/config/ || exit $?
+        cp /usr/data/pellcorp/k1/webcam.conf /usr/data/printer_data/config/ || exit $?
 
         echo "webcam" >> /usr/data/pellcorp.done
         sync
