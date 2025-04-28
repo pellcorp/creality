@@ -1,0 +1,9 @@
+[Plymouth Theme]
+Name=simpleaf
+Description=Simple AF
+Comment=Created by pellcorp
+ModuleName=script
+
+[script]
+ImageDir=/usr/share/plymouth/themes/simpleaf
+ScriptFile=/usr/share/plymouth/themes/simpleaf/simpleaf.script

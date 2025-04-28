@@ -1,0 +1,17 @@
+[Unit]
+Description=Klipper 3D Printer Firmware
+Documentation=https://www.klipper3d.org/
+After=network-online.target
+Wants=udev.target
+
+[Install]
+WantedBy=multi-user.target
+
+[Service]
+Type=simple
+User=pi
+RemainAfterExit=yes
+WorkingDirectory=$HOME/klipper
+ExecStart=$HOME/klippy-env/bin/python $HOME/klipper/klippy/klippy.py $HOME/printer_data/config/printer.cfg -I $HOME/printer_data/comms/klippy.serial -l $HOME/printer_data/logs/klippy.log -a $HOME/printer_data/comms/klippy.sock --rotate-log-at-restart
+Restart=always
+RestartSec=10

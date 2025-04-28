@@ -1,0 +1,43 @@
+## Based on https://github.com/adi1090x/plymouth-themes/blob/master/pack_1/angular/angular.script
+## and https://github.com/HerbFargus/plymouth-themes/blob/master/basic/basic.script
+
+state.status = "play";
+state.time = 0.0;
+
+for (i = 0; i < 45; i++) {
+  flyingman_image[i] = Image("pic_" + i + ".png");
+}
+
+flyingman_sprite = Sprite();
+# FIXME - currently assumes the displays are 800x480
+flyingman_sprite.SetX(0);
+flyingman_sprite.SetY(0);
+
+progress = 0;
+fun refresh_callback () {
+  flyingman_sprite.SetImage(flyingman_image[Math.Int(progress / 2) % 45]);
+  progress++;
+}
+Plymouth.SetRefreshFunction(refresh_callback);
+
+fun DisplayNormalCallback() {
+  state.status = "play";
+  bullets = null;
+  prompt = null;
+  message = null;
+  question = null;
+  answer = null;
+}
+Plymouth.SetDisplayNormalFunction(DisplayNormalCallback);
+
+fun DisplayQuestionCallback(prompt, entry) {
+}
+Plymouth.SetDisplayQuestionFunction(DisplayQuestionCallback);
+
+fun DisplayPasswordCallback(nil, bulletCount) {
+}
+Plymouth.SetDisplayPasswordFunction(DisplayPasswordCallback);
+
+fun MessageCallback(text) {
+}
+Plymouth.SetMessageFunction(MessageCallback);
