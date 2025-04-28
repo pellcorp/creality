@@ -46,9 +46,14 @@ def main():
         if section_name not in updated.sections() and (printer_cfg or fan_control):
             deleted_sections.append(section_name)
 
-    # as a safety mechanism refuse to delete both static_digital_output mcu_fan_always_on and controller_fan mcu
-    if fan_control and 'static_digital_output mcu_fan_always_on' in deleted_sections and 'controller_fan mcu' in deleted_sections:
-        deleted_sections.remove('static_digital_output mcu_fan_always_on')
+    if fan_control:
+        # as a safety mechanism refuse to delete both static_digital_output mcu_fan_always_on and controller_fan mcu
+        if 'static_digital_output mcu_fan_always_on' in deleted_sections and 'controller_fan mcu' in deleted_sections:
+            deleted_sections.remove('static_digital_output mcu_fan_always_on')
+
+        # as a safety mechanism refuse to delete both static_digital_output nozzle_mcu_fan_always_on and heater_fan hotend
+        if 'static_digital_output nozzle_mcu_fan_always_on' in deleted_sections and 'heater_fan hotend' in deleted_sections:
+            deleted_sections.remove('static_digital_output nozzle_mcu_fan_always_on')
 
     # only support deleting sections from printer.cfg or fan_control.cfg for now
     for section_name in deleted_sections:
