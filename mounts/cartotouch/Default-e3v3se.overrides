@@ -1,0 +1,21 @@
+# https://www.printables.com/model/732262-ender-3-v3-ke-beaconcartographer-mount
+
+-- cartotouch.cfg
+[scanner]
+x_offset: -23.0
+y_offset: -14.5
+
+[bed_mesh]
+mesh_min: 10,25
+mesh_max: 200,200
+
+[screws_tilt_adjust]
+screw1: 25,3
+screw2: 195,3
+screw3: 195,173
+screw4: 25,173
+
+[axis_twist_compensation]
+calibrate_start_x: 30
+calibrate_end_x: 210
+calibrate_y: 105
