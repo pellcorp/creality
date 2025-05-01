@@ -44,7 +44,7 @@ if [ -f /usr/data/backups/creality-backup.tar.gz ]; then
 
             # need these files restored back so that moonraker starts correctly
             cp /usr/data/pellcorp/k1/moonraker.conf /usr/data/printer_data/config/
-            cp /usr/data/pellcorp/config/webcam.conf /usr/data/printer_data/config/
+            cp /usr/data/pellcorp/k1/webcam.conf /usr/data/printer_data/config/
             cp /usr/data/pellcorp/config/notifier.conf /usr/data/printer_data/config/
 
             tar -zxf /usr/data/backups/creality-backup.tar.gz -C /usr/data
