@@ -83,7 +83,7 @@ override_file() {
     local file=$1
 
     if [ -L $BASEDIR/printer_data/config/$file ]; then
-        echo "INFO: Overrides not supported for $file"
+        #echo "INFO: Overrides not supported for $file"
         return 0
     fi
 
@@ -100,11 +100,11 @@ override_file() {
     elif [ "$file" = "guppyscreen.cfg" ]; then # old file ignore it
         return 0
     elif [ "$file" = "belts_calibration.cfg" ] || [ "$file" = "internal_macros.cfg" ] || [ "$file" = "useful_macros.cfg" ]; then
-        echo "INFO: Overrides not supported for $file"
+        #echo "INFO: Overrides not supported for $file"
         return 0
     elif [ "$file" = "printer.cfg" ] || [ "$file" = "webcam.conf" ] || [ "$file" = "beacon.conf" ] || [ "$file" = "cartographer.conf" ] || [ "$file" = "moonraker.conf" ] || [ "$file" = "start_end.cfg" ] || [ "$file" = "fan_control.cfg" ]; then
         # for printer.cfg, webcam.conf, useful_macros.cfg, start_end.cfg, fan_control.cfg and moonraker.conf - there must be an pellcorp-backups file
-        echo "INFO: Overrides not supported for $file"
+        #echo "INFO: Overrides not supported for $file"
         return 0
     elif [ ! -f "$BASEDIR/pellcorp/config/$file" ] && [ ! -f "$BASEDIR/pellcorp/${CONFIG_TYPE}/$file" ]; then
         if ! echo $file | grep -qE "printer([0-9]+).cfg"; then
@@ -112,10 +112,11 @@ override_file() {
             cp $BASEDIR/printer_data/config/$file $BASEDIR/pellcorp-overrides/
             return 0
         else
-            echo "INFO: Ignoring $BASEDIR/printer_data/config/$file ..."
+            #echo "INFO: Ignoring $BASEDIR/printer_data/config/$file ..."
             return 0
         fi
     fi
+
     if [ "$file" = "printer.cfg" ]; then
       $CONFIG_OVERRIDES --original "$original_file" --updated "$updated_file" --overrides "$overrides_file" --exclude-sections bltouch,probe || exit $?
 

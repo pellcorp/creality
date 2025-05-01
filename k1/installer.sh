@@ -1748,9 +1748,6 @@ fi
           else
               exit 1
           fi
-      elif [ ! -d /usr/data/pellcorp-overrides ]; then
-        echo "ERROR: Mount option must be specified"
-        exit 1
       elif [ "$skip_overrides" = "true" ] || [ "$mode" = "install" ] || [ "$mode" = "reinstall" ]; then
           echo "ERROR: Mount option must be specified"
           exit 1
@@ -1816,6 +1813,9 @@ fi
 
     mkdir -p /usr/data/backups
     ln -sf /usr/data/backups /usr/data/printer_data/config/
+
+    mkdir -p /usr/data/pellcorp-overrides
+    mkdir -p /usr/data/pellcorp-backups
 
     # we don't do these kinds of backups anymore
     rm /usr/data/printer_data/config/*.bkp 2> /dev/null
