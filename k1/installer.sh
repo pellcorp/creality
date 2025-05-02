@@ -679,6 +679,7 @@ function install_klipper() {
             $CONFIG_HELPER --remove-section "hx711s" || exit $?
             $CONFIG_HELPER --remove-section "filter" || exit $?
             $CONFIG_HELPER --remove-section "dirzctl" || exit $?
+            $CONFIG_HELPER --remove-section "accel_chip_proxy" || exit $?
 
             # for ender 5 max we can't use on board adxl and only beacon and cartotouch support
             # configuring separate adxl
@@ -749,6 +750,7 @@ function install_klipper() {
             $CONFIG_HELPER --remove-section "output_pin MainBoardFan" || exit $?
             $CONFIG_HELPER --remove-section "output_pin en_nozzle_fan" || exit $?
             $CONFIG_HELPER --remove-section "output_pin en_fan0" || exit $?
+            $CONFIG_HELPER --remove-section "output_pin en_fan1" || exit $?
             $CONFIG_HELPER --remove-section "output_pin col_pwm" || exit $?
             $CONFIG_HELPER --remove-section "output_pin col" || exit $?
             $CONFIG_HELPER --remove-section "heater_fan nozzle_fan" || exit $?
@@ -1312,6 +1314,12 @@ function setup_beacon() {
           $CONFIG_HELPER --replace-section-entry "beacon" "# cal_nozzle_z" "0.1" || exit $?
         else
           $CONFIG_HELPER --replace-section-entry "beacon" "cal_nozzle_z" "0.1" || exit $?
+        fi
+
+        # Ender 5 Max we don't have firmware for it, so need to configure cartographer instead for adxl
+        if [ "$MODEL" = "F004" ]; then
+          $CONFIG_HELPER --remove-section "adxl345" || exit $?
+          $CONFIG_HELPER --replace-section-entry "resonance_tester" "accel_chip" "beacon" || exit $?
         fi
 
         echo "beacon-probe" >> /usr/data/pellcorp.done
