@@ -215,9 +215,11 @@ def main():
     opts.add_option("", "--get-section-entry", dest="get_section_entry", nargs=2, type="string")
     # all these are for --get-section-entry only, saves me doing bash arithmetic
     opts.add_option("", "--integer", dest="integer", default=False, action='store_true')
+    opts.add_option("", "--default-value", dest="default_value")
     opts.add_option("", "--divisor", dest="divisor", nargs=1, type="int")
     opts.add_option("", "--minus", dest="minus", nargs=1, type="int")
     opts.add_option("", "--plus", dest="plus", nargs=1, type="int")
+    opts.add_option("", "--quiet", dest="quiet", default=False, action='store_true')
     opts.add_option("", "--replace-section-entry", dest="replace_section_entry", nargs=3, type="string")
     opts.add_option("", "--remove-include", dest="remove_include", nargs=1, type="string")
     opts.add_option("", "--add-include", dest="add_include", nargs=1, type="string")
@@ -265,6 +267,7 @@ def main():
     moonraker_conf = 'moonraker.conf' == os.path.basename(config_file)
     fan_control = 'fan_control.cfg' == os.path.basename(config_file)
     webcam_conf = 'webcam.conf' == os.path.basename(config_file)
+    crowsnest_conf = 'crowsnest.conf' == os.path.basename(config_file)
 
     updated = False
     if options.remove_section:
@@ -290,6 +293,8 @@ def main():
                 value = int(value)
 
             print(value)
+        elif options.default_value:
+            print(options.default_value)
         else:
             exit_code = 1
     elif options.include_exists:
@@ -321,7 +326,7 @@ def main():
             exclude_sections = options.exclude_sections.split(',') if options.exclude_sections else None
             allow_delete_section = (printer_cfg or fan_control)
             allow_delete_entry = printer_cfg
-            allow_new_section = (fan_control or printer_cfg or moonraker_conf or webcam_conf)
+            allow_new_section = (fan_control or printer_cfg or moonraker_conf or webcam_conf or crowsnest_conf)
             updated = override_cfg(updater, options.overrides,
                                    allow_delete_section=allow_delete_section,
                                    allow_delete_entry=allow_delete_entry,
@@ -340,9 +345,9 @@ def main():
                 updater.write(file)
         else:
             with open(config_file, 'w') as file:
-                if options.overrides:
+                if options.overrides and not options.quiet:
                     print(f"Applied overrides to {config_file}")
-                elif options.patches:
+                elif options.patches and not options.quiet:
                     print(f"Applied mount overrides to {config_file}")
                 updater.write(file)
     elif not read_only and options.output:

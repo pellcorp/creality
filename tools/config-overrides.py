@@ -42,6 +42,7 @@ def main():
     fan_control = 'fan_control.cfg' == os.path.basename(args.original)
     # only support new sections for rpi webcam.conf
     webcam_conf = 'webcam.conf' == os.path.basename(args.original) and '/usr/data/printer_data/config/webcam.conf' not in args.updated
+    crowsnest_conf = 'crowsnest.conf' == os.path.basename(args.original)
 
     deleted_sections = []
     for section_name in original.sections():
@@ -76,7 +77,7 @@ def main():
 
         # so for printer.cfg, moonraker.conf, fan_control.cfg or webcam.conf a new section can be saved, but it can't be a gcode macro
         # and we are ignoring a new scanner section in config overrides due to migrating to cartotouch.cfg
-        if section_name != 'scanner' and 'gcode_macro' not in section_name and (printer_cfg or moonraker_conf or fan_control or webcam_conf):
+        if section_name != 'scanner' and 'gcode_macro' not in section_name and (printer_cfg or moonraker_conf or fan_control or webcam_conf or crowsnest_conf):
             if section_name not in original.sections():
                 new_section = updated.get_section(section_name, None)
                 if len(overrides.sections()) > 0:
