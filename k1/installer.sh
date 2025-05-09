@@ -650,8 +650,6 @@ function install_klipper() {
         $CONFIG_HELPER --replace-section-entry "mcu" "baud" 230400 || exit $?
         $CONFIG_HELPER --replace-section-entry "mcu nozzle_mcu" "baud" 230400 || exit $?
 
-        # for Ender 5 Max we need to disable sensorless homing, reversing homing order,don't move away and do not repeat homing
-        # but we are still going to use homing override even though the max has physical endstops to make things a bit easier
         if [ "$MODEL" = "F004" ]; then
             $CONFIG_HELPER --file sensorless.cfg --replace-section-entry "gcode_macro _SENSORLESS_PARAMS" "variable_home_y_before_x" "True" || exit $?
         else # by default we want to home twice when using sensorless
@@ -721,6 +719,22 @@ function install_klipper() {
         if [ -f /usr/data/printer_data/config/factory_printer.cfg ]; then
             rm /usr/data/printer_data/config/factory_printer.cfg
         fi
+
+        if [ ! -d /usr/data/fluidd-config ]; then
+            echo
+            echo "INFO: Updating client macros ..."
+
+            git clone https://github.com/fluidd-core/fluidd-config.git /usr/data/fluidd-config || exit $?
+        fi
+
+        [ -e /usr/data/printer_data/config/fluidd.cfg ] && rm /usr/data/printer_data/config/fluidd.cfg
+
+        ln -sf /usr/data/fluidd-config/client.cfg /usr/data/printer_data/config/
+        $CONFIG_HELPER --add-include "client.cfg" || exit $?
+
+        # for moonraker to be able to use moonraker fluidd/mainsail client.cfg out of the box need to
+        # have $HOME/printer_data resolve correctly.
+        ln -sf /usr/data/printer_data/ /root
 
         cp /usr/data/pellcorp/config/start_end.cfg /usr/data/printer_data/config/ || exit $?
         $CONFIG_HELPER --add-include "start_end.cfg" || exit $?
@@ -798,22 +812,6 @@ function install_klipper() {
         if [ "$mode" != "update" ] && [ -d /usr/data/fluidd-config ]; then
             rm -rf /usr/data/fluidd-config
         fi
-
-        if [ ! -d /usr/data/fluidd-config ]; then
-            echo
-            echo "INFO: Updating client macros ..."
-
-            git clone https://github.com/fluidd-core/fluidd-config.git /usr/data/fluidd-config || exit $?
-        fi
-
-        [ -e /usr/data/printer_data/config/fluidd.cfg ] && rm /usr/data/printer_data/config/fluidd.cfg
-
-        ln -sf /usr/data/fluidd-config/client.cfg /usr/data/printer_data/config/
-        $CONFIG_HELPER --add-include "client.cfg" || exit $?
-
-        # for moonraker to be able to use moonraker fluidd/mainsail client.cfg out of the box need to
-        # have $HOME/printer_data resolve correctly.
-        ln -sf /usr/data/printer_data/ /root
 
         # these are already defined in fluidd config so get rid of them from printer.cfg
         $CONFIG_HELPER --remove-section "pause_resume" || exit $?
