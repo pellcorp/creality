@@ -1,6 +1,6 @@
 #!/bin/sh
 
-BASEDIR=/home/pi
+BASEDIR=$HOME
 CONFIG_TYPE=rpi
 if grep -Fqs "ID=buildroot" /etc/os-release; then
     BASEDIR=/usr/data
@@ -99,7 +99,7 @@ override_file() {
         original_file="$BASEDIR/pellcorp-backups/$file"
     elif [ "$file" = "guppyscreen.cfg" ]; then # old file ignore it
         return 0
-    elif [ "$file" = "belts_calibration.cfg" ] || [ "$file" = "internal_macros.cfg" ] || [ "$file" = "useful_macros.cfg" ]; then
+    elif [ "$file" = "belts_calibration.cfg" ] || [ "$file" = "internal_macros.cfg" ] || [ "$file" = "useful_macros.cfg" ] || [ "$file" = "KlipperScreen.conf" ]; then
         #echo "INFO: Overrides not supported for $file"
         return 0
     elif [ "$file" = "printer.cfg" ] || [ "$file" = "webcam.conf" ] || [ "$file" = "beacon.conf" ] || [ "$file" = "cartographer.conf" ] || [ "$file" = "moonraker.conf" ] || [ "$file" = "start_end.cfg" ] || [ "$file" = "fan_control.cfg" ]; then
@@ -193,14 +193,6 @@ elif [ "$1" = "--repo" ] || [ "$1" = "--clean-repo" ]; then
         exit 1
     fi
 else
-  # there will be no support for generating pellcorp-overrides unless you have done a factory reset
-  if [ -f $BASEDIR/pellcorp-backups/printer.factory.cfg ]; then
-      # the pellcorp-backups do not need .pellcorp extension, so this is to fix backwards compatible
-      if [ -f $BASEDIR/pellcorp-backups/printer.pellcorp.cfg ]; then
-          mv $BASEDIR/pellcorp-backups/printer.pellcorp.cfg $BASEDIR/pellcorp-backups/printer.cfg
-      fi
-  fi
-
   if [ ! -f $BASEDIR/pellcorp-backups/printer.cfg ]; then
       echo "ERROR: $BASEDIR/pellcorp-backups/printer.cfg missing"
       exit 1
@@ -226,8 +218,6 @@ else
 
   mkdir -p $BASEDIR/pellcorp-overrides
 
-  # in case we changed config and no longer need an override file, we should delete all
-  # all the config files there.
   rm $BASEDIR/pellcorp-overrides/*.cfg 2> /dev/null
   rm $BASEDIR/pellcorp-overrides/*.conf 2> /dev/null
   rm $BASEDIR/pellcorp-overrides/*.json 2> /dev/null

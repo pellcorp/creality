@@ -1,6 +1,6 @@
 #!/bin/sh
 
-BASEDIR=/home/pi
+BASEDIR=$HOME
 if grep -Fqs "ID=buildroot" /etc/os-release; then
     BASEDIR=/usr/data
 
@@ -70,21 +70,23 @@ if [ "$mode" = "create" ]; then
     fi
 
     cd $BASEDIR
-    CFG_ARG='printer_data/config/*.cfg'
+    CFG_ARG=''
+    if ls printer_data/config/*.conf > /dev/null 2>&1; then
+        CFG_ARG='printer_data/config/*.cfg'
+    fi
+
     CONF_ARG=''
-    ls printer_data/config/*.conf > /dev/null 2>&1
-    # straight from a factory reset, there will be no conf files
-    if [ $? -eq 0 ]; then
+    if ls printer_data/config/*.conf > /dev/null 2>&1; then
         CONF_ARG='printer_data/config/*.conf'
     fi
 
     PELLCORP_BACKUPS=''
-    if [ -d pellcorp-backups ]; then
+    if ls pellcorp-backups/* > /dev/null 2>&1; then
         PELLCORP_BACKUPS='pellcorp-backups/*'
     fi
 
     PELLCORP_OVERRIDES=''
-    if [ $(find pellcorp-overrides/ -type f | wc -l) -gt 0 ]; then
+    if ls pellcorp-overrides/* > /dev/null 2>&1; then
         PELLCORP_OVERRIDES='pellcorp-overrides/*'
     fi
 
@@ -93,8 +95,10 @@ if [ "$mode" = "create" ]; then
         PELLCORP_DONE=pellcorp.done
     fi
 
-    tar -zcf $BASEDIR/backups/backup-${TIMESTAMP}.tar.gz $CFG_ARG $CONF_ARG $PELLCORP_BACKUPS $PELLCORP_OVERRIDES $PELLCORP_DONE
-    sync
+    if [ -n "$CFG_ARG" ] || [ -n "$CONF_ARG" ] || [ -n "$PELLCORP_BACKUPS" ] || [ -n "$PELLCORP_OVERRIDES" ] || [ -n "$PELLCORP_DONE" ]; then
+        tar -zcf $BASEDIR/backups/backup-${TIMESTAMP}.tar.gz $CFG_ARG $CONF_ARG $PELLCORP_BACKUPS $PELLCORP_OVERRIDES $PELLCORP_DONE
+        sync
+    fi
 
     cd - > /dev/null
     exit 0

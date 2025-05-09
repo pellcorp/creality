@@ -1,6 +1,6 @@
 #!/bin/sh
 
-BASEDIR=/home/pi
+BASEDIR=$HOME
 TMPDIR=/tmp
 if grep -Fqs "ID=buildroot" /etc/os-release; then
     BASEDIR=/usr/data
