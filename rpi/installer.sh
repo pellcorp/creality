@@ -419,6 +419,10 @@ function setup_cartotouch() {
         x_position_mid=$($CONFIG_HELPER --get-section-entry "stepper_x" "position_max" --divisor 2 --integer)
         $CONFIG_HELPER --file cartotouch.cfg --replace-section-entry "bed_mesh" "zero_reference_position" "$x_position_mid,$y_position_mid" || exit $?
 
+        # for rpi we don't need to turn the camera off
+        $CONFIG_HELPER --file cartotouch_macro.cfg --replace-section-entry "gcode_macro BED_MESH_CALIBRATE" "variable_stop_start_camera" "False" || exit $?
+        $CONFIG_HELPER --file cartotouch_macro.cfg --replace-section-entry "gcode_macro AXIS_TWIST_COMPENSATION_CALIBRATE" "variable_stop_start_camera" "False" || exit $?
+
         set_serial_cartotouch
 
         # as we are referencing the included cartographer now we want to remove the included value
@@ -494,6 +498,10 @@ function setup_beacon() {
         $CONFIG_HELPER --file beacon.cfg --replace-section-entry "beacon" "home_xy_position" "$x_position_mid,$y_position_mid" || exit $?
         $CONFIG_HELPER --file beacon.cfg --replace-section-entry "bed_mesh" "zero_reference_position" "$x_position_mid,$y_position_mid" || exit $?
 
+        # for rpi we don't need to turn the camera off
+        $CONFIG_HELPER --file beacon_macro.cfg --replace-section-entry "gcode_macro BED_MESH_CALIBRATE" "variable_stop_start_camera" "False" || exit $?
+        $CONFIG_HELPER --file beacon_macro.cfg --replace-section-entry "gcode_macro AXIS_TWIST_COMPENSATION_CALIBRATE" "variable_stop_start_camera" "False" || exit $?
+
         set_serial_beacon
 
         $CONFIG_HELPER --remove-section "beacon" || exit $?
@@ -549,6 +557,10 @@ function setup_btteddy() {
         $CONFIG_HELPER --remove-section "probe_eddy_current btt_eddy" || exit $?
         $CONFIG_HELPER --add-section "probe_eddy_current btt_eddy" || exit $?
 
+        # for rpi we don't need to turn the camera off
+        $CONFIG_HELPER --file btteddy_macro.cfg --replace-section-entry "gcode_macro BTTEDDY_CURRENT_CALIBRATE" "variable_stop_start_camera" "False" || exit $?
+        $CONFIG_HELPER --file btteddy_macro.cfg --replace-section-entry "gcode_macro BTTEDDY_TEMPERATURE_PROBE_CALIBRATE" "variable_stop_start_camera" "False" || exit $?
+
 # these guided macros are out of date, removing them temporarily to avoid confusion
 #        cp $BASEDIR/pellcorp/config/btteddy_calibrate.cfg $BASEDIR/printer_data/config/ || exit $?
 #        $CONFIG_HELPER --add-include "btteddy_calibrate.cfg" || exit $?
@@ -595,6 +607,9 @@ function setup_eddyng() {
 
         $CONFIG_HELPER --remove-section "probe_eddy_ng btt_eddy" || exit $?
         $CONFIG_HELPER --add-section "probe_eddy_ng btt_eddy" || exit $?
+
+        # for rpi we don't need to turn the camera off
+        $CONFIG_HELPER --file eddyng_macro.cfg --replace-section-entry "gcode_macro BED_MESH_CALIBRATE" "variable_stop_start_camera" "False" || exit $?
 
         echo "eddyng-probe" >> $BASEDIR/pellcorp.done
         sync
