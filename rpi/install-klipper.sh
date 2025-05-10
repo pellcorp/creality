@@ -61,8 +61,8 @@ if [ $? -ne 0 ]; then
         fi
     fi
 
-    cp $BASEDIR/pellcorp/config/sensorless.cfg $BASEDIR/printer_data/config/ || exit $?
-    $CONFIG_HELPER --add-include "sensorless.cfg" || exit $?
+    cp $BASEDIR/pellcorp/config/sensorless.cfg $BASEDIR/printer_data/config/homing_override.cfg || exit $?
+    $CONFIG_HELPER --add-include "homing_override.cfg" || exit $?
 
     cp $BASEDIR/pellcorp/rpi/internal_macros.cfg $BASEDIR/printer_data/config/ || exit $?
     sudo sed -i "s:\$HOME:$BASEDIR:g" $BASEDIR/printer_data/config/internal_macros.cfg
