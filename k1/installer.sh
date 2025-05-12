@@ -602,13 +602,14 @@ function install_klipper() {
             [ -d /usr/share/klipper ] && rm -rf /usr/share/klipper
         else
             cd /usr/data/klipper/
+            branch_ref=$(git rev-parse --abbrev-ref HEAD)
             remote_repo=$(git remote get-url origin | awk -F '/' '{print $NF}' | sed 's/.git//g')
             git log | grep -q "add SET_KINEMATIC_POSITION CLEAR=Z feature to allow us to clear z in sensorless.cfg"
             klipper_status=$?
             cd - > /dev/null
 
             # force klipper update to get reverted kinematic position feature
-            if [ "$remote_repo" = "klipper" ] && [ $klipper_status -ne 0 ]; then
+            if [ "$remote_repo" = "klipper" ] && [ $klipper_status -ne 0 ] && [ "$branch_ref" = "master" ]; then
                 echo "INFO: Forcing update of klipper to latest master"
                 update_repo /usr/data/klipper master || exit $?
             fi
