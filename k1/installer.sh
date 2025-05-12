@@ -630,12 +630,14 @@ function install_klipper() {
         echo "INFO: Updating klipper config ..."
         /usr/share/klippy-env/bin/python3 -m compileall /usr/data/klipper/klippy || exit $?
 
-        # FIXME - one day maybe we can get rid of this link
         ln -sf /usr/data/klipper /usr/share/ || exit $?
 
         # for scripts like ~/klipper/scripts, a soft link makes things a little bit easier
         ln -sf /usr/data/klipper/ /root
 
+        # add a USB link to the gcodes directory so that grumpyscreen can print from USB
+        ln -sf /tmp/udisk/sda1 /root/printer_data/gcodes/usb
+        
         cp /usr/data/pellcorp/k1/services/S55klipper_service /etc/init.d/ || exit $?
 
         # currently no support for updating firmware on Ender 5 Max :-(
