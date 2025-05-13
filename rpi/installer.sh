@@ -160,10 +160,10 @@ function update_klipper() {
   echo
   echo "INFO: Stopping Klipper ..."
   sudo systemctl stop klipper
-  if [ -d $BASEDIR/cartographer-klipper ]; then
-      $BASEDIR/cartographer-klipper/install.sh || return $?
-      sync
-  fi
+#  if [ -f $BASEDIR/printer_data/config/cartotouch.cfg ]; then
+#      install_cartographer_plugin || return $?
+#      sync
+#  fi
   if [ -d $BASEDIR/beacon-klipper ]; then
       $BASEDIR/beacon-klipper/install.sh || return $?
       sync
@@ -229,26 +229,25 @@ function setup_probe() {
     return 0
 }
 
-function install_cartographer_klipper() {
+function install_cartographer_plugin() {
     local mode=$1
 
     grep -q "cartographer-klipper" $BASEDIR/pellcorp.done
     if [ $? -ne 0 ]; then
-        if [ "$mode" != "update" ] && [ -d $BASEDIR/cartographer-klipper ]; then
-            rm -rf $BASEDIR/cartographer-klipper
+        if [ "$mode" != "update" ] && [ -e $BASEDIR/klipper/klippy/extras/cartographer.py ]; then
+            rm -rf $BASEDIR/klipper/klippy/extras/cartographer.py
         fi
 
-        if [ ! -d $BASEDIR/cartographer-klipper ]; then
-            echo
-            echo "INFO: Installing cartographer-klipper ..."
-            git clone https://github.com/pellcorp/cartographer-klipper.git $BASEDIR/cartographer-klipper || exit $?
+        PIP_VERSION=$($BASEDIR/klippy-env/bin/python3 -m pip --version | awk '{print $2}' | tr -d '.')
+        if [ $PIP_VERSION -lt 2200 ]; then
+          echo
+          echo "INFO: Forcing upgrade of PIP ..."
+          $BASEDIR/klippy-env/bin/python3 -m pip install --upgrade pip
         fi
-        cd - > /dev/null
 
-        echo
-        echo "INFO: Running cartographer-klipper installer ..."
-        bash $BASEDIR/cartographer-klipper/install.sh || exit $?
-        $BASEDIR/klippy-env/bin/python3 -m compileall $BASEDIR/klipper/klippy || exit $?
+        if [ ! -f $BASEDIR/klipper/klippy/extras/cartographer.py ]; then
+            curl -s -L https://raw.githubusercontent.com/Cartographer3D/cartographer3d-plugin/refs/heads/main/scripts/install.sh | bash || exit $?
+        fi
 
         echo "cartographer-klipper" >> $BASEDIR/pellcorp.done
         sync
@@ -451,9 +450,9 @@ function setup_klicky() {
 function set_serial_cartotouch() {
     local SERIAL_ID=$(ls /dev/serial/by-id/usb-* | grep "IDM\|Cartographer" | head -1)
     if [ -n "$SERIAL_ID" ]; then
-        local EXISTING_SERIAL_ID=$($CONFIG_HELPER --file cartotouch.cfg --get-section-entry "scanner" "serial")
+        local EXISTING_SERIAL_ID=$($CONFIG_HELPER --file cartotouch.cfg --get-section-entry "mcu cartographer" "serial")
         if [ "$EXISTING_SERIAL_ID" != "$SERIAL_ID" ]; then
-            $CONFIG_HELPER --file cartotouch.cfg --replace-section-entry "scanner" "serial" "$SERIAL_ID" || exit $?
+            $CONFIG_HELPER --file cartotouch.cfg --replace-section-entry "mcu cartographer" "serial" "$SERIAL_ID" || exit $?
             return 1
         else
             echo "Serial value is unchanged"
@@ -490,28 +489,9 @@ function setup_cartotouch() {
 
         # for rpi we don't need to turn the camera off
         $CONFIG_HELPER --file cartotouch_macro.cfg --replace-section-entry "gcode_macro BED_MESH_CALIBRATE" "variable_stop_start_camera" "False" || exit $?
-        $CONFIG_HELPER --file cartotouch_macro.cfg --replace-section-entry "gcode_macro AXIS_TWIST_COMPENSATION_CALIBRATE" "variable_stop_start_camera" "False" || exit $?
+        $CONFIG_HELPER --file cartotouch_macro.cfg --replace-section-entry "gcode_macro CARTOGRAPHER_AXIS_TWIST_COMPENSATION" "variable_stop_start_camera" "False" || exit $?
 
         set_serial_cartotouch
-
-        # as we are referencing the included cartographer now we want to remove the included value
-        # from any previous installation
-        $CONFIG_HELPER --remove-section "scanner" || exit $?
-        $CONFIG_HELPER --add-section "scanner" || exit $?
-
-        scanner_touch_z_offset=$($CONFIG_HELPER --ignore-missing --file $BASEDIR/pellcorp-overrides/printer.cfg.save_config --get-section-entry scanner scanner_touch_z_offset)
-        if [ -n "$scanner_touch_z_offset" ]; then
-          $CONFIG_HELPER --replace-section-entry "scanner" "# scanner_touch_z_offset" "0.05" || exit $?
-        else
-          $CONFIG_HELPER --replace-section-entry "scanner" "scanner_touch_z_offset" "0.05" || exit $?
-        fi
-
-        scanner_mode=$($CONFIG_HELPER --ignore-missing --file $BASEDIR/pellcorp-overrides/printer.cfg.save_config --get-section-entry scanner mode)
-        if [ -n "$scanner_mode" ]; then
-            $CONFIG_HELPER --replace-section-entry "scanner" "# mode" "touch" || exit $?
-        else
-            $CONFIG_HELPER --replace-section-entry "scanner" "mode" "touch" || exit $?
-        fi
 
         echo "cartotouch-probe" >> $BASEDIR/pellcorp.done
         sync
@@ -914,7 +894,7 @@ fi
       if [ -f $BASEDIR/pellcorp.done ] && [ "$mount" = "%CURRENT%" ]; then
           mount=$(cat $BASEDIR/pellcorp.done | grep mount= | awk -F '=' '{print $2}')
       fi
-      
+
       if [ -z "$mount" ]; then
         mount=unknown
       fi
@@ -1191,7 +1171,7 @@ fi
   install_cartographer_klipper=0
   install_beacon_klipper=0
   if [ "$probe" = "cartotouch" ]; then
-    install_cartographer_klipper $mode
+    install_cartographer_plugin $mode
     install_cartographer_klipper=$?
   elif [ "$probe" = "beacon" ]; then
     install_beacon_klipper $mode

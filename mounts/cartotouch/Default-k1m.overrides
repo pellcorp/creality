@@ -1,7 +1,7 @@
 # https://www.printables.com/model/1037606-cartographer-3d-right-angle-k1-series-mount
 
 -- cartotouch.cfg
-[scanner]
+[cartographer]
 x_offset: -16.0
 y_offset: 0.0
 
@@ -14,11 +14,6 @@ screw1: 35,23
 screw2: 294,23
 screw3: 264,272
 screw4: 64,272
-
-[axis_twist_compensation]
-calibrate_start_x: 10
-calibrate_end_x: 280
-calibrate_y: 153
 
 -- printer.cfg
 [stepper_y]

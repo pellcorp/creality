@@ -1,7 +1,7 @@
 # https://www.printables.com/model/1209230-ender-5-max-simply-hexed
 
 -- cartotouch.cfg
-[scanner]
+[cartographer]
 x_offset: 0.0
 y_offset: -30
 
@@ -11,8 +11,3 @@ mesh_max: 370,370
 
 [screws_tilt_adjust]
 __action__: DELETED
-
-[axis_twist_compensation]
-calibrate_start_x: 10
-calibrate_end_x: 380
-calibrate_y: 203

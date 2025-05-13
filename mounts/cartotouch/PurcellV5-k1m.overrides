@@ -1,7 +1,7 @@
 # https://www.printables.com/model/1071493-cartographer-probe-side-mount-options-for-creality
 
 -- cartotouch.cfg
-[scanner]
+[cartographer]
 x_offset: -18.665
 y_offset: 0.0
 
@@ -14,11 +14,6 @@ screw1: 37,23
 screw2: 296,23
 screw3: 266,272
 screw4: 66,272
-
-[axis_twist_compensation]
-calibrate_start_x: 10
-calibrate_end_x: 280
-calibrate_y: 153
 
 -- printer.cfg
 [stepper_y]
