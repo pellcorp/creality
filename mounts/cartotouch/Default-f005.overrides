@@ -1,7 +1,7 @@
 # https://www.printables.com/model/1037606-cartographer-3d-right-angle-k1-series-mount
 
 -- cartotouch.cfg
-[scanner]
+[cartographer]
 y_offset: 22.0
 
 [bed_mesh]

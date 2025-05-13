@@ -1,7 +1,7 @@
 # https://www.printables.com/model/833769-the-skeletor-collection-a-creality-k1k1-maxk1c-coo
 
 -- cartotouch.cfg
-[scanner]
+[cartographer]
 x_offset:0
 y_offset:-22
 

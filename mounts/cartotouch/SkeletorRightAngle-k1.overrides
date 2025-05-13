@@ -1,7 +1,7 @@
 # https://www.printables.com/model/1106768-skeletor-right-angle-cartographer-mount-k1-max-onl
 
 -- cartotouch.cfg
-[scanner]
+[cartographer]
 x_offset: -24.664
 y_offset: 0.0
 
