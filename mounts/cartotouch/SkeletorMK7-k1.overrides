@@ -1,7 +1,7 @@
 # https://www.printables.com/model/833769-the-skeletor-collection-a-creality-k1k1-maxk1c-coo
 
 -- cartotouch.cfg
-[scanner]
+[cartographer]
 x_offset:0
 y_offset:-22
 
@@ -14,11 +14,6 @@ screw1:26,42
 screw2:195,42
 screw3:195,210
 screw4:26,210
-
-[axis_twist_compensation]
-calibrate_start_x: 30
-calibrate_end_x: 210
-calibrate_y: 105
 
 -- printer.cfg
 [stepper_y]
