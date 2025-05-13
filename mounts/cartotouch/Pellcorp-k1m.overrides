@@ -1,7 +1,7 @@
 # Rear quick mounted for right angle for testing only
 
 -- cartotouch.cfg
-[scanner]
+[cartographer]
 x_offset: 0.0
 y_offset: 16.86
 

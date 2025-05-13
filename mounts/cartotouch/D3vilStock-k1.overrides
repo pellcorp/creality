@@ -1,7 +1,7 @@
 # https://www.printables.com/model/684338-k1-k1max-eddy-current-mount-cartographer
 
 -- cartotouch.cfg
-[scanner]
+[cartographer]
 x_offset: 0.0
 y_offset: 16.86
 
