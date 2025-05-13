@@ -1,0 +1,20 @@
+# https://www.printables.com/model/684338-k1-k1max-eddy-current-mount-cartographer
+
+-- cartographer.cfg
+[cartographer]
+x_offset: 0.0
+y_offset: 16.86
+
+[bed_mesh]
+mesh_min: 10,17
+mesh_max: 210,200
+
+[screws_tilt_adjust]
+screw1: 25,3
+screw2: 195,3
+screw3: 195,173
+screw4: 25,173
+
+-- printer.cfg
+[stepper_y]
+position_max: 210

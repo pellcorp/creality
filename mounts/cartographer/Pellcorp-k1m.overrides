@@ -1,0 +1,20 @@
+# Rear quick mounted for right angle for testing only
+
+-- cartographer.cfg
+[cartographer]
+x_offset: 0.0
+y_offset: 16.86
+
+[bed_mesh]
+mesh_min: 10,22
+mesh_max: 288,280
+
+[screws_tilt_adjust]
+screw1: 19,6
+screw2: 278,6
+screw3: 248,255
+screw4: 48,255
+
+-- printer.cfg
+[stepper_y]
+position_max: 288

@@ -259,6 +259,33 @@ function install_cartographer_klipper() {
     return 0
 }
 
+function install_cartographer_plugin() {
+    local mode=$1
+
+    grep -q "cartographer-plugin" $BASEDIR/pellcorp.done
+    if [ $? -ne 0 ]; then
+        if [ "$mode" != "update" ] && [ -e $BASEDIR/klipper/klippy/extras/cartographer.py ]; then
+            rm -rf $BASEDIR/klipper/klippy/extras/cartographer.py
+        fi
+
+        PIP_VERSION=$($BASEDIR/klippy-env/bin/python3 -m pip --version | awk '{print $2}' | tr -d '.')
+        if [ $PIP_VERSION -lt 2200 ]; then
+          echo
+          echo "INFO: Forcing upgrade of PIP ..."
+          $BASEDIR/klippy-env/bin/python3 -m pip install --upgrade pip
+        fi
+
+        if [ ! -f $BASEDIR/klipper/klippy/extras/cartographer.py ]; then
+            curl -s -L https://raw.githubusercontent.com/Cartographer3D/cartographer3d-plugin/refs/heads/main/scripts/install.sh | bash || exit $?
+        fi
+
+        echo "cartographer-plugin" >> $BASEDIR/pellcorp.done
+        sync
+        return 1
+    fi
+    return 0
+}
+
 function install_beacon_klipper() {
     local mode=$1
 
@@ -323,6 +350,7 @@ function cleanup_probes() {
   cleanup_probe btteddy
   cleanup_probe eddyng
   cleanup_probe cartotouch
+  cleanup_probe cartographer
   cleanup_probe beacon
   cleanup_probe klicky
   cleanup_probe bltouch
@@ -459,6 +487,23 @@ function set_serial_cartotouch() {
     fi
 }
 
+function set_serial_cartographer() {
+    local SERIAL_ID=$(ls /dev/serial/by-id/usb-* | grep "IDM\|Cartographer" | head -1)
+    if [ -n "$SERIAL_ID" ]; then
+        local EXISTING_SERIAL_ID=$($CONFIG_HELPER --file cartographer.cfg --get-section-entry "mcu cartographer" "serial")
+        if [ "$EXISTING_SERIAL_ID" != "$SERIAL_ID" ]; then
+            $CONFIG_HELPER --file cartographer.cfg --replace-section-entry "mcu cartographer" "serial" "$SERIAL_ID" || exit $?
+            return 1
+        else
+            echo "Serial value is unchanged"
+            return 0
+        fi
+    else
+        echo "WARNING: There does not seem to be a cartographer attached - skipping auto configuration"
+        return 0
+    fi
+}
+
 function setup_cartotouch() {
     grep -q "cartotouch-probe" $BASEDIR/pellcorp.done
     if [ $? -ne 0 ]; then
@@ -514,6 +559,42 @@ function setup_cartotouch() {
         fi
 
         echo "cartotouch-probe" >> $BASEDIR/pellcorp.done
+        sync
+        return 1
+    fi
+    return 0
+}
+
+function setup_cartographer() {
+    grep -q "cartographer-probe" $BASEDIR/pellcorp.done
+    if [ $? -ne 0 ]; then
+        echo
+        echo "INFO: Setting up cartographer V2 ..."
+
+        cleanup_probes
+
+        cp $BASEDIR/pellcorp/rpi/cartographer.conf $BASEDIR/printer_data/config/ || exit $?
+        $CONFIG_HELPER --file moonraker.conf --add-include "cartographer.conf" || exit $?
+
+        cp $BASEDIR/pellcorp/config/cartographer_macro.cfg $BASEDIR/printer_data/config/ || exit $?
+        $CONFIG_HELPER --add-include "cartographer_macro.cfg" || exit $?
+
+        $CONFIG_HELPER --replace-section-entry "stepper_z" "homing_retract_dist" "0" || exit $?
+
+        cp $BASEDIR/pellcorp/config/cartographer.cfg $BASEDIR/printer_data/config/ || exit $?
+        $CONFIG_HELPER --add-include "cartographer.cfg" || exit $?
+
+        y_position_mid=$($CONFIG_HELPER --get-section-entry "stepper_y" "position_max" --divisor 2 --integer)
+        x_position_mid=$($CONFIG_HELPER --get-section-entry "stepper_x" "position_max" --divisor 2 --integer)
+        $CONFIG_HELPER --file cartographer.cfg --replace-section-entry "bed_mesh" "zero_reference_position" "$x_position_mid,$y_position_mid" || exit $?
+
+        # for rpi we don't need to turn the camera off
+        $CONFIG_HELPER --file cartographer_macro.cfg --replace-section-entry "gcode_macro BED_MESH_CALIBRATE" "variable_stop_start_camera" "False" || exit $?
+        $CONFIG_HELPER --file cartographer_macro.cfg --replace-section-entry "gcode_macro CARTOGRAPHER_AXIS_TWIST_COMPENSATION" "variable_stop_start_camera" "False" || exit $?
+
+        set_serial_cartographer
+
+        echo "cartographer-probe" >> $BASEDIR/pellcorp.done
         sync
         return 1
     fi
@@ -880,6 +961,8 @@ fi
     probe=microprobe
   elif [ -f $BASEDIR/printer_data/config/cartotouch.cfg ]; then
     probe=cartotouch
+  elif [ -f $BASEDIR/printer_data/config/cartographer.cfg ]; then
+      probe=cartographer
   elif [ -f $BASEDIR/printer_data/config/beacon.cfg ]; then
     probe=beacon
   elif [ -f $BASEDIR/printer_data/config/klicky.cfg ]; then
@@ -914,7 +997,7 @@ fi
       if [ -f $BASEDIR/pellcorp.done ] && [ "$mount" = "%CURRENT%" ]; then
           mount=$(cat $BASEDIR/pellcorp.done | grep mount= | awk -F '=' '{print $2}')
       fi
-      
+
       if [ -z "$mount" ]; then
         mount=unknown
       fi
@@ -950,7 +1033,7 @@ fi
     elif [ "$1" = "--force" ]; then
       force=true
       shift
-    elif [ "$1" = "none" ] || [ "$1" = "microprobe" ] || [ "$1" = "bltouch" ] || [ "$1" = "beacon" ] || [ "$1" = "klicky" ] || [ "$1" = "cartotouch" ] || [ "$1" = "btteddy" ] || [ "$1" = "eddyng" ]; then
+    elif [ "$1" = "none" ] || [ "$1" = "microprobe" ] || [ "$1" = "bltouch" ] || [ "$1" = "beacon" ] || [ "$1" = "klicky" ] || [ "$1" = "cartographer" ] || [ "$1" = "cartotouch" ] || [ "$1" = "btteddy" ] || [ "$1" = "eddyng" ]; then
       if [ "$mode" = "fix-serial" ]; then
         echo "ERROR: Switching probes is not supported while trying to fix serial!"
         exit 1
@@ -972,6 +1055,9 @@ fi
     if [ -f $BASEDIR/pellcorp.done ]; then
       if [ "$probe" = "cartotouch" ]; then
         set_serial_cartotouch
+        set_serial=$?
+      elif [ "$probe" = "cartographer" ]; then
+        set_serial_cartographer
         set_serial=$?
       elif [ "$probe" = "beacon" ]; then
         set_serial_beacon
@@ -1024,7 +1110,7 @@ fi
 
   if [ -z "$probe" ]; then
     echo "ERROR: You must specify a probe you want to configure"
-    echo "One of: [microprobe, bltouch, cartotouch, btteddy, eddyng, beacon, klicky]"
+    echo "One of: [microprobe, bltouch, cartotouch, cartographer, btteddy, eddyng, beacon, klicky]"
     exit 1
   fi
 
@@ -1182,10 +1268,14 @@ fi
   fi
 
   install_cartographer_klipper=0
+  install_cartographer_plugin=0
   install_beacon_klipper=0
   if [ "$probe" = "cartotouch" ]; then
     install_cartographer_klipper $mode
     install_cartographer_klipper=$?
+  elif [ "$probe" = "cartographer" ]; then
+    install_cartographer_plugin $mode
+    install_cartographer_plugin=$?
   elif [ "$probe" = "beacon" ]; then
     install_beacon_klipper $mode
     install_beacon_klipper=$?
@@ -1214,6 +1304,9 @@ fi
     setup_probe=$?
     if [ "$probe" = "cartotouch" ]; then
       setup_cartotouch
+      setup_probe_specific=$?
+    elif [ "$probe" = "cartographer" ]; then
+      setup_cartographer
       setup_probe_specific=$?
     elif [ "$probe" = "bltouch" ]; then
       setup_bltouch
