@@ -1061,6 +1061,30 @@ function setup_probe() {
     return 0
 }
 
+function install_cartographer_plugin() {
+        local mode=$1
+
+    grep -q "cartographer-klipper" /usr/data/pellcorp.done
+    if [ $? -ne 0 ]; then
+        # for old style cartographer that is a soft link
+        if [ -L /usr/data/klipper/klippy/extras/cartographer.py ]; then
+            rm -rf /usr/data/klipper/klippy/extras/cartographer.py
+        fi
+        if [ "$mode" != "update" ] && [ -e /usr/data/klipper/klippy/extras/cartographer.py ]; then
+            rm -rf /usr/data/klipper/klippy/extras/cartographer.py
+        fi
+
+        if [ ! -f /usr/data/klipper/klippy/extras/cartographer.py ]; then
+            curl -s -L https://raw.githubusercontent.com/Cartographer3D/cartographer3d-plugin/refs/heads/main/scripts/install.sh | bash -s -- --klipper /usr/data/klipper --klippy-env /usr/share/klippy-env || exit $?
+        fi
+
+        echo "cartographer-klipper" >> /usr/data/pellcorp.done
+        sync
+        return 1
+    fi
+    return 0
+}
+
 function install_cartographer_klipper() {
     local mode=$1
 
@@ -1297,9 +1321,9 @@ function setup_klicky() {
 function set_serial_cartotouch() {
     local SERIAL_ID=$(ls /dev/serial/by-id/usb-* | grep "IDM\|Cartographer" | head -1)
     if [ -n "$SERIAL_ID" ]; then
-        local EXISTING_SERIAL_ID=$($CONFIG_HELPER --file cartotouch.cfg --get-section-entry "scanner" "serial")
+        local EXISTING_SERIAL_ID=$($CONFIG_HELPER --file cartotouch.cfg --get-section-entry "mcu cartographer" "serial")
         if [ "$EXISTING_SERIAL_ID" != "$SERIAL_ID" ]; then
-            $CONFIG_HELPER --file cartotouch.cfg --replace-section-entry "scanner" "serial" "$SERIAL_ID" || exit $?
+            $CONFIG_HELPER --file cartotouch.cfg --replace-section-entry "mcu cartographer" "serial" "$SERIAL_ID" || exit $?
             return 1
         else
             echo "Serial value is unchanged"
@@ -1338,25 +1362,6 @@ function setup_cartotouch() {
 
         # a slight change to the way cartotouch is configured
         $CONFIG_HELPER --remove-section "force_move" || exit $?
-
-        # as we are referencing the included cartographer now we want to remove the included value
-        # from any previous installation
-        $CONFIG_HELPER --remove-section "scanner" || exit $?
-        $CONFIG_HELPER --add-section "scanner" || exit $?
-
-        scanner_touch_z_offset=$($CONFIG_HELPER --ignore-missing --file /usr/data/pellcorp-overrides/printer.cfg.save_config --get-section-entry scanner scanner_touch_z_offset)
-        if [ -n "$scanner_touch_z_offset" ]; then
-          $CONFIG_HELPER --replace-section-entry "scanner" "# scanner_touch_z_offset" "0.05" || exit $?
-        else
-          $CONFIG_HELPER --replace-section-entry "scanner" "scanner_touch_z_offset" "0.05" || exit $?
-        fi
-
-        scanner_mode=$($CONFIG_HELPER --ignore-missing --file /usr/data/pellcorp-overrides/printer.cfg.save_config --get-section-entry scanner mode)
-        if [ -n "$scanner_mode" ]; then
-            $CONFIG_HELPER --replace-section-entry "scanner" "# mode" "touch" || exit $?
-        else
-            $CONFIG_HELPER --replace-section-entry "scanner" "mode" "touch" || exit $?
-        fi
 
         cp /usr/data/pellcorp/config/cartographer_calibrate.cfg /usr/data/printer_data/config/ || exit $?
         $CONFIG_HELPER --add-include "cartographer_calibrate.cfg" || exit $?
@@ -2105,8 +2110,8 @@ fi
 
     install_cartographer_klipper=0
     install_beacon_klipper=0
-    if [ "$probe" = "cartographer" ] || [ "$probe" = "cartotouch" ]; then
-      install_cartographer_klipper $mode
+    if [ "$probe" = "cartotouch" ]; then
+      install_cartographer_plugin $mode
       install_cartographer_klipper=$?
     elif [ "$probe" = "beacon" ]; then
       install_beacon_klipper $mode

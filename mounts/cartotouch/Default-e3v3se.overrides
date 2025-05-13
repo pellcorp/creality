@@ -1,7 +1,7 @@
 # https://www.printables.com/model/732262-ender-3-v3-ke-beaconcartographer-mount
 
 -- cartotouch.cfg
-[scanner]
+[cartographer]
 x_offset: -23.0
 y_offset: -14.5
 
