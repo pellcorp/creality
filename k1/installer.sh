@@ -840,9 +840,10 @@ function install_klipper() {
 
 function install_guppyscreen() {
     local mode=$1
+    local branch=$2
 
     grep -q "guppyscreen" /usr/data/pellcorp.done
-    if [ $? -ne 0 ]; then
+    if [ $? -ne 0 ] || [ "$mode" = "switch-branch" ]; then
         echo
 
         if [ "$mode" != "update" ] && [ -d /usr/data/guppyscreen ]; then
@@ -859,6 +860,8 @@ function install_guppyscreen() {
             fi
         fi
 
+        GUPPY_BRANCH=$branch
+
         # we have logic here to force grumpyscreen to get updated to a minimum required version
         if [ -d /usr/data/guppyscreen ]; then
           TIMESTAMP=0
@@ -869,7 +872,13 @@ function install_guppyscreen() {
             fi
           fi
 
-          if [ $TIMESTAMP -lt $GRUMPYSCREEN_TIMESTAMP ]; then
+          GIT_BRANCH=$(cat /usr/data/guppyscreen/release.info | grep GIT_BRANCH | awk -F '=' '{print $2}')
+          if [ -z "$GIT_BRANCH" ]; then
+            GIT_BRANCH=main
+          fi
+
+          # force reinstall if switch branch mode
+          if [ $TIMESTAMP -lt $GRUMPYSCREEN_TIMESTAMP ] || [ "$GIT_BRANCH" != "$GUPPY_BRANCH" ]; then
             echo
             echo "INFO: Forcing update of grumpyscreen"
             rm -rf /usr/data/guppyscreen
@@ -885,9 +894,19 @@ function install_guppyscreen() {
             if [ "$MODEL" = "F004" ]; then
                 asset_name=guppyscreen-smallscreen.tar.gz
             fi
-            curl -L "https://github.com/pellcorp/guppyscreen/releases/download/main/${asset_name}" -o /usr/data/guppyscreen.tar.gz || exit $?
-            tar xf /usr/data/guppyscreen.tar.gz -C /usr/data/ || exit $?
-            rm /usr/data/guppyscreen.tar.gz
+            curl -L "https://github.com/pellcorp/guppyscreen/releases/download/${GUPPY_BRANCH}/${asset_name}" -o /usr/data/guppyscreen.tar.gz
+            if [ $? -eq 0 ]; then
+                tar xf /usr/data/guppyscreen.tar.gz -C /usr/data/ 2> /dev/null
+                status=$?
+                rm /usr/data/guppyscreen.tar.gz
+                if [ $status -ne 0 ]; then
+                    echo "ERROR: Grumpyscreen (branch ${GUPPY_BRANCH}) could not be downloaded!"
+                    return 0
+                fi
+            else
+                echo "ERROR: Grumpyscreen (branch ${GUPPY_BRANCH}) could not be downloaded!"
+                return 0
+            fi
         fi
 
         cp /usr/data/pellcorp/k1/services/S99guppyscreen /etc/init.d/ || exit $?
@@ -912,7 +931,9 @@ function install_guppyscreen() {
         [ -d /usr/data/printer_data/config/GuppyScreen ] && rm -rf /usr/data/printer_data/config/GuppyScreen
         [ -f /usr/data/printer_data/config/guppyscreen.cfg ] && rm /usr/data/printer_data/config/guppyscreen.cfg
 
-        echo "guppyscreen" >> /usr/data/pellcorp.done
+        if [ "$mode" != "switch-branch" ]; then
+            echo "guppyscreen" >> /usr/data/pellcorp.done
+        fi
         sync
 
         # means klipper needs to be restarted
@@ -1572,6 +1593,13 @@ function fix_custom_config() {
 if [ "$1" = "--update-branch" ]; then
     update_repo /usr/data/pellcorp
     exit $?
+elif [ "$1" = "--grumpy-branch" ]; then
+    install_guppyscreen "switch-branch" "$2"
+    if [ $? -ne 0 ]; then
+        echo "INFO: Restarting Grumpyscreen ..."
+        systemctl restart grumpyscreen
+    fi
+    exit 0
 elif [ "$1" = "--branch" ] && [ -n "$2" ]; then # convenience for testing new features
     update_repo /usr/data/pellcorp $2 || exit $?
     exit $?
@@ -1989,7 +2017,7 @@ fi
       install_beacon_klipper=$?
     fi
 
-    install_guppyscreen $mode
+    install_guppyscreen $mode "main"
     install_guppyscreen=$?
 
     setup_probe
