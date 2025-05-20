@@ -206,10 +206,10 @@ function disable_creality_services() {
         # clean out the calibration data from the end of rhe printer.cfg file
         sed -i '/#\*#.*/d' /usr/data/printer_data/config/printer.cfg
         # uncomment default pid tuning
-        sed -i 's/^#control: pid/control: pid/g' /usr/data/printer_data/config/printer.cfg
-        sed -i 's/^#pid_Kp: /pid_Kp: /g' /usr/data/printer_data/config/printer.cfg
-        sed -i 's/^#pid_Ki: /pid_Ki: /g' /usr/data/printer_data/config/printer.cfg
-        sed -i 's/^#pid_Kd: /pid_Kd: /g' /usr/data/printer_data/config/printer.cfg
+        sed -i 's/^#\s*control:\s*pid/control: pid/g' /usr/data/printer_data/config/printer.cfg
+        sed -i 's/^#\s*pid_Kp:/pid_Kp:/g' /usr/data/printer_data/config/printer.cfg
+        sed -i 's/^#\s*pid_Ki:/pid_Ki:/g' /usr/data/printer_data/config/printer.cfg
+        sed -i 's/^#\s*pid_Kd:/pid_Kd:/g' /usr/data/printer_data/config/printer.cfg
 
         echo "INFO: If you reboot the printer before installing grumpyscreen, the screen will be blank - this is to be expected!"
         /etc/init.d/S99start_app stop > /dev/null 2>&1
