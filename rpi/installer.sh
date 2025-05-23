@@ -1,5 +1,26 @@
 #!/bin/bash
 
+if [ "$(whoami)" = "root" ]; then
+  echo "FATAL: This installer must not be run as root"
+  exit 1
+fi
+
+if [ -d $BASEDIR/kiauh ]; then
+    echo "Simple AF is not compatible with kiuah"
+    exit 1
+fi
+
+if [ -d $BASEDIR/printer_data/config/printer.cfg ] && [ ! -f $BASEDIR/pellcorp.done ]; then
+    echo "Simple AF cannot be installed on a configured printer"
+    exit 1
+fi
+
+command -v apt-get > /dev/null
+if [ $? -ne 0 ]; then
+  echo "FATAL: This OS does not appear to be debian based - aborting"
+  exit 1
+fi
+
 BASEDIR=$HOME
 
 # everything else in the script assumes its cloned to $BASEDIR/pellcorp
@@ -7,6 +28,14 @@ BASEDIR=$HOME
 if [ "$(dirname $(readlink -f $0))" != "$BASEDIR/pellcorp/rpi" ]; then
   >&2 echo "ERROR: This git repo must be cloned to $BASEDIR/pellcorp/rpi"
   exit 1
+fi
+
+# setup a soft link to the rpi/installer.sh so we can start migrating must of the wiki
+# k1 / rpi agnostic paths
+if [ ! -L $BASEDIR/pellcorp/installer.sh ]; then
+  cd $BASEDIR/pellcorp
+  ln -sf rpi/installer.sh installer.sh
+  cd - > /dev/null
 fi
 
 function update_repo() {
@@ -49,7 +78,7 @@ function update_repo() {
     return 0
 }
 
-if [ "$1" = "--branch" ] && [ -n "$2" ]; then # convenience for testing new features
+if [ "$1" = "--branch" ] && [ -n "$2" ]; then
     update_repo $BASEDIR/pellcorp $2 || exit $?
     exit $?
 fi
