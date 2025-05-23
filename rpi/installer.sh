@@ -30,14 +30,6 @@ if [ "$(dirname $(readlink -f $0))" != "$BASEDIR/pellcorp/rpi" ]; then
   exit 1
 fi
 
-# setup a soft link to the rpi/installer.sh so we can start migrating must of the wiki
-# k1 / rpi agnostic paths
-if [ ! -L $BASEDIR/pellcorp/installer.sh ]; then
-  cd $BASEDIR/pellcorp
-  ln -sf rpi/installer.sh installer.sh
-  cd - > /dev/null
-fi
-
 function update_repo() {
     local repo_dir=$1
     local branch=$2
