@@ -41,14 +41,6 @@ fi
 # so we can do ~/pellcorp/ paths in the wiki
 ln -sf /usr/data/pellcorp/ /root
 
-# setup a soft link to the k1/installer.sh so we can start migrating must of the wiki
-# k1 / rpi agnostic paths
-if [ ! -L /usr/data/pellcorp/installer.sh ]; then
-  cd /usr/data/pellcorp
-  ln -sf k1/installer.sh installer.sh
-  cd - > /dev/null
-fi
-
 # kill pip cache to free up overlayfs
 rm -rf /root/.cache
 sync
