@@ -156,10 +156,12 @@ function update_repo() {
 function update_klipper() {
   if [ -d /usr/data/cartographer-klipper ]; then
       /usr/data/cartographer-klipper/install.sh || return $?
+      ln -sf /usr/data/cartographer-klipper/ /root
       sync
   fi
   if [ -d /usr/data/beacon-klipper ]; then
       /usr/data/pellcorp/tools/beacon-install.sh || return $?
+      ln -sf /usr/data/beacon-klipper/ /root
       sync
   fi
   /usr/share/klippy-env/bin/python3 -m compileall /usr/data/klipper/klippy || return $?
@@ -1016,6 +1018,7 @@ function install_cartographer_klipper() {
         echo
         echo "INFO: Running cartographer-klipper installer ..."
         bash /usr/data/cartographer-klipper/install.sh || exit $?
+        ln -sf /usr/data/cartographer-klipper/ /root
         /usr/share/klippy-env/bin/python3 -m compileall /usr/data/klipper/klippy || exit $?
 
         echo "cartographer-klipper" >> /usr/data/pellcorp.done
@@ -1041,7 +1044,7 @@ function install_beacon_klipper() {
         fi
 
         /usr/data/pellcorp/tools/beacon-install.sh || return $?
-
+        ln -sf /usr/data/beacon-klipper/ /root
         /usr/share/klippy-env/bin/python3 -m compileall /usr/data/klipper/klippy || exit $?
 
         echo "beacon-klipper" >> /usr/data/pellcorp.done
@@ -1867,9 +1870,12 @@ fi
 
     mkdir -p /usr/data/backups
     ln -sf /usr/data/backups /usr/data/printer_data/config/
+    ln -sf /usr/data/backups/ /root
 
     mkdir -p /usr/data/pellcorp-overrides
+    ln -sf /usr/data/pellcorp-overrides/ /root
     mkdir -p /usr/data/pellcorp-backups
+    ln -sf /usr/data/pellcorp-backups/ /root
 
     # we don't do these kinds of backups anymore
     rm /usr/data/printer_data/config/*.bkp 2> /dev/null
