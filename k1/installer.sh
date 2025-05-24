@@ -160,7 +160,7 @@ function update_klipper() {
       sync
   fi
   if [ -d /usr/data/beacon-klipper ]; then
-      /usr/data/pellcorp/tools/beacon-install.sh || return $?
+      /usr/data/pellcorp/k1/beacon-install.sh || return $?
       ln -sf /usr/data/beacon-klipper/ /root
       sync
   fi
