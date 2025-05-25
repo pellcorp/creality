@@ -10,13 +10,15 @@ elif [ "$MODEL" = "CR-K1 Max" ] || [ "$MODEL" = "K1 Max SE" ]; then
   model=k1m
 elif [ "$MODEL" = "F004" ]; then
   model=f004
+elif [ "$MODEL" = "F005" ]; then
+  model=f005
 else
   echo "This script is not supported for $MODEL!"
   exit 1
 fi
 
 # we only need to verify we are not trying to install on really old k1 firmware
-if [ "$MODEL" != "F004" ]; then
+if [ "$MODEL" != "F004" ] && [ "$MODEL" != "F005" ]; then
     # 6. prefix is the prefix I use for pre-rooted firmware
     ota_version=$(cat /etc/ota_info | grep ota_version | awk -F '=' '{print $2}' | sed 's/^6.//g' | tr -d '.')
     if [ -z "$ota_version" ] || [ $ota_version -lt 1335 ]; then
@@ -249,7 +251,7 @@ function disable_creality_services() {
 
         # remove the old gcode files provided by creality as they should not be printed
         if [ -d /usr/data/printer_data/gcodes/ ]; then
-            rm /usr/data/printer_data/gcodes/*.gcode
+            rm /usr/data/printer_data/gcodes/*.gcode 2> /dev/null
         fi
 
         # move rubbish to delete
@@ -680,8 +682,8 @@ function install_klipper() {
         
         cp /usr/data/pellcorp/k1/services/S55klipper_service /etc/init.d/ || exit $?
 
-        # currently no support for updating firmware on Ender 5 Max :-(
-        if [ "$MODEL" != "F004" ]; then
+        # currently no support for updating firmware on Ender 5 Max or Ender 3 V3 KE!
+        if [ "$MODEL" != "F004" ] && [ "$MODEL" != "F005" ]; then
             cp /usr/data/pellcorp/k1/services/S13mcu_update /etc/init.d/ || exit $?
         fi
 
@@ -690,13 +692,18 @@ function install_klipper() {
 
         # just make sure the baud is written
         $CONFIG_HELPER --replace-section-entry "mcu" "baud" 230400 || exit $?
+
         $CONFIG_HELPER --replace-section-entry "mcu nozzle_mcu" "baud" 230400 || exit $?
+
+        kinematics=$($CONFIG_HELPER --get-section-entry "printer" "kinematics")
 
         # for Ender 5 Max we need to disable sensorless homing, reversing homing order,don't move away and do not repeat homing
         # but we are still going to use homing override even though the max has physical endstops to make things a bit easier
         if [ "$MODEL" = "F004" ]; then
             $CONFIG_HELPER --file sensorless.cfg --replace-section-entry "gcode_macro _SENSORLESS_PARAMS" "variable_home_y_before_x" "True" || exit $?
-        else # by default we want to home twice when using sensorless
+        fi
+
+        if [ "$kinematics" = "corexy" ]; then # by default we want to home twice when using sensorless
             $CONFIG_HELPER --file sensorless.cfg --replace-section-entry "gcode_macro _SENSORLESS_PARAMS" "variable_repeat_home_xy" "True" || exit $?
         fi
 
@@ -712,27 +719,29 @@ function install_klipper() {
         cp /usr/data/pellcorp/k1/belts_calibration.cfg /usr/data/printer_data/config/ || exit $?
         $CONFIG_HELPER --add-include "belts_calibration.cfg" || exit $?
 
-        # ender 5 max
-       if [ "$MODEL" = "F004" ]; then
-            $CONFIG_HELPER --remove-section "Height_module2" || exit $?
-            $CONFIG_HELPER --remove-section "z_compensate" || exit $?
-            $CONFIG_HELPER --remove-section "output_pin aobi" || exit $?
-            $CONFIG_HELPER --remove-section "output_pin USB_EN" || exit $?
-            $CONFIG_HELPER --remove-section "hx711s" || exit $?
-            $CONFIG_HELPER --remove-section "filter" || exit $?
-            $CONFIG_HELPER --remove-section "dirzctl" || exit $?
-            $CONFIG_HELPER --remove-section "accel_chip_proxy" || exit $?
-
-            # for ender 5 max we can't use on board adxl and only beacon and cartotouch support
-            # configuring separate adxl
-            if [ "$probe" != "beacon" ] && [ "$probe" != "cartotouch" ]; then
-                $CONFIG_HELPER --remove-section "adxl345" || exit $?
-                $CONFIG_HELPER --remove-section "resonance_tester" || exit $?
-            fi
-        else
-            cp /usr/data/pellcorp/k1/files/beep /usr/bin/
+        # ender 5 max and ender 3 v3 KE
+        if [ "$MODEL" = "F004" ] || [ "$MODEL" = "F005" ]; then
+          # for ender 5 max we can't use on board adxl and only beacon and cartotouch support
+          # for Ender 3 V3 KE we have more work to do to support the nebula pad adxl in the future
+          if [ "$probe" != "beacon" ] && [ "$probe" != "cartotouch" ]; then
+              $CONFIG_HELPER --remove-section "adxl345" || exit $?
+              $CONFIG_HELPER --remove-section "resonance_tester" || exit $?
+          fi
         fi
 
+        # F004 and F005 already have the /usr/bin/beep command
+        if [ "$MODEL" != "F004" ] && [ "$MODEL" != "F005" ]; then
+          cp /usr/data/pellcorp/k1/files/beep /usr/bin/
+        fi
+
+        $CONFIG_HELPER --remove-section "Height_module2" || exit $?
+        $CONFIG_HELPER --remove-section "output_pin aobi" || exit $?
+        $CONFIG_HELPER --remove-section "output_pin USB_EN" || exit $?
+        $CONFIG_HELPER --remove-section "hx711s" || exit $?
+        $CONFIG_HELPER --remove-section "filter" || exit $?
+        $CONFIG_HELPER --remove-section "dirzctl" || exit $?
+        $CONFIG_HELPER --remove-section "accel_chip_proxy" || exit $?
+        $CONFIG_HELPER --remove-section "z_compensate" || exit $?
         $CONFIG_HELPER --remove-section "mcu leveling_mcu" || exit $?
         $CONFIG_HELPER --remove-section "bl24c16f" || exit $?
         $CONFIG_HELPER --remove-section "prtouch_v2" || exit $?
@@ -770,7 +779,12 @@ function install_klipper() {
         if [ "$probe" != "beacon" ] && [ "$probe" != "cartotouch" ] && [ "$probe" != "eddyng" ]; then
             $CONFIG_HELPER --file start_end.cfg --replace-section-entry "gcode_macro _START_END_PARAMS" "variable_start_print_bed_heating_move_bed_distance" "0" || exit $?
         fi
-        
+
+        if [ "$kinematics" = "cartesian" ] || [ "$MODEL" = "K1 SE" ]; then
+          # for cartesian no cool down necessary
+          $CONFIG_HELPER --file start_end.cfg --replace-section-entry "gcode_macro _START_END_PARAMS" "variable_end_print_cool_down" "False" || exit $?
+        fi
+
         ln -sf /usr/data/pellcorp/config/Line_Purge.cfg /usr/data/printer_data/config/ || exit $?
         $CONFIG_HELPER --add-include "Line_Purge.cfg" || exit $?
 
@@ -800,6 +814,10 @@ function install_klipper() {
             $CONFIG_HELPER --remove-section "output_pin col_pwm" || exit $?
             $CONFIG_HELPER --remove-section "output_pin col" || exit $?
             $CONFIG_HELPER --remove-section "heater_fan nozzle_fan" || exit $?
+        elif [ "$MODEL" = "F005" ]; then
+          $CONFIG_HELPER --remove-section "output_pin MainBoardFan" || exit $?
+          $CONFIG_HELPER --remove-section "heater_fan nozzle_fan" || exit $?
+          $CONFIG_HELPER --remove-section-entry "heater_bed" "temp_offset_flag" || exit $?
         fi
 
         $CONFIG_HELPER --remove-section "output_pin fan0" || exit $?
@@ -930,7 +948,7 @@ function install_guppyscreen() {
 
             asset_name=guppyscreen.tar.gz
             # Ender 5 Max has a smaller screen
-            if [ "$MODEL" = "F004" ]; then
+            if [ "$MODEL" = "F004" ] || [ "$MODEL" = "F005" ]; then
                 asset_name=guppyscreen-smallscreen.tar.gz
             fi
             curl -L "https://github.com/pellcorp/guppyscreen/releases/download/${GUPPY_BRANCH}/${asset_name}" -o /usr/data/guppyscreen.tar.gz

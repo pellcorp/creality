@@ -1,0 +1,26 @@
+# Default Ender 3 V3 KE
+
+-- bltouch.cfg
+[bltouch]
+sensor_pin:PC14
+control_pin: PC13
+y_offset: 27.0
+speed: 10
+
+[bed_mesh]
+speed: 350
+mesh_min: 5,10
+mesh_max: 215,215
+probe_count: 5,5
+horizontal_move_z: 8
+
+[screws_tilt_adjust]
+screw1: 27.5, -0.5
+screw2: 196.5, -0.5
+screw3: 196.5, 169.5
+screw4: 27.5, 169.5
+
+[axis_twist_compensation]
+calibrate_start_x: 30
+calibrate_end_x: 192
+calibrate_y: 105
