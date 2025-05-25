@@ -89,10 +89,12 @@ def replace_section_value(updater, section_name, key, value):
 
 # the section is everything in the square brackets
 def remove_section(updater, section):
-    if updater.has_section(section):
+    changed=False
+    # some creality config files repeat sections
+    while updater.has_section(section):
         updater.remove_section(section)
-        return True
-    return False
+        changed=True
+    return changed
 
 
 # special case currently for fan_control.cfg to add additional
