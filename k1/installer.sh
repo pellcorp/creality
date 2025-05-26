@@ -208,14 +208,6 @@ function disable_creality_services() {
         echo
         echo "INFO: Disabling some creality services ..."
 
-        # clean out the calibration data from the end of rhe printer.cfg file
-        sed -i '/#\*#.*/d' /usr/data/printer_data/config/printer.cfg
-        # uncomment default pid tuning
-        #sed -i 's/^#\s*control:\s*pid/control: pid/g' /usr/data/printer_data/config/printer.cfg
-        sed -i 's/^#\s*pid_[Kk]p:/pid_Kp:/g' /usr/data/printer_data/config/printer.cfg
-        sed -i 's/^#\s*pid_[Kk]i:/pid_Ki:/g' /usr/data/printer_data/config/printer.cfg
-        sed -i 's/^#\s*pid_[Kk]d:/pid_Kd:/g' /usr/data/printer_data/config/printer.cfg
-
         echo "INFO: If you reboot the printer before installing grumpyscreen, the screen will be blank - this is to be expected!"
         /etc/init.d/S99start_app stop > /dev/null 2>&1
         rm /etc/init.d/S99start_app
@@ -268,6 +260,43 @@ function disable_creality_services() {
         if [ -d /usr/data/creality/upgrade ]; then
           rm -rf /usr/data/creality/upgrade
         fi
+
+        echo "Fixing up default printer config ..."
+        cat /usr/data/printer_data/config/printer.cfg | grep '^#\*#' > /usr/data/printer.cfg.save_config
+
+        # clean out the calibration data from the end of the printer.cfg file
+        sed -i '/#\*#.*/d' /usr/data/printer_data/config/printer.cfg
+
+        extruder_pid=$($CONFIG_HELPER --file /usr/data/printer.cfg.save_config --get-section-entry "extruder" "control")
+        # we have save config overrides for extruder so we have to restore the defaults so that
+        if [ -n "$extruder_pid" ]; then
+            extruder_pid_kp=$($CONFIG_HELPER --file /usr/data/printer.cfg.save_config --get-section-entry "extruder" "pid_kp" --default-value "0")
+            extruder_pid_ki=$($CONFIG_HELPER --file /usr/data/printer.cfg.save_config --get-section-entry "extruder" "pid_ki" --default-value "0")
+            extruder_pid_kd=$($CONFIG_HELPER --file /usr/data/printer.cfg.save_config --get-section-entry "extruder" "pid_kd" --default-value "0")
+            $CONFIG_HELPER --replace-section-entry "extruder" "control" "pid"
+            $CONFIG_HELPER --replace-section-entry "extruder" "pid_kp" "$extruder_pid_kp"
+            $CONFIG_HELPER --replace-section-entry "extruder" "pid_ki" "$extruder_pid_ki"
+            $CONFIG_HELPER --replace-section-entry "extruder" "pid_kd" "$extruder_pid_kd"
+        fi
+
+        heater_pid=$($CONFIG_HELPER --file /usr/data/printer.cfg.save_config --get-section-entry "heater_bed" "control")
+        if [ -n "$heater_pid" ]; then
+          heater_pid_kp=$($CONFIG_HELPER --file /usr/data/printer.cfg.save_config --get-section-entry "heater_bed" "pid_kp" --default-value "0")
+          heater_pid_ki=$($CONFIG_HELPER --file /usr/data/printer.cfg.save_config --get-section-entry "extruder" "pid_ki" --default-value "0")
+          heater_pid_kd=$($CONFIG_HELPER --file /usr/data/printer.cfg.save_config --get-section-entry "extruder" "pid_kd" --default-value "0")
+          $CONFIG_HELPER --replace-section-entry "heater_bed" "control" "pid"
+          $CONFIG_HELPER --replace-section-entry "heater_bed" "pid_kp" "$heater_pid_kp"
+          $CONFIG_HELPER --replace-section-entry "heater_bed" "pid_ki" "$heater_pid_ki"
+          $CONFIG_HELPER --replace-section-entry "heater_bed" "pid_kd" "$heater_pid_kd"
+        fi
+
+        # clean up the extra commented out crap
+        sed -i '/^#\s*control:/d' /usr/data/printer_data/config/printer.cfg
+        sed -i '/^#\s*pid_[Kk]p:/d' /usr/data/printer_data/config/printer.cfg
+        sed -i '/^#\s*pid_[Kk]i:/d' /usr/data/printer_data/config/printer.cfg
+        sed -i '/^#\s*pid_[Kk]d:/d' /usr/data/printer_data/config/printer.cfg
+
+        rm /usr/data/printer.cfg.save_config
     fi
 
     # this is mostly backwards compatible
@@ -647,7 +676,7 @@ function install_klipper() {
         ln -sf /usr/data/klipper/ /root
 
         # add a USB link to the gcodes directory so that grumpyscreen can print from USB
-        ln -sf /tmp/udisk/sda1 /root/printer_data/gcodes/usb
+        ln -sf /tmp/udisk/sda1 /usr/data/printer_data/gcodes/usb
         
         cp /usr/data/pellcorp/k1/services/S55klipper_service /etc/init.d/ || exit $?
 
@@ -1404,11 +1433,6 @@ function setup_btteddy() {
         cp /usr/data/pellcorp/config/btteddy_macro.cfg /usr/data/printer_data/config/ || exit $?
         $CONFIG_HELPER --add-include "btteddy_macro.cfg" || exit $?
 
-        # K1 SE has no chamber fan
-        if [ "$MODEL" = "K1 SE" ]; then
-            sed -i '/SET_FAN_SPEED FAN=chamber.*/d' /usr/data/printer_data/config/btteddy_macro.cfg
-        fi
-
         $CONFIG_HELPER --remove-section "probe_eddy_current btt_eddy" || exit $?
         $CONFIG_HELPER --add-section "probe_eddy_current btt_eddy" || exit $?
 
@@ -1925,11 +1949,11 @@ fi
         echo "INFO: Configuration overrides will not be saved or applied"
     fi
 
+    install_config_updater
+
     # we want to disable creality services at the very beginning otherwise shit gets weird
     # if the crazy creality S55klipper_service is still copying files
     disable_creality_services
-
-    install_config_updater
 
     # no point doing this if its a new installation
     if [ -f /usr/data/pellcorp.done ]; then

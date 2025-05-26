@@ -255,14 +255,18 @@ def main():
             for line in file:
                 if "SAVE_CONFIG" in line or "DO NOT EDIT" in line:
                     line = line.replace("#*#", "#")
+                elif line == "#*#":
+                    line = ""
                 else:
+                    line = line.replace("#*# ", "")
                     line = line.replace("#*#", "")
+                    line = line.replace(" = ", ": ")
                 lines += line
             updater.read_string(lines)
     else:
         with open(config_file, 'r') as file:
             updater.read_file(file)
-    
+
     printer_cfg = 'printer.cfg' == os.path.basename(config_file)
     moonraker_conf = 'moonraker.conf' == os.path.basename(config_file)
     fan_control = 'fan_control.cfg' == os.path.basename(config_file)
