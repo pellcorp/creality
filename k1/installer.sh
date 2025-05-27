@@ -239,7 +239,9 @@ function disable_creality_services() {
 
         if [ -f /etc/init.d/S57klipper_mcu ]; then
             /etc/init.d/S57klipper_mcu stop > /dev/null 2>&1
-            rm /etc/init.d/S57klipper_mcu
+            if [ "$MODEL" != "F005" ]; then
+              rm /etc/init.d/S57klipper_mcu
+            fi
         fi
 
         # the log main process takes up so much memory a lot of it swapped, killing this process might make the
@@ -305,9 +307,10 @@ function disable_creality_services() {
     if [ -f /etc/init.d/S57klipper_mcu ]; then
         /etc/init.d/S55klipper_service stop > /dev/null 2>&1
         /etc/init.d/S57klipper_mcu stop > /dev/null 2>&1
-        rm /etc/init.d/S57klipper_mcu
+        if [ "$MODEL" != "F005" ]; then
+          rm /etc/init.d/S57klipper_mcu
+        fi
     fi
-
     sync
 }
 
@@ -649,6 +652,11 @@ function install_klipper() {
             klipper_status=$?
             cd - > /dev/null
 
+            # force update
+            if [ ! -f /usr/data/klipper/fw/K1/klipper_host_mcu ]; then
+              klipper_status=1
+            fi
+
             # force klipper update to get reverted kinematic position feature
             if [ "$remote_repo" = "klipper" ] && [ $klipper_status -ne 0 ] && [ "$branch_ref" = "master" ]; then
                 echo "INFO: Forcing update of klipper to latest master"
@@ -673,6 +681,8 @@ function install_klipper() {
         /usr/share/klippy-env/bin/python3 -m compileall /usr/data/klipper/klippy || exit $?
 
         ln -sf /usr/data/klipper /usr/share/ || exit $?
+
+        ln -sf /usr/data/klipper/fw/K1/klipper_host_mcu /usr/bin/klipper_mcu
 
         # for scripts like ~/klipper/scripts, a soft link makes things a little bit easier
         ln -sf /usr/data/klipper/ /root
@@ -713,14 +723,25 @@ function install_klipper() {
         cp /usr/data/pellcorp/config/useful_macros.cfg /usr/data/printer_data/config/ || exit $?
         $CONFIG_HELPER --add-include "useful_macros.cfg" || exit $?
 
-        # the klipper_mcu is not even used, so just get rid of it
-        $CONFIG_HELPER --remove-section "mcu rpi" || exit $?
+        if [ "$MODEL" != "F005" ]; then
+          # the klipper_mcu is not even used, so just get rid of it
+          $CONFIG_HELPER --remove-section "mcu rpi" || exit $?
+        fi
 
         cp /usr/data/pellcorp/k1/belts_calibration.cfg /usr/data/printer_data/config/ || exit $?
         $CONFIG_HELPER --add-include "belts_calibration.cfg" || exit $?
 
-        # ender 5 max and ender 3 v3 KE
-        if [ "$MODEL" = "F004" ] || [ "$MODEL" = "F005" ]; then
+        # ender 5 max does not support ADXL in the toolhead and bed because of klipper
+        # version incompatibility, for Ender 3 V3 KE we are hoping to use the nebula
+        # ADXL adaptors and that requires klipper mcu, so if the klipper mcu is
+        # still enabled leave the adxl config intact
+        remove_adxl=false
+        if [ "$MODEL" = "F004" ]; then
+          remove_adxl=true
+        elif [ "$MODEL" = "F005" ] && [ ! -f /etc/init.d/S57klipper_mcu ]; then
+          remove_adxl=true
+        fi
+        if [ "$remove_adxl" = "true" ]; then
           # for ender 5 max we can't use on board adxl and only beacon and cartotouch support
           # for Ender 3 V3 KE we have more work to do to support the nebula pad adxl in the future
           if [ "$probe" != "beacon" ] && [ "$probe" != "cartotouch" ]; then
@@ -2162,6 +2183,7 @@ fi
     if [ $fix_custom_config -ne 0 ] || [ $fixup_client_variables_config -ne 0 ] || [ $apply_overrides -ne 0 ] || [ $apply_mount_overrides -ne 0 ] || [ $install_cartographer_klipper -ne 0 ] || [ $install_beacon_klipper -ne 0 ] || [ $install_klipper -ne 0 ] || [ $setup_probe -ne 0 ] || [ $setup_probe_specific -ne 0 ]; then
         echo "INFO: Restarting Klipper ..."
         sudo systemctl restart klipper
+        sudo systemctl restart klipper_mcu
     fi
 
     if [ $apply_overrides -ne 0 ] || [ $install_guppyscreen -ne 0 ]; then
