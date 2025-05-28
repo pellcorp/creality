@@ -719,23 +719,8 @@ function install_klipper() {
         cp /usr/data/pellcorp/k1/belts_calibration.cfg /usr/data/printer_data/config/ || exit $?
         $CONFIG_HELPER --add-include "belts_calibration.cfg" || exit $?
 
-<<<<<<< Updated upstream
         # ender 5 max and ender 3 v3 KE
         if [ "$MODEL" = "F004" ] || [ "$MODEL" = "F005" ]; then
-=======
-        # ender 5 max does not support ADXL in the toolhead and bed because of klipper
-        # version incompatibility, for Ender 3 V3 KE we are hoping to use the nebula
-        # ADXL adaptors and that requires klipper mcu, so if the klipper mcu is
-        # still enabled leave the adxl config intact
-        remove_adxl=false
-        if [ "$MODEL" = "F004" ]; then
-          remove_adxl=true
-        elif [ "$MODEL" = "F005" ] && [ ! -f /etc/init.d/S57klipper_mcu ]; then
-          remove_adxl=true
-        fi
-
-        if [ "$remove_adxl" = "true" ]; then
->>>>>>> Stashed changes
           # for ender 5 max we can't use on board adxl and only beacon and cartotouch support
           # for Ender 3 V3 KE we have more work to do to support the nebula pad adxl in the future
           if [ "$probe" != "beacon" ] && [ "$probe" != "cartotouch" ]; then
