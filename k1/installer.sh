@@ -1,7 +1,7 @@
 #!/bin/sh
 
 # this allows us to make changes to Simple AF and grumpyscreen in parallel
-GRUMPYSCREEN_TIMESTAMP=1748382600
+GRUMPYSCREEN_TIMESTAMP=1748474300
 
 MODEL=$(/usr/bin/get_sn_mac.sh model)
 if [ "$MODEL" = "CR-K1" ] || [ "$MODEL" = "K1C" ] || [ "$MODEL" = "K1 SE" ]; then
@@ -1349,14 +1349,16 @@ function setup_cartotouch() {
 
         # Ender 5 Max we don't have firmware for it, so need to configure cartographer instead for adxl
         if [ "$MODEL" = "F004" ]; then
-            $CONFIG_HELPER --replace-section-entry "adxl345" "cs_pin" "scanner:PA3" || exit $?
-            $CONFIG_HELPER --replace-section-entry "adxl345" "spi_bus" "spi1" || exit $?
-            $CONFIG_HELPER --replace-section-entry "adxl345" "axes_map" "x,y,z" || exit $?
-            $CONFIG_HELPER --remove-section-entry "adxl345" "spi_speed" || exit $?
-            $CONFIG_HELPER --remove-section-entry "adxl345" "spi_software_sclk_pin" || exit $?
-            $CONFIG_HELPER --remove-section-entry "adxl345" "spi_software_mosi_pin" || exit $?
-            $CONFIG_HELPER --remove-section-entry "adxl345" "spi_software_miso_pin" || exit $?
-            $CONFIG_HELPER --replace-section-entry "resonance_tester" "accel_chip" "adxl345" || exit $?
+          # new versions of Ender 5 Max firmware added accel_chip_proxy to replace adxl
+          $CONFIG_HELPER --add-section "adxl345"
+          $CONFIG_HELPER --replace-section-entry "adxl345" "cs_pin" "scanner:PA3" || exit $?
+          $CONFIG_HELPER --replace-section-entry "adxl345" "spi_bus" "spi1" || exit $?
+          $CONFIG_HELPER --replace-section-entry "adxl345" "axes_map" "x,y,z" || exit $?
+          $CONFIG_HELPER --remove-section-entry "adxl345" "spi_speed" || exit $?
+          $CONFIG_HELPER --remove-section-entry "adxl345" "spi_software_sclk_pin" || exit $?
+          $CONFIG_HELPER --remove-section-entry "adxl345" "spi_software_mosi_pin" || exit $?
+          $CONFIG_HELPER --remove-section-entry "adxl345" "spi_software_miso_pin" || exit $?
+          $CONFIG_HELPER --replace-section-entry "resonance_tester" "accel_chip" "adxl345" || exit $?
         fi
 
         echo "cartotouch-probe" >> /usr/data/pellcorp.done
