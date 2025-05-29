@@ -62,7 +62,7 @@ setup_git_repo() {
 override_guppyscreen() {
     if [ -f $BASEDIR/pellcorp-backups/guppyscreen.json ] && [ -f $BASEDIR/guppyscreen/guppyscreen.json ]; then
         [ -f $BASEDIR/pellcorp-overrides/guppyscreen.json ] && rm $BASEDIR/pellcorp-overrides/guppyscreen.json
-        for entry in display_brightness invert_z_icon display_sleep_sec theme touch_calibration_coeff; do
+        for entry in display_rotate display_brightness invert_z_icon display_sleep_sec theme touch_calibration_coeff; do
             stock_value=$(jq -cr ".$entry" $BASEDIR/pellcorp-backups/guppyscreen.json)
             new_value=$(jq -cr ".$entry" $BASEDIR/guppyscreen/guppyscreen.json)
             # you know what its not an actual json file its just the properties we support updating

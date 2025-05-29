@@ -1,7 +1,7 @@
 #!/bin/sh
 
 # this allows us to make changes to Simple AF and grumpyscreen in parallel
-GRUMPYSCREEN_TIMESTAMP=1748514700
+GRUMPYSCREEN_TIMESTAMP=1748556700
 
 MODEL=$(/usr/bin/get_sn_mac.sh model)
 if [ "$MODEL" = "CR-K1" ] || [ "$MODEL" = "K1C" ] || [ "$MODEL" = "K1 SE" ]; then
@@ -688,7 +688,9 @@ function install_klipper() {
         ln -sf /usr/data/klipper/ /root
 
         # add a USB link to the gcodes directory so that grumpyscreen can print from USB
-        ln -sf /tmp/udisk/sda1 /usr/data/printer_data/gcodes/usb
+        if [ ! -L /usr/data/printer_data/gcodes/usb ]; then
+          ln -sf /tmp/udisk/sda1 /usr/data/printer_data/gcodes/usb
+        fi
         
         cp /usr/data/pellcorp/k1/services/S55klipper_service /etc/init.d/ || exit $?
 
@@ -984,6 +986,10 @@ function install_guppyscreen() {
             else
                 echo "ERROR: Grumpyscreen (branch ${GUPPY_BRANCH}) could not be downloaded!"
                 return 0
+            fi
+
+            if [ "$MODEL" = "F005" ]; then
+              /usr/data/pellcorp/tools/rotate-grumpyscreen.sh 0
             fi
         fi
 

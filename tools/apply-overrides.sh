@@ -8,7 +8,7 @@ CONFIG_HELPER="$BASEDIR/pellcorp/tools/config-helper.py"
 
 apply_guppyscreen_overrides() {
     command=""
-    for entry in display_brightness invert_z_icon display_sleep_sec theme touch_calibration_coeff; do
+    for entry in display_rotate display_brightness invert_z_icon display_sleep_sec theme touch_calibration_coeff; do
       value=$(cat $BASEDIR/pellcorp-overrides/guppyscreen.json | grep "${entry}=" | awk -F '=' '{print $2}')
       if [ -n "$value" ]; then
           if [ -n "$command" ]; then
