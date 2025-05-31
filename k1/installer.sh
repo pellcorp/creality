@@ -771,7 +771,9 @@ function install_klipper() {
         $CONFIG_HELPER --remove-section "output_pin power" || exit $?
         $CONFIG_HELPER --remove-section-entry "printer" "square_corner_max_velocity" || exit $?
         $CONFIG_HELPER --remove-section-entry "printer" "max_accel_to_decel" || exit $?
-
+        $CONFIG_HELPER --remove-section-entry "stepper_y" "gcode_position_max" || exit $?
+        $CONFIG_HELPER --remove-section "filament_switch_sensor filament_sensor_2" || exit $?
+        
         # https://www.klipper3d.org/TMC_Drivers.html#prefer-to-not-specify-a-hold_current
         $CONFIG_HELPER --remove-section-entry "tmc2209 stepper_x" "hold_current" || exit $?
         $CONFIG_HELPER --remove-section-entry "tmc2209 stepper_y" "hold_current" || exit $?
@@ -779,6 +781,7 @@ function install_klipper() {
         $CONFIG_HELPER --remove-include "printer_params.cfg" || exit $?
         $CONFIG_HELPER --remove-include "gcode_macro.cfg" || exit $?
         $CONFIG_HELPER --remove-include "custom_gcode.cfg" || exit $?
+        $CONFIG_HELPER --remove-include "box.cfg" || exit $?
 
         if [ -f /usr/data/printer_data/config/custom_gcode.cfg ]; then
             rm /usr/data/printer_data/config/custom_gcode.cfg
