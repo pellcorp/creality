@@ -39,6 +39,7 @@ factory_reset() {
     /bin/sync >/dev/null 2>&1
     /usr/bin/find /usr/data/creality/userdata \
         -path '/usr/data/creality/userdata/config/system_config.json' -prune -o \
+        -path '/usr/data/creality/userdata/config/user_data_not_deleted.json' -prune -o \
         -path '/usr/data/creality/userdata/user_agree_root' -prune -o \
         -path '/usr/data/creality/userdata' -o -type d -o -print \
         -exec rm {} \; >/dev/null 2>&1
