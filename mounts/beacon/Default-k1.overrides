@@ -6,7 +6,7 @@ x_offset: 20.0
 y_offset: 0.0
 
 [bed_mesh]
-mesh_min: 30,25
+mesh_min: 40,25
 mesh_max: 220,200
 
 [screws_tilt_adjust]
