@@ -88,8 +88,9 @@ def main():
                 for key in new_section.keys():
                     value = new_section.get(key, None)
                     if len(value.lines) > 1:
+                        lines = value.lines
                         # get rid of additional newlines at end of multiline string
-                        lines = [s.rstrip('\n') for s in value.lines]
+                        lines[-1] = lines[-1].rstrip()
                         # we want a multi-line value to always start with a new line
                         lines[0] = '\n'
                         overrides[section_name][key] = ''
