@@ -1,0 +1,18 @@
+# https://www.printables.com/model/1002777-cr-touch-to-btt-eddy-adapter-bracket
+
+-- eddyng.cfg
+[probe_eddy_ng btt_eddy]
+x_offset: 0.0
+y_offset: 27.0
+
+[bed_mesh]
+mesh_min: 5,10
+mesh_max: 215,215
+
+[screws_tilt_adjust]
+__action__: DELETED
+
+[axis_twist_compensation]
+calibrate_start_x: 23
+calibrate_end_x: 202
+calibrate_y: 105
