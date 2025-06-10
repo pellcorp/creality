@@ -1,0 +1,17 @@
+# https://www.printables.com/model/1037606-cartographer-3d-right-angle-k1-series-mount
+
+-- beacon.cfg
+[beacon]
+y_offset: 24.0
+
+[bed_mesh]
+mesh_min: 15,15
+mesh_max: 210,210
+
+[screws_tilt_adjust]
+__action__: DELETED
+
+[axis_twist_compensation]
+calibrate_start_x: 30
+calibrate_end_x: 210
+calibrate_y: 105
