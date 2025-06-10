@@ -21,6 +21,8 @@ if [ -f /usr/data/backups/creality-backup.tar.gz ]; then
 
             rm /usr/share/klipper
             rm -rf /overlay/upper/usr/share/klipper
+            rm /usr/bin/klipper_mcu
+            rm /overlay/upper/usr/bin/klipper_mcu
             rm /overlay/upper/etc/init.d/S57klipper_mcu
             rm /overlay/upper/etc/init.d/S55klipper_service
             rm /overlay/upper/etc/init.d/S99start_app
@@ -80,6 +82,7 @@ if [ -f /usr/data/backups/creality-backup.tar.gz ]; then
             rm -rf /usr/data/printer_data/config/*.conf
             cp /usr/data/pellcorp/k1/services/S55klipper_service /etc/init.d/
             cp /usr/data/pellcorp/k1/services/S99guppyscreen /etc/init.d/
+            ln -sf /usr/data/klipper/fw/K1/klipper_host_mcu /usr/bin/klipper_mcu
             /usr/data/pellcorp/tools/backups.sh --restore backup-latest.tar.gz
         else
             echo "WARN: Stock is not active"
