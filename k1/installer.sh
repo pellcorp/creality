@@ -13,7 +13,7 @@ elif [ "$MODEL" = "F004" ]; then
 elif [ "$MODEL" = "F005" ]; then
   model=f005
 else
-  echo "This script is not supported for $MODEL!"
+  echo "FATAL: This script is not supported for $MODEL!"
   exit 1
 fi
 
@@ -22,21 +22,25 @@ if [ "$MODEL" != "F004" ] && [ "$MODEL" != "F005" ]; then
     # 6. prefix is the prefix I use for pre-rooted firmware
     ota_version=$(cat /etc/ota_info | grep ota_version | awk -F '=' '{print $2}' | sed 's/^6.//g' | tr -d '.')
     if [ -z "$ota_version" ] || [ $ota_version -lt 1335 ]; then
-      echo "ERROR: Firmware is too old, you must update to at least version 1.3.3.5 of Creality OS"
+      echo "FATAL: Firmware is too old, you must update to at least version 1.3.3.5 of Creality OS"
       echo "https://www.creality.com/pages/download-k1-flagship"
       exit 1
     fi
 fi
 
 if [ -d /usr/data/helper-script ] || [ -f /usr/data/fluidd.sh ] || [ -f /usr/data/mainsail.sh ]; then
-    echo "You must factory reset the printer before installing Simple AF!"
+    if [ -f /usr/data/pellcorp.done ]; then
+        echo "FATAL: You have broken your Simple AF install by corrupting it with Helper Script!"
+    else
+        echo "FATAL: You must factory reset the printer before installing Simple AF!"
+    fi
     exit 1
 fi
 
 # everything else in the script assumes its cloned to /usr/data/pellcorp
 # so we must verify this or shit goes wrong
 if [ "$(dirname $(readlink -f $0))" != "/usr/data/pellcorp/k1" ]; then
-  >&2 echo "ERROR: This git repo must be cloned to /usr/data/pellcorp"
+  >&2 echo "FATAL: This git repo must be cloned to /usr/data/pellcorp"
   exit 1
 fi
 
