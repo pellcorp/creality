@@ -843,6 +843,7 @@ function install_klipper() {
         elif [ "$MODEL" = "F005" ]; then
           $CONFIG_HELPER --remove-section "output_pin MainBoardFan" || exit $?
           $CONFIG_HELPER --remove-section "heater_fan nozzle_fan" || exit $?
+          $CONFIG_HELPER --remove-section "bltouch" || exit $?
           $CONFIG_HELPER --remove-section-entry "heater_bed" "temp_offset_flag" || exit $?
         fi
 
