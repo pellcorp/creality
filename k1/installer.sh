@@ -1846,7 +1846,9 @@ fi
         if [ "$mode" = "install" ]; then
             echo
             echo "ERROR: Installation has already completed"
-            if [ "$PELLCORP_UPDATED_SHA" != "$PELLCORP_GIT_SHA" ]; then
+            if [ "$probe_switch" = "true" ]; then
+              echo "Perhaps you meant to execute an --update instead!"
+            elif [ "$PELLCORP_UPDATED_SHA" != "$PELLCORP_GIT_SHA" ]; then
               echo "Perhaps you meant to execute an --update or a --reinstall instead!"
               echo "  https://pellcorp.github.io/creality-wiki/updating/#updating"
               echo "  https://pellcorp.github.io/creality-wiki/updating/#reinstalling"
