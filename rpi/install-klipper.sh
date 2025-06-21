@@ -196,6 +196,9 @@ if [ $? -ne 0 ]; then
   else
     echo
     echo "WARN: No filament sensor configured skipping on filament runout configuration"
+
+    # we need to disable the enable and disable of filament sensor where it does not exist
+    $CONFIG_HELPER --file start_end.cfg --replace-section-entry "_START_END_PARAMS" "variable_enable_disable_filament_sensor" "False" || exit $?
   fi
 
   echo "klipper" >> $BASEDIR/pellcorp.done
