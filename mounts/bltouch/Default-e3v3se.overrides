@@ -3,7 +3,7 @@
 -- bltouch.cfg
 [bltouch]
 x_offset: -23.0
-# y_offset: -14.5
+y_offset: -14.5
 
 [bed_mesh]
 mesh_min: 10,10
