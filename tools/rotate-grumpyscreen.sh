@@ -18,7 +18,7 @@ if [ -f $BASEDIR/guppyscreen/guppyscreen.json ]; then
       exit 1
     fi
   else
-    echo "ERROR: Invalid rotation value, must be between 1 an 3"
+    echo "ERROR: Invalid rotation value, must be between 0 an 3"
     exit 1
   fi
 else
