@@ -5,6 +5,7 @@
 sensor_pin:PC14
 control_pin: PC13
 y_offset: 27.0
+x_offset: 0
 speed: 10
 
 [bed_mesh]
