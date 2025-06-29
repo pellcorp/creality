@@ -71,7 +71,7 @@ if [ "$mode" = "create" ]; then
 
     cd $BASEDIR
     CFG_ARG=''
-    if ls printer_data/config/*.conf > /dev/null 2>&1; then
+    if ls printer_data/config/*.cfg > /dev/null 2>&1; then
         CFG_ARG='printer_data/config/*.cfg'
     fi
 
