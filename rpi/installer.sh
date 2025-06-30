@@ -503,9 +503,6 @@ function setup_cartotouch() {
             $CONFIG_HELPER --replace-section-entry "scanner" "mode" "touch" || exit $?
         fi
 
-        cp $BASEDIR/pellcorp/config/cartographer_calibrate.cfg $BASEDIR/printer_data/config/ || exit $?
-        $CONFIG_HELPER --add-include "cartographer_calibrate.cfg" || exit $?
-
         echo "cartotouch-probe" >> $BASEDIR/pellcorp.done
         sync
         return 1
@@ -619,10 +616,6 @@ function setup_btteddy() {
         # for rpi we don't need to turn the camera off
         $CONFIG_HELPER --file btteddy_macro.cfg --replace-section-entry "gcode_macro BTTEDDY_CURRENT_CALIBRATE" "variable_stop_start_camera" "False" || exit $?
         $CONFIG_HELPER --file btteddy_macro.cfg --replace-section-entry "gcode_macro BTTEDDY_TEMPERATURE_PROBE_CALIBRATE" "variable_stop_start_camera" "False" || exit $?
-
-# these guided macros are out of date, removing them temporarily to avoid confusion
-#        cp $BASEDIR/pellcorp/config/btteddy_calibrate.cfg $BASEDIR/printer_data/config/ || exit $?
-#        $CONFIG_HELPER --add-include "btteddy_calibrate.cfg" || exit $?
 
         echo "btteddy-probe" >> $BASEDIR/pellcorp.done
         sync

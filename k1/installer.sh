@@ -1358,9 +1358,6 @@ function setup_cartotouch() {
             $CONFIG_HELPER --replace-section-entry "scanner" "mode" "touch" || exit $?
         fi
 
-        cp /usr/data/pellcorp/config/cartographer_calibrate.cfg /usr/data/printer_data/config/ || exit $?
-        $CONFIG_HELPER --add-include "cartographer_calibrate.cfg" || exit $?
-
         # Ender 5 Max we don't have firmware for it, so need to configure cartographer instead for adxl
         if [ "$MODEL" = "F004" ]; then
           # new versions of Ender 5 Max firmware added accel_chip_proxy to replace adxl
@@ -1491,10 +1488,6 @@ function setup_btteddy() {
 
         $CONFIG_HELPER --remove-section "probe_eddy_current btt_eddy" || exit $?
         $CONFIG_HELPER --add-section "probe_eddy_current btt_eddy" || exit $?
-
-# these guided macros are out of date, removing them temporarily to avoid confusion
-#        cp /usr/data/pellcorp/config/btteddy_calibrate.cfg /usr/data/printer_data/config/ || exit $?
-#        $CONFIG_HELPER --add-include "btteddy_calibrate.cfg" || exit $?
 
         echo "btteddy-probe" >> /usr/data/pellcorp.done
         sync
