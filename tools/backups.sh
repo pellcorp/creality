@@ -133,10 +133,6 @@ elif [ "$mode" = "restore" ] && [ -f $BASEDIR/backups/$restore ]; then
     # making matters much much worse.
     backup_files=$(tar -ztvf $BASEDIR/backups/$restore)
     valid_backup=true
-    if [ $(echo "$backup_files" | grep "pellcorp-overrides/" | wc -l) -eq 0 ]; then
-        echo "ERROR: This backup cannot be used to do a full restoration - it is missing pellcorp-overrides/"
-        valid_backup=false
-    fi
     if [ $(echo "$backup_files" | grep "pellcorp-backups/" | wc -l) -eq 0 ]; then
         echo "ERROR: This backup cannot be used to do a full restoration - it is missing pellcorp-backups/"
         valid_backup=false
@@ -170,6 +166,9 @@ elif [ "$mode" = "restore" ] && [ -f $BASEDIR/backups/$restore ]; then
     echo "Restoring $restore ..."
     tar -zxf $BASEDIR/backups/$restore -C $BASEDIR
     sync
+
+    # make sure an empty directory gets created for a restoration
+    mkdir -p $BASEDIR/pellcorp-overrides
 
     echo "Restarting Klippper ..."
     sudo systemctl restart klipper
