@@ -16,6 +16,10 @@ if [ -f /usr/data/backups/creality-backup.tar.gz ]; then
                 /etc/init.d/S55klipper_service stop 2> /dev/null
             fi
 
+            # save latest overrides before switching
+            echo "Saving latest config overrides ..."
+            /usr/data/pellcorp/tools/config-overrides.sh
+
             # we want a backup of the latest simple af config so we can quickly switch back
             TIMESTAMP=latest /usr/data/pellcorp/tools/backups.sh --create
 
