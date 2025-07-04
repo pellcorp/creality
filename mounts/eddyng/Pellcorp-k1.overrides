@@ -13,8 +13,8 @@ mesh_max: 205, 210
 __action__: DELETED
 
 [axis_twist_compensation]
-calibrate_start_x: 30
-calibrate_end_x: 210
+calibrate_start_x: 10
+calibrate_end_x: 200
 calibrate_y: 105
 
 -- printer.cfg
