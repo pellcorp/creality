@@ -10,6 +10,9 @@ fi
 sudo cp $BASEDIR/pellcorp/rpi/nginx/fluidd /etc/nginx/sites-enabled/ || exit $?
 sudo cp $BASEDIR/pellcorp/rpi/nginx/mainsail /etc/nginx/sites-enabled/ || exit $?
 
+sudo sed -i "s:\$HOME:$BASEDIR:g" /etc/nginx/sites-enabled/fluidd
+sudo sed -i "s:\$HOME:$BASEDIR:g" /etc/nginx/sites-enabled/mainsail
+
 if [ "$1" = "mainsail" ]; then
   sudo sed -i 's/.*listen 80 default_server;/    #listen 80 default_server;/g' /etc/nginx/sites-enabled/fluidd || exit $?
   sudo sed -i 's/.*#listen 80 default_server;/    listen 80 default_server;/g' /etc/nginx/sites-enabled/mainsail || exit $?
