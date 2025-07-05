@@ -116,12 +116,6 @@ if [ $? -ne 0 ]; then
   sudo sed -i "s:\$HOME:$BASEDIR:g" $BASEDIR/printer_data/config/internal_macros.cfg
   $CONFIG_HELPER --add-include "internal_macros.cfg" || exit $?
 
-  # need to fake a beep to avoid a shell command error where a beep does not exist
-  if [ ! -f /usr/bin/beep ]; then
-    sudo touch /usr/bin/beep
-    sudo chmod 777 /usr/bin/beep
-  fi
-
   cp $BASEDIR/pellcorp/config/useful_macros.cfg $BASEDIR/printer_data/config/ || exit $?
   $CONFIG_HELPER --add-include "useful_macros.cfg" || exit $?
 
