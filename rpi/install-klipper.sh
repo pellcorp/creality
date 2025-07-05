@@ -193,6 +193,9 @@ if [ $? -ne 0 ]; then
 
   if $CONFIG_HELPER --section-exists "filament_switch_sensor filament_sensor"; then
     $CONFIG_HELPER --replace-section-entry "filament_switch_sensor filament_sensor" "runout_gcode" "_ON_FILAMENT_RUNOUT" || exit $?
+    # the _ON_FILAMENT_RUNOUT macro is going to be in control of filament runout now and avoid triggering another
+    # runout event if already paused
+    $CONFIG_HELPER --replace-section-entry "filament_switch_sensor filament_sensor" "pause_on_runout" "false" || exit $?
   else
     echo
     echo "WARN: No filament sensor configured skipping on filament runout configuration"
