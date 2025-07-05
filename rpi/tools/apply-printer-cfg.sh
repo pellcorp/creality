@@ -27,7 +27,7 @@ function verify_printer_file() {
   valid_fans=false
   if $CONFIG_HELPER --file $printer_cfg --section-exists "fan"; then
     valid_fans=true
-  elif $CONFIG_HELPER --file $printer_cfg --section-exists "fan_generic"; then
+  elif $CONFIG_HELPER --file $printer_cfg --section-exists "fan_generic part"; then
     valid_fans=true
   fi
   if [ "$valid_fans" != "true" ]; then
