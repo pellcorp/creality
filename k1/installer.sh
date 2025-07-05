@@ -915,7 +915,12 @@ function install_klipper() {
         $CONFIG_HELPER --remove-section "display_status" || exit $?
         $CONFIG_HELPER --remove-section "virtual_sdcard" || exit $?
 
-        $CONFIG_HELPER --replace-section-entry "filament_switch_sensor filament_sensor" "runout_gcode" "_ON_FILAMENT_RUNOUT" || exit $?
+        if $CONFIG_HELPER --section-exists "filament_switch_sensor filament_sensor"; then
+          $CONFIG_HELPER --replace-section-entry "filament_switch_sensor filament_sensor" "runout_gcode" "_ON_FILAMENT_RUNOUT" || exit $?
+        else
+          echo
+          echo "WARN: No filament sensor configured skipping on filament runout configuration"
+        fi
 
         echo "klipper" >> /usr/data/pellcorp.done
         sync
