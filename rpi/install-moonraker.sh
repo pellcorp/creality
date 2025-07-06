@@ -35,6 +35,7 @@ if [ $? -ne 0 ]; then
   ln -sf $BASEDIR/pellcorp/rpi/moonraker.asvc $BASEDIR/printer_data/ || exit $?
 
   if [ ! -d $BASEDIR/moonraker/.git ]; then
+    echo
     echo "INFO: Installing moonraker ..."
 
     [ -d $BASEDIR/moonraker ] && rm -rf $BASEDIR/moonraker
