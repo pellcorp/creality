@@ -67,7 +67,13 @@ else
 fi
 
 cd $BASEDIR
-python3 -m zipfile -c $BASEDIR/support.zip support.log pellcorp-overrides/ pellcorp-backups/ printer_data/config/ printer_data/logs/installer-*.log printer_data/logs/klippy.log printer_data/logs/moonraker.log printer_data/logs/guppyscreen.log $TMPDIR/messages.log 2> /dev/null
+
+latest_klippy_log=$(ls -Art printer_data/logs/klippy.log.* 2>/dev/null | tail -n 1)
+if [ -z "$latest_klippy_log" ] || [ ! -f $latest_klippy_log ]; then
+  unset latest_klippy_log
+fi
+
+python3 -m zipfile -c $BASEDIR/support.zip support.log pellcorp-overrides/ pellcorp-backups/ printer_data/config/ printer_data/logs/installer-*.log printer_data/logs/klippy.log $latest_klippy_log printer_data/logs/moonraker.log printer_data/logs/guppyscreen.log $TMPDIR/messages.log 2> /dev/null
 cd - > /dev/null
 
 rm $TMPDIR/messages.log
