@@ -46,6 +46,7 @@ if [ $? -ne 0 ]; then
   fi
 
   if [ ! -d $BASEDIR/klipper/ ]; then
+    echo
     echo "INFO: Installing klipper ..."
 
     git clone https://github.com/pellcorp/klipper-rpi.git $BASEDIR/klipper || exit $?

@@ -1136,21 +1136,41 @@ fi
 
   touch $BASEDIR/pellcorp.done
 
-  $BASEDIR/pellcorp/rpi/install-moonraker.sh $mode || exit $?
+  $BASEDIR/pellcorp/rpi/install-moonraker.sh $mode
+  if [ $? -ne 0 ]; then
+    echo "FATAL: Moonraker installation failed - aborting"
+    exit 1
+  fi
 
   if [ "$(sudo systemctl is-enabled crowsnest 2> /dev/null)" = "disabled" ]; then
     echo "INFO: Crowsnest is disabled"
   else
-    $BASEDIR/pellcorp/rpi/install-crowsnest.sh $mode || exit $?
+    $BASEDIR/pellcorp/rpi/install-crowsnest.sh $mode
   fi
 
   $BASEDIR/pellcorp/rpi/install-fluidd.sh $mode || exit $?
+  if [ $? -ne 0 ]; then
+    echo "FATAL: Fluidd installation failed - aborting"
+    exit 1
+  fi
 
   $BASEDIR/pellcorp/rpi/install-mainsail.sh $mode || exit $?
+  if [ $? -ne 0 ]; then
+    echo "FATAL: Mainsail installation failed - aborting"
+    exit 1
+  fi
 
   $BASEDIR/pellcorp/rpi/install-nginx.sh $mode || exit $?
+  if [ $? -ne 0 ]; then
+    echo "FATAL: NGinx installation failed - aborting"
+    exit 1
+  fi
 
   $BASEDIR/pellcorp/rpi/install-klipper.sh $mode $probe || exit $?
+  if [ $? -ne 0 ]; then
+    echo "FATAL: Klipper installation failed - aborting"
+    exit 1
+  fi
 
   install_cartographer_klipper=0
   install_beacon_klipper=0
