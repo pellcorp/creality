@@ -747,9 +747,9 @@ function install_klipper() {
         elif [ "$MODEL" = "F005" ] && [ ! -f /etc/init.d/S57klipper_mcu ]; then
           remove_adxl=true
         fi
+
         if [ "$remove_adxl" = "true" ]; then
           # for ender 5 max we can't use on board adxl and only beacon and cartotouch support
-          # for Ender 3 V3 KE we have more work to do to support the nebula pad adxl in the future
           if [ "$probe" != "beacon" ] && [ "$probe" != "cartotouch" ]; then
               $CONFIG_HELPER --remove-section "adxl345" || exit $?
               $CONFIG_HELPER --remove-section "resonance_tester" || exit $?
