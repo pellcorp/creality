@@ -28,7 +28,7 @@ function install_packages() {
   # additional stuff for numpy for input shaping, cartographer, beacon, eddy-ng
   PKGLIST="${PKGLIST} python3-numpy python3-matplotlib libatlas-base-dev libopenblas-dev"
 
-  retry sudo apt-get install --yes ${PKGLIST} > /dev/null; error
+  retry sudo apt-get install --yes ${PKGLIST}; error
 }
 
 grep -q "klipper" $BASEDIR/pellcorp.done
