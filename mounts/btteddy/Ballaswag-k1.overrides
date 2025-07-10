@@ -14,7 +14,7 @@ __action__: DELETED
 
 [axis_twist_compensation]
 calibrate_start_x: 30
-calibrate_end_x: 210
+calibrate_end_x: 187
 calibrate_y: 105
 
 -- printer.cfg
