@@ -243,9 +243,9 @@ function disable_creality_services() {
 
         if [ -f /etc/init.d/S57klipper_mcu ]; then
             /etc/init.d/S57klipper_mcu stop > /dev/null 2>&1
-            if [ "$MODEL" != "F005" ]; then
-              rm /etc/init.d/S57klipper_mcu
-            fi
+            #if [ "$MODEL" != "F005" ]; then
+            #  rm /etc/init.d/S57klipper_mcu
+            #fi
         fi
 
         # the log main process takes up so much memory a lot of it swapped, killing this process might make the
@@ -311,9 +311,9 @@ function disable_creality_services() {
     if [ -f /etc/init.d/S57klipper_mcu ]; then
         /etc/init.d/S55klipper_service stop > /dev/null 2>&1
         /etc/init.d/S57klipper_mcu stop > /dev/null 2>&1
-        if [ "$MODEL" != "F005" ]; then
-          rm /etc/init.d/S57klipper_mcu
-        fi
+#        if [ "$MODEL" != "F005" ]; then
+#          rm /etc/init.d/S57klipper_mcu
+#        fi
     fi
     sync
 }
@@ -681,6 +681,11 @@ function install_klipper() {
           rm -rf /usr/data/KAMP
         fi
 
+        if [ ! -f /etc/init.d/S57klipper_mcu ]; then
+          rm /overlay/upper/etc/init.d/S57klipper_mcu
+          mount -o remount /
+        fi
+
         echo "INFO: Updating klipper config ..."
         /usr/share/klippy-env/bin/python3 -m compileall /usr/data/klipper/klippy || exit $?
 
@@ -729,10 +734,10 @@ function install_klipper() {
         cp /usr/data/pellcorp/config/useful_macros.cfg /usr/data/printer_data/config/ || exit $?
         $CONFIG_HELPER --add-include "useful_macros.cfg" || exit $?
 
-        if [ "$MODEL" != "F005" ]; then
+#        if [ "$MODEL" != "F005" ]; then
           # the klipper_mcu is not even used, so just get rid of it
-          $CONFIG_HELPER --remove-section "mcu rpi" || exit $?
-        fi
+#          $CONFIG_HELPER --remove-section "mcu rpi" || exit $?
+#        fi
 
         cp /usr/data/pellcorp/k1/belts_calibration.cfg /usr/data/printer_data/config/ || exit $?
         $CONFIG_HELPER --add-include "belts_calibration.cfg" || exit $?

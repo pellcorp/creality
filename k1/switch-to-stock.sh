@@ -1,5 +1,19 @@
 #!/bin/sh
 
+MODEL=$(/usr/bin/get_sn_mac.sh model)
+if [ "$MODEL" = "CR-K1" ] || [ "$MODEL" = "K1C" ] || [ "$MODEL" = "K1 SE" ]; then
+  model=k1
+elif [ "$MODEL" = "CR-K1 Max" ] || [ "$MODEL" = "K1 Max SE" ]; then
+  model=k1m
+elif [ "$MODEL" = "F004" ]; then
+  model=f004
+elif [ "$MODEL" = "F005" ]; then
+  model=f005
+else
+  echo "FATAL: This script is not supported for $MODEL!"
+  exit 1
+fi
+
 mode=stock
 if [ "$1" = "--revert" ]; then
   mode=revert
@@ -78,7 +92,9 @@ if [ -f /usr/data/backups/creality-backup.tar.gz ]; then
 
       if [ -f /etc/init.d/S57klipper_mcu ]; then
           /etc/init.d/S57klipper_mcu stop 2> /dev/null
-          rm /etc/init.d/S57klipper_mcu
+          #if [ "$MODEL" != "F005" ]; then
+          #  rm /etc/init.d/S57klipper_mcu
+          #fi
       fi
       if [ -f /etc/init.d/S55klipper_service ]; then
           /etc/init.d/S55klipper_service stop 2> /dev/null
