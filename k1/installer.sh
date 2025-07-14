@@ -1680,6 +1680,15 @@ function fix_custom_config() {
     return $changed
 }
 
+if [ -f /usr/data/pellcorp.done ] && [ ! -L /usr/share/klipper ]; then
+    echo
+    echo "ERROR: Switch to stock has been activated"
+    echo "If you wish to return to SimpleAF you must run: "
+    echo "  /usr/data/pellcorp/k1/switch-to-stock.sh --revert"
+    echo
+    exit 1
+fi
+
 # special mode to update the repo only
 # this stuff we do not want to have a log file for
 if [ "$1" = "--update-branch" ]; then
@@ -1730,15 +1739,6 @@ elif [ "$1" = "--klipper-branch" ]; then # convenience for testing new features
         echo "Error invalid branch specified"
         exit 1
     fi
-fi
-
-if [ -f /usr/data/pellcorp.done ] && [ ! -L /usr/share/klipper ]; then
-    echo
-    echo "ERROR: Switch to stock has been activated"
-    echo "If you wish to return to SimpleAF you must run: "
-    echo "  /usr/data/pellcorp/k1/switch-to-stock.sh --revert"
-    echo
-    exit 1
 fi
 
 export TIMESTAMP=$(date +"%Y-%m-%d_%H-%M-%S")
