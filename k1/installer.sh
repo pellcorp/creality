@@ -629,7 +629,7 @@ function install_klipper() {
             cd /usr/data/klipper/
             remote_repo=$(git remote get-url origin | awk -F '/' '{print $NF}' | sed 's/.git//g')
             cd - > /dev/null
-            if [ "$remote_repo" != "klipper" ]; then
+            if [ "$remote_repo" != "klipper" ] && [ "$remote_repo" != "crapper" ]; then
                 echo "INFO: Forcing Klipper repo to be switched from pellcorp/${remote_repo} to pellcorp/klipper"
                 rm -rf /usr/data/klipper/
             fi
@@ -1737,6 +1737,41 @@ elif [ "$1" = "--klipper-branch" ]; then # convenience for testing new features
         exit 0
     else
         echo "Error invalid branch specified"
+        exit 1
+    fi
+elif [ "$1" = "--klipper-repo" ]; then # convenience for testing new features
+    if [ -n "$2" ]; then
+        klipper_repo=$2
+        if [ "$klipper_repo" = "k1-carto-klipper" ]; then
+            echo "ERROR: Switching to k1-carto-klipper is no longer supported"
+            exit 1
+        fi
+
+        if [ -d /usr/data/klipper/.git ]; then
+            cd /usr/data/klipper/
+            remote_repo=$(git remote get-url origin | awk -F '/' '{print $NF}' | sed 's/.git//g')
+            cd - > /dev/null
+            if [ "$remote_repo" != "$klipper_repo" ]; then
+                echo "INFO: Switching klipper from pellcorp/$remote_repo to pellcorp/${klipper_repo} ..."
+                rm -rf /usr/data/klipper
+
+                echo "$klipper_repo" > /usr/data/pellcorp.klipper
+            fi
+        fi
+
+        if [ ! -d /usr/data/klipper ]; then
+            git clone https://github.com/pellcorp/${klipper_repo}.git /usr/data/klipper || exit $?
+            if [ -n "$3" ]; then
+              cd /usr/data/klipper && git switch $3 && cd - > /dev/null
+            fi
+        else
+            update_repo /usr/data/klipper $3 || exit $?
+        fi
+
+        update_klipper || exit $?
+        exit 0
+    else
+        echo "Error invalid klipper repo specified"
         exit 1
     fi
 fi
