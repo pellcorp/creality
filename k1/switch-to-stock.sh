@@ -1,5 +1,7 @@
 #!/bin/sh
 
+MODEL=$(/usr/bin/get_sn_mac.sh model)
+
 mode=stock
 if [ "$1" = "--revert" ]; then
   mode=revert
@@ -78,7 +80,9 @@ if [ -f /usr/data/backups/creality-backup.tar.gz ]; then
 
       if [ -f /etc/init.d/S57klipper_mcu ]; then
           /etc/init.d/S57klipper_mcu stop 2> /dev/null
-          rm /etc/init.d/S57klipper_mcu
+          if [ "$MODEL" != "F005" ]; then
+            rm /etc/init.d/S57klipper_mcu
+          fi
       fi
       if [ -f /etc/init.d/S55klipper_service ]; then
           /etc/init.d/S55klipper_service stop 2> /dev/null
