@@ -82,7 +82,7 @@ apply_overrides() {
                 sed -i '/variable_detach_macro/d' $BASEDIR/pellcorp-overrides/KAMP_Settings.cfg
 
                 $CONFIG_HELPER --file start_end.cfg --overrides $overrides_dir/$file || exit $?
-            elif [ -L $BASEDIR/printer_data/config/$file ] || [ "$file" = "useful_macros.cfg" ] || [ "$file" = "internal_macros.cfg" ] || [ "$file" = "belts_calibration.cfg" ]; then
+            elif [ -L $BASEDIR/printer_data/config/$file ] || [ "$file" = "belts_calibration.cfg" ]; then
                 echo "WARN: Ignoring $file ..."
             elif [ -f "$BASEDIR/pellcorp-backups/$file" ] || [ -f "$BASEDIR/pellcorp/config/$file" ] || [ -f "$BASEDIR/pellcorp/k1/$file" ]; then
                 if [ -f $BASEDIR/printer_data/config/$file ]; then
