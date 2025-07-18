@@ -99,10 +99,10 @@ override_file() {
         original_file="$BASEDIR/pellcorp-backups/$file"
     elif [ "$file" = "guppyscreen.cfg" ]; then # old file ignore it
         return 0
-    elif [ "$file" = "belts_calibration.cfg" ] || [ "$file" = "internal_macros.cfg" ] || [ "$file" = "useful_macros.cfg" ] || [ "$file" = "KlipperScreen.conf" ]; then
+    elif [ "$file" = "belts_calibration.cfg" ] || [ "$file" = "KlipperScreen.conf" ]; then
         #echo "INFO: Overrides not supported for $file"
         return 0
-    elif [ "$file" = "printer.cfg" ] || [ "$file" = "webcam.conf" ] || [ "$file" = "beacon.conf" ] || [ "$file" = "cartographer.conf" ] || [ "$file" = "moonraker.conf" ] || [ "$file" = "start_end.cfg" ] || [ "$file" = "fan_control.cfg" ]; then
+    elif [ "$file" = "printer.cfg" ] || [ "$file" = "internal_macros.cfg" ] || [ "$file" = "useful_macros.cfg" ] || [ "$file" = "webcam.conf" ] || [ "$file" = "beacon.conf" ] || [ "$file" = "cartographer.conf" ] || [ "$file" = "moonraker.conf" ] || [ "$file" = "start_end.cfg" ] || [ "$file" = "fan_control.cfg" ]; then
         # for printer.cfg, webcam.conf, useful_macros.cfg, start_end.cfg, fan_control.cfg and moonraker.conf - there must be an pellcorp-backups file
         #echo "INFO: Overrides not supported for $file"
         return 0
