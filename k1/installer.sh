@@ -2005,10 +2005,6 @@ fi
             rm /usr/data/backups/creality-backup.tar.gz
         fi
 
-        if ! grep "#*#" /usr/data/printer_data/config/printer.cfg | grep -q "SAVE_CONFIG"; then
-          echo "WARN: Stock printer.cfg does not have any self check configuration saved!"
-        fi
-
         # note the filename format is intentional so that the cleanup service and backups tool ignores it
         cd /usr/data
         tar -zcf /usr/data/backups/creality-backup.tar.gz printer_data/config/*.cfg
