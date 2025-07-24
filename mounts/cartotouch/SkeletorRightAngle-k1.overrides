@@ -2,7 +2,7 @@
 
 -- cartotouch.cfg
 [scanner]
-x_offset: -24.664
+x_offset: -24.0
 y_offset: 0.0
 
 [bed_mesh]
