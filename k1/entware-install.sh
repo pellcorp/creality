@@ -27,8 +27,8 @@ for folder in bin etc lib/opkg tmp var/lock; do
   mkdir -p /usr/data/opt/$folder
 done
 
-primary_URL="https://bin.entware.net/mipselsf-k3.4/installer"
-secondary_URL="http://www.openk1.org/static/entware/mipselsf-k3.4/installer"
+primary_host="entware.diversion.ch"
+secondary_host="bin.entware.net"
 
 download_files() {
   local url="$1"
@@ -38,12 +38,14 @@ download_files() {
 }
 
 if [ "$mode" != "update" ]; then
-  if download_files "$primary_URL/opkg" "/opt/bin/opkg"; then
-    download_files "$primary_URL/opkg.conf" "/opt/etc/opkg.conf"
+  if download_files "http://$primary_host/mipselsf-k3.4/installer/opkg" "/opt/bin/opkg"; then
+    download_files "http://$primary_host/mipselsf-k3.4/installer/opkg.conf" "/opt/etc/opkg.conf"
+    # the host is hardcoded to bin.entware.net
+    sed -i "s/bin.entware.net/$primary_host/g" "/opt/etc/opkg.conf"
   else
-    echo -e "INFO: : Unable to download from Entware repo. Attempting to download from openK1 repo..."
-    if download_files "$secondary_URL/opkg" "/opt/bin/opkg"; then
-      download_files "$secondary_URL/opkg.conf" "/opt/etc/opkg.conf"
+    echo -e "INFO: : Unable to download from $primary_host repo. Attempting to download from $secondary_host repo..."
+    if download_files "http://$secondary_host/mipselsf-k3.4/installer/opkg" "/opt/bin/opkg"; then
+      download_files "http://$secondary_host/mipselsf-k3.4/installer/opkg.conf" "/opt/etc/opkg.conf"
     else
       echo "INFO: : Failed to download from openK1 repo..."
       exit 1
