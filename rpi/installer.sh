@@ -1190,10 +1190,10 @@ fi
     $BASEDIR/pellcorp/rpi/install-grumpyscreen.sh $mode || exit $?
   elif [ "$(sudo systemctl is-enabled KlipperScreen 2> /dev/null)" = "enabled" ]; then
     $BASEDIR/pellcorp/rpi/install-klipperscreen.sh $mode || exit $?
-  elif [ "$pi_model" = "4" ] || [ "$pi_model" = "5" ]; then
-    $BASEDIR/pellcorp/rpi/install-klipperscreen.sh $mode || exit $?
-  elif [ "$pi_model" = "3" ]; then
-    $BASEDIR/pellcorp/rpi/install-grumpyscreen.sh $mode || exit $?
+#  elif [ "$pi_model" = "4" ] || [ "$pi_model" = "5" ]; then
+#    $BASEDIR/pellcorp/rpi/install-klipperscreen.sh $mode || exit $?
+#  elif [ "$pi_model" = "3" ]; then
+#    $BASEDIR/pellcorp/rpi/install-grumpyscreen.sh $mode || exit $?
   else
     echo "INFO: Skipping Grumpyscreen and KlipperScreen installation"
   fi
