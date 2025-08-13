@@ -99,6 +99,11 @@ if [ $? -ne 0 ]; then
 
   kinematics=$($CONFIG_HELPER --get-section-entry "printer" "kinematics")
   if [ "$kinematics" = "corexy" ]; then
+    # force reinstallation of klippain for anything other than an update
+    if [ "$mode" != "update" ] && [ -d $BASEDIR/klippain_shaketune ]; then
+      rm -rf $BASEDIR/klippain_shaketune
+    fi
+
     if [ ! -d $BASEDIR/klippain_shaketune ]; then
       echo
       echo "INFO: Installing Klippain ShakeTune ..."
