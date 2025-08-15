@@ -899,6 +899,12 @@ fi
     elif [ "$1" = "--mount" ]; then
       shift
       mount=$1
+
+      # allows the user to reapply mount overrides for current mount
+      if [ -f $BASEDIR/pellcorp.done ] && [ "$mount" = "%CURRENT%" ]; then
+          mount=$(cat $BASEDIR/pellcorp.done | grep mount= | awk -F '=' '{print $2}')
+      fi
+      
       if [ -z "$mount" ]; then
         mount=unknown
       fi
