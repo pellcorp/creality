@@ -103,6 +103,9 @@ function update_repo() {
                 return 1
             fi
 
+            # clear any local changes
+            git reset --hard
+
             if [ -z "$branch" ]; then
                 git reset --hard origin/$branch_ref
             else

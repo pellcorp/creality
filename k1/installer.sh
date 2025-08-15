@@ -134,6 +134,9 @@ function update_repo() {
                 return 1
             fi
 
+            # clear any local changes
+            git reset --hard
+
             if [ -z "$branch" ]; then
                 git reset --hard origin/$branch_ref
             else
@@ -652,7 +655,7 @@ function install_klipper() {
             cd /usr/data/klipper/
             branch_ref=$(git rev-parse --abbrev-ref HEAD)
             remote_repo=$(git remote get-url origin | awk -F '/' '{print $NF}' | sed 's/.git//g')
-            git log | grep -q "add SET_KINEMATIC_POSITION CLEAR=Z feature to allow us to clear z in sensorless.cfg"
+            git log | grep -q "add a status flag is_connected so we can check if a mcu is connected before trying to home z"
             klipper_status=$?
             cd - > /dev/null
 
