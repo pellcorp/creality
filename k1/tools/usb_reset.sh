@@ -17,7 +17,7 @@ function reset_device() {
   echo "$IFACE" > "/sys/bus/usb/drivers/$DRIVER/bind"
 }
 
-if [ "$device" = "scanner" ]; then
+if [ "$device" = "cartographer" ]; then
   SERIAL_ID=$(ls /dev/serial/by-id/usb-* | grep "IDM\|Cartographer" | head -1)
 elif [ "$device" = "eddy" ]; then
   SERIAL_ID=$(ls /dev/serial/by-id/usb-Klipper_rp2040* | head -1)
