@@ -20,6 +20,12 @@ if [ "$mode" = "reinstall" ]; then
   rm -rf /usr/data/opt
 fi
 
+# actually it seems like opkg is not hardcoded to /usr/bin/wget
+# it looks for wget in the path
+if [ ! -f /bin/wget ]; then
+  cp /usr/data/pellcorp/k1/files/wget /bin/
+fi
+
 mkdir -p /usr/data/opt
 ln -nsf /usr/data/opt /opt
 
