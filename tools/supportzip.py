@@ -11,7 +11,7 @@ from pathlib import Path
 def make_zip(zip_name, sources, exclude_dirs=None):
     exclude_dirs = set(exclude_dirs or [".git"])
 
-    with zipfile.ZipFile(zip_name, 'w', zipfile.ZIP_DEFLATED) as zf:
+    with zipfile.ZipFile(zip_name, 'w', zipfile.ZIP_DEFLATED, strict_timestamps=False) as zf:
         for pattern in sources:
             for path_str in glob.glob(pattern, recursive=True):
                 path = Path(path_str)

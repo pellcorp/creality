@@ -6,6 +6,8 @@ if grep -Fqs "ID=buildroot" /etc/os-release; then
     BASEDIR=/usr/data
     TMPDIR=$BASEDIR/tmp
 
+    mkdir -p $TMPDIR
+    
     # for backups we are silent unless there is a disk space issue
     REMAINING_ROOT_DISK=$(df -m / | tail -1 | awk '{print $4}')
     if [ $REMAINING_ROOT_DISK -le 25 ]; then
