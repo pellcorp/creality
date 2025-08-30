@@ -655,7 +655,7 @@ function install_klipper() {
             cd /usr/data/klipper/
             branch_ref=$(git rev-parse --abbrev-ref HEAD)
             remote_repo=$(git remote get-url origin | awk -F '/' '{print $NF}' | sed 's/.git//g')
-            git log | grep -q "add a status flag is_connected so we can check if a mcu is connected before trying to home z"
+            git log | grep -q "expand variables in gcode shell command"
             klipper_status=$?
             cd - > /dev/null
 

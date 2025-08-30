@@ -41,6 +41,19 @@ if [ $? -ne 0 ]; then
     rm -rf $BASEDIR/klipper
   fi
 
+  if [ -d $BASEDIR/klipper ]; then
+    cd $BASEDIR/klipper
+    git log | grep -q "expand variables in gcode shell command"
+    klipper_status=$?
+    cd - > /dev/null
+
+    if [ $klipper_status -ne 0 ]; then
+      echo
+      echo "INFO: Forcing update of klipper to latest master"
+      rm -rf $BASEDIR/klipper
+    fi
+  fi
+
   if [ "$mode" != "update" ] && [ -d $BASEDIR/klippy-env ]; then
     rm -rf $BASEDIR/klippy-env
   fi
@@ -51,12 +64,6 @@ if [ $? -ne 0 ]; then
 
     git clone https://github.com/pellcorp/klipper-rpi.git $BASEDIR/klipper || exit $?
     install_packages
-
-    sudo cp $BASEDIR/pellcorp/rpi/services/klipper.service /etc/systemd/system || exit $?
-    sudo sed -i "s:\$HOME:$BASEDIR:g" /etc/systemd/system/klipper.service
-    sudo sed -i "s:User=pi:User=$USER:g" /etc/systemd/system/klipper.service
-    sudo systemctl daemon-reload
-    sudo systemctl enable klipper
 
     if grep -q "dialout" /etc/group; then
       sudo usermod -a -G dialout $USER
@@ -83,6 +90,13 @@ if [ $? -ne 0 ]; then
       sudo systemctl mask ModemManager
     fi
   fi
+
+  # in case there are any updates to the klipper service need to rewrite
+  sudo cp $BASEDIR/pellcorp/rpi/services/klipper.service /etc/systemd/system || exit $?
+  sudo sed -i "s:\$HOME:$BASEDIR:g" /etc/systemd/system/klipper.service
+  sudo sed -i "s:User=pi:User=$USER:g" /etc/systemd/system/klipper.service
+  sudo systemctl enable klipper
+  sudo systemctl daemon-reload
 
   if [ ! -d $BASEDIR/klippy-env ]; then
     virtualenv -p python3 $BASEDIR/klippy-env
