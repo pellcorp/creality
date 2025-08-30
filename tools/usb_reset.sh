@@ -4,7 +4,7 @@ device=$1
 
 # thanks to Chad (aka ChatGPT) for this code
 # https://chatgpt.com/share/68a844e5-f164-800d-808f-9ab18f40f1e1
-function reset_device() {
+reset_device() {
   local DEV=$1
   local TTY=$(readlink -f "$DEV") || exit 1
   local BASENAME=$(basename "$TTY")
