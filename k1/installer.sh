@@ -1683,7 +1683,7 @@ function fix_custom_config() {
     return $changed
 }
 
-if [ -f /usr/data/pellcorp.done ] && [ ! -L /usr/share/klipper ]; then
+if [ -f /usr/data/pellcorp.done ] && [ $(grep "probe" /usr/data/pellcorp.done | wc -l) -ge 2 ] && [ ! -L /usr/share/klipper ]; then
     echo
     echo "ERROR: Switch to stock has been activated"
     echo "If you wish to return to SimpleAF you must run: "
