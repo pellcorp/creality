@@ -12,9 +12,9 @@ function reset_device() {
   local IFACE=$(basename "$SYSFS")
   local DRIVER=$(basename "$(readlink -f "$SYSFS/driver")")
 
-  echo "$IFACE" > "/sys/bus/usb/drivers/$DRIVER/unbind"
+  echo "$IFACE" | sudo tee "/sys/bus/usb/drivers/$DRIVER/unbind" > /dev/null
   sleep 3
-  echo "$IFACE" > "/sys/bus/usb/drivers/$DRIVER/bind"
+  echo "$IFACE" | sudo tee "/sys/bus/usb/drivers/$DRIVER/bind" > /dev/null
 }
 
 if [ "$device" = "scanner" ]; then
