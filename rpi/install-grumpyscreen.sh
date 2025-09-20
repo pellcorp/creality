@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # this allows us to make changes to Simple AF and grumpyscreen in parallel
-GRUMPYSCREEN_TIMESTAMP=1756264500
+GRUMPYSCREEN_TIMESTAMP=1758335800
 
 BASEDIR=$HOME
 source $BASEDIR/pellcorp/rpi/functions.sh
