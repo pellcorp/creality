@@ -37,7 +37,10 @@ if [ -f /usr/data/backups/creality-backup.tar.gz ]; then
       rm -rf /overlay/upper/usr/share/klipper
       rm /usr/bin/klipper_mcu
       rm /overlay/upper/usr/bin/klipper_mcu
-      rm /overlay/upper/etc/init.d/S57klipper_mcu
+      # for KE we don't remove klipper_mcu
+      if [ -f /overlay/upper/etc/init.d/S57klipper_mcu ]; then
+        rm /overlay/upper/etc/init.d/S57klipper_mcu
+      fi
       rm /overlay/upper/etc/init.d/S55klipper_service
       rm /overlay/upper/etc/init.d/S99start_app
       mount -o remount /
