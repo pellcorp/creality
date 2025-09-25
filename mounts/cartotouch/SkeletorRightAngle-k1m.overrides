@@ -10,10 +10,10 @@ mesh_min: 10,10
 mesh_max: 275,290
 
 [screws_tilt_adjust]
-screw1:20, 47
-screw2:280, 47
-screw3:250, 297
-screw4:50, 297
+screw1:49, 25
+screw2:309, 25
+screw3:294, 275
+screw4:79, 275
 
 [axis_twist_compensation]
 calibrate_start_x: 15
