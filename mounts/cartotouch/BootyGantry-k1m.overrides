@@ -1,7 +1,7 @@
 # https://github.com/tlace17/K1-Linear-Rail-Gantry/blob/main/STLs/Probe%20Mounts/Rail%20Carriage%20Carto%20Mount.stl
 
 -- cartotouch.cfg
-[scanner]
+[cartographer]
 x_offset: 0.0
 y_offset: 18.7
 
@@ -14,11 +14,6 @@ screw1: 19,4.3
 screw2: 278,4.3
 screw3: 248,253.3
 screw4: 48,253.3
-
-[axis_twist_compensation]
-calibrate_start_x: 10
-calibrate_end_x: 280
-calibrate_y: 153
 
 -- printer.cfg
 [stepper_x]
