@@ -779,6 +779,7 @@ function install_klipper() {
         $CONFIG_HELPER --remove-section-entry "printer" "square_corner_max_velocity" || exit $?
         $CONFIG_HELPER --remove-section-entry "printer" "max_accel_to_decel" || exit $?
         $CONFIG_HELPER --remove-section-entry "stepper_y" "gcode_position_max" || exit $?
+        $CONFIG_HELPER --remove-section-entry "stepper_x" "gcode_position_max" || exit $?
         $CONFIG_HELPER --remove-section "filament_switch_sensor filament_sensor_2" || exit $?
         
         # https://www.klipper3d.org/TMC_Drivers.html#prefer-to-not-specify-a-hold_current
