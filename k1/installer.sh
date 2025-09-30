@@ -163,16 +163,17 @@ function update_repo() {
 }
 
 function update_klipper() {
-  if [ -d /usr/data/cartographer-klipper ]; then
-      /usr/data/cartographer-klipper/install.sh || return $?
-      ln -sf /usr/data/cartographer-klipper/ /root
-      sync
-  fi
+#  if [ -f /usr/data/printer_data/config/cartotouch.cfg ]; then
+#    install_cartographer_plugin || return $?
+#    sync
+#  fi
+
   if [ -d /usr/data/beacon-klipper ]; then
       /usr/data/pellcorp/k1/beacon-install.sh || return $?
       ln -sf /usr/data/beacon-klipper/ /root
       sync
   fi
+
   /usr/share/klippy-env/bin/python3 -m compileall /usr/data/klipper/klippy || return $?
   /usr/data/pellcorp/k1/tools/check-firmware.sh --status
   if [ $? -eq 0 ]; then
@@ -1073,47 +1074,23 @@ function setup_probe() {
     return 0
 }
 
-function install_cartographer_klipper() {
+# /usr/share/klippy-env/bin/python -m pip install --upgrade cartographer3d-plugin
+function install_cartographer_plugin() {
     local mode=$1
 
     grep -q "cartographer-klipper" /usr/data/pellcorp.done
     if [ $? -ne 0 ]; then
-        if [ "$mode" != "update" ] && [ -d /usr/data/cartographer-klipper ]; then
-            rm -rf /usr/data/cartographer-klipper
+        # for old style cartographer that is a soft link
+        if [ -L /usr/data/klipper/klippy/extras/cartographer.py ]; then
+            rm -rf /usr/data/klipper/klippy/extras/cartographer.py
+        fi
+        if [ "$mode" != "update" ] && [ -e /usr/data/klipper/klippy/extras/cartographer.py ]; then
+            rm -rf /usr/data/klipper/klippy/extras/cartographer.py
         fi
 
-        if [ ! -d /usr/data/cartographer-klipper ]; then
-            echo
-            echo "INFO: Installing cartographer-klipper ..."
-            git clone https://github.com/pellcorp/cartographer-klipper.git /usr/data/cartographer-klipper || exit $?
-        else
-            cd /usr/data/cartographer-klipper
-            REMOTE_URL=$(git remote get-url origin)
-            if [ "$REMOTE_URL" != "https://github.com/pellcorp/cartographer-klipper.git" ]; then
-                echo "INFO: Switching cartographer-klipper to pellcorp fork"
-                git remote set-url origin https://github.com/pellcorp/cartographer-klipper.git
-                git fetch origin
-            fi
-
-            branch=$(git rev-parse --abbrev-ref HEAD)
-            # do not stuff up a different branch
-            if [ "$branch" = "master" ]; then
-                revision=$(git rev-parse --short HEAD)
-                # reset our branch or update from v1.0.5
-                if [ "$revision" = "303ea63" ] || [ "$revision" = "8324877" ]; then
-                    echo "INFO: Forcing cartographer-klipper update"
-                    git fetch origin
-                    git reset --hard v1.1.0
-                fi
-            fi
+        if [ ! -f /usr/data/klipper/klippy/extras/cartographer.py ]; then
+            curl -s -L https://raw.githubusercontent.com/Cartographer3D/cartographer3d-plugin/refs/heads/main/scripts/install.sh | bash -s -- --klipper /usr/data/klipper --klippy-env /usr/share/klippy-env || exit $?
         fi
-        cd - > /dev/null
-
-        echo
-        echo "INFO: Running cartographer-klipper installer ..."
-        bash /usr/data/cartographer-klipper/install.sh || exit $?
-        ln -sf /usr/data/cartographer-klipper/ /root
-        /usr/share/klippy-env/bin/python3 -m compileall /usr/data/klipper/klippy || exit $?
 
         echo "cartographer-klipper" >> /usr/data/pellcorp.done
         sync
@@ -1309,9 +1286,9 @@ function setup_klicky() {
 function set_serial_cartotouch() {
     local SERIAL_ID=$(ls /dev/serial/by-id/usb-* | grep "IDM\|Cartographer" | head -1)
     if [ -n "$SERIAL_ID" ]; then
-        local EXISTING_SERIAL_ID=$($CONFIG_HELPER --file cartotouch.cfg --get-section-entry "scanner" "serial")
+        local EXISTING_SERIAL_ID=$($CONFIG_HELPER --file cartotouch.cfg --get-section-entry "mcu cartographer" "serial")
         if [ "$EXISTING_SERIAL_ID" != "$SERIAL_ID" ]; then
-            $CONFIG_HELPER --file cartotouch.cfg --replace-section-entry "scanner" "serial" "$SERIAL_ID" || exit $?
+            $CONFIG_HELPER --file cartotouch.cfg --replace-section-entry "mcu cartographer" "serial" "$SERIAL_ID" || exit $?
             return 1
         else
             echo "Serial value is unchanged"
@@ -1350,25 +1327,6 @@ function setup_cartotouch() {
 
         # a slight change to the way cartotouch is configured
         $CONFIG_HELPER --remove-section "force_move" || exit $?
-
-        # as we are referencing the included cartographer now we want to remove the included value
-        # from any previous installation
-        $CONFIG_HELPER --remove-section "scanner" || exit $?
-        $CONFIG_HELPER --add-section "scanner" || exit $?
-
-        scanner_touch_z_offset=$($CONFIG_HELPER --ignore-missing --file /usr/data/pellcorp-overrides/printer.cfg.save_config --get-section-entry scanner scanner_touch_z_offset)
-        if [ -n "$scanner_touch_z_offset" ]; then
-          $CONFIG_HELPER --replace-section-entry "scanner" "# scanner_touch_z_offset" "0.05" || exit $?
-        else
-          $CONFIG_HELPER --replace-section-entry "scanner" "scanner_touch_z_offset" "0.05" || exit $?
-        fi
-
-        scanner_mode=$($CONFIG_HELPER --ignore-missing --file /usr/data/pellcorp-overrides/printer.cfg.save_config --get-section-entry scanner mode)
-        if [ -n "$scanner_mode" ]; then
-            $CONFIG_HELPER --replace-section-entry "scanner" "# mode" "touch" || exit $?
-        else
-            $CONFIG_HELPER --replace-section-entry "scanner" "mode" "touch" || exit $?
-        fi
 
         # Ender 5 Max we don't have firmware for it, so need to configure cartographer instead for adxl
         if [ "$MODEL" = "F004" ]; then
@@ -1841,7 +1799,6 @@ fi
         elif [ "$1" = "--mount" ]; then
             shift
             mount=$1
-
             # allows the user to reapply mount overrides for current mount
             if [ -f /usr/data/pellcorp.done ] && [ "$mount" = "%CURRENT%" ]; then
                 mount=$(cat /usr/data/pellcorp.done | grep mount= | awk -F '=' '{print $2}')
@@ -2147,8 +2104,8 @@ fi
 
     install_cartographer_klipper=0
     install_beacon_klipper=0
-    if [ "$probe" = "cartographer" ] || [ "$probe" = "cartotouch" ]; then
-      install_cartographer_klipper $mode
+    if [ "$probe" = "cartotouch" ]; then
+      install_cartographer_plugin $mode
       install_cartographer_klipper=$?
     elif [ "$probe" = "beacon" ]; then
       install_beacon_klipper $mode
