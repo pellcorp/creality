@@ -47,7 +47,7 @@ while true; do
 
         if [ "$restore" = "latest" ]; then
             if [ -d $BASEDIR/backups ] && [ $(ls -lt $BASEDIR/backups/backup-*.tar.gz 2> /dev/null | wc -l) -gt 0 ]; then
-                restore=$(ls -lt $BASEDIR/backups/backup-*.tar.gz 2> /dev/null | head -1 | awk '{print $9}' | awk -F '/' '{print $NF}')
+                restore=$(ls -lt $BASEDIR/backups/backup-*.tar.gz 2> /dev/null | grep -v "backup-latest.tar.gz" | head -1 | awk '{print $9}' | awk -F '/' '{print $NF}')
             else
                 echo "ERROR: No backups found"
                 exit 1
@@ -104,7 +104,7 @@ if [ "$mode" = "create" ]; then
     exit 0
 elif [ "$mode" = "latest" ]; then
     if [ -d $BASEDIR/backups ] && [ $(ls -lt $BASEDIR/backups/backup-*.tar.gz 2> /dev/null | wc -l) -gt 0 ]; then
-        latest=$(ls -lt $BASEDIR/backups/backup-*.tar.gz 2> /dev/null | head -1 | awk '{print $9}' | awk -F '/' '{print $NF}')
+        latest=$(ls -lt $BASEDIR/backups/backup-*.tar.gz 2> /dev/null | grep -v "backup-latest.tar.gz" | head -1 | awk '{print $9}' | awk -F '/' '{print $NF}')
         if [ -n "$latest" ]; then
             echo "$latest"
             exit 0
@@ -118,7 +118,7 @@ elif [ "$mode" = "latest" ]; then
     fi
 elif [ "$mode" = "list" ]; then
     if [ -d $BASEDIR/backups ] && [ $(ls -lt $BASEDIR/backups/backup-*.tar.gz 2> /dev/null | wc -l) -gt 0 ]; then
-        ls -lt $BASEDIR/backups/backup-*.tar.gz 2> /dev/null | awk '{print $9}' | awk -F '/' '{print $NF}'
+        ls -lt $BASEDIR/backups/backup-*.tar.gz 2> /dev/null | grep -v "backup-latest.tar.gz" | awk '{print $9}' | awk -F '/' '{print $NF}'
         exit 0
     else
         echo "ERROR: No backups found"
