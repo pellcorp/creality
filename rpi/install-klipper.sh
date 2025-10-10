@@ -26,15 +26,7 @@ function install_packages() {
   PKGLIST="${PKGLIST} gcc-arm-none-eabi binutils-arm-none-eabi libusb-1.0"
 
   # additional stuff for numpy for input shaping, cartographer, beacon, eddy-ng
-  PKGLIST="${PKGLIST} python3-numpy python3-matplotlib libopenblas-dev"
-
-  # FIXME - older versions of debian have the libatlas-base-dev and I must have
-  # had this dependency here for a reason, so for now I leave it in, need to find
-  # the time to see if its actually required
-  debian_release=$(lsb_release -rs)
-  if [ $debian_release -lt 13 ]; then
-    PKGLIST="${PKGLIST} libatlas-base-dev"
-  fi
+  PKGLIST="${PKGLIST} python3-numpy python3-matplotlib libatlas-base-dev libopenblas-dev"
 
   retry sudo apt-get install --yes ${PKGLIST}; error
 }
@@ -109,12 +101,7 @@ if [ $? -ne 0 ]; then
   if [ ! -d $BASEDIR/klippy-env ]; then
     virtualenv -p python3 $BASEDIR/klippy-env
     $BASEDIR/klippy-env/bin/pip install -r $BASEDIR/klipper/scripts/klippy-requirements.txt
-    debian_release=$(lsb_release -rs)
-    if [ $debian_release -gt 12 ]; then
-      $BASEDIR/klippy-env/bin/pip install numpy || exit $?
-    else
-      $BASEDIR/klippy-env/bin/pip install numpy==1.26.2 || exit $?
-    fi
+    $BASEDIR/klippy-env/bin/pip install numpy==1.26.2 || exit $?
   fi
 
   if [ ! -d $BASEDIR/fluidd-config ]; then
