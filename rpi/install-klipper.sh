@@ -35,7 +35,7 @@ function install_packages() {
   if [ $debian_release -lt 13 ]; then
     PKGLIST="${PKGLIST} libatlas-base-dev"
   fi
-  
+
   retry sudo apt-get install --yes ${PKGLIST}; error
 }
 
@@ -109,7 +109,12 @@ if [ $? -ne 0 ]; then
   if [ ! -d $BASEDIR/klippy-env ]; then
     virtualenv -p python3 $BASEDIR/klippy-env
     $BASEDIR/klippy-env/bin/pip install -r $BASEDIR/klipper/scripts/klippy-requirements.txt
-    $BASEDIR/klippy-env/bin/pip install numpy==1.26.2 || exit $?
+    debian_release=$(lsb_release -rs)
+    if [ $debian_release -gt 12 ]; then
+      $BASEDIR/klippy-env/bin/pip install numpy || exit $?
+    else
+      $BASEDIR/klippy-env/bin/pip install numpy==1.26.2 || exit $?
+    fi
   fi
 
   if [ ! -d $BASEDIR/fluidd-config ]; then
