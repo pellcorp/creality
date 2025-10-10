@@ -8,6 +8,17 @@ fi
 BASEDIR=$HOME
 source $BASEDIR/pellcorp/rpi/functions.sh
 
+command -v lsb_release > /dev/null
+if [ $? -ne 0 ]; then
+  retry sudo apt-get install -y lsb-release; error
+fi
+
+debian_release=$(lsb_release -rs)
+if [ $debian_release -gt 12 ]; then
+  echo "ERROR: Simple AF for RPi not supported on Debian 13 yet!"
+  exit 1
+fi
+
 CONFIG_HELPER="$BASEDIR/pellcorp/tools/config-helper.py"
 
 # everything else in the script assumes its cloned to $BASEDIR/pellcorp
@@ -175,10 +186,6 @@ function install_config_updater() {
             retry sudo apt-get install -y python3-pip > /dev/null; error
         fi
 
-        command -v lsb_release > /dev/null
-        if [ $? -ne 0 ]; then
-          retry sudo apt-get install -y lsb-release; error
-        fi
         debian_release=$(lsb_release -rs)
         # from debian 12 onwards you are expected to create a virtualenv but we can
         # force the config module to be installed in system
