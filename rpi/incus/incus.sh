@@ -14,8 +14,10 @@ incus network set incusbr0 ipv4.firewall false
 
 if [ "$1" = "11" ]; then
     incus init images:debian/11/cloud klipper --vm || exit $?
-else
+elif [ "$1" = "12" ]; then
     incus init images:debian/12/cloud klipper --vm || exit $?
+else
+    incus init images:debian/13/cloud klipper --vm || exit $?
 fi
 incus config set klipper security.secureboot false || exit $?
 incus config set klipper limits.cpu 4 || exit $?
