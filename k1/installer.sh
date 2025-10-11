@@ -1331,8 +1331,20 @@ function setup_cartotouch() {
 
         cleanup_probes
 
-        cp /usr/data/pellcorp/k1/cartographer.conf /usr/data/printer_data/config/ || exit $?
-        $CONFIG_HELPER --file moonraker.conf --add-include "cartographer.conf" || exit $?
+        # the old calibration macros are no longer supported
+        if [ -f /usr/data/printer_data/config/cartographer_calibrate.cfg ]; then
+          rm /usr/data/printer_data/config/cartographer_calibrate.cfg || exit $?
+        fi
+        $CONFIG_HELPER --remove-include "cartographer_calibrate.cfg" || exit $?
+
+        # we are adding a new probe so need to migrate file names
+        if [ -f /usr/data/printer_data/config/cartographer.conf ]; then
+          rm /usr/data/printer_data/config/cartographer.conf || exit $?
+        fi
+        $CONFIG_HELPER --file moonraker.conf --remove-include "cartographer.conf" || exit $?
+
+        cp /usr/data/pellcorp/k1/cartotouch.conf /usr/data/printer_data/config/ || exit $?
+        $CONFIG_HELPER --file moonraker.conf --add-include "cartotouch.conf" || exit $?
 
         cp /usr/data/pellcorp/config/cartotouch_macro.cfg /usr/data/printer_data/config/ || exit $?
         $CONFIG_HELPER --add-include "cartotouch_macro.cfg" || exit $?
@@ -1490,6 +1502,12 @@ function setup_btteddy() {
 
         cleanup_probes
 
+        # the old calibration macros are no longer supported
+        if [ -f /usr/data/printer_data/config/btteddy_calibrate.cfg ]; then
+          rm /usr/data/printer_data/config/btteddy_calibrate.cfg || exit $?
+        fi
+        $CONFIG_HELPER --remove-include "btteddy_calibrate.cfg" || exit $?
+
         cp /usr/data/pellcorp/config/btteddy.cfg /usr/data/printer_data/config/ || exit $?
         $CONFIG_HELPER --add-include "btteddy.cfg" || exit $?
 
@@ -1532,6 +1550,12 @@ function setup_eddyng() {
         echo "INFO: Setting up btt eddy-ng ..."
 
         cleanup_probes
+
+        # the old calibration macros are no longer supported
+        if [ -f /usr/data/printer_data/config/btteddy_calibrate.cfg ]; then
+          rm /usr/data/printer_data/config/btteddy_calibrate.cfg || exit $?
+        fi
+        $CONFIG_HELPER --remove-include "btteddy_calibrate.cfg" || exit $?
 
         cp /usr/data/pellcorp/config/eddyng.cfg /usr/data/printer_data/config/ || exit $?
         $CONFIG_HELPER --add-include "eddyng.cfg" || exit $?
@@ -1878,13 +1902,6 @@ fi
         exit 1
     fi
 
-    probe_model=${probe}
-    if [ "$probe" = "cartotouch" ]; then
-        probe_model=cartographer
-    elif [ "$probe" = "eddyng" ]; then
-        probe_model=btteddy
-    fi
-
     echo "INFO: Mode is $mode"
     echo "INFO: Probe is $probe"
 
@@ -1913,6 +1930,14 @@ fi
 
     # don't try and validate a mount if all we are wanting to do is fix serial
     if [ "$mode" != "fix-serial" ]; then
+      # this is just for migrating the cartographer-k1.cfg, etc files
+      probe_model=${probe}
+      if [ "$probe" = "cartotouch" ]; then
+          probe_model=cartographer
+      elif [ "$probe" = "eddyng" ]; then
+          probe_model=btteddy
+      fi
+
       if [ -z "$mount" ] && [ -n "$install_mount" ] && [ "$probe_switch" != "true" ]; then
         # for a partial install where we selected a mount, we can grab it from the pellcorp.done file
         if [ "$mode" = "install" ]; then
@@ -2190,7 +2215,7 @@ fi
     if [ -f /usr/data/pellcorp-backups/printer.factory.cfg ]; then
         # we want a copy of the file before config overrides are re-applied so we can correctly generate diffs
         # against different generations of the original file
-        for file in printer.cfg start_end.cfg fan_control.cfg $probe_model.conf spoolman.conf internal_macros.cfg useful_macros.cfg timelapse.conf moonraker.conf webcam.conf sensorless.cfg ${probe}_macro.cfg ${probe}.cfg; do
+        for file in printer.cfg start_end.cfg fan_control.cfg ${probe}.conf spoolman.conf internal_macros.cfg useful_macros.cfg timelapse.conf moonraker.conf webcam.conf sensorless.cfg ${probe}_macro.cfg ${probe}.cfg; do
             if [ -f /usr/data/printer_data/config/$file ]; then
                 cp /usr/data/printer_data/config/$file /usr/data/pellcorp-backups/$file
             fi

@@ -160,11 +160,13 @@ function update_klipper() {
   echo
   echo "INFO: Stopping Klipper ..."
   sudo systemctl stop klipper
-  if [ -d $BASEDIR/cartographer-klipper ]; then
+
+  if [ -d $BASEDIR/cartographer-klipper ] && [ -L $BASEDIR/klipper/klippy/extras/scanner.py ]; then
       $BASEDIR/cartographer-klipper/install.sh || return $?
       sync
   fi
-  if [ -d $BASEDIR/beacon-klipper ]; then
+
+  if [ -d $BASEDIR/beacon-klipper ] && [ -L $BASEDIR/klipper/klippy/extras/beacon.py ]; then; then
       $BASEDIR/beacon-klipper/install.sh || return $?
       sync
   fi
@@ -305,23 +307,11 @@ function cleanup_probe() {
         rm $BASEDIR/printer_data/config/variables.cfg
     fi
 
-    # we use the cartographer includes
-    if [ "$probe" = "cartotouch" ]; then
-        probe=cartographer
-    elif [ "$probe" = "eddyng" ]; then
-        probe=btteddy
-    fi
-
     if [ -f $BASEDIR/printer_data/config/${probe}.conf ]; then
         rm $BASEDIR/printer_data/config/${probe}.conf
     fi
 
     $CONFIG_HELPER --file moonraker.conf --remove-include "${probe}.conf" || exit $?
-
-    if [ -f $BASEDIR/printer_data/config/${probe}_calibrate.cfg ]; then
-        rm $BASEDIR/printer_data/config/${probe}_calibrate.cfg
-    fi
-    $CONFIG_HELPER --remove-include "${probe}_calibrate.cfg" || exit $?
 }
 
 function cleanup_probes() {
@@ -473,8 +463,14 @@ function setup_cartotouch() {
 
         cleanup_probes
 
-        cp $BASEDIR/pellcorp/rpi/cartographer.conf $BASEDIR/printer_data/config/ || exit $?
-        $CONFIG_HELPER --file moonraker.conf --add-include "cartographer.conf" || exit $?
+        # we are adding a new probe so need to migrate file names
+        if [ -f $BASEDIR/printer_data/config/cartographer.conf ]; then
+          rm $BASEDIR/printer_data/config/cartographer.conf || exit $?
+        fi
+        $CONFIG_HELPER --file moonraker.conf --remove-include "cartographer.conf" || exit $?
+
+        cp $BASEDIR/pellcorp/rpi/cartotouch.conf $BASEDIR/printer_data/config/ || exit $?
+        $CONFIG_HELPER --file moonraker.conf --add-include "cartotouch.conf" || exit $?
 
         cp $BASEDIR/pellcorp/config/cartotouch_macro.cfg $BASEDIR/printer_data/config/ || exit $?
         $CONFIG_HELPER --add-include "cartotouch_macro.cfg" || exit $?
@@ -1034,13 +1030,6 @@ fi
   mkdir -p $BASEDIR/pellcorp-overrides
   mkdir -p $BASEDIR/pellcorp-backups
 
-  probe_model=${probe}
-  if [ "$probe" = "cartotouch" ]; then
-    probe_model=cartographer
-  elif [ "$probe" = "eddyng" ]; then
-    probe_model=btteddy
-  fi
-
   echo "INFO: Mode is $mode"
   echo "INFO: Probe is $probe"
 
@@ -1250,7 +1239,7 @@ fi
 
   # we want a copy of the file before config overrides are re-applied so we can correctly generate diffs
   # against different generations of the original file
-  for file in printer.cfg start_end.cfg fan_control.cfg $probe_model.conf spoolman.conf timelapse.conf moonraker.conf crowsnest.conf webcam.conf useful_macros.cfg homing_override.cfg ${probe}_macro.cfg ${probe}.cfg; do
+  for file in printer.cfg start_end.cfg fan_control.cfg ${probe}.conf spoolman.conf timelapse.conf moonraker.conf crowsnest.conf webcam.conf useful_macros.cfg homing_override.cfg ${probe}_macro.cfg ${probe}.cfg; do
     if [ -f $BASEDIR/printer_data/config/$file ]; then
       cp $BASEDIR/printer_data/config/$file $BASEDIR/pellcorp-backups/$file
     fi
