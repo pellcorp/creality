@@ -802,7 +802,7 @@ elif [ "$1" = "--cleanup" ]; then # mostly to make testing easier
 elif [ "$1" = "--branch" ] && [ -n "$2" ]; then # convenience for testing new features
     update_repo $BASEDIR/pellcorp $2 || exit $?
     exit $?
-elif [ "$1" = "--cartographer-branch" ]; then
+elif [ "$1" = "--cartotouch-branch" ]; then
     shift
     if [ -d $BASEDIR/cartographer-klipper ]; then
         branch=master
@@ -818,9 +818,9 @@ elif [ "$1" = "--cartographer-branch" ]; then
         fi
         update_repo $BASEDIR/cartographer-klipper $branch || exit $?
         update_klipper || exit $?
-        if [ -f $BASEDIR/printer_data/config/cartographer.conf ]; then
-            $CONFIG_HELPER --file cartographer.conf --replace-section-entry 'update_manager cartographer' channel $channel || exit $?
-            $CONFIG_HELPER --file cartographer.conf --replace-section-entry 'update_manager cartographer' primary_branch $branch || exit $?
+        if [ -f $BASEDIR/printer_data/config/cartotouch.conf ]; then
+            $CONFIG_HELPER --file cartotouch.conf --replace-section-entry 'update_manager cartotouch' channel $channel || exit $?
+            $CONFIG_HELPER --file cartotouch.conf --replace-section-entry 'update_manager cartotouch' primary_branch $branch || exit $?
             restart_moonraker || exit $?
         fi
     else

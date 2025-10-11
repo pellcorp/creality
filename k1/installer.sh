@@ -163,12 +163,12 @@ function update_repo() {
 }
 
 function update_klipper() {
-  if [ -d /usr/data/cartographer-klipper ]; then
+  if [ -d /usr/data/cartographer-klipper ] && [ -L /usr/data/klipper/klippy/extras/scanner.py ]; then
       /usr/data/cartographer-klipper/install.sh || return $?
       ln -sf /usr/data/cartographer-klipper/ /root
       sync
   fi
-  if [ -d /usr/data/beacon-klipper ]; then
+  if [ -d /usr/data/beacon-klipper ] && [ -L /usr/data/klipper/klippy/extras/beacon.py ]; then
       /usr/data/pellcorp/k1/beacon-install.sh || return $?
       ln -sf /usr/data/beacon-klipper/ /root
       sync
@@ -1732,7 +1732,7 @@ elif [ "$1" = "--grumpy-branch" ]; then
 elif [ "$1" = "--branch" ] && [ -n "$2" ]; then # convenience for testing new features
     update_repo /usr/data/pellcorp $2 || exit $?
     exit $?
-elif [ "$1" = "--cartographer-branch" ]; then
+elif [ "$1" = "--cartotouch-branch" ]; then
     shift
     if [ -d /usr/data/cartographer-klipper ]; then
         branch=master
@@ -1748,9 +1748,9 @@ elif [ "$1" = "--cartographer-branch" ]; then
         fi
         update_repo /usr/data/cartographer-klipper $branch || exit $?
         update_klipper || exit $?
-        if [ -f /usr/data/printer_data/config/cartographer.conf ]; then
-            $CONFIG_HELPER --file cartographer.conf --replace-section-entry 'update_manager cartographer' channel $channel || exit $?
-            $CONFIG_HELPER --file cartographer.conf --replace-section-entry 'update_manager cartographer' primary_branch $branch || exit $?
+        if [ -f /usr/data/printer_data/config/cartotouch.conf ]; then
+            $CONFIG_HELPER --file cartotouch.conf --replace-section-entry 'update_manager cartotouch' channel $channel || exit $?
+            $CONFIG_HELPER --file cartotouch.conf --replace-section-entry 'update_manager cartotouch' primary_branch $branch || exit $?
             restart_moonraker || exit $?
         fi
     else
