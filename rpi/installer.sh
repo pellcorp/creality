@@ -166,7 +166,7 @@ function update_klipper() {
       sync
   fi
 
-  if [ -d $BASEDIR/beacon-klipper ] && [ -L $BASEDIR/klipper/klippy/extras/beacon.py ]; then; then
+  if [ -d $BASEDIR/beacon-klipper ] && [ -L $BASEDIR/klipper/klippy/extras/beacon.py ]; then
       $BASEDIR/beacon-klipper/install.sh || return $?
       sync
   fi
