@@ -1170,10 +1170,7 @@ function cleanup_probe() {
         rm /usr/data/printer_data/config/variables.cfg
     fi
 
-    # we use the cartographer includes
-    if [ "$probe" = "cartotouch" ]; then
-        probe=cartographer
-    elif [ "$probe" = "eddyng" ]; then
+    if [ "$probe" = "eddyng" ]; then
         probe=btteddy
     fi
 
@@ -1182,11 +1179,6 @@ function cleanup_probe() {
     fi
 
     $CONFIG_HELPER --file moonraker.conf --remove-include "${probe}.conf" || exit $?
-
-    if [ -f /usr/data/printer_data/config/${probe}_calibrate.cfg ]; then
-        rm /usr/data/printer_data/config/${probe}_calibrate.cfg
-    fi
-    $CONFIG_HELPER --remove-include "${probe}_calibrate.cfg" || exit $?
 
     if [ -f /usr/data/printer_data/config/$probe-${model}.cfg ]; then
         rm /usr/data/printer_data/config/$probe-${model}.cfg
