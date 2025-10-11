@@ -128,8 +128,8 @@ function cleanup_printer_cfg() {
   # in order to take advantage of the mounts for the various K1 series printers
   # we need to include a MODEL: header
   sed -i '/^#/d' $file
-  sed -i "1c\# Creality $(basename $target .cfg) printer definition for https://rentry.co/k1-with-pi/" $file
-  sed -i "2c\# MODEL:$model" $file
+  sed -i "1i\# Creality $(basename $target .cfg) printer definition for https://rentry.co/k1-with-pi/" $file
+  sed -i "2i\# MODEL:$model" $file
 }
 
 cleanup_printer_cfg K1_CR4CU220812S12 creality-k1-2023.cfg k1
