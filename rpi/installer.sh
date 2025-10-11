@@ -307,6 +307,10 @@ function cleanup_probe() {
         rm $BASEDIR/printer_data/config/variables.cfg
     fi
 
+    if [ "$probe" = "eddyng" ]; then
+        probe=btteddy
+    fi
+
     if [ -f $BASEDIR/printer_data/config/${probe}.conf ]; then
         rm $BASEDIR/printer_data/config/${probe}.conf
     fi
