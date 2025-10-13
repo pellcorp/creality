@@ -1073,6 +1073,32 @@ function setup_probe() {
     return 0
 }
 
+# /usr/share/klippy-env/bin/python -m pip install --upgrade cartographer3d-plugin
+function install_cartographer_plugin() {
+    local mode=$1
+
+    grep -q "cartographer-plugin" /usr/data/pellcorp.done
+    if [ $? -ne 0 ]; then
+        # for old style cartographer that is a soft link
+        if [ -L /usr/data/klipper/klippy/extras/cartographer.py ]; then
+            rm -rf /usr/data/klipper/klippy/extras/cartographer.py
+        fi
+        if [ "$mode" != "update" ] && [ -e /usr/data/klipper/klippy/extras/cartographer.py ]; then
+            rm -rf /usr/data/klipper/klippy/extras/cartographer.py
+        fi
+
+        if [ ! -f /usr/data/klipper/klippy/extras/cartographer.py ]; then
+            curl -s -L https://raw.githubusercontent.com/Cartographer3D/cartographer3d-plugin/refs/heads/main/scripts/install.sh | bash -s -- --klipper /usr/data/klipper --klippy-env /usr/share/klippy-env || exit $?
+        fi
+
+        echo "cartographer-plugin" >> /usr/data/pellcorp.done
+        sync
+        return 1
+    fi
+    return 0
+}
+
+
 function install_cartographer_klipper() {
     local mode=$1
 
@@ -1191,6 +1217,7 @@ function cleanup_probes() {
   cleanup_probe btteddy
   cleanup_probe eddyng
   cleanup_probe cartotouch
+  cleanup_probe cartographer
   cleanup_probe beacon
   cleanup_probe klicky
   cleanup_probe bltouch
@@ -1315,6 +1342,23 @@ function set_serial_cartotouch() {
     fi
 }
 
+function set_serial_cartographer() {
+    local SERIAL_ID=$(ls /dev/serial/by-id/usb-* | grep "IDM\|Cartographer" | head -1)
+    if [ -n "$SERIAL_ID" ]; then
+        local EXISTING_SERIAL_ID=$($CONFIG_HELPER --file cartographer.cfg --get-section-entry "mcu cartographer" "serial")
+        if [ "$EXISTING_SERIAL_ID" != "$SERIAL_ID" ]; then
+            $CONFIG_HELPER --file cartographer.cfg --replace-section-entry "mcu cartographer" "serial" "$SERIAL_ID" || exit $?
+            return 1
+        else
+            echo "Serial value is unchanged"
+            return 0
+        fi
+    else
+        echo "WARNING: There does not seem to be a cartographer attached - skipping auto configuration"
+        return 0
+    fi
+}
+
 function setup_cartotouch() {
     grep -q "cartotouch-probe" /usr/data/pellcorp.done
     if [ $? -ne 0 ]; then
@@ -1389,6 +1433,52 @@ function setup_cartotouch() {
         fi
 
         echo "cartotouch-probe" >> /usr/data/pellcorp.done
+        sync
+        return 1
+    fi
+    return 0
+}
+
+function setup_cartographer() {
+    grep -q "cartographer-probe" /usr/data/pellcorp.done
+    if [ $? -ne 0 ]; then
+        echo
+        echo "INFO: Setting up cartographer V2 ..."
+
+        cleanup_probes
+
+        cp /usr/data/pellcorp/k1/cartographer.conf /usr/data/printer_data/config/ || exit $?
+        $CONFIG_HELPER --file moonraker.conf --add-include "cartographer.conf" || exit $?
+
+        cp /usr/data/pellcorp/config/cartographer_macro.cfg /usr/data/printer_data/config/ || exit $?
+        $CONFIG_HELPER --add-include "cartographer_macro.cfg" || exit $?
+
+        $CONFIG_HELPER --replace-section-entry "stepper_z" "homing_retract_dist" "0" || exit $?
+
+        cp /usr/data/pellcorp/config/cartographer.cfg /usr/data/printer_data/config/ || exit $?
+        $CONFIG_HELPER --add-include "cartographer.cfg" || exit $?
+
+        y_position_mid=$($CONFIG_HELPER --get-section-entry "stepper_y" "position_max" --divisor 2 --integer)
+        x_position_mid=$($CONFIG_HELPER --get-section-entry "stepper_x" "position_max" --divisor 2 --integer)
+        $CONFIG_HELPER --file cartographer.cfg --replace-section-entry "bed_mesh" "zero_reference_position" "$x_position_mid,$y_position_mid" || exit $?
+
+        set_serial_cartographer
+
+        # Ender 5 Max we don't have firmware for it, so need to configure cartographer instead for adxl
+        if [ "$MODEL" = "F004" ]; then
+          # new versions of Ender 5 Max firmware added accel_chip_proxy to replace adxl
+          $CONFIG_HELPER --add-section "adxl345"
+          $CONFIG_HELPER --replace-section-entry "adxl345" "cs_pin" "scanner:PA3" || exit $?
+          $CONFIG_HELPER --replace-section-entry "adxl345" "spi_bus" "spi1" || exit $?
+          $CONFIG_HELPER --replace-section-entry "adxl345" "axes_map" "x,y,z" || exit $?
+          $CONFIG_HELPER --remove-section-entry "adxl345" "spi_speed" || exit $?
+          $CONFIG_HELPER --remove-section-entry "adxl345" "spi_software_sclk_pin" || exit $?
+          $CONFIG_HELPER --remove-section-entry "adxl345" "spi_software_mosi_pin" || exit $?
+          $CONFIG_HELPER --remove-section-entry "adxl345" "spi_software_miso_pin" || exit $?
+          $CONFIG_HELPER --replace-section-entry "resonance_tester" "accel_chip" "adxl345" || exit $?
+        fi
+
+        echo "cartographer-probe" >> /usr/data/pellcorp.done
         sync
         return 1
     fi
@@ -1818,6 +1908,8 @@ fi
         probe=microprobe
     elif [ -f /usr/data/printer_data/config/cartotouch.cfg ]; then
         probe=cartotouch
+    elif [ -f /usr/data/printer_data/config/cartographer.cfg ]; then
+        probe=cartographer
     elif [ -f /usr/data/printer_data/config/beacon.cfg ]; then
         probe=beacon
     elif [ -f /usr/data/printer_data/config/klicky.cfg ]; then
@@ -1857,7 +1949,6 @@ fi
         elif [ "$1" = "--mount" ]; then
             shift
             mount=$1
-
             # allows the user to reapply mount overrides for current mount
             if [ -f /usr/data/pellcorp.done ] && [ "$mount" = "%CURRENT%" ]; then
                 mount=$(cat /usr/data/pellcorp.done | grep mount= | awk -F '=' '{print $2}')
@@ -1870,7 +1961,7 @@ fi
         elif [ "$1" = "--force" ]; then
           force=true
           shift
-        elif [ "$1" = "microprobe" ] || [ "$1" = "bltouch" ] || [ "$1" = "beacon" ] || [ "$1" = "klicky" ] || [ "$1" = "cartotouch" ] || [ "$1" = "btteddy" ] || [ "$1" = "eddyng" ]; then
+        elif [ "$1" = "microprobe" ] || [ "$1" = "bltouch" ] || [ "$1" = "beacon" ] || [ "$1" = "klicky" ] || [ "$1" = "cartographer" ] || [ "$1" = "cartotouch" ] || [ "$1" = "btteddy" ] || [ "$1" = "eddyng" ]; then
             if [ "$mode" = "fix-serial" ]; then
                 echo "ERROR: Switching probes is not supported while trying to fix serial!"
                 exit 1
@@ -1890,7 +1981,7 @@ fi
 
     if [ -z "$probe" ]; then
         echo "ERROR: You must specify a probe you want to configure"
-        echo "One of: [microprobe, bltouch, cartotouch, btteddy, eddyng, beacon, klicky]"
+        echo "One of: [microprobe, bltouch, cartotouch, cartographer, btteddy, eddyng, beacon, klicky]"
         exit 1
     fi
 
@@ -1968,6 +2059,9 @@ fi
         if [ -f /usr/data/pellcorp.done ]; then
             if [ "$probe" = "cartotouch" ]; then
                 set_serial_cartotouch
+                set_serial=$?
+            elif [ "$probe" = "cartographer" ]; then
+                set_serial_cartographer
                 set_serial=$?
             elif [ "$probe" = "beacon" ]; then
                 set_serial_beacon
@@ -2163,10 +2257,14 @@ fi
     install_klipper=$?
 
     install_cartographer_klipper=0
+    install_cartographer_plugin=0
     install_beacon_klipper=0
-    if [ "$probe" = "cartographer" ] || [ "$probe" = "cartotouch" ]; then
+    if [ "$probe" = "cartotouch" ]; then
       install_cartographer_klipper $mode
       install_cartographer_klipper=$?
+    elif [ "$probe" = "cartographer" ]; then
+      install_cartographer_plugin $mode
+      install_cartographer_plugin=$?
     elif [ "$probe" = "beacon" ]; then
       install_beacon_klipper $mode
       install_beacon_klipper=$?
@@ -2180,6 +2278,9 @@ fi
 
     if [ "$probe" = "cartotouch" ]; then
         setup_cartotouch
+        setup_probe_specific=$?
+    elif [ "$probe" = "cartographer" ]; then
+        setup_cartographer
         setup_probe_specific=$?
     elif [ "$probe" = "bltouch" ]; then
         setup_bltouch
@@ -2247,7 +2348,7 @@ fi
     update_ip_address=$?
     echo
     
-    if [ $apply_overrides -ne 0 ] || [ $install_moonraker -ne 0 ] || [ $install_cartographer_klipper -ne 0 ] || [ $install_beacon_klipper -ne 0 ] || [ $update_ip_address -ne 0 ]; then
+    if [ $apply_overrides -ne 0 ] || [ $install_moonraker -ne 0 ] || [ $install_cartographer_plugin -ne 0 ] || [ $install_cartographer_klipper -ne 0 ] || [ $install_beacon_klipper -ne 0 ] || [ $update_ip_address -ne 0 ]; then
         echo "INFO: Restarting Moonraker ..."
         sudo systemctl restart moonraker
     fi

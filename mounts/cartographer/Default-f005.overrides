@@ -1,0 +1,13 @@
+# https://www.printables.com/model/1037606-cartographer-3d-right-angle-k1-series-mount
+
+-- cartographer.cfg
+[cartographer]
+y_offset: 22.0
+x_offset: 0
+
+[bed_mesh]
+mesh_min: 15,15
+mesh_max: 210,210
+
+[screws_tilt_adjust]
+__action__: DELETED

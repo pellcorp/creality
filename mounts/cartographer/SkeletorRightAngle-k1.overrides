@@ -1,0 +1,25 @@
+# https://www.printables.com/model/1106768-skeletor-right-angle-cartographer-mount-k1-max-onl
+
+-- cartographer.cfg
+[cartographer]
+x_offset: -24.0
+y_offset: 0.0
+
+[bed_mesh]
+mesh_min: 10,10
+mesh_max: 200,215
+
+[screws_tilt_adjust]
+screw1:53.50, 25
+screw2:223.50, 25
+screw3:223.50, 194.50
+screw4:53.50, 194.50
+
+[axis_twist_compensation]
+calibrate_start_x: 10
+calibrate_end_x: 200
+calibrate_y: 105
+
+-- printer.cfg
+[stepper_y]
+position_max: 226

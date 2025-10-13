@@ -61,7 +61,7 @@ elif [ "$1" = "--restart" ]; then
 fi
 
 if [ $# -eq 0 ]; then
-    echo "Usage: $0 [--verify] <cartotouch|btteddy|eddyng|microprobe|bltouch|beacon|klicky> <mount>"
+    echo "Usage: $0 [--verify] <cartotouch|cartographer|btteddy|eddyng|microprobe|bltouch|beacon|klicky> <mount>"
     exit 0
 fi
 
