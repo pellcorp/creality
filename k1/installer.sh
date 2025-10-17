@@ -475,13 +475,15 @@ function install_moonraker() {
             git clone https://github.com/mainsail-crew/moonraker-timelapse.git /usr/data/moonraker-timelapse/ || exit $?
         fi
 
-        if [ ! -d /usr/data/moonraker-env ]; then
-            tar -zxf /usr/data/pellcorp/k1/moonraker-env.tar.gz -C /usr/data/ || exit $?
+        # clean up old ffmpeg install
+        if [ -f /opt/bin/ffmpeg ]; then
+          /opt/bin/opkg remove ffmpeg
         fi
 
-        if [ "$mode" != "update" ] || [ ! -f /opt/bin/ffmpeg ]; then
-            echo "INFO: Upgrading ffmpeg for moonraker timelapse ..."
-            /opt/bin/opkg install ffmpeg || exit $?
+        cp /usr/data/pellcorp/k1/tools/ffmpeg-shim /usr/bin/
+
+        if [ ! -d /usr/data/moonraker-env ]; then
+            tar -zxf /usr/data/pellcorp/k1/moonraker-env.tar.gz -C /usr/data/ || exit $?
         fi
 
         echo "INFO: Updating moonraker config ..."
