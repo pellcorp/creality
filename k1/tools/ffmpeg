@@ -1,0 +1,107 @@
+#!/usr/bin/env bash
+# ffmpeg-shim for Moonraker timelapse (720p, built-in h264, NV12)
+# Rewrites:
+#   -vcodec libx264 / -c:v libx264  ->  -vcodec h264
+#   -crf N                           ->  -b:v XM -maxrate XM -bufsize 2XM
+# Adds fast flags for built-in h264 + defaults to -pix_fmt nv12 (unless user set one)
+
+set -euo pipefail
+REAL_FFMPEG="${REAL_FFMPEG:-/usr/bin/ffmpeg}"
+
+# --- 720p CRF→Mbps mapping (tweak if you like) ---
+crf_to_mbps() {
+  case "$1" in
+    18) echo 7 ;;
+    19) echo 6 ;;
+    20) echo 5 ;;
+    21) echo 4 ;;
+    22) echo 3.5 ;;
+    23) echo 3 ;;   # default sweet spot at 720p
+    24) echo 2.5 ;;
+    25) echo 2 ;;
+    26) echo 1.8 ;;
+    27) echo 1.6 ;;
+    28) echo 1.5 ;;
+    29) echo 1.2 ;;
+    30) echo 1 ;;
+    *)  echo 3 ;;
+  esac
+}
+
+have_flag() { printf '%s\0' "$@" | grep -Fzxq "$1" ; }
+
+OUT=()
+skip=0
+i=1
+saw_codec=""
+while [ $i -le $# ]; do
+  a="${!i}"
+
+  if [ $skip -eq 1 ]; then
+    skip=0; i=$((i+1)); continue
+  fi
+
+  case "$a" in
+    -vcodec|-c:v)
+      j=$((i+1))
+      if [ $j -le $# ] && [ "${!j}" = "libx264" ]; then
+        OUT+=("$a" "h264")
+        saw_codec="h264"
+        skip=1; i=$((i+1)); continue
+      fi
+      OUT+=("$a")
+      if [ $j -le $# ]; then
+        OUT+=("${!j}")
+        saw_codec="${!j}"
+        skip=1; i=$((i+1)); continue
+      fi
+      ;;
+
+    -crf)
+      j=$((i+1))
+      if [ $j -le $# ]; then
+        crf="${!j}"
+        mbps="$(crf_to_mbps "$crf")"
+        rate="${mbps}M"
+        # Inject RC flags if not present
+        have_flag "-b:v"     "${OUT[@]}" "$@" || OUT+=("-b:v"     "$rate")
+        have_flag "-maxrate" "${OUT[@]}" "$@" || OUT+=("-maxrate" "$rate")
+        if ! have_flag "-bufsize" "${OUT[@]}" "$@"; then
+          case "$mbps" in
+            *.*) buf="$(awk -v v="$mbps" 'BEGIN{printf "%.3fM", 2*v}')" ;;
+            *)   buf="$(( mbps * 2 ))M" ;;
+          esac
+          OUT+=("-bufsize" "$buf")
+        fi
+        skip=1; i=$((i+1)); continue
+      fi
+      ;;
+
+    *)
+      OUT+=("$a")
+      ;;
+  esac
+
+  i=$((i+1))
+done
+
+# If codec wasn’t set explicitly, force built-in h264 (Moonraker tends to request libx264)
+if [ -z "$saw_codec" ]; then
+  OUT=("-vcodec" "h264" "${OUT[@]}")
+  saw_codec="h264"
+fi
+
+# Fast, “superfast-like” settings for built-in h264 (add only if not present)
+if [ "$saw_codec" = "h264" ]; then
+  have_flag "-g"        "${OUT[@]}" || OUT+=("-g" "60")
+  have_flag "-bf"       "${OUT[@]}" || OUT+=("-bf" "0")
+  have_flag "+fast"     "${OUT[@]}" || OUT+=("-flags" "+fast")
+  have_flag "-coder"    "${OUT[@]}" || OUT+=("-coder" "0")
+  have_flag "-me_method"${OUT[@]}" || OUT+=("-me_method" "zero")
+  have_flag "-subq"     "${OUT[@]}" || OUT+=("-subq" "0")
+  have_flag "-refs"     "${OUT[@]}" || OUT+=("-refs" "1")
+  # Default to NV12 unless user specified a pix_fmt
+  have_flag "-pix_fmt"  "${OUT[@]}" || OUT+=("-pix_fmt" "nv12")
+fi
+
+exec "$REAL_FFMPEG" "${OUT[@]}"
