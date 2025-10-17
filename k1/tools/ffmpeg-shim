@@ -1,0 +1,97 @@
+#!/usr/bin/env bash
+# Minimal ffmpeg shim for Moonraker-Timelapse (Creality OS):
+# FORCE hardware: -vcodec libx264  ->  -vcodec h264_v4l2m2m
+# Replace: -crf N  ->  -b:v XM -maxrate XM -bufsize 2XM  (720p mapping)
+# Add MP4 sync flags before the output filename.
+# Does NOT touch pixel format (set that in your timelapse config).
+
+set -euo pipefail
+REAL_FFMPEG="${REAL_FFMPEG:-/usr/bin/ffmpeg}"
+
+# 720p CRF→Mbps map (tweak via env if desired)
+crf_to_mbps() {
+  case "$1" in
+    18) echo "${CRF_TO_MBPS_18:-7}" ;;
+    19) echo "${CRF_TO_MBPS_19:-6}" ;;
+    20) echo "${CRF_TO_MBPS_20:-5}" ;;
+    21) echo "${CRF_TO_MBPS_21:-4}" ;;
+    22) echo "${CRF_TO_MBPS_22:-3.5}" ;;
+    23) echo "${CRF_TO_MBPS_23:-3}" ;;   # sweet spot for 720p
+    24) echo "${CRF_TO_MBPS_24:-2.5}" ;;
+    25) echo "${CRF_TO_MBPS_25:-2}" ;;
+    26) echo "${CRF_TO_MBPS_26:-1.8}" ;;
+    27) echo "${CRF_TO_MBPS_27:-1.6}" ;;
+    28) echo "${CRF_TO_MBPS_28:-1.5}" ;;
+    29) echo "${CRF_TO_MBPS_29:-1.2}" ;;
+    30) echo "${CRF_TO_MBPS_30:-1}" ;;
+    *)  echo "${CRF_TO_MBPS_DEFAULT:-3}" ;;
+  esac
+}
+
+# Pass 1: rewrite codec, capture and drop -crf
+OUT=()
+captured_crf=""
+skip=0
+for ((i=1; i<=$#; i++)); do
+  if (( skip )); then skip=0; continue; fi
+  a="${!i}"
+  case "$a" in
+    -vcodec)
+      j=$((i+1))
+      if [[ $j -le $# ]]; then
+        v="${!j}"
+        if [[ "$v" == "libx264" ]]; then
+          OUT+=("-vcodec" "h264_v4l2m2m")
+          skip=1; continue
+        fi
+        OUT+=("-vcodec" "$v")
+        skip=1; continue
+      fi
+      OUT+=("-vcodec")
+      ;;
+    -crf)
+      j=$((i+1))
+      if [[ $j -le $# ]]; then
+        captured_crf="${!j}"
+        skip=1   # drop -crf and its value
+        continue
+      fi
+      ;;
+    *)
+      OUT+=("$a")
+      ;;
+  esac
+done
+
+# Build the extra flags we’ll inject before the filename
+EXTRA=()
+if [[ -n "$captured_crf" ]]; then
+  mbps="$(crf_to_mbps "$captured_crf")"
+  rate="${mbps}M"
+  # bufsize = 2× bitrate
+  case "$mbps" in
+    *.*) buf="$(awk -v v="$mbps" 'BEGIN{printf "%.3fM", 2*v}')" ;;
+    *)   buf="$(( mbps * 2 ))M" ;;
+  esac
+  EXTRA+=(-b:v "$rate" -maxrate "$rate" -bufsize "$buf")
+fi
+
+# MP4 / timestamp hygiene (stabilizes v4l2m2m + mp4)
+EXTRA+=(-fflags +genpts -vsync cfr -r 30 -g 60 -bf 0 -movflags +faststart+frag_keyframe+empty_moov)
+
+# Insert EXTRA right before the actual output filename (Moonraker uses: <file> -y)
+if ((${#OUT[@]}>=2)); then
+  before_file_index=$((${#OUT[@]}-2))   # filename is 2nd-to-last
+  OUT=("${OUT[@]:0:before_file_index}" "${EXTRA[@]}" "${OUT[@]:before_file_index}")
+else
+  OUT+=("${EXTRA[@]}")
+fi
+
+# Optional debug: SHIM_DEBUG=1 to print final argv
+if [[ "${SHIM_DEBUG:-0}" -ne 0 ]]; then
+  echo "[ffmpeg-shim] final argv:" >&2
+  printf ' %q' "$REAL_FFMPEG" "${OUT[@]}" >&2
+  echo >&2
+fi
+
+exec "$REAL_FFMPEG" "${OUT[@]}"
