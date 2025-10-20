@@ -66,6 +66,10 @@ factory_reset() {
         -exec rmdir {} \; >/dev/null 2>&1
     /bin/sync >/dev/null 2>&1
 
+    # for some reason sometimes /opt directory is present
+    [ -d /opt ] && rm -rf /opt
+    /bin/sync >/dev/null 2>&1
+
     echo "INFO: Factory reset was executed successfully, the printer will restart..."
     /etc/init.d/rcK >/dev/null 2>&1
     /bin/sync >/dev/null 2>&1
