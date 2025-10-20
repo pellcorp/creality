@@ -78,7 +78,6 @@ function cleanup_printer_cfg() {
   $CONFIG_HELPER --file $file --remove-include "sensorless.cfg" || exit $?
 
   # weird arse hotend stuff config
-  $CONFIG_HELPER --file $file --remove-section "duplicate_pin_override" || exit $?
   $CONFIG_HELPER --file $file --remove-section "static_digital_output my_fan_output_pins" || exit $?
   $CONFIG_HELPER --file $file --remove-section "multi_pin heater_fans" || exit $?
 
