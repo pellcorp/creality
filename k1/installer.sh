@@ -35,6 +35,9 @@ if [ -d /usr/data/helper-script ] || [ -f /usr/data/fluidd.sh ] || [ -f /usr/dat
         echo "FATAL: You must factory reset the printer before installing Simple AF!"
     fi
     exit 1
+elif [ -d /opt ] && [ ! -L /opt ]; then
+   echo "FATAL: You must factory reset the printer before installing Simple AF!"
+   exit 1
 fi
 
 # everything else in the script assumes its cloned to /usr/data/pellcorp
