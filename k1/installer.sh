@@ -1860,20 +1860,27 @@ elif [ "$1" = "--klipper-repo" ]; then # convenience for testing new features
             exit 1
         fi
 
+        owner="${klipper_repo%%/*}"
+        repo="${klipper_repo#*/}"
+        if [ "$owner" = "$repo" ]; then
+          owner=pellcorp
+        fi
+
         if [ -d /usr/data/klipper/.git ]; then
             cd /usr/data/klipper/
-            remote_repo=$(git remote get-url origin | awk -F '/' '{print $NF}' | sed 's/.git//g')
+            remote_repo=$(git remote get-url origin)
+            remote_repo="${remote_repo#*github.com/}"   # remove everything up to github.com/
+            remote_repo="${remote_repo%.git}"     # remove trailing .git
             cd - > /dev/null
-            if [ "$remote_repo" != "$klipper_repo" ]; then
-                echo "INFO: Switching klipper from pellcorp/$remote_repo to pellcorp/${klipper_repo} ..."
-                rm -rf /usr/data/klipper
 
-                echo "$klipper_repo" > /usr/data/pellcorp.klipper
+            if [ "$remote_repo" != "${owner}/${repo}" ]; then
+                echo "INFO: Switching klipper from $remote_repo to ${owner}/${repo} ..."
+                rm -rf /usr/data/klipper
             fi
         fi
 
         if [ ! -d /usr/data/klipper ]; then
-            git clone https://github.com/pellcorp/${klipper_repo}.git /usr/data/klipper || exit $?
+            git clone https://github.com/${owner}/${repo}.git /usr/data/klipper || exit $?
             if [ -n "$3" ]; then
               cd /usr/data/klipper && git switch $3 && cd - > /dev/null
             fi
