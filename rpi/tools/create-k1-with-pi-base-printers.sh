@@ -12,6 +12,16 @@ if [ ! -d $CONFIG_DIR ]; then
   exit 1
 fi
 
+python3 -c 'from configupdater import ConfigUpdater' 2> /dev/null
+if [ $? -ne 0 ]; then
+  echo "ERROR: configupdater python module not available"
+  echo "Try:"
+  echo "  python3 -m venv $ROOT_DIR/.venv"
+  echo "  source $ROOT_DIR/.venv/bin/activate"
+  echo "  pip install configupdater==3.2"
+  exit 1
+fi
+
 CONFIG_HELPER="$CREALITY_DIR/tools/config-helper.py"
 
 function cleanup_printer_cfg() {
