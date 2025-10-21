@@ -104,6 +104,8 @@ function cleanup_printer_cfg() {
     $CONFIG_HELPER --file $file --replace-section-entry "fan_generic part" "pin" "$part_pin" || exit $?
     $CONFIG_HELPER --file $file --replace-section-entry "fan_generic part" "cycle_time" "0.0100" || exit $?
     $CONFIG_HELPER --file $file --replace-section-entry "fan_generic part" "hardware_pwm" "false" || exit $?
+    # this was originally the static_digital_output my_fan_output_pins
+    $CONFIG_HELPER --file $file --replace-section-entry "fan_generic part" "enable_pin" "nozzle_mcu:PB6" || exit $?
   fi
 
   aux_pin=$($CONFIG_HELPER --file $file --get-section-entry "output_pin fan2" "pin")
