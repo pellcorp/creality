@@ -1,19 +1,24 @@
 #!/bin/sh
 
 # this allows us to make changes to Simple AF and grumpyscreen in parallel
-GRUMPYSCREEN_TIMESTAMP=1758872100
+GRUMPYSCREEN_TIMESTAMP=1761125800
 
-MODEL=$(/usr/bin/get_sn_mac.sh model)
-if [ "$MODEL" = "CR-K1" ] || [ "$MODEL" = "K1C" ] || [ "$MODEL" = "K1 SE" ]; then
-  model=k1
-elif [ "$MODEL" = "CR-K1 Max" ] || [ "$MODEL" = "K1 Max SE" ]; then
-  model=k1m
-elif [ "$MODEL" = "F004" ]; then
-  model=f004
-elif [ "$MODEL" = "F005" ]; then
-  model=f005
+if [ -f /usr/bin/get_sn_mac.sh ]; then
+  MODEL=$(/usr/bin/get_sn_mac.sh model)
+  if [ "$MODEL" = "CR-K1" ] || [ "$MODEL" = "K1C" ] || [ "$MODEL" = "K1 SE" ]; then
+    model=k1
+  elif [ "$MODEL" = "CR-K1 Max" ] || [ "$MODEL" = "K1 Max SE" ]; then
+    model=k1m
+  elif [ "$MODEL" = "F004" ]; then
+    model=f004
+  elif [ "$MODEL" = "F005" ]; then
+    model=f005
+  else
+    echo "FATAL: This script is not supported for $MODEL!"
+    exit 1
+  fi
 else
-  echo "FATAL: This script is not supported for $MODEL!"
+  echo "FATAL: This script is not supported on non Creality OS!"
   exit 1
 fi
 
@@ -660,7 +665,7 @@ function install_klipper() {
             cd /usr/data/klipper/
             branch_ref=$(git rev-parse --abbrev-ref HEAD)
             remote_repo=$(git remote get-url origin | awk -F '/' '{print $NF}' | sed 's/.git//g')
-            git log | grep -q "expand variables in gcode shell command"
+            git log | grep -q "support M106 P argument thanks to Chad"
             klipper_status=$?
             cd - > /dev/null
 
