@@ -43,7 +43,7 @@ if [ $? -ne 0 ]; then
 
   if [ -d $BASEDIR/klipper ]; then
     cd $BASEDIR/klipper
-    git log | grep -q "expand variables in gcode shell command"
+    git log | grep -q "support M106 P argument thanks to Chad"
     klipper_status=$?
     cd - > /dev/null
 
@@ -104,6 +104,8 @@ if [ $? -ne 0 ]; then
     $BASEDIR/klippy-env/bin/pip install numpy==1.26.2 || exit $?
   fi
 
+  echo "INFO: Updating klipper config ..."
+
   if [ ! -d $BASEDIR/fluidd-config ]; then
     git clone https://github.com/fluidd-core/fluidd-config.git $BASEDIR/fluidd-config || exit $?
   fi
@@ -160,14 +162,14 @@ if [ $? -ne 0 ]; then
   cp $BASEDIR/pellcorp/rpi/fan_control.cfg $BASEDIR/printer_data/config || exit $?
   $CONFIG_HELPER --add-include "fan_control.cfg" || exit $?
 
-  # replace a [fan] with a part fan
-  pin=$($CONFIG_HELPER --get-section-entry "fan" "pin")
+  # replace a [fan_generic part] with a [fan]
+  pin=$($CONFIG_HELPER --get-section-entry "fan_generic part" "pin")
   if [ -n "$pin" ]; then
-    $CONFIG_HELPER --remove-section "fan" || exit $?
-    $CONFIG_HELPER --add-section "fan_generic part" || exit $?
-    $CONFIG_HELPER --replace-section-entry "fan_generic part" "pin" "$pin" || exit $?
-    $CONFIG_HELPER --replace-section-entry "fan_generic part" "cycle_time" "0.0100" || exit $?
-    $CONFIG_HELPER --replace-section-entry "fan_generic part" "hardware_pwm" "false" || exit $?
+    $CONFIG_HELPER --remove-section "fan_generic part" || exit $?
+    $CONFIG_HELPER --add-section "fan" || exit $?
+    $CONFIG_HELPER --replace-section-entry "fan" "pin" "$pin" || exit $?
+    $CONFIG_HELPER --replace-section-entry "fan" "cycle_time" "0.0100" || exit $?
+    $CONFIG_HELPER --replace-section-entry "fan" "hardware_pwm" "false" || exit $?
   fi
 
   if [ "$kinematics" = "corexy" ]; then
