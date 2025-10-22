@@ -360,45 +360,65 @@ function install_webcam() {
 
     grep -q "webcam" /usr/data/pellcorp.done
     if [ $? -ne 0 ]; then
-        if [ "$mode" != "update" ] || [ ! -f /opt/bin/mjpg_streamer ]; then
-            echo
-            echo "INFO: Installing mjpg streamer ..."
-            /opt/bin/opkg install mjpg-streamer mjpg-streamer-input-http mjpg-streamer-input-uvc mjpg-streamer-output-http mjpg-streamer-www || exit $?
-        fi
-
-        echo "INFO: Updating webcam config ..."
-        # we do not want to start the entware version of the service ever
-        if [ -f /opt/etc/init.d/S96mjpg-streamer ]; then
-            rm /opt/etc/init.d/S96mjpg-streamer
-        fi
-        # kill the existing creality services so that we can use the app right away without a restart
-        pidof cam_app &>/dev/null && killall -TERM cam_app > /dev/null 2>&1
-        pidof mjpg_streamer &>/dev/null && killall -TERM mjpg_streamer > /dev/null 2>&1
-
+      INPUT_TYPE=uvc
+      if [ "$mode" != "update" ] || [ ! -d /usr/data/mjpg-streamer ]; then
         if [ -f /etc/init.d/S50webcam ]; then
-            /etc/init.d/S50webcam stop > /dev/null 2>&1
+          /etc/init.d/S50webcam stop > /dev/null 2>&1
         fi
 
-        # auto_uvc.sh is responsible for starting the web cam_app
-        [ -f /usr/bin/auto_uvc.sh ] && rm /usr/bin/auto_uvc.sh
-        cp /usr/data/pellcorp/k1/files/auto_uvc.sh /usr/bin/
-        chmod 777 /usr/bin/auto_uvc.sh
-
-        cp /usr/data/pellcorp/k1/services/S50webcam /etc/init.d/
-        /etc/init.d/S50webcam start
-
-        if [ -f /usr/data/pellcorp.ipaddress ]; then
-          # don't wipe the pellcorp.ipaddress if its been explicitly set to skip
-          PREVIOUS_IP_ADDRESS=$(cat /usr/data/pellcorp.ipaddress 2> /dev/null)
-          if [ "$PREVIOUS_IP_ADDRESS" != "skip" ]; then
-            rm /usr/data/pellcorp.ipaddress
-          fi
+        if [ -f /opt/bin/mjpg_streamer ]; then
+          echo "INFO: Removing entware mjpg_streamer"
+          /opt/bin/opkg remove --force-removal-of-dependent-packages mjpg-streamer mjpg-streamer-input-http mjpg-streamer-input-uvc mjpg-streamer-output-http mjpg-streamer-www 2> /dev/null
         fi
-        cp /usr/data/pellcorp/k1/webcam.conf /usr/data/printer_data/config/ || exit $?
 
-        echo "webcam" >> /usr/data/pellcorp.done
-        sync
-        return 1
+        if [ -d /usr/data/mjpg-streamer ]; then
+          rm -rf /usr/data/mjpg-streamer
+        fi
+      fi
+
+      if [ ! -d /usr/data/mjpg-streamer ]; then
+        echo
+        echo "INFO: Installing mjpg-streamer ..."
+        curl -L "https://github.com/pellcorp/k1-mjpg-streamer/releases/download/main/mjpg-streamer.tar.gz" -o /usr/data/mjpg-streamer.tar.gz
+        tar -zxf /usr/data/mjpg-streamer.tar.gz -C /usr/data/
+      fi
+
+      echo
+      echo "INFO: Updating webcam config ..."
+
+      # kill the existing creality services so that we can use the app right away without a restart
+      pidof cam_app &>/dev/null && killall -TERM cam_app > /dev/null 2>&1
+      pidof mjpg_streamer &>/dev/null && killall -TERM mjpg_streamer > /dev/null 2>&1
+
+      # auto_uvc.sh is responsible for starting the web cam_app
+      [ -f /usr/bin/auto_uvc.sh ] && rm /usr/bin/auto_uvc.sh
+      cp /usr/data/pellcorp/k1/files/auto_uvc.sh /usr/bin/
+      chmod 777 /usr/bin/auto_uvc.sh
+
+      if [ -f /etc/init.d/S50webcam ]; then
+        CURRENT_INPUT_TYPE=$(cat /etc/init.d/S50webcam | grep INPUT_TYPE= | awk -F '=' '{print $2}')
+        if [ -n "$CURRENT_INPUT_TYPE" ]; then
+          INPUT_TYPE=$CURRENT_INPUT_TYPE
+        fi
+      fi
+      cp /usr/data/pellcorp/k1/services/S50webcam /etc/init.d/
+      if [ "$INPUT_TYPE" != "uvc" ]; then
+        sed -i "s/INPUT_TYPE=uvc/INPUT_TYPE=$INPUT_TYPE/g" /etc/init.d/S50webcam
+      fi
+      /etc/init.d/S50webcam start
+
+      if [ -f /usr/data/pellcorp.ipaddress ]; then
+        # don't wipe the pellcorp.ipaddress if its been explicitly set to skip
+        PREVIOUS_IP_ADDRESS=$(cat /usr/data/pellcorp.ipaddress 2> /dev/null)
+        if [ "$PREVIOUS_IP_ADDRESS" != "skip" ]; then
+          rm /usr/data/pellcorp.ipaddress
+        fi
+      fi
+      cp /usr/data/pellcorp/k1/webcam.conf /usr/data/printer_data/config/ || exit $?
+
+      echo "webcam" >> /usr/data/pellcorp.done
+      sync
+      return 1
     fi
     return 0
 }

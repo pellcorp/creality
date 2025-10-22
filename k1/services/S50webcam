@@ -2,6 +2,9 @@
 
 PID_FILE="/var/run/mjpg_streamer.pid"
 
+# change this to syncframes but only if you have a creality camera
+INPUT_TYPE=uvc
+
 case "$1" in
   start)
     V4L_DEVICE=$(v4l2-ctl --list-devices|grep -A1 usb|sed 's/^[[:space:]]*//g'|grep '^/dev' | head -1)
@@ -10,7 +13,12 @@ case "$1" in
       exit 1
     fi
 
-    start-stop-daemon -S -b -m -p $PID_FILE --exec "/opt/bin/mjpg_streamer" -- -i "/opt/lib/mjpg-streamer/input_uvc.so -d $V4L_DEVICE -r 1280x720 -f 10 -n -timeout 15" -o "/opt/lib/mjpg-streamer/output_http.so -p 8080"
+    export LD_LIBRARY_PATH=/usr/data/mjpg-streamer/lib/:/usr/data/mjpg-streamer/lib/mjpg-streamer/
+    if [ "$INPUT_TYPE" = "syncframes" ]; then
+        start-stop-daemon -S -b -m -p $PID_FILE --exec "/usr/data/mjpg-streamer/bin/mjpg_streamer" -- -i "/usr/data/mjpg-streamer/lib/mjpg-streamer/input_syncframes.so -r 1280x720 -m -camera_device0 $V4L_DEVICE" -o "/usr/data/mjpg-streamer/lib/mjpg-streamer/output_http.so -p 8080"
+    else
+        start-stop-daemon -S -b -m -p $PID_FILE --exec "/usr/data/mjpg-streamer/bin/mjpg_streamer" -- -i "/usr/data/mjpg-streamer/lib/mjpg-streamer/input_uvc.so -r 1280x720 -d $V4L_DEVICE -f 10 -n -timeout 15" -o "/usr/data/mjpg-streamer/lib/mjpg-streamer/output_http.so -p 8080"
+    fi
     ;;
   stop)
     start-stop-daemon -K -p $PID_FILE > /dev/null 2>&1
