@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Minimal ffmpeg shim for Moonraker-Timelapse (Creality OS):
-# FORCE hardware: -vcodec libx264  ->  -vcodec h264_v4l2m2m
+# FORCE hardware: -vcodec libx264  ->  -vcodec h264
 # Replace: -crf N  ->  -b:v XM -maxrate XM -bufsize 2XM  (720p mapping)
 # Add MP4 sync flags before the output filename.
 # Does NOT touch pixel format (set that in your timelapse config).
@@ -41,7 +41,7 @@ for ((i=1; i<=$#; i++)); do
       if [[ $j -le $# ]]; then
         v="${!j}"
         if [[ "$v" == "libx264" ]]; then
-          OUT+=("-vcodec" "h264_v4l2m2m")
+          OUT+=("-vcodec" "h264")
           skip=1; continue
         fi
         OUT+=("-vcodec" "$v")
