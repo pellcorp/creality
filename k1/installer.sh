@@ -635,7 +635,9 @@ function install_klipper() {
             cd /usr/data/klipper/
             remote_repo=$(git remote get-url origin | awk -F '/' '{print $NF}' | sed 's/.git//g')
             cd - > /dev/null
-            if [ "$remote_repo" != "klipper" ] && [ "$remote_repo" != "crapper" ]; then
+
+            # this old repo is no longer supported
+            if [ "$remote_repo" = "k1-carto-klipper" ]; then
                 echo "INFO: Forcing Klipper repo to be switched from pellcorp/${remote_repo} to pellcorp/klipper"
                 rm -rf /usr/data/klipper/
             fi
