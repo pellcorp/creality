@@ -221,11 +221,6 @@ function disable_creality_services() {
       mount -o remount /
     fi
 
-    # the bsa_server uses like 35% of ram its a bitch we dont need it
-    if [ -f /etc/init.d/S41bt_bsa_download_firmware ]; then
-        rm /etc/init.d/S41bt_bsa_download_firmware
-    fi
-    
     if [ -f /etc/init.d/S99start_app ]; then
         echo
         echo "INFO: Disabling some creality services ..."
