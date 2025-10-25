@@ -1,0 +1,10 @@
+#!/bin/sh
+
+# if using on a wifi ap on a phone a ping so the phone does not deauth the printer
+# which causes issues
+case "$1" in
+  start)
+    /usr/data/pellcorp/k1/keepalive.sh &
+esac
+
+exit $?
