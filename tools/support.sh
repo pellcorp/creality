@@ -83,6 +83,8 @@ rm $BASEDIR/support.log
 if [ -f $BASEDIR/support.zip ]; then
     mv $BASEDIR/support.zip $BASEDIR/printer_data/config/
     echo "Upload the support.zip to discord"
+    exit 0
 else
     echo "ERROR: Failed to create the support.zip file"
+    exit 1
 fi
