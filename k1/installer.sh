@@ -1,7 +1,7 @@
 #!/bin/sh
 
 # this allows us to make changes to Simple AF and grumpyscreen in parallel
-GRUMPYSCREEN_TIMESTAMP=1761125800
+GRUMPYSCREEN_TIMESTAMP=1761444100
 
 if [ -f /usr/bin/get_sn_mac.sh ]; then
   MODEL=$(/usr/bin/get_sn_mac.sh model)
