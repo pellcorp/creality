@@ -13,7 +13,10 @@ incus network set incusbr0 ipv6.firewall false
 incus network set incusbr0 ipv4.firewall false
 
 default_user=debian
-if [ "$1" = "noble" ]; then
+if [ "$1" = "jammy" ]; then
+    incus init images:ubuntu/jammy/cloud klipper --vm || exit $?
+    default_user=ubuntu
+elif [ "$1" = "noble" ]; then
     incus init images:ubuntu/noble/cloud klipper --vm || exit $?
     default_user=ubuntu
 elif [ "$1" = "11" ]; then
