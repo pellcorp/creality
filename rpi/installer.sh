@@ -198,7 +198,6 @@ function install_config_updater() {
             retry sudo apt-get install -y python3-pip > /dev/null; error
         fi
 
-        debian_release=$(lsb_release -rs)
         # from debian 12 onwards you are expected to create a virtualenv but we can
         # force the config module to be installed in system
         if [ $debian_release -ge 12 ]; then
