@@ -12,7 +12,11 @@ sudo ufw route allow out on incusbr0
 incus network set incusbr0 ipv6.firewall false
 incus network set incusbr0 ipv4.firewall false
 
-if [ "$1" = "11" ]; then
+default_user=debian
+if [ "$1" = "noble" ]; then
+    incus init images:ubuntu/noble/cloud klipper --vm || exit $?
+    default_user=ubuntu
+elif [ "$1" = "11" ]; then
     incus init images:debian/11/cloud klipper --vm || exit $?
 elif [ "$1" = "12" ]; then
     incus init images:debian/12/cloud klipper --vm || exit $?
@@ -23,12 +27,12 @@ incus config set klipper security.secureboot false || exit $?
 incus config set klipper limits.cpu 4 || exit $?
 incus config set klipper limits.memory 2048MB || exit $?
 incus config device override klipper root size=16GB || exit $?
-incus config device add klipper projects disk source=$ROOT_DIR path=/opt/projects/ || exit $?
+incus config device add klipper projects disk source=$ROOT_DIR path=/opt/projects/ io.bus=9p shift=true || exit $?
 incus start klipper
 
 echo -n "Waiting for klipper to start ."
 while true; do
-  incus exec klipper -- id -u debian > /dev/null 2>&1
+  incus exec klipper -- id -u $default_user > /dev/null 2>&1
   if [ $? -eq 0 ]; then
     break
   else

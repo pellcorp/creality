@@ -13,8 +13,11 @@ if [ $? -ne 0 ]; then
   retry sudo apt-get install -y lsb-release; error
 fi
 
-debian_release=$(lsb_release -rs)
-if [ $debian_release -gt 12 ]; then
+debian_release=$(lsb_release -rs 2> /dev/null | tr -d '.')
+if [ $debian_release -gt 1000 ]; then
+  echo "ERROR: Simple AF for RPi not supported on Ubuntu based distributions yet!"
+  exit 1
+elif [ $debian_release -gt 12 ]; then
   echo "ERROR: Simple AF for RPi not supported on Debian 13 yet!"
   exit 1
 fi
