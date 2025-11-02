@@ -747,9 +747,14 @@ function install_klipper() {
         cp /usr/data/pellcorp/config/sensorless.cfg /usr/data/printer_data/config/ || exit $?
         $CONFIG_HELPER --add-include "sensorless.cfg" || exit $?
 
+        x_position_mid=$($CONFIG_HELPER --get-section-entry "stepper_x" "position_max" --divisor 2 --integer)
+        $CONFIG_HELPER --file sensorless.cfg --replace-section-entry "gcode_macro _SENSORLESS_PARAMS" "variable_home_x" "$x_position_mid" || exit $?
+
+        y_position_mid=$($CONFIG_HELPER --get-section-entry "stepper_y" "position_max" --divisor 2 --integer)
+        $CONFIG_HELPER --file sensorless.cfg --replace-section-entry "gcode_macro _SENSORLESS_PARAMS" "variable_home_y" "$y_position_mid" || exit $?
+
         # just make sure the baud is written
         $CONFIG_HELPER --replace-section-entry "mcu" "baud" 230400 || exit $?
-
         $CONFIG_HELPER --replace-section-entry "mcu nozzle_mcu" "baud" 230400 || exit $?
 
         kinematics=$($CONFIG_HELPER --get-section-entry "printer" "kinematics")

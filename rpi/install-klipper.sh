@@ -134,6 +134,12 @@ if [ $? -ne 0 ]; then
   cp $BASEDIR/pellcorp/config/sensorless.cfg $BASEDIR/printer_data/config/homing_override.cfg || exit $?
   $CONFIG_HELPER --add-include "homing_override.cfg" || exit $?
 
+  x_position_mid=$($CONFIG_HELPER --get-section-entry "stepper_x" "position_max" --divisor 2 --integer)
+  $CONFIG_HELPER --file homing_override.cfg --replace-section-entry "gcode_macro _SENSORLESS_PARAMS" "variable_home_x" "$x_position_mid" || exit $?
+
+  y_position_mid=$($CONFIG_HELPER --get-section-entry "stepper_y" "position_max" --divisor 2 --integer)
+  $CONFIG_HELPER --file homing_override.cfg --replace-section-entry "gcode_macro _SENSORLESS_PARAMS" "variable_home_y" "$y_position_mid" || exit $?
+
   cp $BASEDIR/pellcorp/rpi/internal_macros.cfg $BASEDIR/printer_data/config/ || exit $?
   sudo sed -i "s:\$HOME:$BASEDIR:g" $BASEDIR/printer_data/config/internal_macros.cfg
   $CONFIG_HELPER --add-include "internal_macros.cfg" || exit $?
