@@ -44,6 +44,11 @@ function update_rootfs() {
 }
 
 download=$(wget -q https://www.creality.com/pages/${DOWNLOAD_PAGE} -O- | grep -o  "\"\(.*\)V${CREALITY_VERSION}.img\"" | head -1 | tr -d '"')
+if [ -z "$download" ]; then
+  echo "FATAL: Download page has changed could not download V${CREALITY_VERSION}"
+  exit 1
+fi
+
 old_image_name=$(basename $download)
 board_name=$(echo "$old_image_name" | grep -o "\(CR.*\)ota" | sed 's/_ota//g')
 old_directory="${board_name}_ota_img_V${CREALITY_VERSION}"
