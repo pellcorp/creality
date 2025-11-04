@@ -33,6 +33,17 @@ if [ "$MODEL" != "F004" ] && [ "$MODEL" != "F005" ]; then
     fi
 fi
 
+# clean up the stray opt directory with a single .ash_history file
+# ok so for some reason my 1.3.3.8 pre-rooted firmware has a /opt directory with a .ash_history file
+# if /opt is empty except for that then just kill it and proceed.
+if [ -d /opt ] && [ ! -L /opt ] && [ $(ls -1 /opt | wc -l) -eq 0 ]; then
+  rm -rf /opt
+fi
+
+# kill pip cache to free up overlayfs
+rm -rf /root/.cache
+sync
+
 if [ -d /usr/data/helper-script ] || [ -f /usr/data/fluidd.sh ] || [ -f /usr/data/mainsail.sh ]; then
     if [ -f /usr/data/pellcorp.done ]; then
         echo "FATAL: You have broken your Simple AF install by corrupting it with Helper Script!"
@@ -54,10 +65,6 @@ fi
 
 # so we can do ~/pellcorp/ paths in the wiki
 ln -sf /usr/data/pellcorp/ /root
-
-# kill pip cache to free up overlayfs
-rm -rf /root/.cache
-sync
 
 REMAINING_ROOT_DISK=$(df -m / | tail -1 | awk '{print $4}')
 if [ $REMAINING_ROOT_DISK -gt 25 ]; then
