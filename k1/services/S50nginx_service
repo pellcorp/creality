@@ -2,7 +2,7 @@
 
 NGINX="/usr/data/nginx/sbin/nginx"
 PID_FILE="/var/run/nginx.pid"
-NGINX_ARGS="-c /usr/data/nginx/nginx/nginx.conf"
+NGINX_ARGS="-c /usr/data/nginx/etc/nginx.conf"
 
 case "$1" in
   start)

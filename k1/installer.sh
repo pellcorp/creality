@@ -353,7 +353,7 @@ function install_boot_display() {
     cp /usr/data/pellcorp/k1/boot-display.conf /etc/boot-display/
     cp /usr/data/pellcorp/k1/services/S11jpeg_display_shell /etc/init.d/
     mkdir -p /usr/data/boot-display
-    tar -zxf "/usr/data/pellcorp/k1/boot-display.tar.gz" -C /usr/data/boot-display
+    tar -zxf /usr/data/pellcorp/k1/boot-display.tar.gz -C /usr/data/boot-display || exit $?
     ln -s /usr/data/boot-display/part0 /etc/boot-display/
     echo "boot-display" >> /usr/data/pellcorp.done
     sync
@@ -387,7 +387,8 @@ function install_webcam() {
         echo
         echo "INFO: Installing mjpg-streamer ..."
         curl -L "https://github.com/pellcorp/k1-mjpg-streamer/releases/download/main/mjpg-streamer.tar.gz" -o /usr/data/mjpg-streamer.tar.gz
-        tar -zxf /usr/data/mjpg-streamer.tar.gz -C /usr/data/
+        tar -zxf /usr/data/mjpg-streamer.tar.gz -C /usr/data/ || exit $?
+        rm /usr/data/mjpg-streamer.tar.gz
       fi
 
       echo
@@ -560,11 +561,22 @@ function install_nginx() {
     grep -q "nginx" /usr/data/pellcorp.done
     if [ $? -ne 0 ]; then
         default_ui=fluidd
-        if [ -f /usr/data/nginx/nginx/sites/mainsail ]; then
+        if [ -f /usr/data/nginx/etc/sites/mainsail ]; then
+          grep "#listen" /usr/data/nginx/etc/sites/mainsail > /dev/null
+          if [ $? -ne 0 ]; then
+            default_ui=mainsail
+          fi
+        elif [ -f /usr/data/nginx/nginx/sites/mainsail ]; then
           grep "#listen" /usr/data/nginx/nginx/sites/mainsail > /dev/null
           if [ $? -ne 0 ]; then
             default_ui=mainsail
           fi
+        fi
+
+        # remove old creality stuff
+        if [ -d /usr/data/nginx/nginx ]; then
+          /etc/init.d/S50nginx_service stop
+          rm -rf /usr/data/nginx
         fi
 
         if [ "$mode" != "update" ] && [ -d /usr/data/nginx ]; then
@@ -577,20 +589,19 @@ function install_nginx() {
         if [ ! -d /usr/data/nginx ]; then
             echo
             echo "INFO: Installing nginx ..."
-
-            tar -zxf /usr/data/pellcorp/k1/nginx.tar.gz -C /usr/data/ || exit $?
+            tar -zxf /usr/data/pellcorp/k1/packages/nginx.tar.gz -C / || exit $?
         fi
 
         echo "INFO: Updating nginx config ..."
-        cp /usr/data/pellcorp/k1/nginx.conf /usr/data/nginx/nginx/ || exit $?
-        mkdir -p /usr/data/nginx/nginx/sites/
-        cp /usr/data/pellcorp/k1/nginx/fluidd /usr/data/nginx/nginx/sites/ || exit $?
-        cp /usr/data/pellcorp/k1/nginx/mainsail /usr/data/nginx/nginx/sites/ || exit $?
+        cp /usr/data/pellcorp/k1/nginx.conf /usr/data/nginx/etc/ || exit $?
+        mkdir -p /usr/data/nginx/etc/sites/
+        cp /usr/data/pellcorp/k1/nginx/fluidd /usr/data/nginx/etc/sites/ || exit $?
+        cp /usr/data/pellcorp/k1/nginx/mainsail /usr/data/nginx/etc/sites/ || exit $?
 
         if [ "$default_ui" = "mainsail" ]; then
           echo "INFO: Restoring mainsail as default UI"
-          sed -i 's/.*listen 80 default_server;/    #listen 80 default_server;/g' /usr/data/nginx/nginx/sites/fluidd || exit $?
-          sed -i 's/.*#listen 80 default_server;/    listen 80 default_server;/g' /usr/data/nginx/nginx/sites/mainsail || exit $?
+          sed -i 's/.*listen 80 default_server;/    #listen 80 default_server;/g' /usr/data/nginx/etc/sites/fluidd || exit $?
+          sed -i 's/.*#listen 80 default_server;/    listen 80 default_server;/g' /usr/data/nginx/etc/sites/mainsail || exit $?
         fi
 
         cp /usr/data/pellcorp/k1/services/S50nginx_service /etc/init.d/ || exit $?
@@ -1147,7 +1158,6 @@ function install_cartographer_plugin() {
     fi
     return 0
 }
-
 
 function install_cartographer_klipper() {
     local mode=$1
@@ -1707,13 +1717,35 @@ function setup_eddyng() {
     return 0
 }
 
-function install_entware() {
+function install_packages() {
     local mode=$1
-    if ! grep -q "entware" /usr/data/pellcorp.done; then
+    grep -q "packages" /usr/data/pellcorp.done
+    if [ $? -ne 0 ]; then
         echo
-        /usr/data/pellcorp/k1/entware-install.sh "$mode" || exit $?
 
-        echo "entware" >> /usr/data/pellcorp.done
+        if [ -f /opt/bin/bash ]; then
+          echo "INFO: Removing entware bash"
+          /opt/bin/opkg remove --force-removal-of-dependent-packages bash 2> /dev/null
+        fi
+
+        if [ "$mode" != "update" ] || [ ! -d /usr/data/bash ]; then
+          echo "INFO: installing bash"
+          tar -zxf /usr/data/pellcorp/k1/packages/bash.tar.gz -C / || exit $?
+          ln -sf /usr/data/bash/bin/bash /bin/
+        fi
+
+        if [ -e /opt/libexec/sftp-server ]; then
+          echo "INFO: Removing entware sftp-server"
+          [ -e /usr/libexec/sftp-server ] && rm -f /usr/libexec/sftp-server
+          /opt/bin/opkg remove --force-removal-of-dependent-packages openssh-sftp-server 2> /dev/null
+        fi
+
+        if [ "$mode" != "update" ] || [ ! -f /usr/libexec/sftp-server ]; then
+          echo "INFO: installing sftp-server"
+          tar -zxf /usr/data/pellcorp/k1/packages/sftp-server.tar.gz -C /usr/libexec/ || exit $?
+        fi
+        
+        echo "packages" >> /usr/data/pellcorp.done
         sync
     fi
 }
@@ -2294,7 +2326,7 @@ fi
     touch /usr/data/pellcorp.done
     sync
 
-    install_entware $mode
+    install_packages $mode
     install_webcam $mode
     install_boot_display
 
