@@ -9,11 +9,6 @@ CONFIG_HELPER="$BASEDIR/pellcorp/tools/config-helper.py"
 apply_guppyscreen_overrides() {
     command=""
 
-    if [ -f $BASEDIR/pellcorp-overrides/calibration.json ]; then
-      echo "Restoring $BASEDIR/guppyscreen/calibration.json ..."
-      cp $BASEDIR/pellcorp-overrides/calibration.json $BASEDIR/guppyscreen/
-    fi
-
     for entry in display_rotate display_brightness invert_z_icon display_sleep_sec theme; do
       value=$(cat $BASEDIR/pellcorp-overrides/guppyscreen.json | grep "${entry}=" | awk -F '=' '{print $2}')
       if [ -n "$value" ]; then
@@ -76,6 +71,9 @@ apply_overrides() {
             elif [ "$file" = "moonraker.secrets" ]; then
                 echo "INFO: Restoring $BASEDIR/printer_data/$file ..."
                 cp $overrides_dir/$file $BASEDIR/printer_data/
+            elif [ "$file" = "calibration.json" ]; then
+                echo "INFO: Restoring $BASEDIR/guppyscreen/$file ..."
+                cp $overrides_dir/$file $BASEDIR/guppyscreen/$file
             elif [ "$file" = "guppyscreen.json" ]; then
                 apply_guppyscreen_overrides
             elif [ "$file" = "KAMP_Settings.cfg" ]; then # KAMP_Settings.cfg is gone apply any overrides to start_end.cfg
