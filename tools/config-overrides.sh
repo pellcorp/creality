@@ -60,15 +60,20 @@ setup_git_repo() {
 }
 
 override_guppyscreen() {
+    # restore any guppyscreen touch_calibration_coeff
+    if [ -f $BASEDIR/guppyscreen/calibration.json ]; then
+      echo "INFO: Saving guppyscreen calibration.json to $BASEDIR/pellcorp-overrides/calibration.json"
+      cp $BASEDIR/guppyscreen/calibration.json $BASEDIR/pellcorp-overrides/
+      sync
+    fi
+
     if [ -f $BASEDIR/pellcorp-backups/guppyscreen.json ] && [ -f $BASEDIR/guppyscreen/guppyscreen.json ]; then
         [ -f $BASEDIR/pellcorp-overrides/guppyscreen.json ] && rm $BASEDIR/pellcorp-overrides/guppyscreen.json
-        for entry in display_rotate display_brightness invert_z_icon display_sleep_sec theme touch_calibration_coeff; do
+        for entry in display_rotate display_brightness invert_z_icon display_sleep_sec theme; do
             stock_value=$(jq -cr ".$entry" $BASEDIR/pellcorp-backups/guppyscreen.json)
             new_value=$(jq -cr ".$entry" $BASEDIR/guppyscreen/guppyscreen.json)
             # you know what its not an actual json file its just the properties we support updating
-            if [ "$entry" = "touch_calibration_coeff" ] && [ "$new_value" != "null" ]; then
-                echo "$entry=$new_value" >> $BASEDIR/pellcorp-overrides/guppyscreen.json
-            elif [ "$stock_value" != "null" ] && [ "$new_value" != "null" ] && [ "$stock_value" != "$new_value" ]; then
+            if [ "$stock_value" != "null" ] && [ "$new_value" != "null" ] && [ "$stock_value" != "$new_value" ]; then
                 echo "$entry=$new_value" >> $BASEDIR/pellcorp-overrides/guppyscreen.json
             fi
         done
