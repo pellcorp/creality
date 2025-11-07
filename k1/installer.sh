@@ -477,15 +477,7 @@ function install_moonraker() {
             [ -d /usr/data/moonraker-env ] && rm -rf /usr/data/moonraker-env
 
             echo
-            if [ "$AF_GIT_CLONE" = "ssh" ]; then
-                export GIT_SSH_IDENTITY=moonraker
-                export GIT_SSH=/usr/data/pellcorp/k1/ssh/git-ssh.sh
-                git clone git@github.com:pellcorp/moonraker.git /usr/data/moonraker || exit $?
-                cd /usr/data/moonraker && git remote set-url origin https://github.com/pellcorp/moonraker.git && cd - > /dev/null
-            else
-                git clone https://github.com/pellcorp/moonraker.git /usr/data/moonraker || exit $?
-            fi
-
+            git clone https://github.com/pellcorp/moonraker.git /usr/data/moonraker || exit $?
             if [ -f /usr/data/moonraker-database.tar.gz ]; then
                 echo
                 echo "INFO: Restoring moonraker database ..."
@@ -696,16 +688,7 @@ function install_klipper() {
 
         if [ ! -d /usr/data/klipper/.git ]; then
             echo "INFO: Installing klipper ..."
-
-            if [ "$AF_GIT_CLONE" = "ssh" ]; then
-                export GIT_SSH_IDENTITY=klipper
-                export GIT_SSH=/usr/data/pellcorp/k1/ssh/git-ssh.sh
-                git clone git@github.com:pellcorp/klipper.git /usr/data/klipper || exit $?
-                # reset the origin url to make moonraker happy
-                cd /usr/data/klipper && git remote set-url origin https://github.com/pellcorp/klipper.git && cd - > /dev/null
-            else
-                git clone https://github.com/pellcorp/klipper.git /usr/data/klipper || exit $?
-            fi
+            git clone https://github.com/pellcorp/klipper.git /usr/data/klipper || exit $?
             [ -d /usr/share/klipper ] && rm -rf /usr/share/klipper
         else
             cd /usr/data/klipper/
