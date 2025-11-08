@@ -6,7 +6,7 @@ An alternative environment for your printer which requires a separate probe
 
 The following projects also owned and developed by me (usually from an upstream fork) that are also used by this project:
 
-- https://github.com/pellcorp/guppyscreen
+- https://github.com/pellcorp/grumpyscreen
 - https://github.com/pellcorp/k1-klipper-firmware
 - https://github.com/pellcorp/creality-wiki
 - https://github.com/pellcorp/klipper

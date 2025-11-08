@@ -1352,10 +1352,6 @@ fi
     fi
   done
 
-  if [ -f $BASEDIR/guppyscreen/guppyscreen.json ]; then
-    cp $BASEDIR/guppyscreen/guppyscreen.json $BASEDIR/pellcorp-backups/
-  fi
-
   if [ "$skip_overrides" != "true" ]; then
     apply_overrides
   fi

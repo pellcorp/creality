@@ -1,7 +1,8 @@
 #!/bin/sh
 
 # this allows us to make changes to Simple AF and grumpyscreen in parallel
-GRUMPYSCREEN_TIMESTAMP=1762560400
+GRUMPYSCREEN_TIMESTAMP=1762663700
+GRUMPYSCREEN_BRANCH=main
 
 if [ -f /usr/bin/get_sn_mac.sh ]; then
   MODEL=$(/usr/bin/get_sn_mac.sh model)
@@ -1034,11 +1035,12 @@ function install_guppyscreen() {
             echo "INFO: Installing grumpyscreen ..."
 
             asset_name=guppyscreen.tar.gz
-            # Ender 5 Max has a smaller screen
+            # Ender 5 Max and Ender 3 V3 KE have a nebula pad which is small resolution
             if [ "$MODEL" = "F004" ] || [ "$MODEL" = "F005" ]; then
                 asset_name=guppyscreen-smallscreen.tar.gz
             fi
-            curl -L "https://github.com/pellcorp/guppyscreen/releases/download/${GUPPY_BRANCH}/${asset_name}" -o /usr/data/guppyscreen.tar.gz
+
+            curl -L "https://github.com/pellcorp/grumpyscreen/releases/download/${GUPPY_BRANCH}/${asset_name}" -o /usr/data/guppyscreen.tar.gz
             if [ $? -eq 0 ]; then
                 tar xf /usr/data/guppyscreen.tar.gz -C /usr/data/ 2> /dev/null
                 status=$?
@@ -1052,9 +1054,19 @@ function install_guppyscreen() {
                 return 0
             fi
 
+            # for Ender 5 Max we want display_rotate: 2 and that gets set by grumpyscreen package
+            # so we need to switch it to 3 for KE
             if [ "$MODEL" = "F005" ]; then
-              /usr/data/pellcorp/tools/rotate-grumpyscreen.sh 0
+              sed -i "s/display_rotate:.*/display_rotate: 0/g" /usr/data/guppyscreen/grumpyscreen.cfg
             fi
+            mv /usr/data/guppyscreen/grumpyscreen.cfg /usr/data/pellcorp-backups/
+        fi
+
+        if [ -f /usr/data/pellcorp-backups/grumpyscreen.cfg ]; then
+          cp /usr/data/pellcorp-backups/grumpyscreen.cfg /usr/data/printer_data/config/
+
+          # we want grumpyscreen.cfg to be editable from fluidd / mainsail we do that with a soft link
+          ln -sf /usr/data/printer_data/config/grumpyscreen.cfg /usr/data/guppyscreen/
         fi
 
         cp /usr/data/pellcorp/k1/services/S99guppyscreen /etc/init.d/ || exit $?
@@ -2342,7 +2354,7 @@ fi
       install_beacon_klipper=$?
     fi
 
-    install_guppyscreen $mode "main"
+    install_guppyscreen $mode "$GRUMPYSCREEN_BRANCH"
     install_guppyscreen=$?
 
     setup_probe
@@ -2385,10 +2397,6 @@ fi
                 cp /usr/data/printer_data/config/$file /usr/data/pellcorp-backups/$file
             fi
         done
-
-        if [ -f /usr/data/guppyscreen/guppyscreen.json ]; then
-          cp /usr/data/guppyscreen/guppyscreen.json /usr/data/pellcorp-backups/
-        fi
     fi
 
     apply_overrides=0

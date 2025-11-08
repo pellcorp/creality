@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # this allows us to make changes to Simple AF and grumpyscreen in parallel
-GRUMPYSCREEN_TIMESTAMP=1762560400
+GRUMPYSCREEN_TIMESTAMP=1762663700
 
 BASEDIR=$HOME
 source $BASEDIR/pellcorp/rpi/functions.sh
@@ -36,9 +36,19 @@ if [ $? -ne 0 ]; then
       retry sudo apt-get install -y curl; retry
     fi
 
-    curl -L "https://github.com/pellcorp/guppyscreen/releases/download/main/guppyscreen-rpi.tar.gz" -o $BASEDIR/guppyscreen.tar.gz || exit $?
+    curl -L "https://github.com/pellcorp/grumpyscreen/releases/download/main/guppyscreen-rpi.tar.gz" -o $BASEDIR/guppyscreen.tar.gz || exit $?
     tar xf $BASEDIR/guppyscreen.tar.gz -C $BASEDIR/ || exit $?
     rm $BASEDIR/guppyscreen.tar.gz
+
+    # for config-overrides copy the base cfg file
+    mv $BASEDIR/guppyscreen/grumpyscreen.cfg $BASEDIR/pellcorp-backups/
+  fi
+
+  if [ -f $BASEDIR/pellcorp-backups/grumpyscreen.cfg ]; then
+    cp $BASEDIR/pellcorp-backups/grumpyscreen.cfg $BASEDIR/printer_data/config/
+
+    # we want grumpyscreen.cfg to be editable from fluidd / mainsail we do that with a soft link
+    ln -sf $BASEDIR/printer_data/config/grumpyscreen.cfg $BASEDIR/guppyscreen/
   fi
 
   cp $BASEDIR/pellcorp/rpi/services/cursor.sh $BASEDIR/guppyscreen/

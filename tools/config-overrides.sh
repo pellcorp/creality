@@ -59,31 +59,6 @@ setup_git_repo() {
     fi
 }
 
-override_guppyscreen() {
-    # restore any guppyscreen touch_calibration_coeff
-    if [ -f $BASEDIR/guppyscreen/calibration.json ]; then
-      echo "INFO: Saving guppyscreen calibration.json to $BASEDIR/pellcorp-overrides/calibration.json"
-      cp $BASEDIR/guppyscreen/calibration.json $BASEDIR/pellcorp-overrides/
-      sync
-    fi
-
-    if [ -f $BASEDIR/pellcorp-backups/guppyscreen.json ] && [ -f $BASEDIR/guppyscreen/guppyscreen.json ]; then
-        [ -f $BASEDIR/pellcorp-overrides/guppyscreen.json ] && rm $BASEDIR/pellcorp-overrides/guppyscreen.json
-        for entry in display_rotate display_brightness invert_z_icon display_sleep_sec theme; do
-            stock_value=$(jq -cr ".$entry" $BASEDIR/pellcorp-backups/guppyscreen.json)
-            new_value=$(jq -cr ".$entry" $BASEDIR/guppyscreen/guppyscreen.json)
-            # you know what its not an actual json file its just the properties we support updating
-            if [ "$stock_value" != "null" ] && [ "$new_value" != "null" ] && [ "$stock_value" != "$new_value" ]; then
-                echo "$entry=$new_value" >> $BASEDIR/pellcorp-overrides/guppyscreen.json
-            fi
-        done
-        if [ -f $BASEDIR/pellcorp-overrides/guppyscreen.json ]; then
-            echo "INFO: Saving overrides to $BASEDIR/pellcorp-overrides/guppyscreen.json"
-            sync
-        fi
-    fi
-}
-
 override_file() {
     local file=$1
 
@@ -107,8 +82,8 @@ override_file() {
     elif [ "$file" = "belts_calibration.cfg" ] || [ "$file" = "KlipperScreen.conf" ]; then
         #echo "INFO: Overrides not supported for $file"
         return 0
-    elif [ "$file" = "printer.cfg" ] || [ "$file" = "internal_macros.cfg" ] || [ "$file" = "useful_macros.cfg" ] || [ "$file" = "webcam.conf" ] || [ "$file" = "beacon.conf" ] || [ "$file" = "cartographer.conf" ] || [ "$file" = "moonraker.conf" ] || [ "$file" = "start_end.cfg" ] || [ "$file" = "fan_control.cfg" ]; then
-        # for printer.cfg, webcam.conf, useful_macros.cfg, start_end.cfg, fan_control.cfg and moonraker.conf - there must be an pellcorp-backups file
+    elif [ "$file" = "grumpyscreen.cfg" ] || [ "$file" = "printer.cfg" ] || [ "$file" = "internal_macros.cfg" ] || [ "$file" = "useful_macros.cfg" ] || [ "$file" = "webcam.conf" ] || [ "$file" = "beacon.conf" ] || [ "$file" = "cartographer.conf" ] || [ "$file" = "moonraker.conf" ] || [ "$file" = "start_end.cfg" ] || [ "$file" = "fan_control.cfg" ]; then
+        # for grumpyscreen.cfg, printer.cfg, webcam.conf, useful_macros.cfg, start_end.cfg, fan_control.cfg and moonraker.conf - there must be an pellcorp-backups file
         #echo "INFO: Overrides not supported for $file"
         return 0
     elif [ ! -f "$BASEDIR/pellcorp/config/$file" ] && [ ! -f "$BASEDIR/pellcorp/${CONFIG_TYPE}/$file" ]; then
@@ -242,6 +217,12 @@ else
       fi
   fi
 
+  if [ -f $BASEDIR/guppyscreen/calibration.json ]; then
+    echo "INFO: Saving guppyscreen calibration.json to $BASEDIR/pellcorp-overrides/calibration.json"
+    cp $BASEDIR/guppyscreen/calibration.json $BASEDIR/pellcorp-overrides/
+    sync
+  fi
+
   files=$(find $BASEDIR/printer_data/config/ -maxdepth 1 ! -name 'printer-*.cfg' -a ! -name ".printer.cfg" -a -name "*.cfg" -o -name "*.conf")
   for file in $files; do
     file=$(basename $file)
@@ -252,7 +233,6 @@ else
   # we want the printer.cfg to be done last
   override_file printer.cfg
 
-  override_guppyscreen
 fi
 
 cd $BASEDIR/pellcorp-overrides
