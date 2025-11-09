@@ -6,30 +6,6 @@ if grep -Fqs "ID=buildroot" /etc/os-release; then
 fi
 CONFIG_HELPER="$BASEDIR/pellcorp/tools/config-helper.py"
 
-apply_guppyscreen_overrides() {
-    command=""
-
-    for entry in display_rotate display_brightness invert_z_icon display_sleep_sec theme; do
-      value=$(cat $BASEDIR/pellcorp-overrides/guppyscreen.json | grep "${entry}=" | awk -F '=' '{print $2}')
-      if [ -n "$value" ]; then
-          if [ -n "$command" ]; then
-              command="$command | "
-          fi
-          if [ "$entry" = "theme" ]; then
-              command="${command}.${entry} = \"$value\""
-          else
-              command="${command}.${entry} = $value"
-          fi
-      fi
-    done
-
-    if [ -n "$command" ]; then
-        echo "Applying overrides $BASEDIR/guppyscreen/guppyscreen.json ..."
-        jq "$command" $BASEDIR/guppyscreen/guppyscreen.json > $BASEDIR/guppyscreen/guppyscreen.json.$$
-        mv $BASEDIR/guppyscreen/guppyscreen.json.$$ $BASEDIR/guppyscreen/guppyscreen.json
-    fi
-}
-
 apply_overrides() {
     return_status=0
     if [ -f $BASEDIR/pellcorp-overrides.cfg ] || [ -d $BASEDIR/pellcorp-overrides ]; then
@@ -74,8 +50,6 @@ apply_overrides() {
             elif [ "$file" = "calibration.json" ]; then
                 echo "INFO: Restoring $BASEDIR/guppyscreen/$file ..."
                 cp $overrides_dir/$file $BASEDIR/guppyscreen/$file
-            elif [ "$file" = "guppyscreen.json" ]; then
-                apply_guppyscreen_overrides
             elif [ "$file" = "KAMP_Settings.cfg" ]; then # KAMP_Settings.cfg is gone apply any overrides to start_end.cfg
                 # remove any overrides for these values which do not apply to Smart Park and Line Purge
                 sed -i '/variable_verbose_enable/d' $BASEDIR/pellcorp-overrides/KAMP_Settings.cfg
