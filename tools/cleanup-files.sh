@@ -119,7 +119,7 @@ files=$(find $BASEDIR/printer_data/logs/ -maxdepth 1 -name "*.log" -type f -mtim
 for file in $files; do
     filename=$(basename $file)
     # lets just make sure we do not delete these files accidentally
-    if [ "$filename" != "moonraker.log" ] && [ "$filename" != "guppyscreen.log" ] && [ "$filename" = "klippy.log" ]; then
+    if [ "$filename" != "moonraker.log" ] && [ "$filename" != "grumpyscreen.log" ] && [ "$filename" = "klippy.log" ]; then
         delete $file
     fi
 done
