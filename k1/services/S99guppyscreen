@@ -3,7 +3,7 @@
 RC_DIR=/run/openrc
 SUPERVISE_DAEMON=/usr/data/pellcorp/k1/files/respawn/supervise-daemon
 GUPPYSCREEN=/usr/data/guppyscreen/guppyscreen
-GUPPYSCREEN_LOG=/usr/data/printer_data/logs/guppyscreen.log
+GUPPYSCREEN_LOG=/usr/data/printer_data/logs/grumpyscreen.log
 PID_FILE="/var/run/guppyscreen.pid"
 SVC_NAME=guppyscreen
 
