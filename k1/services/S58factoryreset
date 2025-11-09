@@ -52,7 +52,7 @@ factory_reset() {
     /bin/sync >/dev/null 2>&1
     # cleanup the logs all except for guppyscreen and factoryreset logs
     /usr/bin/find /usr/data/printer_data/logs \
-                -path '/usr/data/printer_data/logs/guppyscreen.log' -prune -o \
+                -path '/usr/data/printer_data/logs/grumpyscreen.log' -prune -o \
                 -path '/usr/data/printer_data/logs/factoryreset.log' -prune -o \
                 -path '/usr/data/printer_data/logs' -o -type d -o -print \
                 -exec rm {} \; >/dev/null 2>&1
