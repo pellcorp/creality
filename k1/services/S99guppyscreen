@@ -8,7 +8,7 @@ PID_FILE="/var/run/guppyscreen.pid"
 SVC_NAME=guppyscreen
 
 start_server() {
-    # kill the boot display so it does not keep showing over top of guppyscreen
+    # kill the boot display so it does not keep showing over top of grumpyscreen
     killall boot_display 2> /dev/null
     # display black transition image to stop the corrupt image being shown
     cmd_jpeg_display /usr/data/pellcorp/k1/black.jpg &
