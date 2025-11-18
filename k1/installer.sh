@@ -1591,16 +1591,6 @@ function setup_beacon() {
 
         set_serial_beacon
 
-        $CONFIG_HELPER --remove-section "beacon" || exit $?
-        $CONFIG_HELPER --add-section "beacon" || exit $?
-
-        beacon_cal_nozzle_z=$($CONFIG_HELPER --ignore-missing --file /usr/data/pellcorp-overrides/printer.cfg.save_config --get-section-entry beacon cal_nozzle_z)
-        if [ -n "$beacon_cal_nozzle_z" ]; then
-          $CONFIG_HELPER --replace-section-entry "beacon" "# cal_nozzle_z" "0.1" || exit $?
-        else
-          $CONFIG_HELPER --replace-section-entry "beacon" "cal_nozzle_z" "0.1" || exit $?
-        fi
-
         # Ender 5 Max we don't have firmware for it, so need to configure cartographer instead for adxl
         if [ "$MODEL" = "F004" ]; then
           $CONFIG_HELPER --remove-section "adxl345" || exit $?
