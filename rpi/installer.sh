@@ -790,50 +790,51 @@ function fixup_client_variables_config() {
 
     changed=0
     kinematics=$($CONFIG_HELPER --get-section-entry "printer" "kinematics")
-    # position_min is optional so we need a fallback
-    position_min_x=$($CONFIG_HELPER --get-section-entry "stepper_x" "position_min" --integer --default-value 0)
-    position_min_y=$($CONFIG_HELPER --get-section-entry "stepper_y" "position_min" --integer --default-value 0)
-    position_max_x=$($CONFIG_HELPER --get-section-entry "stepper_x" "position_max" --integer)
-    position_max_y=$($CONFIG_HELPER --get-section-entry "stepper_y" "position_max" --integer)
-    variable_custom_park_y=$($CONFIG_HELPER --file start_end.cfg --get-section-entry "gcode_macro _CLIENT_VARIABLE" "variable_custom_park_y" --integer)
-    variable_custom_park_x=$($CONFIG_HELPER --file start_end.cfg --get-section-entry "gcode_macro _CLIENT_VARIABLE" "variable_custom_park_x" --integer)
-    variable_park_at_cancel_y=$($CONFIG_HELPER --file start_end.cfg --get-section-entry "gcode_macro _CLIENT_VARIABLE" "variable_park_at_cancel_y" --integer)
-    variable_park_at_cancel_x=$($CONFIG_HELPER --file start_end.cfg --get-section-entry "gcode_macro _CLIENT_VARIABLE" "variable_park_at_cancel_x" --integer)
-
-    if [ $position_max_x -le $position_min_x ]; then
-        echo "ERROR: The stepper_x position_max seems to be incorrect: $position_max_x"
-        return 0
-    fi
-    if [ $position_max_y -le $position_min_y ]; then
-        echo "ERROR: The stepper_y position_max seems to be incorrect: $position_max_y"
-        return 0
-    fi
-    if [ -z "$variable_custom_park_y" ]; then
-        echo "ERROR: The variable_custom_park_y has no value"
-        return 0
-    fi
-    if [ -z "$variable_custom_park_x" ]; then
-        echo "ERROR: The variable_custom_park_x has no value"
-        return 0
-    fi
-    if [ -z "$variable_park_at_cancel_y" ]; then
-        echo "ERROR: The variable_park_at_cancel_y has no value"
-        return 0
-    fi
-    if [ -z "$variable_park_at_cancel_x" ]; then
-        echo "ERROR: The variable_park_at_cancel_x has no value"
-        return 0
-    fi
-
     if [ "$kinematics" = "corexy" ] || [ "$kinematics" = "cartesian" ]; then
-        if [ $variable_custom_park_x -eq 0 ] || [ $variable_custom_park_x -ge $position_max_x ] || [ $variable_custom_park_x -le $position_min_x ]; then
-            pause_park_x=$((position_max_x - 10))
-            if [ $pause_park_x -ne $variable_custom_park_x ]; then
-              echo "Overriding variable_custom_park_x to $pause_park_x (was $variable_custom_park_x)"
-              $CONFIG_HELPER --file start_end.cfg --replace-section-entry "gcode_macro _CLIENT_VARIABLE" "variable_custom_park_x" $pause_park_x
-              changed=1
-            fi
-        fi
+      # position_min is optional so we need a fallback
+      position_min_x=$($CONFIG_HELPER --get-section-entry "stepper_x" "position_min" --integer --default-value 0)
+      position_min_y=$($CONFIG_HELPER --get-section-entry "stepper_y" "position_min" --integer --default-value 0)
+      position_max_x=$($CONFIG_HELPER --get-section-entry "stepper_x" "position_max" --integer)
+      position_max_y=$($CONFIG_HELPER --get-section-entry "stepper_y" "position_max" --integer)
+      variable_custom_park_y=$($CONFIG_HELPER --file start_end.cfg --get-section-entry "gcode_macro _CLIENT_VARIABLE" "variable_custom_park_y" --integer)
+      variable_custom_park_x=$($CONFIG_HELPER --file start_end.cfg --get-section-entry "gcode_macro _CLIENT_VARIABLE" "variable_custom_park_x" --integer)
+      variable_park_at_cancel_y=$($CONFIG_HELPER --file start_end.cfg --get-section-entry "gcode_macro _CLIENT_VARIABLE" "variable_park_at_cancel_y" --integer)
+      variable_park_at_cancel_x=$($CONFIG_HELPER --file start_end.cfg --get-section-entry "gcode_macro _CLIENT_VARIABLE" "variable_park_at_cancel_x" --integer)
+
+      if [ $position_max_x -le $position_min_x ]; then
+          echo "ERROR: The stepper_x position_max seems to be incorrect: $position_max_x"
+          return 0
+      fi
+      if [ $position_max_y -le $position_min_y ]; then
+          echo "ERROR: The stepper_y position_max seems to be incorrect: $position_max_y"
+          return 0
+      fi
+
+      if [ -z "$variable_custom_park_y" ]; then
+          echo "ERROR: The variable_custom_park_y has no value"
+          return 0
+      fi
+      if [ -z "$variable_custom_park_x" ]; then
+          echo "ERROR: The variable_custom_park_x has no value"
+          return 0
+      fi
+      if [ -z "$variable_park_at_cancel_y" ]; then
+          echo "ERROR: The variable_park_at_cancel_y has no value"
+          return 0
+      fi
+      if [ -z "$variable_park_at_cancel_x" ]; then
+          echo "ERROR: The variable_park_at_cancel_x has no value"
+          return 0
+      fi
+
+      if [ $variable_custom_park_x -eq 0 ] || [ $variable_custom_park_x -ge $position_max_x ] || [ $variable_custom_park_x -le $position_min_x ]; then
+          pause_park_x=$((position_max_x - 10))
+          if [ $pause_park_x -ne $variable_custom_park_x ]; then
+            echo "Overriding variable_custom_park_x to $pause_park_x (was $variable_custom_park_x)"
+            $CONFIG_HELPER --file start_end.cfg --replace-section-entry "gcode_macro _CLIENT_VARIABLE" "variable_custom_park_x" $pause_park_x
+            changed=1
+          fi
+      fi
 
       if [ $variable_custom_park_y -eq 0 ] || [ $variable_custom_park_y -le $position_min_y ]; then
             pause_park_y=$(($position_min_y + 10))
@@ -862,8 +863,6 @@ function fixup_client_variables_config() {
                 changed=1
             fi
       fi
-    else
-        echo "ERROR: Invalid kinematics: $kinematics"
     fi
     sync
     return $changed
@@ -980,6 +979,8 @@ fi
     probe=eddyng
   elif [ -f $BASEDIR/printer_data/config/btteddy.cfg ]; then
     probe=btteddy
+  else
+    probe=none
   fi
 
   mode=install
@@ -1041,6 +1042,8 @@ fi
       fi
     elif [ "$1" = "--force" ]; then
       force=true
+      shift
+    elif [ "$1" = "--probe" ]; then # allow the installer to specify a `--probe` argument for clarity
       shift
     elif [ "$1" = "none" ] || [ "$1" = "microprobe" ] || [ "$1" = "bltouch" ] || [ "$1" = "beacon" ] || [ "$1" = "klicky" ] || [ "$1" = "cartographer" ] || [ "$1" = "cartotouch" ] || [ "$1" = "btteddy" ] || [ "$1" = "eddyng" ]; then
       if [ "$mode" = "fix-serial" ]; then

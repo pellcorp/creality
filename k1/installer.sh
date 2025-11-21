@@ -2030,6 +2030,8 @@ fi
                 skip_overrides=true
                 mode=$(echo $mode | sed 's/clean-//g')
             fi
+        elif [ "$1" = "--probe" ]; then # allow the installer to specify a `--probe` argument for clarity
+            shift
         elif [ "$1" = "--mount" ]; then
             shift
             mount=$1
