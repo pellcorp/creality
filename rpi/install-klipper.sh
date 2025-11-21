@@ -131,15 +131,6 @@ if [ $? -ne 0 ]; then
     fi
   fi
 
-  cp $BASEDIR/pellcorp/config/sensorless.cfg $BASEDIR/printer_data/config/homing_override.cfg || exit $?
-  $CONFIG_HELPER --add-include "homing_override.cfg" || exit $?
-
-  x_position_mid=$($CONFIG_HELPER --get-section-entry "stepper_x" "position_max" --divisor 2 --integer)
-  $CONFIG_HELPER --file homing_override.cfg --replace-section-entry "gcode_macro _SENSORLESS_PARAMS" "variable_home_x" "$x_position_mid" || exit $?
-
-  y_position_mid=$($CONFIG_HELPER --get-section-entry "stepper_y" "position_max" --divisor 2 --integer)
-  $CONFIG_HELPER --file homing_override.cfg --replace-section-entry "gcode_macro _SENSORLESS_PARAMS" "variable_home_y" "$y_position_mid" || exit $?
-
   cp $BASEDIR/pellcorp/rpi/internal_macros.cfg $BASEDIR/printer_data/config/ || exit $?
   sudo sed -i "s:\$HOME:$BASEDIR:g" $BASEDIR/printer_data/config/internal_macros.cfg
   $CONFIG_HELPER --add-include "internal_macros.cfg" || exit $?
@@ -147,26 +138,38 @@ if [ $? -ne 0 ]; then
   cp $BASEDIR/pellcorp/config/useful_macros.cfg $BASEDIR/printer_data/config/ || exit $?
   $CONFIG_HELPER --add-include "useful_macros.cfg" || exit $?
 
-  cp $BASEDIR/pellcorp/config/start_end.cfg $BASEDIR/printer_data/config/ || exit $?
-  $CONFIG_HELPER --add-include "start_end.cfg" || exit $?
+  # most stuff only works with corexy and cartesian
+  if [ "$kinematics" = "corexy" ] || [ "$kinematics" = "cartesian" ]; then
+    cp $BASEDIR/pellcorp/config/sensorless.cfg $BASEDIR/printer_data/config/homing_override.cfg || exit $?
+    $CONFIG_HELPER --add-include "homing_override.cfg" || exit $?
 
-  if [ "$kinematics" = "cartesian" ]; then
-    # for cartesian no cool down necessary
-    $CONFIG_HELPER --file start_end.cfg --replace-section-entry "gcode_macro _START_END_PARAMS" "variable_end_print_cool_down" "False" || exit $?
+    x_position_mid=$($CONFIG_HELPER --get-section-entry "stepper_x" "position_max" --divisor 2 --integer)
+    $CONFIG_HELPER --file homing_override.cfg --replace-section-entry "gcode_macro _SENSORLESS_PARAMS" "variable_home_x" "$x_position_mid" || exit $?
+
+    y_position_mid=$($CONFIG_HELPER --get-section-entry "stepper_y" "position_max" --divisor 2 --integer)
+    $CONFIG_HELPER --file homing_override.cfg --replace-section-entry "gcode_macro _SENSORLESS_PARAMS" "variable_home_y" "$y_position_mid" || exit $?
+
+    cp $BASEDIR/pellcorp/config/start_end.cfg $BASEDIR/printer_data/config/ || exit $?
+    $CONFIG_HELPER --add-include "start_end.cfg" || exit $?
+
+    if [ "$kinematics" = "cartesian" ]; then
+      # for cartesian no cool down necessary
+      $CONFIG_HELPER --file start_end.cfg --replace-section-entry "gcode_macro _START_END_PARAMS" "variable_end_print_cool_down" "False" || exit $?
+    fi
+
+    if [ "$probe" != "beacon" ] && [ "$probe" != "cartotouch" ] && [ "$probe" != "eddyng" ]; then
+      $CONFIG_HELPER --file start_end.cfg --replace-section-entry "gcode_macro _START_END_PARAMS" "variable_start_print_bed_heating_move_bed_distance" "0" || exit $?
+    fi
+
+    ln -sf $BASEDIR/pellcorp/config/Line_Purge.cfg $BASEDIR/printer_data/config/ || exit $?
+    $CONFIG_HELPER --add-include "Line_Purge.cfg" || exit $?
+
+    ln -sf $BASEDIR/pellcorp/config/Smart_Park.cfg $BASEDIR/printer_data/config/ || exit $?
+    $CONFIG_HELPER --add-include "Smart_Park.cfg" || exit $?
+
+    cp $BASEDIR/pellcorp/rpi/fan_control.cfg $BASEDIR/printer_data/config || exit $?
+    $CONFIG_HELPER --add-include "fan_control.cfg" || exit $?
   fi
-
-  if [ "$probe" != "beacon" ] && [ "$probe" != "cartotouch" ] && [ "$probe" != "eddyng" ]; then
-    $CONFIG_HELPER --file start_end.cfg --replace-section-entry "gcode_macro _START_END_PARAMS" "variable_start_print_bed_heating_move_bed_distance" "0" || exit $?
-  fi
-
-  ln -sf $BASEDIR/pellcorp/config/Line_Purge.cfg $BASEDIR/printer_data/config/ || exit $?
-  $CONFIG_HELPER --add-include "Line_Purge.cfg" || exit $?
-
-  ln -sf $BASEDIR/pellcorp/config/Smart_Park.cfg $BASEDIR/printer_data/config/ || exit $?
-  $CONFIG_HELPER --add-include "Smart_Park.cfg" || exit $?
-
-  cp $BASEDIR/pellcorp/rpi/fan_control.cfg $BASEDIR/printer_data/config || exit $?
-  $CONFIG_HELPER --add-include "fan_control.cfg" || exit $?
 
   # replace a [fan_generic part] with a [fan]
   pin=$($CONFIG_HELPER --get-section-entry "fan_generic part" "pin")
