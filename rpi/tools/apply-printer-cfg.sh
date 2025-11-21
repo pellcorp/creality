@@ -15,8 +15,12 @@ function verify_printer_file() {
 
   # for now only support cartesian and corexy
   if [ "$kinematics" != "cartesian" ] && [ "$kinematics" != "corexy" ]; then
-    echo "ERROR: Invalid printer configuration file - kinematics not supported ($kinematics)"
-    valid_printer=false
+    if [ "$kinematics" = "delta" ]; then
+      echo "WARN: Invalid printer configuration file - delta not supported"
+    else
+      echo "ERROR: Invalid printer configuration file - kinematics not supported ($kinematics)"
+      valid_printer=false
+    fi
   fi
 
   if ! $CONFIG_HELPER --file $printer_cfg --section-exists "extruder"; then
@@ -30,14 +34,17 @@ function verify_printer_file() {
   elif $CONFIG_HELPER --file $printer_cfg --section-exists "fan_generic part"; then
     valid_fans=true
   fi
+
   if [ "$valid_fans" != "true" ]; then
     echo "ERROR: Invalid printer configuration file - a fan or generic_fan must be defined"
     valid_printer=false
   fi
 
   if ! $CONFIG_HELPER --file $printer_cfg --section-exists "stepper_x"; then
-    echo "ERROR: Invalid printer configuration file - stepper_x is not defined"
-    valid_printer=false
+    if [ "$kinematics" != "delta" ]; then
+      echo "ERROR: Invalid printer configuration file - stepper_x is not defined"
+      valid_printer=false
+    fi
   else
     value=$($CONFIG_HELPER --file $printer_cfg --get-section-entry "stepper_x" "position_max")
     if [ -z "$value" ]; then
@@ -47,8 +54,10 @@ function verify_printer_file() {
   fi
 
   if ! $CONFIG_HELPER --file $printer_cfg --section-exists "stepper_y"; then
-    echo "ERROR: Invalid printer configuration file - stepper_y is not defined"
-    valid_printer=false
+    if [ "$kinematics" != "delta" ]; then
+      echo "ERROR: Invalid printer configuration file - stepper_y is not defined"
+      valid_printer=false
+    fi
   else
     value=$($CONFIG_HELPER --file $printer_cfg --get-section-entry "stepper_y" "position_max")
     if [ -z "$value" ]; then
