@@ -21,6 +21,8 @@ if [ "$device" = "cartographer" ]; then
   SERIAL_ID=$(ls /dev/serial/by-id/usb-* | grep "IDM\|Cartographer" | head -1)
 elif [ "$device" = "eddy" ]; then
   SERIAL_ID=$(ls /dev/serial/by-id/usb-Klipper_rp2040* | head -1)
+elif [ "$device" = "beacon" ]; then
+  SERIAL_ID=$(ls /dev/serial/by-id/usb-Beacon_Beacon* | head -1)
 fi
 
 if [ -n "$SERIAL_ID" ]; then
