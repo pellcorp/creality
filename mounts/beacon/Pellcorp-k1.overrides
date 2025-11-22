@@ -7,7 +7,7 @@ y_offset: 16.86
 
 [bed_mesh]
 mesh_min: 10,17
-mesh_max: 210,210
+mesh_max: 210,200
 
 [screws_tilt_adjust]
 __action__: DELETED
