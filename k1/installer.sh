@@ -230,7 +230,7 @@ function disable_creality_services() {
     fi
 
     # deleting this file was a really bad idea I think as I think its causing wifi to crash
-    if [ -f /overlay/upper/etc/init.d/S41bt_bsa_download_firmware ]; then
+    if [ -e /overlay/upper/etc/init.d/S41bt_bsa_download_firmware ]; then
         rm /overlay/upper/etc/init.d/S41bt_bsa_download_firmware
         mount -o remount /
     fi
