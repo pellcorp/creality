@@ -2,7 +2,7 @@
 
 -- beacon.cfg
 [beacon]
-x_offset: 20.0
+x_offset: -22.5
 y_offset: 0.0
 
 [bed_mesh]
@@ -13,7 +13,7 @@ mesh_max: 287,287
 __action__: DELETED
 
 [axis_twist_compensation]
-calibrate_start_x: 10
+calibrate_start_x: 30
 calibrate_end_x: 280
 calibrate_y: 153
 
