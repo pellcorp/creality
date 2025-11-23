@@ -2,7 +2,7 @@
 
 -- beacon.cfg
 [beacon]
-x_offset: -22.5
+x_offset: -15.35
 y_offset: 0.0
 
 [bed_mesh]
