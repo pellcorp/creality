@@ -1,9 +1,17 @@
 #!/bin/sh
 
-MODEL=$(/usr/bin/get_sn_mac.sh model)
+if [ -f /usr/bin/get_sn_mac.sh ]; then
+  MODEL=$(/usr/bin/get_sn_mac.sh model)
+  if [ "$MODEL" = "Nebula Pad" ]; then
+    MODEL=NEBULA
+  fi
+else
+  echo "FATAL: This script is not supported on non Creality OS!"
+  exit 0
+fi
 
-# Ender 5 Max does not have any firmware we can upgrade as yet
-if [ "$MODEL" = "F004" ] || [ "$MODEL" = "F005" ]; then
+# Ender 5 Max, Ender 3 V3 KE and Nebula dont have firmware we can update
+if [ "$MODEL" = "F004" ] || [ "$MODEL" = "F005" ] || [ "$MODEL" = "NEBULA" ]; then
     echo "INFO: Your MCU Firmware is up to date!"
     exit 0
 fi

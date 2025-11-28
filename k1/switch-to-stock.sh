@@ -1,6 +1,14 @@
 #!/bin/sh
 
-MODEL=$(/usr/bin/get_sn_mac.sh model)
+if [ -f /usr/bin/get_sn_mac.sh ]; then
+  MODEL=$(/usr/bin/get_sn_mac.sh model)
+  if [ "$MODEL" = "Nebula Pad" ]; then
+    MODEL=NEBULA
+  fi
+else
+  echo "FATAL: This script is not supported on non Creality OS!"
+  exit 1
+fi
 
 mode=stock
 if [ "$1" = "--revert" ]; then
@@ -83,10 +91,12 @@ if [ -f /usr/data/backups/creality-backup.tar.gz ]; then
 
       if [ -f /etc/init.d/S57klipper_mcu ]; then
           /etc/init.d/S57klipper_mcu stop 2> /dev/null
-          if [ "$MODEL" != "F005" ]; then
+          # Ender 3 V3 KE uses rpi mcu for adxl so we need to leave it alone
+          if [ "$MODEL" != "F005" ] && [ "$MODEL" != "NEBULA" ]; then
             rm /etc/init.d/S57klipper_mcu
           fi
       fi
+
       if [ -f /etc/init.d/S55klipper_service ]; then
           /etc/init.d/S55klipper_service stop 2> /dev/null
       fi
