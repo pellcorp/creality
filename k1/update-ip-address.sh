@@ -9,7 +9,6 @@ if [ -f /usr/data/ipaddress.log ]; then
   rm /usr/data/ipaddress.log
 fi
 
-MODEL=$(/usr/bin/get_sn_mac.sh model)
 while true; do
   # so depending on how quickly ethernet gets an address there is a chance we pick up a wifi address first
   # but why the f would you enable wifi and ethernet on the printer, that just seems stupid

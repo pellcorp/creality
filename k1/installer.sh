@@ -6,6 +6,10 @@ GRUMPYSCREEN_BRANCH=main
 
 if [ -f /usr/bin/get_sn_mac.sh ]; then
   MODEL=$(/usr/bin/get_sn_mac.sh model)
+  if [ "$MODEL" = "Nebula Pad" ]; then
+    MODEL=NEBULA
+  fi
+
   if [ "$MODEL" = "CR-K1" ] || [ "$MODEL" = "K1C" ] || [ "$MODEL" = "K1 SE" ]; then
     model=k1
   elif [ "$MODEL" = "CR-K1 Max" ] || [ "$MODEL" = "K1 Max SE" ]; then
@@ -14,6 +18,19 @@ if [ -f /usr/bin/get_sn_mac.sh ]; then
     model=f004
   elif [ "$MODEL" = "F005" ]; then
     model=f005
+  elif [ "$MODEL" = "NEBULA" ]; then
+    if [ -f /usr/data/creality/userdata/config/system_config.json ]; then
+      PRINTER_MODEL=$(grep -r model_str /usr/data/creality/userdata/config/system_config.json | awk -F: '{print $2}' | grep -o '".*"' | tr -d '"')
+      if [ "$PRINTER_MODEL" = "Ender-3 V3 SE" ]; then
+        model=e3v3se
+      else
+        echo "FATAL: This nebula pad uses an unsupported printer: $PRINTER_MODEL!"
+        exit 1
+      fi
+    else
+      echo "FATAL: This nebula pad is not setup for a specific printer!"
+      exit 1
+    fi
   else
     echo "FATAL: This script is not supported for $MODEL!"
     exit 1
@@ -24,7 +41,7 @@ else
 fi
 
 # we only need to verify we are not trying to install on really old k1 firmware
-if [ "$MODEL" != "F004" ] && [ "$MODEL" != "F005" ]; then
+if [ "$MODEL" != "F004" ] && [ "$MODEL" != "F005" ] && [ "$MODEL" != "NEBULA" ]; then
     # 6. prefix is the prefix I use for pre-rooted firmware
     ota_version=$(cat /etc/ota_info | grep ota_version | awk -F '=' '{print $2}' | sed 's/^6.//g' | tr -d '.')
     if [ -z "$ota_version" ] || [ $ota_version -lt 1335 ]; then
@@ -268,7 +285,7 @@ function disable_creality_services() {
 
         if [ -f /etc/init.d/S57klipper_mcu ]; then
             /etc/init.d/S57klipper_mcu stop > /dev/null 2>&1
-            if [ "$MODEL" != "F005" ]; then
+            if [ "$MODEL" != "F005" ] && [ "$MODEL" != "NEBULA" ]; then
               rm /etc/init.d/S57klipper_mcu
             fi
         fi
@@ -336,7 +353,7 @@ function disable_creality_services() {
     if [ -f /etc/init.d/S57klipper_mcu ]; then
         /etc/init.d/S55klipper_service stop > /dev/null 2>&1
         /etc/init.d/S57klipper_mcu stop > /dev/null 2>&1
-        if [ "$MODEL" != "F005" ]; then
+        if [ "$MODEL" != "F005" ] && [ "$MODEL" != "NEBULA" ]; then
           rm /etc/init.d/S57klipper_mcu
         fi
     fi
@@ -742,7 +759,7 @@ function install_klipper() {
         cp /usr/data/pellcorp/k1/services/S55klipper_service /etc/init.d/ || exit $?
 
         # currently no support for updating firmware on Ender 5 Max or Ender 3 V3 KE!
-        if [ "$MODEL" != "F004" ] && [ "$MODEL" != "F005" ]; then
+        if [ "$MODEL" != "F004" ] && [ "$MODEL" != "F005" ] && [ "$MODEL" != "NEBULA" ]; then
             cp /usr/data/pellcorp/k1/services/S13mcu_update /etc/init.d/ || exit $?
         fi
 
@@ -777,7 +794,7 @@ function install_klipper() {
         cp /usr/data/pellcorp/config/useful_macros.cfg /usr/data/printer_data/config/ || exit $?
         $CONFIG_HELPER --add-include "useful_macros.cfg" || exit $?
 
-        if [ "$MODEL" != "F005" ]; then
+        if [ "$MODEL" != "F005" ] && [ "$MODEL" != "NEBULA" ]; then
           # the klipper_mcu is not even used, so just get rid of it
           $CONFIG_HELPER --remove-section "mcu rpi" || exit $?
         fi
@@ -792,9 +809,10 @@ function install_klipper() {
         remove_adxl=false
         if [ "$MODEL" = "F004" ]; then
           remove_adxl=true
-        elif [ "$MODEL" = "F005" ] && [ ! -f /etc/init.d/S57klipper_mcu ]; then
+        elif [ "$MODEL" = "F005" ] && [ "$MODEL" != "NEBULA" ] && [ ! -f /etc/init.d/S57klipper_mcu ]; then
           remove_adxl=true
         fi
+
         if [ "$remove_adxl" = "true" ]; then
           # for ender 5 max we can't use on board adxl and only beacon and cartotouch support
           # for Ender 3 V3 KE we have more work to do to support the nebula pad adxl in the future
@@ -804,8 +822,8 @@ function install_klipper() {
           fi
         fi
 
-        # F004 and F005 already have the /usr/bin/beep command
-        if [ "$MODEL" != "F004" ] && [ "$MODEL" != "F005" ]; then
+        # F004, F005 and NEBULA already have the /usr/bin/beep command
+        if [ "$MODEL" != "F004" ] && [ "$MODEL" != "F005" ] && [ "$MODEL" != "NEBULA" ]; then
           cp /usr/data/pellcorp/k1/files/beep /usr/bin/
         fi
 
@@ -1036,7 +1054,7 @@ function install_guppyscreen() {
 
             asset_name=guppyscreen.tar.gz
             # Ender 5 Max and Ender 3 V3 KE have a nebula pad which is small resolution
-            if [ "$MODEL" = "F004" ] || [ "$MODEL" = "F005" ]; then
+            if [ "$MODEL" = "F004" ] || [ "$MODEL" = "F005" ] || [ "$MODEL" = "NEBULA" ]; then
                 asset_name=guppyscreen-smallscreen.tar.gz
             fi
 
@@ -1055,8 +1073,8 @@ function install_guppyscreen() {
             fi
 
             # for Ender 5 Max we want display_rotate: 2 and that gets set by grumpyscreen package
-            # so we need to switch it to 3 for KE
-            if [ "$MODEL" = "F005" ]; then
+            # so we need to switch it to 3 for KE and Nebula
+            if [ "$MODEL" = "F005" ] || [ "$MODEL" = "NEBULA" ]; then
               sed -i "s/display_rotate:.*/display_rotate: 0/g" /usr/data/guppyscreen/grumpyscreen.cfg
             fi
             mv /usr/data/guppyscreen/grumpyscreen.cfg /usr/data/pellcorp-backups/
