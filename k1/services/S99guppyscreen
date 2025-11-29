@@ -16,7 +16,7 @@ start_server() {
     export HOME=/root
     sync && echo 3 > /proc/sys/vm/drop_caches
     mkdir -p $RC_DIR
-    RC_SVCNAME=guppyscreen $SUPERVISE_DAEMON guppyscreen --start --stdout $GUPPYSCREEN_LOG --stderr $GUPPYSCREEN_LOG --pidfile $PID_FILE $GUPPYSCREEN
+    RC_SVCNAME=guppyscreen $SUPERVISE_DAEMON guppyscreen -e "WPA_SUPPLICANT_SOCKET=/var/run/wpa_supplicant" --start --stdout $GUPPYSCREEN_LOG --stderr $GUPPYSCREEN_LOG --pidfile $PID_FILE $GUPPYSCREEN
 }
 
 stop_server() {

@@ -10,6 +10,7 @@ Restart=always
 RestartSec=1
 User=pi
 WorkingDirectory=$HOME/guppyscreen
+Environment="WPA_SUPPLICANT_SOCKET=/var/run/wpa_supplicant"
 ExecStartPre="$HOME/guppyscreen/cursor.sh"
 ExecStart="$HOME/guppyscreen/guppyscreen"
 
