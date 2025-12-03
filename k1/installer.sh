@@ -62,16 +62,19 @@ fi
 rm -rf /root/.cache
 sync
 
-if [ -d /usr/data/helper-script ] || [ -f /usr/data/fluidd.sh ] || [ -f /usr/data/mainsail.sh ]; then
-    if [ -f /usr/data/pellcorp.done ]; then
-        echo "FATAL: You have broken your Simple AF install by corrupting it with Helper Script!"
-    else
-        echo "FATAL: You must factory reset the printer before installing Simple AF!"
-    fi
-    exit 1
-elif [ -d /opt ] && [ ! -L /opt ]; then
-   echo "FATAL: You must factory reset the printer before installing Simple AF!"
-   exit 1
+# the installer can switch branches even on a helper script printer
+if [ "$1" != "--branch" ]; then
+  if [ -d /usr/data/helper-script ] || [ -f /usr/data/fluidd.sh ] || [ -f /usr/data/mainsail.sh ]; then
+      if [ -f /usr/data/pellcorp.done ]; then
+          echo "FATAL: You have broken your Simple AF install by corrupting it with Helper Script!"
+      else
+          echo "FATAL: You must factory reset the printer before installing Simple AF!"
+      fi
+      exit 1
+  elif [ -d /opt ] && [ ! -L /opt ]; then
+     echo "FATAL: You must factory reset the printer before installing Simple AF!"
+     exit 1
+  fi
 fi
 
 # everything else in the script assumes its cloned to /usr/data/pellcorp
