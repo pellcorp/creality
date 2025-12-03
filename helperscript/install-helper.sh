@@ -50,9 +50,6 @@ sed -i 's/local theme_choice/local theme_choice=nightly/g' -i /usr/data/helper-s
 sed -i 's/install_msg.*//g' -i /usr/data/helper-script/scripts/gcode_shell_command.sh || exit $?
 sed -i 's/local yn/local yn=y/g' -i /usr/data/helper-script/scripts/gcode_shell_command.sh || exit $?
 
-sed -i 's/install_msg.*//g' -i /usr/data/helper-script/scripts/improved_shapers.sh || exit $?
-sed -i 's/local yn/local yn=y/g' -i /usr/data/helper-script/scripts/improved_shapers.sh || exit $?
-
 sh /usr/data/helper-script/helper.sh install_moonraker_nginx install_menu_ui_k1 || exit $?
 sync
 
@@ -77,10 +74,12 @@ sync
 sh /usr/data/helper-script/helper.sh install_gcode_shell_command install_menu_ui_k1 || exit $?
 sync
 
-sh /usr/data/helper-script/helper.sh install_improved_shapers install_menu_ui_k1 || exit $?
-sync
-
 sh /usr/data/helper-script/helper.sh install_guppy_screen customize_menu_ui_k1 || exit $?
 sync
+
+# now reset so that the menu can be used normally
+cd /usr/data/helper-script/
+git reset --hard
+cd -
 
 echo "Done!"
