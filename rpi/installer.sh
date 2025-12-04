@@ -590,6 +590,9 @@ function setup_cartographer() {
 
         $CONFIG_HELPER --replace-section-entry "stepper_z" "homing_retract_dist" "0" || exit $?
 
+        # we need to disable the firmware check
+        $CONFIG_HELPER --file cartographer.cfg --replace-section-entry "_CARTOGRAPHER_VARIABLES" "variable_verify_firmware" "False" || exit $?
+
         cp $BASEDIR/pellcorp/config/cartographer.cfg $BASEDIR/printer_data/config/ || exit $?
         $CONFIG_HELPER --add-include "cartographer.cfg" || exit $?
 
