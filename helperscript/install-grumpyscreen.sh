@@ -44,9 +44,9 @@ sed -i 's/\[guppy_module_loader\]//g' /usr/data/printer_data/config/GuppyScreen/
 [ -f /usr/data/printer_data/config/guppyscreen.cfg ] && rm /usr/data/printer_data/config/guppyscreen.cfg
 
 # remove the extras which are no longer used
-rm /usr/share/klipper/klippy/extras/guppy_config_helper.py
-rm /usr/share/klipper/klippy/extras/guppy_module_loader.py
-rm /usr/share/klipper/klippy/extras/tmcstatus.py
+[ -f /usr/share/klipper/klippy/extras/guppy_config_helper.py ] && rm /usr/share/klipper/klippy/extras/guppy_config_helper.py
+[ -f /usr/share/klipper/klippy/extras/guppy_module_loader.py ] && rm /usr/share/klipper/klippy/extras/guppy_module_loader.py
+[ -f /usr/share/klipper/klippy/extras/tmcstatus.py ] && rm /usr/share/klipper/klippy/extras/tmcstatus.py
 
 # there are a few macros required by GrumpyScreen
 cp /usr/data/pellcorp/helperscript/grumpy-macros.cfg /usr/data/printer_data/config/GuppyScreen/
