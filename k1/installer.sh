@@ -63,7 +63,7 @@ rm -rf /root/.cache
 sync
 
 # the installer can switch branches even on a helper script printer
-if [ "$1" != "--branch" ]; then
+if [ "$1" != "--branch" ] || [ "$1" != "--update-branch" ]; then
   if [ -d /usr/data/helper-script ] || [ -f /usr/data/fluidd.sh ] || [ -f /usr/data/mainsail.sh ]; then
       if [ -f /usr/data/pellcorp.done ]; then
           echo "FATAL: You have broken your Simple AF install by corrupting it with Helper Script!"
