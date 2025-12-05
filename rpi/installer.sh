@@ -1053,7 +1053,7 @@ fi
         echo "ERROR: Switching probes is not supported while trying to fix serial!"
         exit 1
       fi
-      if [ -n "$probe" ] && [ "$1" != "$probe" ]; then
+      if [ -f $BASEDIR/pellcorp.done ] && [ -n "$probe" ] && [ "$1" != "$probe" ]; then
         echo "WARNING: About to switch from $probe to $1!"
         probe_switch=true
       fi
