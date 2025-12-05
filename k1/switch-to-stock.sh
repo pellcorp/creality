@@ -80,7 +80,7 @@ if [ -f /usr/data/backups/creality-backup.tar.gz ]; then
 echo
 echo "--------------------- Switch to Stock Mode is ACTIVE ---------------------"
 echo
-echo "To restore Simple AF you need to run:"
+echo "If you wish to return to SimpleAF you must run:"
 echo
 echo "   /usr/data/pellcorp/k1/switch-to-stock.sh --revert"
 echo
