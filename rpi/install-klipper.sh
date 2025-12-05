@@ -49,8 +49,8 @@ if [ $? -ne 0 ]; then
 
     if [ $klipper_status -ne 0 ]; then
       echo
-      echo "INFO: Forcing update of klipper to latest master"
-      rm -rf $BASEDIR/klipper
+      echo "IMPORTANT: Please update Klipper from Fluidd / Mainsail ASAP - its out of date!"
+      echo
     fi
   fi
 
