@@ -75,7 +75,23 @@ if [ -f /usr/data/backups/creality-backup.tar.gz ]; then
       cp /usr/data/pellcorp/config/notifier.conf /usr/data/printer_data/config/
 
       tar -zxf /usr/data/backups/creality-backup.tar.gz -C /usr/data
-      sync
+
+      cat > /root/.profile.stock << EOF
+echo
+echo "--------------------- Switch to Stock Mode is ACTIVE ---------------------"
+echo
+echo "To restore Simple AF you need to run:"
+echo
+echo "   /usr/data/pellcorp/k1/switch-to-stock.sh --revert"
+echo
+echo "--------------------------------------------------------------------------"
+echo
+EOF
+
+      if ! grep -q "source /root/.profile.stock" /root/.profile 2> /dev/null; then
+        echo "source /root/.profile.stock 2> /dev/null" >> /root/.profile
+      fi
+    sync
     else
       echo "WARN: Stock is already active"
       exit 1
@@ -113,6 +129,8 @@ if [ -f /usr/data/backups/creality-backup.tar.gz ]; then
       cp /usr/data/pellcorp/k1/services/S99guppyscreen /etc/init.d/
       ln -sf /usr/data/klipper/fw/K1/klipper_host_mcu /usr/bin/klipper_mcu
       /usr/data/pellcorp/tools/backups.sh --restore backup-latest.tar.gz
+      [ -f /root/.profile.stock ] && rm /root/.profile.stock
+      sync
     else
         echo "WARN: Stock is not active"
         exit 1
