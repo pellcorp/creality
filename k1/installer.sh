@@ -1880,7 +1880,8 @@ function fix_custom_config() {
 
 if [ -f /usr/data/pellcorp.done ] && [ $(grep "probe" /usr/data/pellcorp.done | wc -l) -ge 2 ] && [ ! -L /usr/share/klipper ]; then
     echo
-    echo "ERROR: Switch to stock has been activated"
+    echo "ERROR: Switch to Stock Mode is ACTIVE"
+    echo
     echo "If you wish to return to SimpleAF you must run: "
     echo "  /usr/data/pellcorp/k1/switch-to-stock.sh --revert"
     echo
