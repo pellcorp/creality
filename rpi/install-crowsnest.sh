@@ -6,6 +6,11 @@ source $BASEDIR/pellcorp/rpi/functions.sh
 CONFIG_HELPER="$BASEDIR/pellcorp/tools/config-helper.py"
 mode=$1
 
+# The installer should export this variable
+if [ -z "$TIMESTAMP" ]; then
+  export TIMESTAMP=$(date +"%Y-%m-%d_%H-%M-%S")
+fi
+
 grep -q "crowsnest" $BASEDIR/pellcorp.done
 if [ $? -ne 0 ]; then
   if [ "$mode" != "update" ] || [ ! -f /usr/local/bin/crowsnest ]; then
@@ -21,9 +26,17 @@ if [ $? -ne 0 ]; then
       retry sudo DEBIAN_FRONTEND=noninteractive apt-get --yes install make; error
     fi
 
-    sudo CROWSNEST_UNATTENDED=1 CROWSNEST_ADD_CROWSNEST_MOONRAKER=0 make install > /tmp/crowsnest.log
-    if [ $? -ne 0 ]; then
-      echo "ERROR: Crowsnest installation failed - see /tmp/crowsnest.log for error"
+    echo
+    echo "INFO: Building crowsnest quietly ... (this is going to take a fair while be patient)"
+    echo
+    echo "If you wish to monitor progress open another terminal and run:"
+    echo "  tail -f $BASEDIR/printer_data/logs/crowsnest-install-$TIMESTAMP.log"
+    echo
+    
+    sudo CROWSNEST_UNATTENDED=1 CROWSNEST_ADD_CROWSNEST_MOONRAKER=0 make install > $BASEDIR/printer_data/logs/crowsnest-install-$TIMESTAMP.log 2>&1
+    if [ $? -eq 0 ]; then
+      echo "INFO: Crownest Installation complete!"
+      echo "ERROR: Crowsnest installation failed - see $BASEDIR/printer_data/logs/crowsnest-install-$TIMESTAMP.log for error"
       exit 1
     fi
 
