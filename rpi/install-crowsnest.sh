@@ -36,6 +36,7 @@ if [ $? -ne 0 ]; then
     sudo CROWSNEST_UNATTENDED=1 CROWSNEST_ADD_CROWSNEST_MOONRAKER=0 make install > $BASEDIR/printer_data/logs/crowsnest-install-$TIMESTAMP.log 2>&1
     if [ $? -eq 0 ]; then
       echo "INFO: Crownest Installation complete!"
+    else
       echo "ERROR: Crowsnest installation failed - see $BASEDIR/printer_data/logs/crowsnest-install-$TIMESTAMP.log for error"
       exit 1
     fi
