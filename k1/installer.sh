@@ -115,8 +115,9 @@ else
 fi
 echo
 
-cp /usr/data/pellcorp/k1/services/S45cleanup /etc/init.d || exit $?
-cp /usr/data/pellcorp/k1/services/S58factoryreset /etc/init.d || exit $?
+cp /usr/data/pellcorp/k1/services/S58wpa_supplicant /etc/init.d/ || exit $?
+cp /usr/data/pellcorp/k1/services/S45cleanup /etc/init.d/ || exit $?
+cp /usr/data/pellcorp/k1/services/S58factoryreset /etc/init.d/ || exit $?
 cp /usr/data/pellcorp/k1/services/S50dropbear /etc/init.d/ || exit $?
 sync
 
