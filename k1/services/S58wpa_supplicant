@@ -1,0 +1,23 @@
+#!/bin/sh
+
+if [ "$1" = "start" ]; then
+  # for whatever reason some dodgy usb keys will get mounted to /tmp/udisk/sda
+  # or /tmp/udisk/sda2 (usually if there is more than one partition on the usb
+  WPA_SUPPLICANT_CONF=$(ls /tmp/udisk/sda*/wpa_supplicant.conf 2> /dev/null)
+  if [ $? -eq 0 ] && [ -n "$WPA_SUPPLICANT_CONF" ]; then
+    # there should never be a case where it gets more than one file but lets just make sure
+    WPA_SUPPLICANT_CONF=$(echo $WPA_SUPPLICANT_CONF | awk '{print $1}')
+    if [ -f $WPA_SUPPLICANT_CONF ]; then
+      cp /usr/data/wpa_supplicant.conf /usr/data/wpa_supplicant.conf.old
+      cp $WPA_SUPPLICANT_CONF /usr/data/
+      /bin/sync >/dev/null 2>&1
+
+      # now we force wifi to restart if these scripts exist
+      if [ -f /usr/bin/wifi_down.sh ] && [ -f /usr/bin/wifi_up.sh ]; then
+        /usr/bin/wifi_down.sh
+        /usr/bin/wifi_up.sh
+      fi
+    fi
+  fi
+fi
+exit 0
