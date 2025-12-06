@@ -1296,19 +1296,17 @@ fi
     install_beacon_klipper=$?
   fi
 
+  echo
   if [ "$(sudo systemctl is-enabled grumpyscreen 2> /dev/null)" = "disabled" ]; then
     echo "INFO: GrumpyScreen is disabled"
   elif [ "$(sudo systemctl is-enabled KlipperScreen 2> /dev/null)" = "disabled" ]; then
     echo "INFO: KlipperScreen is disabled"
-  elif [ "$(sudo systemctl is-enabled grumpyscreen 2> /dev/null)" = "enabled" ]; then
+  fi
+  if [ "$(sudo systemctl is-enabled grumpyscreen 2> /dev/null)" = "enabled" ]; then
+    echo
     $BASEDIR/pellcorp/rpi/install-grumpyscreen.sh $mode || exit $?
   elif [ "$(sudo systemctl is-enabled KlipperScreen 2> /dev/null)" = "enabled" ]; then
      echo "INFO: Skipping KlipperScreen $mode"
-#    $BASEDIR/pellcorp/rpi/install-klipperscreen.sh $mode || exit $?
-#  elif [ "$pi_model" = "4" ] || [ "$pi_model" = "5" ]; then
-#    $BASEDIR/pellcorp/rpi/install-klipperscreen.sh $mode || exit $?
-#  elif [ "$pi_model" = "3" ]; then
-#    $BASEDIR/pellcorp/rpi/install-grumpyscreen.sh $mode || exit $?
   else
     echo "INFO: Skipping Grumpyscreen and KlipperScreen installation"
   fi
