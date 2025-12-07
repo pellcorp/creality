@@ -23,6 +23,23 @@ function verify_printer_file() {
     fi
   fi
 
+  if $CONFIG_HELPER --file $printer_cfg --includes-exist; then
+    echo "ERROR: Invalid printer configuration file - includes are not allowed"
+    valid_printer=false
+  fi
+
+  if grep -q "#*# <-.* SAVE_CONFIG .*->" $printer_cfg; then
+    echo "ERROR: Invalid printer configuration file - save configuration is not allowed"
+    valid_printer=false
+  fi
+
+  for section in bed_mesh idle_timeout pause_resume display_status virtual_sdcard exclude_object; do
+    if $CONFIG_HELPER --file $printer_cfg --section-exists $section; then
+      echo "ERROR: Invalid printer configuration file - $section is not allowed"
+      valid_printer=false
+    fi
+  done
+
   if ! $CONFIG_HELPER --file $printer_cfg --section-exists "extruder"; then
     echo "ERROR: Invalid printer configuration file - extruder is not defined"
     valid_printer=false
