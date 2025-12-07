@@ -176,7 +176,7 @@ fi
 # so rather than bail out saying the file is invalid for the following sections we just clean it up ourselves
 # FIXME: we should change this to be a white list honestly.
 if [ -f $BASEDIR/pellcorp-backups/printer.factory.cfg ]; then
-  for section in bltouch probe safe_z_home homing_override force_move pause_resume bed_mesh idle_timeout display_status virtual_sdcard exclude_object; do
+  for section in screws_tilt_adjust axis_twist_compensation bltouch probe safe_z_home homing_override force_move pause_resume bed_mesh idle_timeout display_status virtual_sdcard exclude_object; do
     $CONFIG_HELPER --file $BASEDIR/pellcorp-backups/printer.factory.cfg --remove-section "$section"
   done
   exit 0
