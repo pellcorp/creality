@@ -982,7 +982,7 @@ fi
     probe=eddyng
   elif [ -f $BASEDIR/printer_data/config/btteddy.cfg ]; then
     probe=btteddy
-  else
+  elif [ -f $BASEDIR/pellcorp.done ]; then # only if an existing install do we treat is as probe=none
     probe=none
   fi
 
