@@ -33,13 +33,6 @@ function verify_printer_file() {
     valid_printer=false
   fi
 
-  for section in bed_mesh idle_timeout pause_resume display_status virtual_sdcard exclude_object; do
-    if $CONFIG_HELPER --file $printer_cfg --section-exists $section; then
-      echo "ERROR: Invalid printer configuration file - $section is not allowed"
-      valid_printer=false
-    fi
-  done
-
   if ! $CONFIG_HELPER --file $printer_cfg --section-exists "extruder"; then
     echo "ERROR: Invalid printer configuration file - extruder is not defined"
     valid_printer=false
@@ -180,16 +173,12 @@ else
   cp $printer_cfg $BASEDIR/pellcorp-backups/printer.factory.cfg
 fi
 
+# so rather than bail out saying the file is invalid for the following sections we just clean it up ourselves
+# FIXME: we should change this to be a white list honestly.
 if [ -f $BASEDIR/pellcorp-backups/printer.factory.cfg ]; then
-  # cleanup the factory config file of all illegal config sections
-  # fixme - perhaps we should have a white list instead of a black list
-  $CONFIG_HELPER --file $BASEDIR/pellcorp-backups/printer.factory.cfg --remove-section "bltouch"
-  $CONFIG_HELPER --file $BASEDIR/pellcorp-backups/printer.factory.cfg --remove-section "probe"
-  $CONFIG_HELPER --file $BASEDIR/pellcorp-backups/printer.factory.cfg --remove-section "safe_z_home"
-  $CONFIG_HELPER --file $BASEDIR/pellcorp-backups/printer.factory.cfg --remove-section "homing_override"
-  $CONFIG_HELPER --file $BASEDIR/pellcorp-backups/printer.factory.cfg --remove-section "force_move"
-  $CONFIG_HELPER --file $BASEDIR/pellcorp-backups/printer.factory.cfg --remove-section "pause_resume"
-
+  for section in bltouch probe safe_z_home homing_override force_move pause_resume bed_mesh idle_timeout display_status virtual_sdcard exclude_object; do
+    $CONFIG_HELPER --file $BASEDIR/pellcorp-backups/printer.factory.cfg --remove-section "$section"
+  done
   exit 0
 else
   echo "ERROR: Missing printer.cfg file"

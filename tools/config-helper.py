@@ -228,6 +228,7 @@ def main():
     opts.add_option("", "--include-exists", dest="include_exists", nargs=1, type="string")
     opts.add_option("", "--section-exists", dest="section_exists", nargs=1, type="string")
     opts.add_option("", "--includes-exist", dest="includes_exist", default=False, action='store_true')
+    opts.add_option("", "--sections", dest="sections", default=False, action='store_true')
     opts.add_option("", "--add-section", dest="add_section", nargs=1, type="string")
     opts.add_option("", "--ignore-missing", dest="ignore_missing", default=False, action='store_true')
     opts.add_option("", "--overrides", dest="overrides", nargs=1, type="string")
@@ -310,6 +311,11 @@ def main():
             exit_code = 0
         else:
             exit_code = 1
+    elif options.sections:
+        for section in updater.sections():
+            if 'include ' not in section:
+                print(section)
+        exit_code = 0
     elif options.section_exists:
         if updater.has_section(options.section_exists):
             exit_code = 0
