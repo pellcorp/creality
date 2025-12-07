@@ -54,12 +54,18 @@ echo "---------------- top -----------------------------------------------------
 top -b -n 1 >> $BASEDIR/support.log
 echo "---------------- free ------------------------------------------------------" >> $BASEDIR/support.log
 free >> $BASEDIR/support.log
-echo "---------------- lsusb -----------------------------------------------------" >> $BASEDIR/support.log
-lsusb >> $BASEDIR/support.log
-echo "---------------- ls -la /etc/init.d ----------------------------------------" >> $BASEDIR/support.log
-ls -la /etc/init.d >> $BASEDIR/support.log
+command -v lsusb > /dev/null
+if [ $? -eq 0 ]; then
+  echo "---------------- lsusb -----------------------------------------------------" >> $BASEDIR/support.log
+  lsusb >> $BASEDIR/support.log
+fi
+if [ -d /etc/init.d ]; then
+  echo "---------------- ls -la /etc/init.d ----------------------------------------" >> $BASEDIR/support.log
+  ls -la /etc/init.d >> $BASEDIR/support.log
+fi
+
 echo "---------------- ls -laR $BASEDIR -----------------------------------------" >> $BASEDIR/support.log
-ls -laR $BASEDIR >> $BASEDIR/support.log
+ls -laR $BASEDIR 2> /dev/null >> $BASEDIR/support.log
 echo "----------------------------------------------------------------------------" >> $BASEDIR/support.log
 
 if [ -f /var/log/messages ]; then
