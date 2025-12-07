@@ -29,9 +29,16 @@ if grep -Fqs "ID=buildroot" /etc/os-release; then
         echo "CRITICAL: There is $(df -h $BASEDIR | tail -1 | awk '{print $4}') remaining on your $BASEDIR partition"
         exit 1
     fi
+else
+  # on rpi should not be run as root
+  if [ "$(whoami)" = "root" ]; then
+    echo "FATAL: This installer must not be run as root"
+    exit 1
+  fi
 fi
 
-echo "Generating support.zip, please wait..."
+echo
+echo "INFO: Generating support.zip, please wait..."
 
 if [ -f $BASEDIR/printer_data/config/support.tar.gz ]; then
     rm $BASEDIR/printer_data/config/support.tar.gz
@@ -88,7 +95,10 @@ rm $TMPDIR/messages.log
 rm $BASEDIR/support.log
 if [ -f $BASEDIR/support.zip ]; then
     mv $BASEDIR/support.zip $BASEDIR/printer_data/config/
-    echo "Upload the support.zip to discord"
+    echo
+    echo "Upload the $BASEDIR/printer_data/config/support.zip to discord"
+    echo "You can also find it in the config directory in fluidd or mainsail"
+    echo
     exit 0
 else
     echo "ERROR: Failed to create the support.zip file"
