@@ -13,6 +13,10 @@ start_server() {
     # display black transition image to stop the corrupt image being shown
     cmd_jpeg_display /usr/data/pellcorp/k1/black.jpg &
 
+    # for core dumps
+    ulimit -c unlimited
+    echo "/usr/data/printer_data/logs/%e.core" > /proc/sys/kernel/core_pattern
+
     export HOME=/root
     sync && echo 3 > /proc/sys/vm/drop_caches
     mkdir -p $RC_DIR
