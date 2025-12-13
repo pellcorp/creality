@@ -30,11 +30,11 @@ ln -sf /usr/data/printer_data/config/grumpyscreen.ini /usr/data/guppyscreen/grum
 
 cp /usr/data/pellcorp/k1/services/S99guppyscreen /etc/init.d/
 
-sed -i 's/load_filament:.*/load_filament: _GUPPY_LOAD_MATERIAL EXTRUDER_TEMP={}/g' /usr/data/printer_data/config/grumpyscreen.cfg
-sed -i 's/unload_filament:.*/unload_filament: _GUPPY_QUIT_MATERIAL EXTRUDER_TEMP={}/g' /usr/data/printer_data/config/grumpyscreen.cfg
-sed -i 's~guppy_update_cmd:.*~guppy_update_cmd: /usr/data/pellcorp/helperscript/update-grumpyscreen.sh~g' /usr/data/printer_data/config/grumpyscreen.cfg
-sed -i 's/switch_to_stock_cmd:.*/switch_to_stock_cmd:/g' /usr/data/printer_data/config/grumpyscreen.cfg
-sed -i 's/support_zip_cmd:.*/support_zip_cmd:/g' /usr/data/printer_data/config/grumpyscreen.cfg
+sed -i 's/load_filament:.*/load_filament: _GUPPY_LOAD_MATERIAL EXTRUDER_TEMP={}/g' /usr/data/printer_data/config/grumpyscreen.ini
+sed -i 's/unload_filament:.*/unload_filament: _GUPPY_QUIT_MATERIAL EXTRUDER_TEMP={}/g' /usr/data/printer_data/config/grumpyscreen.ini
+sed -i 's~guppy_update_cmd:.*~guppy_update_cmd: /usr/data/pellcorp/helperscript/update-grumpyscreen.sh~g' /usr/data/printer_data/config/grumpyscreen.ini
+sed -i 's/switch_to_stock_cmd:.*/switch_to_stock_cmd:/g' /usr/data/printer_data/config/grumpyscreen.ini
+sed -i 's/support_zip_cmd:.*/support_zip_cmd:/g' /usr/data/printer_data/config/grumpyscreen.ini
 
 sync
 
