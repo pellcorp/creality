@@ -28,7 +28,7 @@ apply_overrides() {
             done < "$BASEDIR/pellcorp-overrides.cfg"
         fi
 
-        files=$(find $overrides_dir -maxdepth 1 ! -name 'printer-*.cfg' -a ! -name ".printer.cfg" -a -name "*.cfg" -o -name "*.conf" -o -name "*.json" -o -name "printer.cfg.save_config")
+        files=$(find $overrides_dir -maxdepth 1 ! -name 'printer-*.cfg' -a ! -name ".printer.cfg" -a -name "*.cfg" -o -name "*.conf" -o -name "*.ini" -o -name "*.json" -o -name "printer.cfg.save_config")
         for file in $files; do
             file=$(basename $file)
 
@@ -38,11 +38,15 @@ apply_overrides() {
                 base_file=cartotouch.cfg
             elif [ "$base_file" = "btteddy.cfg" ] && [ -f $BASEDIR/printer_data/config/eddyng.cfg ]; then
                 base_file=eddyng.cfg
+            elif [ "$base_file" = "grumpyscreen.cfg" ] && [ -f $BASEDIR/printer_data/config/grumpyscreen.ini ]; then
+                base_file=grumpyscreen.ini
             fi
 
             if [ "$file" != "$base_file" ] && [ -f "$BASEDIR/pellcorp/k1/$base_file" ] && [ -f $BASEDIR/printer_data/config/${base_file} ]; then
                 $CONFIG_HELPER --file ${base_file} --overrides $overrides_dir/$file || exit $?
             elif [ "$file" != "$base_file" ] && [ -f "$BASEDIR/pellcorp/config/$base_file" ] && [ -f $BASEDIR/printer_data/config/${base_file} ]; then
+                $CONFIG_HELPER --file ${base_file} --overrides $overrides_dir/$file || exit $?
+            elif [ "$base_file" = "grumpyscreen.ini" ]; then
                 $CONFIG_HELPER --file ${base_file} --overrides $overrides_dir/$file || exit $?
             elif [ "$file" = "moonraker.secrets" ]; then
                 echo "INFO: Restoring $BASEDIR/printer_data/$file ..."
