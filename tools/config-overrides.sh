@@ -77,12 +77,14 @@ override_file() {
     
     if [ -f "$BASEDIR/pellcorp-backups/$file" ]; then
         original_file="$BASEDIR/pellcorp-backups/$file"
+    elif [ "$file" = "grumpyscreen.ini" ] && [ -f "$BASEDIR/pellcorp-backups/grumpyscreen.cfg" ]; then
+        original_file="$BASEDIR/pellcorp-backups/grumpyscreen.cfg"
     elif [ "$file" = "guppyscreen.cfg" ]; then # old file ignore it
         return 0
     elif [ "$file" = "belts_calibration.cfg" ] || [ "$file" = "KlipperScreen.conf" ]; then
         #echo "INFO: Overrides not supported for $file"
         return 0
-    elif [ "$file" = "grumpyscreen.cfg" ] || [ "$file" = "printer.cfg" ] || [ "$file" = "internal_macros.cfg" ] || [ "$file" = "useful_macros.cfg" ] || [ "$file" = "webcam.conf" ] || [ "$file" = "beacon.conf" ] || [ "$file" = "cartographer.conf" ] || [ "$file" = "moonraker.conf" ] || [ "$file" = "start_end.cfg" ] || [ "$file" = "fan_control.cfg" ]; then
+    elif [ "$file" = "grumpyscreen.ini" ] || [ "$file" = "grumpyscreen.cfg" ] || [ "$file" = "printer.cfg" ] || [ "$file" = "internal_macros.cfg" ] || [ "$file" = "useful_macros.cfg" ] || [ "$file" = "webcam.conf" ] || [ "$file" = "beacon.conf" ] || [ "$file" = "cartographer.conf" ] || [ "$file" = "moonraker.conf" ] || [ "$file" = "start_end.cfg" ] || [ "$file" = "fan_control.cfg" ]; then
         # for grumpyscreen.cfg, printer.cfg, webcam.conf, useful_macros.cfg, start_end.cfg, fan_control.cfg and moonraker.conf - there must be an pellcorp-backups file
         #echo "INFO: Overrides not supported for $file"
         return 0
@@ -199,6 +201,7 @@ else
   mkdir -p $BASEDIR/pellcorp-overrides
 
   rm $BASEDIR/pellcorp-overrides/*.cfg 2> /dev/null
+  rm $BASEDIR/pellcorp-overrides/*.ini 2> /dev/null
   rm $BASEDIR/pellcorp-overrides/*.conf 2> /dev/null
   rm $BASEDIR/pellcorp-overrides/*.json 2> /dev/null
   if [ -f $BASEDIR/pellcorp-overrides/printer.cfg.save_config ]; then
@@ -223,7 +226,7 @@ else
     sync
   fi
 
-  files=$(find $BASEDIR/printer_data/config/ -maxdepth 1 ! -name 'printer-*.cfg' -a ! -name ".printer.cfg" -a -name "*.cfg" -o -name "*.conf")
+  files=$(find $BASEDIR/printer_data/config/ -maxdepth 1 ! -name 'printer-*.cfg' -a ! -name ".printer.cfg" -a -name "*.cfg" -o -name "*.conf" -o -name "*.ini")
   for file in $files; do
     file=$(basename $file)
     if [ "$file" != "printer.cfg" ]; then
@@ -232,7 +235,6 @@ else
   done
   # we want the printer.cfg to be done last
   override_file printer.cfg
-
 fi
 
 cd $BASEDIR/pellcorp-overrides

@@ -1085,10 +1085,13 @@ function install_guppyscreen() {
         fi
 
         if [ -f /usr/data/pellcorp-backups/grumpyscreen.cfg ]; then
-          cp /usr/data/pellcorp-backups/grumpyscreen.cfg /usr/data/printer_data/config/
+          # we want an ini file in config directory so that fluidd and mainsail don't provide save and restart button
+          cp /usr/data/pellcorp-backups/grumpyscreen.cfg /usr/data/printer_data/config/grumpyscreen.ini
 
           # we want grumpyscreen.cfg to be editable from fluidd / mainsail we do that with a soft link
-          ln -sf /usr/data/printer_data/config/grumpyscreen.cfg /usr/data/guppyscreen/
+          ln -sf /usr/data/printer_data/config/grumpyscreen.ini /usr/data/guppyscreen/grumpyscreen.cfg
+
+          [ -f /usr/data/printer_data/config/grumpyscreen.cfg ] && rm /usr/data/printer_data/config/grumpyscreen.cfg
         fi
 
         cp /usr/data/pellcorp/k1/services/S99guppyscreen /etc/init.d/ || exit $?

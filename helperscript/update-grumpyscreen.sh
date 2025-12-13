@@ -22,8 +22,11 @@ else
 fi
 
 # we want grumpyscreen.cfg to be editable from fluidd / mainsail we do that with a soft link
-mv /usr/data/guppyscreen/grumpyscreen.cfg /usr/data/printer_data/config/
-ln -sf /usr/data/printer_data/config/grumpyscreen.cfg /usr/data/guppyscreen/
+mv /usr/data/guppyscreen/grumpyscreen.cfg /usr/data/printer_data/config/grumpyscreen.ini
+ln -sf /usr/data/printer_data/config/grumpyscreen.ini /usr/data/guppyscreen/grumpyscreen.cfg
+
+# remove old file
+[ -f /usr/data/printer_data/config/grumpyscreen.cfg ] && rm /usr/data/printer_data/config/grumpyscreen.cfg
 
 cp /usr/data/pellcorp/k1/services/S99guppyscreen /etc/init.d/
 
