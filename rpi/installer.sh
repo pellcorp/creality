@@ -1377,6 +1377,11 @@ fi
   echo "INFO: Restarting Klipper ..."
   sudo systemctl restart klipper
 
+  if [ "$(sudo systemctl is-enabled grumpyscreen 2> /dev/null)" = "enabled" ]; then
+    echo "INFO: Restarting GrumpyScreen ..."
+    sudo systemctl restart grumpyscreen
+  fi
+
   echo "installed_sha=$PELLCORP_GIT_SHA" >> $BASEDIR/pellcorp.done
   sync
 
