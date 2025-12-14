@@ -57,9 +57,9 @@ if [ $? -ne 0 ]; then
   sudo cp $BASEDIR/pellcorp/rpi/services/grumpyscreen.service /etc/systemd/system/ || exit $?
   sudo sed -i "s:\$HOME:$BASEDIR:g" /etc/systemd/system/grumpyscreen.service
   sudo sed -i "s:User=pi:User=$USER:g" /etc/systemd/system/grumpyscreen.service
+  sed -i "s~support_zip_cmd:.*~support_zip_cmd: $BASEDIR/pellcorp/tools/support.sh~g" $BASEDIR/printer_data/config/grumpyscreen.ini
   sudo systemctl daemon-reload
   sudo systemctl enable grumpyscreen
-  sudo systemctl restart grumpyscreen
 
   echo "grumpyscreen" >> $BASEDIR/pellcorp.done
 fi
