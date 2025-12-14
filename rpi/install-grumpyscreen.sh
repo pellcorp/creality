@@ -58,6 +58,9 @@ if [ $? -ne 0 ]; then
   sudo sed -i "s:\$HOME:$BASEDIR:g" /etc/systemd/system/grumpyscreen.service
   sudo sed -i "s:User=pi:User=$USER:g" /etc/systemd/system/grumpyscreen.service
   sed -i "s~support_zip_cmd:.*~support_zip_cmd: $BASEDIR/pellcorp/tools/support.sh~g" $BASEDIR/printer_data/config/grumpyscreen.ini
+  sed -i "s~factory_reset_cmd:.*~support_zip_cmd:~g" $BASEDIR/printer_data/config/grumpyscreen.ini
+  # the current grumpy release fucks this up so clean it up for rpi
+  sed -i "s~factory_reset_cmd:.*~factory_reset_cmd:~g" $BASEDIR/printer_data/config/grumpyscreen.ini
   sudo systemctl daemon-reload
   sudo systemctl enable grumpyscreen
 
