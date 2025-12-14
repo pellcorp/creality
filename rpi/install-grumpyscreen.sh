@@ -50,7 +50,7 @@ if [ $? -ne 0 ]; then
     # we want grumpyscreen.cfg to be editable from fluidd / mainsail we do that with a soft link
     ln -sf $BASEDIR/printer_data/config/grumpyscreen.ini $BASEDIR/guppyscreen/grumpyscreen.cfg
 
-    [ -f $BASEDIR/config/grumpyscreen.cfg ] && rm $BASEDIR/printer_data/config/grumpyscreen.cfg
+    [ -f $BASEDIR/printer_data/config/grumpyscreen.cfg ] && rm $BASEDIR/printer_data/config/grumpyscreen.cfg
   fi
 
   cp $BASEDIR/pellcorp/rpi/services/cursor.sh $BASEDIR/guppyscreen/

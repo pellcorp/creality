@@ -276,7 +276,7 @@ def main():
     fan_control = 'fan_control.cfg' == os.path.basename(config_file)
     webcam_conf = 'webcam.conf' == os.path.basename(config_file)
     crowsnest_conf = 'crowsnest.conf' == os.path.basename(config_file)
-    grumpyscreen_cfg = 'grumpyscreen.cfg' == os.path.basename(config_file)
+    grumpyscreen_cfg = 'grumpyscreen.cfg' == os.path.basename(config_file) or 'grumpyscreen.ini' == os.path.basename(config_file)
 
     updated = False
     if options.remove_section:
