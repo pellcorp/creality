@@ -40,7 +40,7 @@ def main():
     printer_cfg = 'printer.cfg' == os.path.basename(args.original)
     moonraker_conf = 'moonraker.conf' == os.path.basename(args.original)
     fan_control = 'fan_control.cfg' == os.path.basename(args.original)
-    grumpyscreen_cfg = 'grumpyscreen.cfg' == os.path.basename(args.original)
+    grumpyscreen_cfg = 'grumpyscreen.cfg' == os.path.basename(args.original) or 'grumpyscreen.ini' == os.path.basename(args.original)
     # only support new sections for rpi webcam.conf
     webcam_conf = 'webcam.conf' == os.path.basename(args.original) and '/usr/data/printer_data/config/webcam.conf' not in args.updated
     crowsnest_conf = 'crowsnest.conf' == os.path.basename(args.original)
@@ -59,7 +59,7 @@ def main():
         if 'static_digital_output nozzle_mcu_fan_always_on' in deleted_sections and 'heater_fan hotend' in deleted_sections:
             deleted_sections.remove('static_digital_output nozzle_mcu_fan_always_on')
 
-    # only support deleting sections from printer.cfg, fan_control.cfg or grumpyscreen.cfg for now
+    # only support deleting sections from printer.cfg, fan_control.cfg or grumpyscreen.ini for now
     for section_name in deleted_sections:
         if (exclude_sections and section_name in exclude_sections) or (include_sections and section_name not in include_sections):
             continue
