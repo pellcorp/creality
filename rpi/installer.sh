@@ -538,6 +538,9 @@ function setup_cartotouch() {
         cp $BASEDIR/pellcorp/config/cartotouch.cfg $BASEDIR/printer_data/config/ || exit $?
         $CONFIG_HELPER --add-include "cartotouch.cfg" || exit $?
 
+        # we need to disable the firmware check
+        $CONFIG_HELPER --file cartotouch.cfg --replace-section-entry "_CARTOTOUCH_VARIABLES" "variable_verify_firmware" "False" || exit $?
+
         y_position_mid=$($CONFIG_HELPER --get-section-entry "stepper_y" "position_max" --divisor 2 --integer)
         x_position_mid=$($CONFIG_HELPER --get-section-entry "stepper_x" "position_max" --divisor 2 --integer)
         $CONFIG_HELPER --file cartotouch.cfg --replace-section-entry "bed_mesh" "zero_reference_position" "$x_position_mid,$y_position_mid" || exit $?
