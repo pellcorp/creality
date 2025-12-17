@@ -241,6 +241,12 @@ function install_config_updater() {
 }
 
 function disable_creality_services() {
+    # for some reason and I don't really understand why pip is getting deleted from klippy-env lets restore it
+    if [ ! -f /usr/share/klippy-env/bin/pip ] && [ -e /overlay/upper/usr/share/klippy-env/bin/pip ]; then
+      rm /overlay/upper/usr/share/klippy-env/bin/pip*
+      mount -o remount /
+    fi
+
     if [ ! -L /etc/boot-display/part0 ]; then
       # clean up failed installation of custom boot display
       rm -rf /overlay/upper/etc/boot-display/*
