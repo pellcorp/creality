@@ -539,7 +539,7 @@ function setup_cartotouch() {
         $CONFIG_HELPER --add-include "cartotouch.cfg" || exit $?
 
         # we need to disable the firmware check
-        $CONFIG_HELPER --file cartotouch.cfg --replace-section-entry "_CARTOTOUCH_VARIABLES" "variable_verify_firmware" "False" || exit $?
+        $CONFIG_HELPER --file cartotouch.cfg --replace-section-entry "gcode_macro _CARTOTOUCH_VARIABLES" "variable_verify_firmware" "False" || exit $?
 
         y_position_mid=$($CONFIG_HELPER --get-section-entry "stepper_y" "position_max" --divisor 2 --integer)
         x_position_mid=$($CONFIG_HELPER --get-section-entry "stepper_x" "position_max" --divisor 2 --integer)
@@ -597,7 +597,7 @@ function setup_cartographer() {
         $CONFIG_HELPER --add-include "cartographer.cfg" || exit $?
 
         # we need to disable the firmware check
-        $CONFIG_HELPER --file cartographer.cfg --replace-section-entry "_CARTOGRAPHER_VARIABLES" "variable_verify_firmware" "False" || exit $?
+        $CONFIG_HELPER --file cartographer.cfg --replace-section-entry "gcode_macro _CARTOGRAPHER_VARIABLES" "variable_verify_firmware" "False" || exit $?
 
         y_position_mid=$($CONFIG_HELPER --get-section-entry "stepper_y" "position_max" --divisor 2 --integer)
         x_position_mid=$($CONFIG_HELPER --get-section-entry "stepper_x" "position_max" --divisor 2 --integer)
