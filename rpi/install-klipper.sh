@@ -127,7 +127,12 @@ if [ $? -ne 0 ]; then
       if [ $? -ne 0 ]; then
           retry sudo apt-get install --yes wget; error
       fi
-      wget -O - https://raw.githubusercontent.com/Frix-x/klippain-shaketune/main/install.sh | bash
+      curl -s -L https://raw.githubusercontent.com/Frix-x/klippain-shaketune/main/install.sh -o /tmp/install.sh || exit $?
+      chmod 777 /tmp/install.sh
+
+      # leave 2 cores to avoid overwhelming the device
+      taskset -c 0-$(($(nproc) - 3)) /tmp/install.sh
+      rm /tmp/install.sh
     fi
   fi
 

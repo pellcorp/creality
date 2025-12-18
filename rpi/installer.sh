@@ -258,7 +258,8 @@ function install_cartographer_klipper() {
 
         echo
         echo "INFO: Running cartographer-klipper installer ..."
-        bash $BASEDIR/cartographer-klipper/install.sh || exit $?
+        # leave 2 cores to avoid overwhelming the device
+        taskset -c 0-$(($(nproc) - 3)) $BASEDIR/cartographer-klipper/install.sh || exit $?
         $BASEDIR/klippy-env/bin/python3 -m compileall $BASEDIR/klipper/klippy || exit $?
 
         echo "cartographer-klipper" >> $BASEDIR/pellcorp.done
@@ -285,7 +286,12 @@ function install_cartographer_plugin() {
         fi
 
         if [ ! -f $BASEDIR/klipper/klippy/extras/cartographer.py ]; then
-            curl -s -L https://raw.githubusercontent.com/Cartographer3D/cartographer3d-plugin/refs/heads/main/scripts/install.sh | bash || exit $?
+          curl -s -L https://raw.githubusercontent.com/Cartographer3D/cartographer3d-plugin/refs/heads/main/scripts/install.sh -o /tmp/install.sh || exit $?
+          chmod 777 /tmp/install.sh
+
+          # leave 2 cores to avoid overwhelming the device
+          taskset -c 0-$(($(nproc) - 3)) /tmp/install.sh
+          rm /tmp/install.sh
         fi
 
         echo "cartographer-plugin" >> $BASEDIR/pellcorp.done
@@ -310,8 +316,8 @@ function install_beacon_klipper() {
             git clone https://github.com/beacon3d/beacon_klipper $BASEDIR/beacon-klipper || exit $?
         fi
 
-        $BASEDIR/pellcorp/tools/beacon-install.sh || return $?
-
+        # leave 2 cores to avoid overwhelming the device
+        taskset -c 0-$(($(nproc) - 3)) $BASEDIR/beacon_klipper/install.sh || exit $?
         $BASEDIR/klippy-env/bin/python3 -m compileall $BASEDIR/klipper/klippy || exit $?
 
         echo "beacon-klipper" >> $BASEDIR/pellcorp.done
