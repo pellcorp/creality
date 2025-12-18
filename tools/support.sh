@@ -88,13 +88,19 @@ if [ -z "$latest_klippy_log" ] || [ ! -f $latest_klippy_log ]; then
   unset latest_klippy_log
 fi
 
-$BASEDIR/pellcorp/tools/supportzip.py $BASEDIR/support.zip support.log pellcorp-overrides/ pellcorp-backups/ printer_data/config/ printer_data/logs/installer-*.log printer_data/logs/klippy.log $latest_klippy_log printer_data/logs/moonraker.log printer_data/logs/grumpyscreen.log $TMPDIR/messages.log /tmp/mcu_update.log
+# we need to make copies of currently streaming logs to avoid corruption
+cp printer_data/logs/klippy.log $TMPDIR/klippy.log
+cp printer_data/logs/moonraker.log $TMPDIR/moonraker.log
+cp printer_data/logs/grumpyscreen.log $TMPDIR/grumpyscreen.log
+
+$BASEDIR/pellcorp/tools/supportzip.py $BASEDIR/support.zip support.log pellcorp-overrides/ pellcorp-backups/ printer_data/config/ printer_data/logs/installer-*.log $TMPDIR/klippy.log $latest_klippy_log $TMPDIR/moonraker.log $TMPDIR/grumpyscreen.log $TMPDIR/messages.log /tmp/mcu_update.log
 cd - > /dev/null
 
-rm $TMPDIR/messages.log
-rm $BASEDIR/support.log
+rm $TMPDIR/*.log
+
 if [ -f $BASEDIR/support.zip ]; then
     mv $BASEDIR/support.zip $BASEDIR/printer_data/config/
+    sync
     echo
     echo "Upload the $BASEDIR/printer_data/config/support.zip to discord"
     echo "You can also find it in the config directory in fluidd or mainsail"

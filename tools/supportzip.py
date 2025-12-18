@@ -16,7 +16,11 @@ def make_zip(zip_name, sources, exclude_dirs=None):
             for path_str in glob.glob(pattern, recursive=True):
                 path = Path(path_str)
                 if path.is_file():
-                    zf.write(path, arcname=path)
+                    arcpath = str(path)
+                    filename = os.path.basename(arcpath)
+                    if '.log' in filename:
+                        arcpath='logs/' + filename
+                    zf.write(path, arcname=arcpath)
                 elif path.is_dir():
                     for root, dirs, files in os.walk(path):
                         # filter excluded dirs in-place so os.walk won't descend
@@ -24,7 +28,11 @@ def make_zip(zip_name, sources, exclude_dirs=None):
 
                         for f in files:
                             fpath = Path(root) / f
-                            zf.write(fpath, arcname=fpath)
+                            arcpath = str(fpath)
+                            filename = os.path.basename(arcpath)
+                            if 'printer_data/config' in arcpath:
+                                arcpath='config/' + filename
+                            zf.write(fpath, arcname=arcpath)
 
 
 def main():
