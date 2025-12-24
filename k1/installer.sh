@@ -1548,6 +1548,9 @@ function setup_cartographer() {
         x_position_mid=$($CONFIG_HELPER --get-section-entry "stepper_x" "position_max" --divisor 2 --integer)
         $CONFIG_HELPER --file cartographer.cfg --replace-section-entry "bed_mesh" "zero_reference_position" "$x_position_mid,$y_position_mid" || exit $?
 
+        # to avoid errors on calibration and printing for the cartographer lower the preheat to 148 to avoid blowing through 152
+        $CONFIG_HELPER --file start_end.cfg --replace-section-entry "gcode_macro _START_END_PARAMS" "variable_start_preheat_nozzle_temp" 148 || exit $?
+
         set_serial_cartographer
 
         # Ender 5 Max we don't have firmware for it, so need to configure cartographer instead for adxl
