@@ -310,8 +310,7 @@ function install_beacon_klipper() {
             git clone https://github.com/beacon3d/beacon_klipper $BASEDIR/beacon-klipper || exit $?
         fi
 
-        $BASEDIR/pellcorp/tools/beacon-install.sh || return $?
-
+        $BASEDIR/beacon-klipper/install.sh || exit $?
         $BASEDIR/klippy-env/bin/python3 -m compileall $BASEDIR/klipper/klippy || exit $?
 
         echo "beacon-klipper" >> $BASEDIR/pellcorp.done
