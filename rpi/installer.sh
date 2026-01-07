@@ -252,13 +252,13 @@ function install_cartographer_klipper() {
         if [ ! -d $BASEDIR/cartographer-klipper ]; then
             echo
             echo "INFO: Installing cartographer-klipper ..."
-            git clone https://github.com/pellcorp/cartographer-klipper.git $BASEDIR/cartographer-klipper || exit $?
+            git clone https://github.com/cartographer3d/cartographer-klipper.git $BASEDIR/cartographer-klipper || exit $?
         fi
         cd - > /dev/null
 
         echo
         echo "INFO: Running cartographer-klipper installer ..."
-        bash $BASEDIR/cartographer-klipper/install.sh || exit $?
+        $BASEDIR/pellcorp/rpi/cartotouch-install.sh || exit $?
         $BASEDIR/klippy-env/bin/python3 -m compileall $BASEDIR/klipper/klippy || exit $?
 
         echo "cartographer-klipper" >> $BASEDIR/pellcorp.done
