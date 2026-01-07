@@ -1223,6 +1223,27 @@ fi
   if [ "$mode" = "install" ] && [ ! -f $BASEDIR/printer_data/config/printer.cfg ]; then
     cp $BASEDIR/pellcorp-backups/printer.factory.cfg $BASEDIR/printer_data/config/printer.cfg
   elif [ "$mode" = "reinstall" ] || [ "$mode" = "update" ]; then
+    # before going ahead with the update lets stop a bunch of things to just make it easier
+    if [ "$(sudo systemctl is-enabled moonraker 2> /dev/null)" = "enabled" ]; then
+      echo "INFO: Stopping Moonraker ..."
+      sudo systemctl stop moonraker
+    fi
+
+    if [ "$(sudo systemctl is-enabled klipper 2> /dev/null)" = "enabled" ]; then
+      echo "INFO: Stopping Klipper ..."
+      sudo systemctl stop klipper
+    fi
+
+    if [ "$(sudo systemctl is-enabled grumpyscreen 2> /dev/null)" = "enabled" ]; then
+      echo "INFO: Stopping GrumpyScreen ..."
+      sudo systemctl stop grumpyscreen
+    fi
+
+    if [ "$(sudo systemctl is-enabled KlipperScreen 2> /dev/null)" = "enabled" ]; then
+      echo "INFO: Stopping KlipperScreen ..."
+      sudo systemctl stop KlipperScreen
+    fi
+
     if [ "$skip_overrides" != "true" ]; then
       $BASEDIR/pellcorp/tools/config-overrides.sh
     fi
@@ -1382,6 +1403,11 @@ fi
   if [ "$(sudo systemctl is-enabled grumpyscreen 2> /dev/null)" = "enabled" ]; then
     echo "INFO: Restarting GrumpyScreen ..."
     sudo systemctl restart grumpyscreen
+  fi
+
+  if [ "$(sudo systemctl is-enabled KlipperScreen 2> /dev/null)" = "enabled" ]; then
+    echo "INFO: Restarting KlipperScreen ..."
+    sudo systemctl restart KlipperScreen
   fi
 
   echo "installed_sha=$PELLCORP_GIT_SHA" >> $BASEDIR/pellcorp.done
