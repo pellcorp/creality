@@ -53,6 +53,11 @@ if [ $? -ne 0 ]; then
     [ -f $BASEDIR/printer_data/config/grumpyscreen.cfg ] && rm $BASEDIR/printer_data/config/grumpyscreen.cfg
   fi
 
+  # si that you can print
+  if [ ! -L $BASEDIR/printer_data/gcodes/usb ]; then
+    ln -sf /media/usb $BASEDIR/printer_data/gcodes/usb
+  fi
+
   cp $BASEDIR/pellcorp/rpi/services/cursor.sh $BASEDIR/guppyscreen/
   sudo cp $BASEDIR/pellcorp/rpi/services/grumpyscreen.service /etc/systemd/system/ || exit $?
   sudo sed -i "s:\$HOME:$BASEDIR:g" /etc/systemd/system/grumpyscreen.service

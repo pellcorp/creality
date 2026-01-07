@@ -1,0 +1,8 @@
+[Unit]
+Description=Mount USB Drive on %i
+
+[Service]
+Type=oneshot
+RemainAfterExit=true
+ExecStart=/etc/automount/automount.sh add %i
+ExecStop=/etc/automount/automount.sh remove %i
