@@ -952,13 +952,14 @@ fi
 mkdir -p $BASEDIR/pellcorp-backups
 mkdir -p $BASEDIR/pellcorp-overrides
 
-if [ $# -gt 0 ]; then
+if [ $# -gt 0 ] && [ "$1" != "--fix-serial" ]; then
   # diet-pi dont have this file
   if [ -f /var/cache/apt/pkgcache.bin ]; then
     # https://unix.stackexchange.com/a/271058
     now=$(date +%s)
     last_update=$(stat -c %Y /var/cache/apt/pkgcache.bin)
-    if [ $((now - last_update)) -gt 3600 ]; then
+    # if not updated for a day refresh
+    if [ $((now - last_update)) -gt 86400 ]; then
       retry sudo apt-get --error-on=any update; error
     fi
   fi
