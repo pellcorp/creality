@@ -1,9 +1,10 @@
 #!/bin/bash
 
-KDIR="${HOME}/klipper"
-KENV="${HOME}/klippy-env"
-
 BASEDIR=$HOME
+
+KDIR="${BASEDIR}/klipper"
+KENV="${BASEDIR}/klippy-env"
+BKDIR="${BASEDIR}/cartographer-klipper"
 
 # we want to skip the matplotlib which triggers a long compile for no good reason
 "${KENV}/bin/pip" install -r "$BASEDIR/pellcorp/rpi/cartotouch-requirements.txt"
