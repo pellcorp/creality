@@ -10,6 +10,12 @@ grep -q "klipperscreen" $BASEDIR/pellcorp.done
 if [ $? -ne 0 ]; then
   echo
 
+  if [ "$(sudo systemctl is-enabled grumpyscreen 2> /dev/null)" = "enabled" ]; then
+    echo "INFO: Stop and disable grumpyscreen"
+    sudo systemctl stop grumpyscreen > /dev/null 2>&1
+    sudo systemctl disable grumpyscreen > /dev/null 2>&1
+  fi
+
   if [ "$mode" != "update" ] && [ -d $BASEDIR/KlipperScreen ]; then
     if [ -f /etc/systemd/system/KlipperScreen.service ]; then
       sudo systemctl stop KlipperScreen > /dev/null 2>&1

@@ -5,12 +5,15 @@ ROOT_DIR=$(dirname $CURRENT_DIR)
 
 incus delete klipper --force 2> /dev/null
 
-sudo iptables -P FORWARD ACCEPT
-sudo ufw allow in on incusbr0
-sudo ufw route allow in on incusbr0
-sudo ufw route allow out on incusbr0
-incus network set incusbr0 ipv6.firewall false
-incus network set incusbr0 ipv4.firewall false
+#sudo iptables -P FORWARD ACCEPT
+#sudo ufw allow in on incusbr0
+#sudo ufw route allow in on incusbr0
+#sudo ufw route allow out on incusbr0
+#incus network set incusbr0 ipv6.firewall false
+#incus network set incusbr0 ipv4.firewall false
+#
+#sudo firewall-cmd --permanent --zone=trusted --add-interface=incusbr0
+#sudo firewall-cmd --reload
 
 default_user=debian
 if [ "$1" = "jammy" ]; then
