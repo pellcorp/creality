@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # this allows us to make changes to Simple AF and grumpyscreen in parallel
-GRUMPYSCREEN_TIMESTAMP=1765591800
+GRUMPYSCREEN_TIMESTAMP=1768292800
 
 BASEDIR=$HOME
 source $BASEDIR/pellcorp/rpi/functions.sh
@@ -11,6 +11,12 @@ mode=$1
 grep -q "grumpyscreen" $BASEDIR/pellcorp.done
 if [ $? -ne 0 ]; then
   echo
+
+  if [ "$(sudo systemctl is-enabled KlipperScreen 2> /dev/null)" = "enabled" ]; then
+    echo "INFO: Stop and disable KlipperScreen"
+    sudo systemctl stop KlipperScreen > /dev/null 2>&1
+    sudo systemctl disable KlipperScreen > /dev/null 2>&1
+  fi
 
   if [ "$mode" != "update" ] && [ -d $BASEDIR/guppyscreen ]; then
     if [ -f /etc/systemd/system/grumpyscreen.service ]; then
