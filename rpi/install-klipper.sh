@@ -26,9 +26,12 @@ function install_packages() {
   PKGLIST="${PKGLIST} gcc-arm-none-eabi binutils-arm-none-eabi libusb-1.0"
 
   # additional stuff for numpy for input shaping, cartographer, beacon, eddy-ng
-  PKGLIST="${PKGLIST} python3-numpy python3-matplotlib libatlas-base-dev libopenblas-dev"
+  PKGLIST="${PKGLIST} python3-numpy python3-matplotlib libopenblas-dev"
 
   retry sudo apt-get install --yes ${PKGLIST}; error
+
+  # just remove these two we dont need them
+  retry sudo apt remove --purge --yes brltty modemmanager; error
 }
 
 grep -q "klipper" $BASEDIR/pellcorp.done
@@ -72,23 +75,6 @@ if [ $? -ne 0 ]; then
     if grep -q "tty" /etc/group; then
       sudo usermod -a -G tty $USER
     fi
-
-    # derived from https://github.com/dw-0/kiauh/blob/master/scripts/klipper.sh
-    # https://klipper.discourse.group/t/other-single-board-computers-sbc-apart-from-raspberry-pis/6323
-    if [[ $(dpkg -s brltty  2>/dev/null | grep "Status") = *\ installed ]]; then
-      sudo systemctl stop brltty
-      sudo systemctl mask brltty
-    fi
-
-    if [[ $(dpkg -s brltty-udev  2>/dev/null | grep "Status") = *\ installed ]]; then
-      sudo systemctl stop brltty-udev
-      sudo systemctl mask brltty-udev
-    fi
-
-    if [[ $(dpkg -s ModemManager  2>/dev/null | grep "Status") = *\ installed ]]; then
-      sudo systemctl stop ModemManager
-      sudo systemctl mask ModemManager
-    fi
   fi
 
   # in case there are any updates to the klipper service need to rewrite
@@ -101,7 +87,9 @@ if [ $? -ne 0 ]; then
   if [ ! -d $BASEDIR/klippy-env ]; then
     virtualenv -p python3 $BASEDIR/klippy-env
     $BASEDIR/klippy-env/bin/pip install -r $BASEDIR/klipper/scripts/klippy-requirements.txt
-    $BASEDIR/klippy-env/bin/pip install numpy==1.26.2 || exit $?
+
+    # just install whatever is the latest version of numpy
+    $BASEDIR/klippy-env/bin/pip install numpy || exit $?
   fi
 
   echo "INFO: Updating klipper config ..."
@@ -115,19 +103,25 @@ if [ $? -ne 0 ]; then
 
   kinematics=$($CONFIG_HELPER --get-section-entry "printer" "kinematics")
   if [ "$kinematics" = "corexy" ]; then
-    # force reinstallation of klippain for anything other than an update
-    if [ "$mode" != "update" ] && [ -d $BASEDIR/klippain_shaketune ]; then
-      rm -rf $BASEDIR/klippain_shaketune
-    fi
-
-    if [ ! -d $BASEDIR/klippain_shaketune ]; then
-      echo
-      echo "INFO: Installing Klippain ShakeTune ..."
-      command -v wget 2> /dev/null
-      if [ $? -ne 0 ]; then
-          retry sudo apt-get install --yes wget; error
+    # once klippain develop branch is released we can remove this check
+    if [ $debian_release -ne 13 ]; then
+      # force reinstallation of klippain for anything other than an update
+      if [ "$mode" != "update" ] && [ -d $BASEDIR/klippain_shaketune ]; then
+        rm -rf $BASEDIR/klippain_shaketune
       fi
-      wget -O - https://raw.githubusercontent.com/Frix-x/klippain-shaketune/main/install.sh | bash
+
+      if [ ! -d $BASEDIR/klippain_shaketune ]; then
+        echo
+        echo "INFO: Installing Klippain ShakeTune ..."
+        command -v wget 2> /dev/null
+        if [ $? -ne 0 ]; then
+            retry sudo apt-get install --yes wget; error
+        fi
+        wget -O - https://raw.githubusercontent.com/Frix-x/klippain-shaketune/main/install.sh | bash
+      fi
+    else
+      echo "ERROR: Klippain not supported on Debian 13 as yet"
+      echo "Refer to https://github.com/Frix-x/klippain-shaketune/issues/241"
     fi
   fi
 

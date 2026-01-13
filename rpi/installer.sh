@@ -6,28 +6,13 @@ if [ "$(whoami)" = "root" ]; then
 fi
 
 BASEDIR=$HOME
-source $BASEDIR/pellcorp/rpi/functions.sh
 
 command -v lsb_release > /dev/null
 if [ $? -ne 0 ]; then
   retry sudo apt-get install -y lsb-release; error
 fi
 
-debian_release=$(lsb_release -rs 2> /dev/null | tr -d '.')
-
-# hackery for ubuntu
-if [ $debian_release -eq 2404 ]; then
-  debian_release=12
-elif [ $debian_release -eq 2204 ]; then
-  debian_release=11
-elif [ $debian_release -gt 2204 ]; then
-  debian_release=13
-fi
-
-if [ $debian_release -ne 11 ] && [ $debian_release -ne 12 ]; then
-  echo "ERROR: Simple AF for RPi is only supported on Debian 11, 12, Ubuntu 22.04 or 24.04 based distibutions!"
-  exit 1
-fi
+source $BASEDIR/pellcorp/rpi/functions.sh
 
 CONFIG_HELPER="$BASEDIR/pellcorp/tools/config-helper.py"
 
