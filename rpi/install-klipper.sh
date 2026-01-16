@@ -104,7 +104,7 @@ if [ $? -ne 0 ]; then
   kinematics=$($CONFIG_HELPER --get-section-entry "printer" "kinematics")
   if [ "$kinematics" = "corexy" ]; then
     # once klippain develop branch is released we can remove this check
-    if [ $debian_release -ne 13 ]; then
+    if [ $debian_release -lt 13 ]; then
       # force reinstallation of klippain for anything other than an update
       if [ "$mode" != "update" ] && [ -d $BASEDIR/klippain_shaketune ]; then
         rm -rf $BASEDIR/klippain_shaketune

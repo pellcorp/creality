@@ -6,6 +6,12 @@ GRUMPYSCREEN_TIMESTAMP=1768292800
 BASEDIR=$HOME
 source $BASEDIR/pellcorp/rpi/functions.sh
 
+# for some reason grumpyscreen does not work on Debian 13
+if [ $debian_release -ge 13 ]; then
+  echo "ERROR: Grumpyscreen not supported on Debian 13"
+  exit 1
+fi
+
 mode=$1
 
 grep -q "grumpyscreen" $BASEDIR/pellcorp.done

@@ -868,19 +868,25 @@ if [ "$1" = "--update-branch" ]; then
     update_repo $BASEDIR/pellcorp
     exit $?
 elif [ "$1" = "--cleanup" ]; then # mostly to make testing easier
+    echo "INFO: Running cleanup ..."
     [ -f $BASEDIR/pellcorp.done ] && rm $BASEDIR/pellcorp.done
     [ -d $BASEDIR/pellcorp-backups ] && rm -rf $BASEDIR/pellcorp-backups
     [ -d $BASEDIR/pellcorp-overrides ] && rm -rf $BASEDIR/pellcorp-overrides
     [ -d $BASEDIR/printer_data ] && rm -rf $BASEDIR/printer_data
     [ -d $BASEDIR/klipper ] && rm -rf $BASEDIR/klipper
+    [ -d $BASEDIR/klippy-env ] && rm -rf $BASEDIR/klippy-env
     [ -f /usr/local/bin/klipper_mcu ] && sudo rm /usr/local/bin/klipper_mcu
     [ -d $BASEDIR/moonraker ] && rm -rf $BASEDIR/moonraker
+    [ -d $BASEDIR/moonraker-env ] && rm -rf $BASEDIR/moonraker-env
+    [ -d $BASEDIR/moonraker-timelapse ] && rm -rf $BASEDIR/moonraker-timelapse
     [ -d $BASEDIR/fluidd ] && rm -rf $BASEDIR/fluidd
     [ -d $BASEDIR/mainsail ] && rm -rf $BASEDIR/mainsail
     [ -d $BASEDIR/crowsnest ] && rm -rf $BASEDIR/crowsnest
     [ -d $BASEDIR/fluidd-config ] && rm -rf $BASEDIR/fluidd-config
-    [ -d $BASEDIR/grumpyscreen ] && rm -rf $BASEDIR/grumpyscreen
+    [ -d $BASEDIR/guppyscreen ] && rm -rf $BASEDIR/guppyscreen
     [ -d $BASEDIR/KlipperScreen ] && rm -rf $BASEDIR/KlipperScreen
+    [ -d $BASEDIR/cartographer-klipper ] && rm -rf $BASEDIR/cartographer-klipper
+    [ -d $BASEDIR/beacon-klipper ] && rm -rf $BASEDIR/beacon-klipper
     exit 0
 elif [ "$1" = "--branch" ] && [ -n "$2" ]; then # convenience for testing new features
     update_repo $BASEDIR/pellcorp $2 || exit $?
