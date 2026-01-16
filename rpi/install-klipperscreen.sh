@@ -30,6 +30,12 @@ if [ $? -ne 0 ]; then
 
     # skip setting up network manager, should do it manually if required
     NETWORK=n SERVICE=y BACKEND=X ./KlipperScreen/scripts/KlipperScreen-install.sh
+
+    # manually enable non root users managing network connections for debian where network manager is used
+    if [ -d /etc/NetworkManager/conf.d ]; then
+      sudo cp $BASEDIR/pellcorp/rpi/klipperscreen-any-user.conf /etc/NetworkManager/conf.d/any-user.conf
+      sudo systemctl reload NetworkManager
+    fi
     cd - > /dev/null
   fi
 
