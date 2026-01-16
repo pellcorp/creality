@@ -1,4 +1,2 @@
-numpy~=1.16
-scipy~=1.10
-# skip matplotlib as triggers long compile which is not needed
-# matplotlib~=3.7
+numpy
+scipy
