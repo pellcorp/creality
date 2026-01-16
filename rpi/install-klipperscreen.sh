@@ -28,8 +28,8 @@ if [ $? -ne 0 ]; then
     cd $BASEDIR
     git clone https://github.com/KlipperScreen/KlipperScreen.git
 
-    # answer yes to all questions for default installation
-    yes | ./KlipperScreen/scripts/KlipperScreen-install.sh
+    # skip setting up network manager, should do it manually if required
+    NETWORK=n SERVICE=y BACKEND=X ./KlipperScreen/scripts/KlipperScreen-install.sh
     cd - > /dev/null
   fi
 
