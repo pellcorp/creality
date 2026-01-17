@@ -1,7 +1,7 @@
 #!/bin/sh
 
 # this allows us to make changes to Simple AF and grumpyscreen in parallel
-GRUMPYSCREEN_TIMESTAMP=1768292800
+GRUMPYSCREEN_TIMESTAMP=1768689500
 GRUMPYSCREEN_BRANCH=main
 
 if [ -f /usr/bin/get_sn_mac.sh ]; then
