@@ -175,6 +175,10 @@ if [ $? -ne 0 ]; then
     $CONFIG_HELPER --replace-section-entry "fan" "hardware_pwm" "false" || exit $?
   fi
 
+  # its too hard to figure out when to enable this setting as additional fans may be added after initial setup
+  # so for simplicity sake just enable this setting for everyone
+  $CONFIG_HELPER --replace-section-entry "fan" "p_selector_map" "chamber, auxiliary, chamber" || exit $?
+
   if [ "$kinematics" = "corexy" ]; then
     cp $BASEDIR/pellcorp/rpi/klippain.cfg $BASEDIR/printer_data/config || exit $?
     if $CONFIG_HELPER --section-exists "resonance_tester"; then
