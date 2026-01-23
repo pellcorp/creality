@@ -125,6 +125,15 @@ if [ $? -ne 0 ]; then
     fi
   fi
 
+  # customised lcd menu
+  display_lcd_type=$($CONFIG_HELPER --get-section-entry "display" "lcd_type" --default-value "none")
+  # just the ender 3 v1 specific screen supported for now, I dont have a V2 to be able to
+  # test and verify that different LCD model will work correctly.
+  if [ "$display_lcd_type" = "st7920" ]; then
+    ln -sf $BASEDIR/pellcorp/rpi/lcd_menu.cfg $BASEDIR/printer_data/config/ || exit $?
+    $CONFIG_HELPER --add-include "lcd_menu.cfg" || exit $?
+  fi
+
   cp $BASEDIR/pellcorp/rpi/internal_macros.cfg $BASEDIR/printer_data/config/ || exit $?
   sudo sed -i "s:\$HOME:$BASEDIR:g" $BASEDIR/printer_data/config/internal_macros.cfg
   $CONFIG_HELPER --add-include "internal_macros.cfg" || exit $?
