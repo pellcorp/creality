@@ -1323,6 +1323,9 @@ function setup_bltouch() {
         cp /usr/data/pellcorp/config/bltouch_macro.cfg /usr/data/printer_data/config/ || exit $?
         $CONFIG_HELPER --add-include "bltouch_macro.cfg" || exit $?
 
+        # for bltouch probe deploy issues occur with safe z at 3
+        $CONFIG_HELPER --file sensorless.cfg --replace-section-entry "gcode_macro _SENSORLESS_PARAMS" "variable_safe_z" "5" || exit $?
+
         # need to add a empty bltouch section for baby stepping to work
         $CONFIG_HELPER --remove-section "bltouch" || exit $?
         $CONFIG_HELPER --add-section "bltouch" || exit $?
