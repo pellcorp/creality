@@ -171,9 +171,6 @@ if [ $? -ne 0 ]; then
     $CONFIG_HELPER --add-include "Smart_Park.cfg" || exit $?
   fi
 
-  cp $BASEDIR/pellcorp/rpi/fan_control.cfg $BASEDIR/printer_data/config || exit $?
-  $CONFIG_HELPER --add-include "fan_control.cfg" || exit $?
-
   # replace a [fan_generic part] with a [fan]
   pin=$($CONFIG_HELPER --get-section-entry "fan_generic part" "pin")
   if [ -n "$pin" ]; then
