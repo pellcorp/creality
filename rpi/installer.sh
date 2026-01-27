@@ -1369,7 +1369,7 @@ fi
 
   # we want a copy of the file before config overrides are re-applied so we can correctly generate diffs
   # against different generations of the original file
-  for file in printer.cfg start_end.cfg fan_control.cfg ${probe}.conf spoolman.conf timelapse.conf moonraker.conf crowsnest.conf webcam.conf useful_macros.cfg homing_override.cfg ${probe}_macro.cfg ${probe}.cfg; do
+  for file in printer.cfg start_end.cfg ${probe}.conf spoolman.conf timelapse.conf moonraker.conf crowsnest.conf webcam.conf useful_macros.cfg homing_override.cfg ${probe}_macro.cfg ${probe}.cfg; do
     if [ -f $BASEDIR/printer_data/config/$file ]; then
       cp $BASEDIR/printer_data/config/$file $BASEDIR/pellcorp-backups/$file
     fi
