@@ -27,9 +27,9 @@ if [ $? -ne 0 ]; then
     fi
 
     echo
-    echo "INFO: Building crowsnest quietly ... (this is going to take a fair while be patient)"
+    echo "INFO: Building crowsnest quietly ... (this is potentially going to take a long time)"
     echo
-    echo "If you wish to monitor progress open another terminal and run:"
+    echo "If you wish to monitor progress of building crowsnest, open another terminal and run:"
     echo "  tail -f $BASEDIR/printer_data/logs/crowsnest-install-$TIMESTAMP.log"
     echo
     
