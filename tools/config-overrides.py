@@ -40,6 +40,7 @@ def main():
     printer_cfg = 'printer.cfg' == os.path.basename(args.original)
     moonraker_conf = 'moonraker.conf' == os.path.basename(args.original)
     fan_control = 'fan_control.cfg' == os.path.basename(args.original)
+    cartographer_cfg = 'cartographer.cfg' == os.path.basename(args.original)
     grumpyscreen_cfg = 'grumpyscreen.cfg' == os.path.basename(args.original) or 'grumpyscreen.ini' == os.path.basename(args.original)
     # only support new sections for rpi webcam.conf
     webcam_conf = 'webcam.conf' == os.path.basename(args.original) and '/usr/data/printer_data/config/webcam.conf' not in args.updated
@@ -151,7 +152,7 @@ def main():
                     continue
 
                 # do not add a new value that was missing from original unless this is for printer.cfg or the special is_non_critical field
-                if original_value or printer_cfg or fan_control or key == 'is_non_critical':
+                if original_value or printer_cfg or fan_control or cartographer_cfg or key == 'is_non_critical':
                     if (not original_value and updated_value and updated_value.value) or (original_value and original_value.value and updated_value and updated_value.value and original_value.value != updated_value.value):
                         if not overrides.has_section(section_name):
                             if len(overrides.sections()) > 0:
