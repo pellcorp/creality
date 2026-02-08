@@ -8,6 +8,33 @@ mode=apply
 function verify_printer_file() {
   local printer_cfg=$1
 
+  # validate that any model specified is an actual supported model to avoid issues later on
+  local model=$(grep MODEL: $printer_cfg | awk -F ':' '{print $2}')
+  if [ -n "$model" ] && [ "$model" != "k1" ] && [ "$model" != "k1m" ] && [ "$model" != "f004" ] && [ "$model" != "f005" ] && [ "$model" != "e3v3se" ]; then
+    echo "ERROR: Invalid printer configuration file - MODEL:$model is not supported (Must be k1, k1m, f004, f005 or e3v3se)"
+    valid_printer=false
+  fi
+
+  # support external base printer definitions with file sections
+  if grep -q "^-- printer.cfg" $printer_cfg; then
+    file=
+    while IFS= read -r line; do
+      if echo "$line" | grep -q "^--"; then
+        file=$(echo $line | sed 's/-- //g' | sed 's/.cfg//g')
+        if [ -n "$model" ] && [ "$file" = "printer" ] && [ ! -f /tmp/printer.$$.cfg ]; then
+          echo "# MODEL:$model" > /tmp/printer.$$.cfg
+        else
+          touch /tmp/printer.$$.cfg
+        fi
+      elif echo "$line" | grep -q "^#"; then
+        continue # skip comments
+      elif [ -n "$file" ] && [ "$file" = "printer" ]; then
+        echo "$line" >> /tmp/printer.$$.cfg
+      fi
+    done < "$printer_cfg"
+    printer_cfg=/tmp/printer.$$.cfg
+  fi
+
   # for a arbitrary file we want to validate it was downloaded correctly
   kinematics=$($CONFIG_HELPER --file $printer_cfg --get-section-entry "printer" "kinematics" --default-value unknown 2> /dev/null)
 
@@ -74,6 +101,10 @@ function verify_printer_file() {
       echo "ERROR: Invalid printer configuration file - stepper_y position_max is not defined"
       valid_printer=false
     fi
+  fi
+
+  if [ -f /tmp/printer.$$.cfg ]; then
+    rm /tmp/printer.$$.cfg
   fi
 
   if [ "$valid_printer" != "true" ]; then
