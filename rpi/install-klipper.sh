@@ -191,7 +191,10 @@ if [ $? -ne 0 ]; then
   if [ "$kinematics" = "corexy" ]; then
     cp $BASEDIR/pellcorp/rpi/klippain.cfg $BASEDIR/printer_data/config || exit $?
     if $CONFIG_HELPER --section-exists "resonance_tester"; then
-      $CONFIG_HELPER --add-include "klippain.cfg" || exit $?
+      # debian 13 is not setup for klippain yet
+      if [ $debian_release -lt 13 ]; then
+        $CONFIG_HELPER --add-include "klippain.cfg" || exit $?
+      fi
     else
       echo "INFO: SKipped including klippain.cfg as no resonance_tester"
     fi
