@@ -883,7 +883,7 @@ function install_klipper() {
         cp /usr/data/pellcorp/config/start_end.cfg /usr/data/printer_data/config/ || exit $?
         $CONFIG_HELPER --add-include "start_end.cfg" || exit $?
 
-        if [ "$probe" != "beacon" ] && [ "$probe" != "cartotouch" ] && [ "$probe" != "eddyng" ]; then
+        if [ "$probe" != "beacon" ] && [ "$probe" != "cartotouch" ] && [ "$probe" != "eddyng" ] && [ "$probe" != "cartographer" ]; then
             $CONFIG_HELPER --file start_end.cfg --replace-section-entry "gcode_macro _START_END_PARAMS" "variable_start_print_bed_heating_move_bed_distance" "0" || exit $?
         fi
 
@@ -1431,23 +1431,6 @@ function set_serial_cartotouch() {
     fi
 }
 
-function set_serial_cartographer() {
-    local SERIAL_ID=$(ls /dev/serial/by-id/usb-* | grep "IDM\|Cartographer" | head -1)
-    if [ -n "$SERIAL_ID" ]; then
-        local EXISTING_SERIAL_ID=$($CONFIG_HELPER --file cartographer.cfg --get-section-entry "mcu cartographer" "serial")
-        if [ "$EXISTING_SERIAL_ID" != "$SERIAL_ID" ]; then
-            $CONFIG_HELPER --file cartographer.cfg --replace-section-entry "mcu cartographer" "serial" "$SERIAL_ID" || exit $?
-            return 1
-        else
-            echo "Serial value is unchanged"
-            return 0
-        fi
-    else
-        echo "WARNING: There does not seem to be a cartographer attached - skipping auto configuration"
-        return 0
-    fi
-}
-
 function setup_cartotouch() {
     grep -q "cartotouch-probe" /usr/data/pellcorp.done
     if [ $? -ne 0 ]; then
@@ -1528,6 +1511,23 @@ function setup_cartotouch() {
     return 0
 }
 
+function set_serial_cartographer() {
+    local SERIAL_ID=$(ls /dev/serial/by-id/usb-* | grep "IDM\|Cartographer" | head -1)
+    if [ -n "$SERIAL_ID" ]; then
+        local EXISTING_SERIAL_ID=$($CONFIG_HELPER --file cartographer.cfg --get-section-entry "mcu cartographer" "serial")
+        if [ "$EXISTING_SERIAL_ID" != "$SERIAL_ID" ]; then
+            $CONFIG_HELPER --file cartographer.cfg --replace-section-entry "mcu cartographer" "serial" "$SERIAL_ID" || exit $?
+            return 1
+        else
+            echo "Serial value is unchanged"
+            return 0
+        fi
+    else
+        echo "WARNING: There does not seem to be a cartographer attached - skipping auto configuration"
+        return 0
+    fi
+}
+
 function setup_cartographer() {
     grep -q "cartographer-probe" /usr/data/pellcorp.done
     if [ $? -ne 0 ]; then
@@ -1550,6 +1550,9 @@ function setup_cartographer() {
         y_position_mid=$($CONFIG_HELPER --get-section-entry "stepper_y" "position_max" --divisor 2 --integer)
         x_position_mid=$($CONFIG_HELPER --get-section-entry "stepper_x" "position_max" --divisor 2 --integer)
         $CONFIG_HELPER --file cartographer.cfg --replace-section-entry "bed_mesh" "zero_reference_position" "$x_position_mid,$y_position_mid" || exit $?
+
+        # due to ridiculous issue with cartographer not handling slight out of band temps just set it here and let everyone else use 150
+        $CONFIG_HELPER --file start_end.cfg --replace-section-entry "gcode_macro _START_END_PARAMS" "variable_start_preheat_nozzle_temp" 148 || exit $?
 
         set_serial_cartographer
 
