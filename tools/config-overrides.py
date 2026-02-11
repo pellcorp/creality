@@ -151,6 +151,10 @@ def main():
                 if (section_name == 'beacon' or section_name == 'scanner' or section_name == 'cartographer' or section_name == 'mcu eddy') and key == 'serial':
                     continue
 
+                # do not allow customisation of the pinned commit
+                if moonraker_conf and (section_name == 'update_manager klipper' or section_name == 'update_manager moonraker') and key == 'pinned_commit':
+                    continue
+
                 # do not add a new value that was missing from original unless this is for printer.cfg or the special is_non_critical field
                 if original_value or printer_cfg or fan_control or cartographer_cfg or key == 'is_non_critical':
                     if (not original_value and updated_value and updated_value.value) or (original_value and original_value.value and updated_value and updated_value.value and original_value.value != updated_value.value):

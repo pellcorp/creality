@@ -34,6 +34,41 @@ function install_packages() {
   retry sudo apt remove --purge --yes brltty modemmanager; error
 }
 
+function update_klipper_mcu() {
+  echo
+  echo "INFO: Rebuilding Klipper MCU ..."
+  cd $BASEDIR/klipper
+  cp .config.linux .config
+  make clean
+  make || exit $?
+  rm .config
+  sudo systemctl stop klipper-mcu
+  sudo cp out/klipper.elf /usr/local/bin/klipper_mcu || exit $?
+  sudo systemctl restart klipper-mcu || exit $?
+  cd - > /dev/null
+}
+
+function update_klipper() {
+  echo
+  echo "INFO: Stopping Klipper ..."
+  sudo systemctl stop klipper
+
+  if [ -d $BASEDIR/cartographer-klipper ] && [ -L $BASEDIR/klipper/klippy/extras/scanner.py ]; then
+      $BASEDIR/cartographer-klipper/install.sh || return $?
+      sync
+  fi
+
+  if [ -d $BASEDIR/beacon-klipper ] && [ -L $BASEDIR/klipper/klippy/extras/beacon.py ]; then
+      $BASEDIR/beacon-klipper/install.sh || return $?
+      sync
+  fi
+  $BASEDIR/klippy-env/bin/python3 -m compileall $BASEDIR/klipper/klippy || return $?
+  update_klipper_mcu
+
+  echo "INFO: Starting Klipper ..."
+  sudo systemctl start klipper
+}
+
 grep -q "klipper" $BASEDIR/pellcorp.done
 if [ $? -ne 0 ]; then
   if [ "$mode" != "update" ] && [ -d $BASEDIR/klipper ]; then
@@ -51,9 +86,15 @@ if [ $? -ne 0 ]; then
     cd - > /dev/null
 
     if [ $klipper_status -ne 0 ]; then
-      echo
-      echo "IMPORTANT: Please update Klipper from Fluidd / Mainsail ASAP - its out of date!"
-      echo
+      echo "INFO: Forcing update of klipper to $KLIPPER_PINNED_COMMIT"
+      cd $BASEDIR/klipper
+      git fetch
+      branch_ref=$(git rev-parse --abbrev-ref HEAD)
+      git reset --hard origin/$branch_ref
+      KLIPPER_PINNED_COMMIT=$($CONFIG_HELPER --file moonraker.conf --get-section-entry "update_manager klipper" "pinned_commit")
+      git reset --hard $KLIPPER_PINNED_COMMIT
+      cd - > /dev/null
+      update_klipper
     fi
   fi
 
@@ -66,6 +107,14 @@ if [ $? -ne 0 ]; then
     echo "INFO: Installing klipper ..."
 
     git clone https://github.com/pellcorp/klipper-rpi.git $BASEDIR/klipper || exit $?
+
+    # we want to make sure we do not go past the pinned commit this just allows us to push changes to klipper without
+    # immediately rolling them out to everyone
+    KLIPPER_PINNED_COMMIT=$($CONFIG_HELPER --file moonraker.conf --get-section-entry "update_manager klipper" "pinned_commit")
+    cd $BASEDIR/klipper
+    git reset --hard $KLIPPER_PINNED_COMMIT
+    cd - > /dev/null
+
     install_packages
 
     if grep -q "dialout" /etc/group; then
@@ -121,7 +170,6 @@ if [ $? -ne 0 ]; then
       fi
     else
       echo "ERROR: Klippain not supported on Debian 13 as yet"
-      echo "Refer to https://github.com/Frix-x/klippain-shaketune/issues/241"
     fi
   fi
 
