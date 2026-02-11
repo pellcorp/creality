@@ -2,6 +2,7 @@
 
 BASEDIR=$HOME
 source $BASEDIR/pellcorp/rpi/functions.sh
+CONFIG_HELPER="$BASEDIR/pellcorp/tools/config-helper.py"
 mode=$1
 
 grep -q "moonraker" $BASEDIR/pellcorp.done
@@ -31,6 +32,17 @@ if [ $? -ne 0 ]; then
     cp $BASEDIR/pellcorp/config/moonraker.secrets $BASEDIR/printer_data/
   fi
 
+  if [ -d $BASEDIR/moonraker/.git ]; then
+    cd $BASEDIR/moonraker/.git
+    MOONRAKER_URL=$(git remote get-url origin)
+    cd - > /dev/null
+    if [ "$MOONRAKER_URL" != "https://github.com/Arksine/moonraker.git" ]; then
+      echo
+      echo "INFO: Forcing moonraker to switch to Arksine/moonraker"
+      rm -rf $BASEDIR/moonraker/.git
+    fi
+  fi
+
   cp $BASEDIR/pellcorp/rpi/moonraker.conf $BASEDIR/printer_data/config/ || exit $?
   ln -sf $BASEDIR/pellcorp/rpi/moonraker.asvc $BASEDIR/printer_data/ || exit $?
 
@@ -41,7 +53,13 @@ if [ $? -ne 0 ]; then
     [ -d $BASEDIR/moonraker ] && rm -rf $BASEDIR/moonraker
     [ -d $BASEDIR/moonraker-env ] && rm -rf $BASEDIR/moonraker-env
 
-    git clone https://github.com/pellcorp/moonraker.git $BASEDIR/moonraker || exit $?
+    git clone https://github.com/Arksine/moonraker.git $BASEDIR/moonraker || exit $?
+
+    MOONRAKER_PINNED_COMMIT=$($CONFIG_HELPER --file moonraker.conf --get-section-entry "update_manager moonraker" "pinned_commit")
+    # to protect against bricking we want to keep control of what commit we support
+    cd $BASEDIR/moonraker
+    git reset --hard $MOONRAKER_PINNED_COMMIT
+    cd - > /dev/null
 
     if [ -f $BASEDIR/moonraker-database.tar.gz ]; then
       echo

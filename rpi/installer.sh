@@ -897,32 +897,6 @@ elif [ "$1" = "--cleanup" ]; then # mostly to make testing easier
 elif [ "$1" = "--branch" ] && [ -n "$2" ]; then # convenience for testing new features
     update_repo $BASEDIR/pellcorp $2 || exit $?
     exit $?
-elif [ "$1" = "--cartotouch-branch" ]; then
-    shift
-    if [ -d $BASEDIR/cartographer-klipper ]; then
-        branch=master
-        channel=stable
-        if [ "$1" = "stable" ]; then
-            branch=master
-        elif [ "$1" = "beta" ]; then
-            branch=beta
-            channel=dev
-        else
-            branch=$1
-            channel=dev
-        fi
-        update_repo $BASEDIR/cartographer-klipper $branch || exit $?
-        update_klipper || exit $?
-        if [ -f $BASEDIR/printer_data/config/cartotouch.conf ]; then
-            $CONFIG_HELPER --file cartotouch.conf --replace-section-entry 'update_manager cartotouch' channel $channel || exit $?
-            $CONFIG_HELPER --file cartotouch.conf --replace-section-entry 'update_manager cartotouch' primary_branch $branch || exit $?
-            restart_moonraker || exit $?
-        fi
-    else
-        echo "Error cartographer-klipper repo does not exist"
-        exit 1
-    fi
-    exit 0
 elif [ "$1" = "--klipper-branch" ]; then # convenience for testing new features
     if [ -n "$2" ]; then
         update_repo $BASEDIR/klipper $2 || exit $?

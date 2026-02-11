@@ -492,8 +492,9 @@ function install_moonraker() {
             cd /usr/data/moonraker
             MOONRAKER_URL=$(git remote get-url origin)
             cd - > /dev/null
-            if [ "$MOONRAKER_URL" != "https://github.com/pellcorp/moonraker.git" ]; then
-                echo "INFO: Forcing moonraker to switch to pellcorp/moonraker"
+            if [ "$MOONRAKER_URL" != "https://github.com/Arksine/moonraker.git" ]; then
+                echo
+                echo "INFO: Forcing moonraker to switch to Arksine/moonraker"
                 rm -rf /usr/data/moonraker
             fi
         fi
@@ -505,7 +506,14 @@ function install_moonraker() {
             [ -d /usr/data/moonraker-env ] && rm -rf /usr/data/moonraker-env
 
             echo
-            git clone https://github.com/pellcorp/moonraker.git /usr/data/moonraker || exit $?
+            git clone https://github.com/Arksine/moonraker.git /usr/data/moonraker || exit $?
+
+            # to protect against bricking we want to keep control of what commit we support
+            cd /usr/data/moonraker
+            MOONRAKER_PINNED_COMMIT=$($CONFIG_HELPER --file moonraker.conf --get-section-entry "update_manager moonraker" "pinned_commit")
+            git reset --hard $MOONRAKER_PINNED_COMMIT
+            cd - > /dev/null
+
             if [ -f /usr/data/moonraker-database.tar.gz ]; then
                 echo
                 echo "INFO: Restoring moonraker database ..."
@@ -714,9 +722,15 @@ function install_klipper() {
             fi
         fi
 
+        KLIPPER_PINNED_COMMIT=$($CONFIG_HELPER --file moonraker.conf --get-section-entry "update_manager klipper" "pinned_commit")
         if [ ! -d /usr/data/klipper/.git ]; then
             echo "INFO: Installing klipper ..."
             git clone https://github.com/pellcorp/klipper.git /usr/data/klipper || exit $?
+
+            cd /usr/data/klipper
+            git reset --hard $KLIPPER_PINNED_COMMIT
+            cd - > /dev/null
+
             [ -d /usr/share/klipper ] && rm -rf /usr/share/klipper
         else
             cd /usr/data/klipper/
@@ -731,10 +745,13 @@ function install_klipper() {
               klipper_status=1
             fi
 
-            # force klipper update to get reverted kinematic position feature
             if [ "$remote_repo" = "klipper" ] && [ $klipper_status -ne 0 ] && [ "$branch_ref" = "master" ]; then
-                echo "INFO: Forcing update of klipper to latest master"
+                echo "INFO: Forcing update of klipper to $KLIPPER_PINNED_COMMIT"
                 update_repo /usr/data/klipper master || exit $?
+
+                cd /usr/data/klipper
+                git reset --hard $KLIPPER_PINNED_COMMIT
+                cd - > /dev/null
             fi
         fi
 
@@ -1919,32 +1936,6 @@ elif [ "$1" = "--grumpy-branch" ]; then
 elif [ "$1" = "--branch" ] && [ -n "$2" ]; then # convenience for testing new features
     update_repo /usr/data/pellcorp $2 || exit $?
     exit $?
-elif [ "$1" = "--cartotouch-branch" ]; then
-    shift
-    if [ -d /usr/data/cartographer-klipper ]; then
-        branch=master
-        channel=stable
-        if [ "$1" = "stable" ]; then
-            branch=master
-        elif [ "$1" = "beta" ]; then
-            branch=beta
-            channel=dev
-        else
-            branch=$1
-            channel=dev
-        fi
-        update_repo /usr/data/cartographer-klipper $branch || exit $?
-        update_klipper || exit $?
-        if [ -f /usr/data/printer_data/config/cartotouch.conf ]; then
-            $CONFIG_HELPER --file cartotouch.conf --replace-section-entry 'update_manager cartotouch' channel $channel || exit $?
-            $CONFIG_HELPER --file cartotouch.conf --replace-section-entry 'update_manager cartotouch' primary_branch $branch || exit $?
-            restart_moonraker || exit $?
-        fi
-    else
-        echo "Error cartographer-klipper repo does not exist"
-        exit 1
-    fi
-    exit 0
 elif [ "$1" = "--klipper-branch" ]; then # convenience for testing new features
     if [ -n "$2" ]; then
         update_repo /usr/data/klipper $2 || exit $?
@@ -1957,10 +1948,6 @@ elif [ "$1" = "--klipper-branch" ]; then # convenience for testing new features
 elif [ "$1" = "--klipper-repo" ]; then # convenience for testing new features
     if [ -n "$2" ]; then
         klipper_repo=$2
-        if [ "$klipper_repo" = "k1-carto-klipper" ]; then
-            echo "ERROR: Switching to k1-carto-klipper is no longer supported"
-            exit 1
-        fi
 
         owner="${klipper_repo%%/*}"
         repo="${klipper_repo#*/}"
