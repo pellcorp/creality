@@ -163,6 +163,13 @@ elif [ "$mode" = "restore" ] && [ -f $BASEDIR/backups/$restore ]; then
         mv $BASEDIR/pellcorp-backups $BASEDIR/pellcorp-backups.old
     fi
 
+    if [ -d "$BASEDIR/printer_data/config" ]; then
+        if [ -d $BASEDIR/printer_data/config.old ]; then
+            rm -rf $BASEDIR/printer_data/config.old
+        fi
+        mv $BASEDIR/printer_data/config $BASEDIR/printer_data/config.old
+    fi
+
     echo "Restoring $restore ..."
     tar -zxf $BASEDIR/backups/$restore -C $BASEDIR
     sync

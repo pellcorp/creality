@@ -27,7 +27,9 @@ while true; do
 done
 
 echo
-if [ -z "$PREVIOUS_IP_ADDRESS" ] || [ "$PREVIOUS_IP_ADDRESS" != "$CURRENT_IP_ADDRESS" ]; then
+
+grep -q $CURRENT_IP_ADDRESS /usr/data/printer_data/config/webcam.conf
+if ! grep -q $CURRENT_IP_ADDRESS /usr/data/printer_data/config/webcam.conf; then
   if [ -n "$PREVIOUS_IP_ADDRESS" ]; then
       echo "Previous IP Address was $PREVIOUS_IP_ADDRESS" | tee /usr/data/ipaddress.log
   fi
