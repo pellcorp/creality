@@ -499,6 +499,8 @@ function install_moonraker() {
             fi
         fi
 
+        cp /usr/data/pellcorp/k1/moonraker.conf /usr/data/printer_data/config/ || exit $?
+
         if [ ! -d /usr/data/moonraker/.git ]; then
             echo "INFO: Installing moonraker ..."
 
@@ -553,7 +555,6 @@ function install_moonraker() {
         ln -sf /usr/data/pellcorp/k1/tools/systemctl /usr/bin/ || exit $?
         ln -sf /usr/data/pellcorp/k1/tools/sudo /usr/bin/ || exit $?
         cp /usr/data/pellcorp/k1/services/S56moonraker_service /etc/init.d/ || exit $?
-        cp /usr/data/pellcorp/k1/moonraker.conf /usr/data/printer_data/config/ || exit $?
         ln -sf /usr/data/pellcorp/k1/moonraker.asvc /usr/data/printer_data/ || exit $?
 
         ln -sf /usr/data/moonraker-timelapse/component/timelapse.py /usr/data/moonraker/moonraker/components/ || exit $?
