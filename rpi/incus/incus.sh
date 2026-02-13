@@ -57,4 +57,7 @@ IP_ADDRESS=$(incus info klipper | grep inet | head -1 | awk -F ':' '{print $2}' 
 ssh-keygen -f "$HOME/.ssh/known_hosts" -R $IP_ADDRESS > /dev/null 2>&1
 ssh-keyscan -t rsa "$IP_ADDRESS" >> "$HOME/.ssh/known_hosts" 2> /dev/null
 
+# seems like running this again after setup might fix some issues no idea why, perhaps this is a fedora thing
+sudo iptables -P FORWARD ACCEPT
+
 ssh me@$IP_ADDRESS

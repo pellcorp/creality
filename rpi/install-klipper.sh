@@ -200,6 +200,12 @@ if [ $? -ne 0 ]; then
     y_position_mid=$($CONFIG_HELPER --get-section-entry "stepper_y" "position_max" --divisor 2 --integer)
     $CONFIG_HELPER --file homing_override.cfg --replace-section-entry "gcode_macro _SENSORLESS_PARAMS" "variable_home_y" "$y_position_mid" || exit $?
 
+    # there is an assumption the same stepper driver will be used for stepper x and y
+    tmc_driver=$($CONFIG_HELPER --list-sections tmc% | grep stepper_x | awk -F ' ' '{print $1}')
+    if [ -n "$tmc_driver" ] && [ "$tmc_driver" != "tmc2209" ]; then
+      $CONFIG_HELPER --file homing_override.cfg --replace-section-entry "gcode_macro _SENSORLESS_PARAMS" "variable_driver_type" "\"$tmc_driver\"" || exit $?
+    fi
+
     cp $BASEDIR/pellcorp/config/start_end.cfg $BASEDIR/printer_data/config/ || exit $?
     $CONFIG_HELPER --add-include "start_end.cfg" || exit $?
 

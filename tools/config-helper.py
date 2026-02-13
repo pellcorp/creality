@@ -227,6 +227,7 @@ def main():
     opts.add_option("", "--add-include", dest="add_include", nargs=1, type="string")
     opts.add_option("", "--include-exists", dest="include_exists", nargs=1, type="string")
     opts.add_option("", "--section-exists", dest="section_exists", nargs=1, type="string")
+    opts.add_option("", "--list-sections", dest="list_exists", nargs=1, type="string")
     opts.add_option("", "--includes-exist", dest="includes_exist", default=False, action='store_true')
     opts.add_option("", "--sections", dest="sections", default=False, action='store_true')
     opts.add_option("", "--add-section", dest="add_section", nargs=1, type="string")
@@ -316,6 +317,13 @@ def main():
             if 'include ' not in section:
                 print(section)
         exit_code = 0
+    elif options.list_exists:
+        search = options.list_exists
+        if search.endswith("%"):
+            search = search[:-1]
+            for section in updater.sections():
+                if section.startswith(search):
+                    print(section)
     elif options.section_exists:
         if updater.has_section(options.section_exists):
             exit_code = 0
