@@ -997,25 +997,13 @@ fi
       fi
       shift
 
-      if [ ! -f $BASEDIR/pellcorp.done ]; then
-        if [ -n "$existing_printer" ] && [ "$printer" != "unknown" ] && [ "$existing_printer" != "$printer" ]; then
-          echo "ERROR: Printer [$printer] does not match config overrides printer [$existing_printer]"
-          exit 1
-        fi
+      if [ "$mode" = "reinstall" ] || [ ! -f $BASEDIR/pellcorp.done ]; then
         $BASEDIR/pellcorp/rpi/tools/apply-printer-cfg.sh --verify $printer
         if [ $? -eq 0 ]; then
           echo "INFO: Printer is $printer"
         else
           exit 1
         fi
-      else
-        # ignore this argument if its the same as what was used for the installation
-        if [ "$existing_printer" != "$printer" ]; then
-          echo "ERROR: Cannot specify --printer argument for anything but a new installation!"
-          exit 1
-        fi
-        unset existing_printer
-        unset printer
       fi
     elif [ "$1" = "--force" ]; then
       force=true
@@ -1027,7 +1015,7 @@ fi
         echo "ERROR: Switching probes is not supported while trying to fix serial!"
         exit 1
       fi
-      if [ -f $BASEDIR/pellcorp.done ] && [ -n "$probe" ] && [ "$1" != "$probe" ]; then
+      if [ "$mode" = "update" ] && [ -n "$probe" ] && [ "$1" != "$probe" ]; then
         echo "WARNING: About to switch from $probe to $1!"
         probe_switch=true
       fi
@@ -1092,9 +1080,15 @@ fi
     fi
   fi
 
-  if [ -z "$printer" ] && [ ! -f $BASEDIR/pellcorp-backups/printer.factory.cfg ]; then
-    echo "ERROR: Printer --printer argument is required"
-    exit 1
+  # if using a standard base printer can continue to use it no need to respecify it
+  if [ -z "$printer" ] && [ "$mode" != "update" ]; then
+    if [ "$mode" = "reinstall" ] && [ -n "$existing_printer" ] && [ -f $BASEDIR/pellcorp/rpi/printers/${existing_printer}.cfg ]; then
+      printer=${existing_printer}
+      echo "INFO: Printer is $printer"
+    else
+      echo "ERROR: Printer --printer argument is required"
+      exit 1
+    fi
   fi
 
   if [ -z "$probe" ]; then
@@ -1139,12 +1133,9 @@ fi
     TIMESTAMP=${TIMESTAMP} $BASEDIR/pellcorp/tools/backups.sh --create
   fi
 
-  if [ -n "$printer" ] && [ ! -f $BASEDIR/pellcorp.done ]; then
+  # this sets up the base printer definition
+  if [ -n "$printer" ] && [ "$mode" != "update" ]; then
     $BASEDIR/pellcorp/rpi/tools/apply-printer-cfg.sh $printer || exit $?
-  fi
-
-  if [ -f $BASEDIR/pellcorp/rpi/printers/${printer}.cfg ] && [ ! -f $BASEDIR/pellcorp-backups/printer.factory.cfg ]; then
-    cp $BASEDIR/pellcorp/rpi/printers/${printer}.cfg $BASEDIR/pellcorp-backups/printer.factory.cfg
   fi
 
   model=$(cat $BASEDIR/pellcorp-backups/printer.factory.cfg | grep MODEL: | awk -F ':' '{print $2}')
@@ -1192,9 +1183,7 @@ fi
     echo "INFO: Configuration overrides will not be saved or applied"
   fi
 
-  if [ "$mode" = "install" ] && [ ! -f $BASEDIR/printer_data/config/printer.cfg ]; then
-    cp $BASEDIR/pellcorp-backups/printer.factory.cfg $BASEDIR/printer_data/config/printer.cfg
-  elif [ "$mode" = "reinstall" ] || [ "$mode" = "update" ]; then
+  if [ -f $BASEDIR/printer_data/config/printer.cfg ]; then # this is an update or a reinstall
     # before going ahead with the update lets stop a bunch of things to just make it easier
     if [ "$(sudo systemctl is-enabled moonraker 2> /dev/null)" = "enabled" ]; then
       echo "INFO: Stopping Moonraker ..."
@@ -1216,16 +1205,27 @@ fi
       sudo systemctl stop KlipperScreen
     fi
 
-    if [ "$skip_overrides" != "true" ]; then
-      $BASEDIR/pellcorp/tools/config-overrides.sh
-    fi
-
-    cp $BASEDIR/pellcorp-backups/printer.factory.cfg $BASEDIR/printer_data/config/printer.cfg
-
     if [ -f $BASEDIR/pellcorp.done ]; then
+      if [ "$skip_overrides" != "true" ]; then
+        $BASEDIR/pellcorp/tools/config-overrides.sh
+      fi
+
       rm $BASEDIR/pellcorp.done
     fi
   fi
+
+  if [ "$mode" = "reinstall" ]; then
+    # where the base printer was changed we need to clear out any overrides as they are unsafe to try and reapply
+    # also we only reapply if the base printer is built in, because we have NO idea if an existing adhoc (either file or url)
+    # is sufficiently alike for it to be safe to reapply config overrides
+    if [ -z "$existing_printer" ] || [ "$printer" != "$existing_printer" ] || [ ! -f $BASEDIR/pellcorp/rpi/printers/${printer}.cfg ]; then
+      [ -f $BASEDIR/pellcorp-overrides/printer.cfg ] && rm $BASEDIR/pellcorp-overrides/printer.cfg
+    fi
+    [ -d $BASEDIR/printer_data/config/ ] && rm -rf $BASEDIR/printer_data
+  fi
+
+  mkdir -p $BASEDIR/printer_data/config/
+  cp $BASEDIR/pellcorp-backups/printer.factory.cfg $BASEDIR/printer_data/config/printer.cfg
 
   if [ "$model" != "unspecified" ] && [ ! -f $BASEDIR/pellcorp.done ]; then
     # we need a flag to know what mount we are using
