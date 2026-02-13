@@ -137,8 +137,8 @@ if [ $? -ne 0 ]; then
     virtualenv -p python3 $BASEDIR/klippy-env
     $BASEDIR/klippy-env/bin/pip install -r $BASEDIR/klipper/scripts/klippy-requirements.txt
 
-    # just install whatever is the latest version of numpy
-    $BASEDIR/klippy-env/bin/pip install numpy || exit $?
+    # now install numpy with same version as klippain
+    $BASEDIR/klippy-env/bin/pip install -r $BASEDIR/pellcorp/rpi/klippy-requirements.txt
   fi
 
   echo "INFO: Updating klipper config ..."
@@ -152,24 +152,19 @@ if [ $? -ne 0 ]; then
 
   kinematics=$($CONFIG_HELPER --get-section-entry "printer" "kinematics")
   if [ "$kinematics" = "corexy" ]; then
-    # once klippain develop branch is released we can remove this check
-    if [ $debian_release -lt 13 ]; then
-      # force reinstallation of klippain for anything other than an update
-      if [ "$mode" != "update" ] && [ -d $BASEDIR/klippain_shaketune ]; then
-        rm -rf $BASEDIR/klippain_shaketune
-      fi
+    # force reinstallation of klippain for anything other than an update
+    if [ "$mode" != "update" ] && [ -d $BASEDIR/klippain_shaketune ]; then
+      rm -rf $BASEDIR/klippain_shaketune
+    fi
 
-      if [ ! -d $BASEDIR/klippain_shaketune ]; then
-        echo
-        echo "INFO: Installing Klippain ShakeTune ..."
-        command -v wget 2> /dev/null
-        if [ $? -ne 0 ]; then
-            retry sudo apt-get install --yes wget; error
-        fi
-        wget -O - https://raw.githubusercontent.com/Frix-x/klippain-shaketune/main/install.sh | bash
+    if [ ! -d $BASEDIR/klippain_shaketune ]; then
+      echo
+      echo "INFO: Installing Klippain ShakeTune ..."
+      command -v wget 2> /dev/null
+      if [ $? -ne 0 ]; then
+          retry sudo apt-get install --yes wget; error
       fi
-    else
-      echo "ERROR: Klippain not supported on Debian 13 as yet"
+      wget -O - https://raw.githubusercontent.com/Frix-x/klippain-shaketune/main/install.sh | bash
     fi
   fi
 
@@ -245,12 +240,7 @@ if [ $? -ne 0 ]; then
   if [ "$kinematics" = "corexy" ]; then
     cp $BASEDIR/pellcorp/rpi/klippain.cfg $BASEDIR/printer_data/config || exit $?
     if $CONFIG_HELPER --section-exists "resonance_tester"; then
-      # debian 13 is not setup for klippain yet
-      if [ $debian_release -lt 13 ]; then
-        $CONFIG_HELPER --add-include "klippain.cfg" || exit $?
-      fi
-    else
-      echo "INFO: SKipped including klippain.cfg as no resonance_tester"
+      $CONFIG_HELPER --add-include "klippain.cfg" || exit $?
     fi
   fi
 
@@ -258,6 +248,9 @@ if [ $? -ne 0 ]; then
   $CONFIG_HELPER --add-section "exclude_object" || exit $?
 
   if [ ! -f /usr/local/bin/klipper_mcu ]; then
+    echo
+    echo "INFO: Building klipper mcu ..."
+
     # https://klipper.discourse.group/t/armbian-kernel-klipper-host-mcu-got-error-1-in-sched-setschedule/1193
     runtime_us=$(sudo sysctl -n kernel.sched_rt_runtime_us)
     if [ "$runtime_us" != "-1" ]; then
