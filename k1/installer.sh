@@ -844,7 +844,7 @@ function install_klipper() {
         if [ "$remove_adxl" = "true" ]; then
           # for ender 5 max we can't use on board adxl and only beacon and cartotouch support
           # for Ender 3 V3 KE we have more work to do to support the nebula pad adxl in the future
-          if [ "$probe" != "beacon" ] && [ "$probe" != "cartotouch" ]; then
+          if [ "$probe" != "beacon" ] && [ "$probe" != "cartotouch" ] && [ "$probe" != "cartographer" ]; then
               $CONFIG_HELPER --remove-section "adxl345" || exit $?
               $CONFIG_HELPER --remove-section "resonance_tester" || exit $?
           fi
@@ -1512,7 +1512,19 @@ function setup_cartotouch() {
         if [ "$MODEL" = "F004" ]; then
           # new versions of Ender 5 Max firmware added accel_chip_proxy to replace adxl
           $CONFIG_HELPER --add-section "adxl345"
-          $CONFIG_HELPER --replace-section-entry "adxl345" "cs_pin" "scanner:PA3" || exit $?
+
+          local SERIAL_ID=$(ls /dev/serial/by-id/usb-* | grep "IDM\|Cartographer" | head -1)
+          if [ -n "$SERIAL_ID" ]; then
+            local CARTO_TYPE=$(echo $SERIAL_ID | awk -F '_' '{print $2}')
+            if [ "$CARTO_TYPE" = "stm32g431xx" ]; then # a V4
+              $CONFIG_HELPER --replace-section-entry "adxl345" "cs_pin" "scanner:PA0" || exit $?
+            else
+              $CONFIG_HELPER --replace-section-entry "adxl345" "cs_pin" "scanner:PA3" || exit $?
+            fi
+          else
+            $CONFIG_HELPER --replace-section-entry "adxl345" "cs_pin" "scanner:CHANGEME" || exit $?
+          fi
+
           $CONFIG_HELPER --replace-section-entry "adxl345" "spi_bus" "spi1" || exit $?
           $CONFIG_HELPER --replace-section-entry "adxl345" "axes_map" "x,y,z" || exit $?
           $CONFIG_HELPER --remove-section-entry "adxl345" "spi_speed" || exit $?
@@ -1578,7 +1590,17 @@ function setup_cartographer() {
         if [ "$MODEL" = "F004" ]; then
           # new versions of Ender 5 Max firmware added accel_chip_proxy to replace adxl
           $CONFIG_HELPER --add-section "adxl345"
-          $CONFIG_HELPER --replace-section-entry "adxl345" "cs_pin" "scanner:PA3" || exit $?
+          local SERIAL_ID=$(ls /dev/serial/by-id/usb-* | grep "IDM\|Cartographer" | head -1)
+          if [ -n "$SERIAL_ID" ]; then
+            local CARTO_TYPE=$(echo $SERIAL_ID | awk -F '_' '{print $2}')
+            if [ "$CARTO_TYPE" = "stm32g431xx" ]; then # a V4
+              $CONFIG_HELPER --replace-section-entry "adxl345" "cs_pin" "cartographer:PA0" || exit $?
+            else
+              $CONFIG_HELPER --replace-section-entry "adxl345" "cs_pin" "cartographer:PA3" || exit $?
+            fi
+          else
+            $CONFIG_HELPER --replace-section-entry "adxl345" "cs_pin" "cartographer:CHANGEME" || exit $?
+          fi
           $CONFIG_HELPER --replace-section-entry "adxl345" "spi_bus" "spi1" || exit $?
           $CONFIG_HELPER --replace-section-entry "adxl345" "axes_map" "x,y,z" || exit $?
           $CONFIG_HELPER --remove-section-entry "adxl345" "spi_speed" || exit $?
