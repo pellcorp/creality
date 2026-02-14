@@ -1297,11 +1297,34 @@ fi
   elif [ "$(sudo systemctl is-enabled KlipperScreen 2> /dev/null)" = "disabled" ]; then
     echo "INFO: KlipperScreen is disabled"
   fi
+
   if [ "$(sudo systemctl is-enabled grumpyscreen 2> /dev/null)" = "enabled" ]; then
     echo
     $BASEDIR/pellcorp/rpi/install-grumpyscreen.sh $mode || exit $?
   elif [ "$(sudo systemctl is-enabled KlipperScreen 2> /dev/null)" = "enabled" ]; then
-     echo "INFO: Skipping KlipperScreen $mode"
+   echo "INFO: Skipping KlipperScreen $mode"
+  elif [ "$mode" != "uodate" ] && [ $pi_model -ge 4 ]; then
+    # FIXME - do not do a klipperscreen install unless we can see a HDMI or DSI screen
+    # start with only supporting BTT screens by default all others users will have to
+    # manually install
+
+    screen_found=false
+
+    # this is a DSI screen
+    if [ -e /dev/input/by-path/platform-soc:firmware:touchscreen-event ]; then
+      echo "INFO: DSI Screen found"
+      screen_found=true
+    fi
+
+    # BTT HDMI screen
+    if ls /dev/serial/by-id/usb-* | grep "usb-BIQU_BTT-HDMI" > /dev/null; then
+      echo "INFO: BTT HDMI Screen found"
+      screen_found=true
+    fi
+    
+    if [ "$screen_found" = "true" ]; then
+      $BASEDIR/pellcorp/rpi/install-klipperscreen.sh $mode || exit $?
+    fi
   else
     echo "INFO: Skipping Grumpyscreen and KlipperScreen installation"
   fi
