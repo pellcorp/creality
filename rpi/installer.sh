@@ -968,6 +968,10 @@ fi
   mount=
   existing_printer=$(cat $BASEDIR/pellcorp-overrides/config.info 2> /dev/null | grep printer= | awk -F '=' '{print $2}')
 
+  if [ -f $BASEDIR/pellcorp.done ]; then
+    install_mount=$(cat $BASEDIR/pellcorp.done | grep "mount=" | awk -F '=' '{print $2}')
+  fi
+
   while true; do
     if [ "$1" = "--fix-client-variables" ] || [ "$1" = "--fix-serial" ] || [ "$1" = "--install" ] || [ "$1" = "--update" ] || [ "$1" = "--reinstall" ] || [ "$1" = "--clean-install" ] || [ "$1" = "--clean-update" ] || [ "$1" = "--clean-reinstall" ]; then
       mode=$(echo $1 | sed 's/--//g')
@@ -979,11 +983,6 @@ fi
     elif [ "$1" = "--mount" ]; then
       shift
       mount=$1
-
-      # allows the user to reapply mount overrides for current mount
-      if [ -f $BASEDIR/pellcorp.done ] && [ "$mount" = "%CURRENT%" ]; then
-          mount=$(cat $BASEDIR/pellcorp.done | grep mount= | awk -F '=' '{print $2}')
-      fi
 
       if [ -z "$mount" ]; then
         mount=unknown
@@ -1146,7 +1145,7 @@ fi
     model=unspecified
   fi
 
-  # we skip mount overrides for a special unspecified mount
+  # we skip mount overrides for a special unspecified model
   if [ "$model" != "unspecified" ]; then
     if [ -f $BASEDIR/pellcorp.done ]; then
       install_mount=$(cat $BASEDIR/pellcorp.done | grep "mount=" | awk -F '=' '{print $2}')
@@ -1157,6 +1156,16 @@ fi
       # for a partial install where we selected a mount, we can grab it from the pellcorp.done file
       if [ "$mode" = "install" ]; then
         mount=$install_mount
+      fi
+    elif [ -n "$mount" ] && [ -n "$install_mount" ]; then
+      if [ "$mount" = "%CURRENT%" ]; then
+        mount=$install_mount
+      fi
+
+      if [ "$mount" = "$install_mount" ] && [ "$probe_switch" != "true" ] && [ "$force" != "true" ]; then
+        echo "ERROR: You have specified --mount $mount for your existing mount!"
+        echo "INFO: If you know what you are doing you can force reapplying mount overrides with --force"
+        exit 1
       fi
     fi
 
