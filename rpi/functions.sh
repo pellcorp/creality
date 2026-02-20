@@ -37,10 +37,10 @@ function error() {
 
 debian_release=$(lsb_release -rs 2> /dev/null | tr -d '.')
 # hackery for ubuntu
-if [ $debian_release -eq 2404 ]; then
-  debian_release=12
-elif [ $debian_release -eq 2204 ]; then
-  debian_release=11
-elif [ $debian_release -gt 2204 ]; then
+if [ $debian_release -ge 2404 ]; then
   debian_release=13
+elif [ $debian_release -ge 2204 ]; then
+  debian_release=12
+elif [ $debian_release -ge 2004 ]; then
+  debian_release=11
 fi
