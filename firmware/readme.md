@@ -36,7 +36,7 @@ Don't try and create this on windows or MacOs, you could do it on a ubuntu vm no
 
 ## Creating
 
-Then you can create a new firmware file, currently without any customations just to test things work with:
+Then you can create a new firmware file, currently without any customisations just to test things work with:
 
 ```
 ./create.sh
@@ -44,7 +44,7 @@ Then you can create a new firmware file, currently without any customations just
 
 **NOTE:** You will be required to enter your `sudo` password
 
-The resulting img file will be located at `/tmp/1.3.3.8-pellcorp/CR4CU220812S11_ota_img_V6.1.3.3.8.img`
+The resulting img file will be located at `/tmp/7.1.3.3.46-pellcorp/CR4CU220812S11_ota_img_V7.1.3.3.46.img`
 
 ## Testing
 
@@ -52,7 +52,7 @@ It's very important to test this in the safest way possible, luckily creality ha
 a new firmware image from the cli rather than relying on the display server
 
 ```
-/etc/ota_bin/local_ota_update.sh /tmp/udisk/sda1/CR4CU220812S11_ota_img_V6.1.3.3.8.img
+/etc/ota_bin/local_ota_update.sh /tmp/udisk/sda1/CR4CU220812S11_ota_img_V7.1.3.3.46.img
 ```
 
 ## Thanks

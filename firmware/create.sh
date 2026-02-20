@@ -1,6 +1,8 @@
 #!/bin/bash
 
 CURRENT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd -P)"
+ROOT_DIR=$(dirname $CURRENT_DIR)
+K1_DIR=$ROOT_DIR/k1
 
 commands="7z unsquashfs mksquashfs mkpasswd"
 for command in $commands; do
@@ -13,12 +15,12 @@ done
 
 BOARD_SHORT_NAME=CR4CU220812S11
 DOWNLOAD_PAGE=download-k1-flagship
-CREALITY_VERSION=1.3.3.8
+CREALITY_VERSION=1.3.3.46
 
 # thanks to Neon for showing me how to derive the password
 FIRMWARE_PASSWORD=$(mkpasswd -m md5 "${BOARD_SHORT_NAME}C3_7e_bz" -S cxswfile)
 
-version="6.${CREALITY_VERSION}"
+version="7.${CREALITY_VERSION}"
 
 function write_ota_info() {
     echo "ota_version=${version}" > /tmp/${version}-pellcorp/ota_info
@@ -32,6 +34,8 @@ function customise_rootfs() {
     write_ota_info
     [ -d $CURRENT_DIR/opt ] && rm -rf $CURRENT_DIR/opt
     sudo cp $CURRENT_DIR/etc/init.d/* /tmp/${version}-pellcorp/squashfs-root/etc/init.d/
+    sudo cp $K1_DIR/services/S58factoryreset /tmp/${version}-pellcorp/squashfs-root/etc/init.d/
+    sudo cp $K1_DIR/services/S58wpa_supplicant /tmp/${version}-pellcorp/squashfs-root/etc/init.d/
 }
 
 function update_rootfs() {
@@ -43,7 +47,7 @@ function update_rootfs() {
     sudo chown $USER rootfs.squashfs 
 }
 
-download=$(wget -q https://www.creality.com/pages/${DOWNLOAD_PAGE} -O- | grep -o  "\"\(.*\)V${CREALITY_VERSION}.img\"" | head -1 | tr -d '"')
+download=$(wget -q https://www.creality.com/pages/${DOWNLOAD_PAGE} -O- | grep -o "\"\([^\"]*\)V${CREALITY_VERSION}.img" | tail -1 | tr -d '"')
 if [ -z "$download" ]; then
   echo "FATAL: Download page has changed could not download V${CREALITY_VERSION}"
   exit 1
@@ -117,3 +121,5 @@ pushd /tmp/${version}-pellcorp/ > /dev/null
 7z a ${image_name}.7z -p"$FIRMWARE_PASSWORD" $directory
 mv ${image_name}.7z ${image_name}
 popd > /dev/null
+
+echo "The image is $directory/${image_name}"
