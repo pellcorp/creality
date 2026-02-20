@@ -2073,10 +2073,6 @@ fi
         elif [ "$1" = "--mount" ]; then
             shift
             mount=$1
-            # allows the user to reapply mount overrides for current mount
-            if [ -f /usr/data/pellcorp.done ] && [ "$mount" = "%CURRENT%" ]; then
-                mount=$(cat /usr/data/pellcorp.done | grep mount= | awk -F '=' '{print $2}')
-            fi
 
             if [ -z "$mount" ]; then
                 mount=unknown
@@ -2158,6 +2154,16 @@ fi
           # no mount overrides generated
           echo "WARNING: Enforcing mount overrides for mount $install_mount for migration"
           mount=$install_mount
+        fi
+      elif [ -n "$mount" ] && [ -n "$install_mount" ]; then
+        if [ "$mount" = "%CURRENT%" ]; then
+          mount=$install_mount
+        fi
+
+        if [ "$mount" = "$install_mount" ] && [ "$probe_switch" != "true" ] && [ "$force" != "true" ]; then
+          echo "ERROR: You have specified --mount $mount for your existing mount!"
+          echo "INFO: If you know what you are doing you can force reapplying mount overrides with --force"
+          exit 1
         fi
       fi
 
