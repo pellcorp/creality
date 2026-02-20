@@ -1109,7 +1109,8 @@ fi
   if [ -n "$PELLCORP_UPDATED_SHA" ]; then
     if [ "$mode" = "install" ]; then
       echo
-      echo "ERROR: Installation has already completed"
+      echo "ERROR: Installation has already completed - NO CHANGES WERE MADE!"
+      echo
       if [ "$PELLCORP_UPDATED_SHA" != "$PELLCORP_GIT_SHA" ]; then
         echo "Perhaps you meant to execute an --update or a --reinstall instead!"
         echo "  https://pellcorp.github.io/creality-wiki/updating/#updating"
@@ -1119,7 +1120,8 @@ fi
       exit 1
     elif [ "$mode" = "update" ] && [ "$PELLCORP_UPDATED_SHA" = "$PELLCORP_GIT_SHA" ] && [ "$probe_switch" != "true" ] && [ "$force" != "true" ] && [ -z "$mount" ]; then
       echo
-      echo "ERROR: Installation is already up to date"
+      echo "ERROR: Installation is already up to date - NO CHANGES WERE MADE!"
+      echo
       echo "Perhaps you forgot to execute a --branch main first!"
       echo "  https://pellcorp.github.io/creality-wiki/updating/#updating"
       echo
