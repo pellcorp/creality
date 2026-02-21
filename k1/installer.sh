@@ -901,7 +901,7 @@ function install_klipper() {
         cp /usr/data/pellcorp/config/start_end.cfg /usr/data/printer_data/config/ || exit $?
         $CONFIG_HELPER --add-include "start_end.cfg" || exit $?
 
-        if [ "$probe" != "beacon" ] && [ "$probe" != "cartotouch" ] && [ "$probe" != "eddyng" ] && [ "$probe" != "cartographer" ]; then
+        if [ "$probe" != "beacon" ] && [ "$probe" != "cartotouch" ] && [ "$probe" != "eddyng" ] && [ "$probe" != "cartographer" ] && [ "$probe" != "btteddy" ]; then
             $CONFIG_HELPER --file start_end.cfg --replace-section-entry "gcode_macro _START_END_PARAMS" "variable_start_print_bed_heating_move_bed_distance" "0" || exit $?
         fi
 
