@@ -1570,6 +1570,7 @@ function setup_cartographer() {
         $CONFIG_HELPER --file moonraker.conf --add-include "cartographer.conf" || exit $?
 
         cp /usr/data/pellcorp/config/cartographer_macro.cfg /usr/data/printer_data/config/ || exit $?
+        sed -i "s:\$HOME:/usr/data:g" /usr/data/printer_data/config/cartographer_macro.cfg
         $CONFIG_HELPER --add-include "cartographer_macro.cfg" || exit $?
 
         $CONFIG_HELPER --replace-section-entry "stepper_z" "homing_retract_dist" "0" || exit $?
