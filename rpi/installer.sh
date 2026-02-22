@@ -577,6 +577,7 @@ function setup_cartographer() {
 
         cp $BASEDIR/pellcorp/config/cartographer_macro.cfg $BASEDIR/printer_data/config/ || exit $?
         $CONFIG_HELPER --add-include "cartographer_macro.cfg" || exit $?
+        sed -i "s:\$HOME:$BASEDIR:g" $BASEDIR/printer_data/config/cartographer_macro.cfg
 
         $CONFIG_HELPER --replace-section-entry "stepper_z" "homing_retract_dist" "0" || exit $?
 
