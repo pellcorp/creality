@@ -876,6 +876,12 @@ if [ "$1" = "--update-branch" ]; then
     exit $?
 elif [ "$1" = "--cleanup" ]; then # mostly to make testing easier
     echo "INFO: Running cleanup ..."
+    for service in KlipperScreen grumpyscreen klipper moonraker crowsnest nginx; do
+      if [ -f /etc/systemd/system/${service}.service ]; then
+        sudo systemctl stop ${service} > /dev/null 2>&1
+        sudo rm /etc/systemd/system/${service}.service
+      fi
+    done
     [ -f $BASEDIR/pellcorp.done ] && rm $BASEDIR/pellcorp.done
     [ -d $BASEDIR/pellcorp-backups ] && rm -rf $BASEDIR/pellcorp-backups
     [ -d $BASEDIR/pellcorp-overrides ] && rm -rf $BASEDIR/pellcorp-overrides
@@ -1309,13 +1315,42 @@ fi
   elif [ "$(sudo systemctl is-enabled KlipperScreen 2> /dev/null)" = "disabled" ]; then
     echo "INFO: KlipperScreen is disabled"
   fi
+
   if [ "$(sudo systemctl is-enabled grumpyscreen 2> /dev/null)" = "enabled" ]; then
     echo
     $BASEDIR/pellcorp/rpi/install-grumpyscreen.sh $mode || exit $?
   elif [ "$(sudo systemctl is-enabled KlipperScreen 2> /dev/null)" = "enabled" ]; then
-     echo "INFO: Skipping KlipperScreen $mode"
+   echo "INFO: Skipping KlipperScreen $mode - update via fluidd or mainsail"
+  elif [ "$mode" != "update" ] && [ $pi_model -ge 4 ]; then
+    screen_found=false
+
+    if grep -q "^connected$" /sys/class/drm/card*DSI*/status 2>/dev/null; then
+      echo "INFO: DSI Screen found"
+      screen_found=true
+    fi
+
+    if grep -q "^connected$" /sys/class/drm/card*HDMI*/status 2>/dev/null; then
+      echo "INFO: HDMI Screen found"
+      screen_found=true
+    fi
+
+    if [ "$screen_found" = "true" ]; then
+      $BASEDIR/pellcorp/rpi/install-klipperscreen.sh $mode || exit $?
+    else
+      echo "INFO: Skipping KlipperScreen installation as screen not found"
+      echo
+      echo "To manually install: "
+      echo "- https://pellcorp.github.io/creality-wiki/rpi_klipperscreen"
+      echo
+      echo
+    fi
   else
     echo "INFO: Skipping Grumpyscreen and KlipperScreen installation"
+    echo
+    echo "To manually install: "
+    echo "- https://pellcorp.github.io/creality-wiki/rpi_klipperscreen"
+    echo "- https://pellcorp.github.io/creality-wiki/rpi_grumpyscreen"
+    echo
   fi
 
   setup_probe=0
