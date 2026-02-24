@@ -139,6 +139,12 @@ def main():
                 if ('gcode_macro' in section_name or section_name == 'homing_override') and key == 'gcode':
                     continue
 
+                # we removed the variable_turn_off_chamber and variable_turn_on_chamber from turn on and off fans so don't apply an override here
+                # we normally only apply overrides where the variable exists but we allow new variables for fan control
+                # so we need this hack
+                if ('gcode_macro' in section_name) and (key == 'variable_turn_off_chamber' or key == 'variable_turn_on_chamber'):
+                    continue
+
                 # disable all overrides for any gcode shell commands
                 if 'gcode_shell_command' in section_name:
                     continue
@@ -155,7 +161,7 @@ def main():
                 if moonraker_conf and (section_name == 'update_manager klipper' or section_name == 'update_manager moonraker') and key == 'pinned_commit':
                     continue
 
-                # do not add a new value that was missing from original unless this is for printer.cfg or the special is_non_critical field
+                # do not add a new value that was missing from original unless this is for printer.cfg, fan_control.cfg, cartographer.cfg or the special is_non_critical field
                 if original_value or printer_cfg or fan_control or cartographer_cfg or key == 'is_non_critical':
                     if (not original_value and updated_value and updated_value.value) or (original_value and original_value.value and updated_value and updated_value.value and original_value.value != updated_value.value):
                         if not overrides.has_section(section_name):
