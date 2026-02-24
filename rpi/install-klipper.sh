@@ -221,6 +221,14 @@ if [ $? -ne 0 ]; then
   fi
 
   cp $BASEDIR/pellcorp/rpi/fan_control.cfg $BASEDIR/printer_data/config || exit $?
+  if ! $CONFIG_HELPER --section-exists "temperature_fan chamber_fan"; then
+    $CONFIG_HELPER --file fan_control.cfg --remove-section "gcode_macro M141"
+  fi
+
+  if ! $CONFIG_HELPER --section-exists "temperature_sensor chamber_temp"; then
+    $CONFIG_HELPER --file fan_control.cfg --remove-section "gcode_macro M191"
+  fi
+
   $CONFIG_HELPER --add-include "fan_control.cfg" || exit $?
 
   # replace a [fan_generic part] with a [fan]

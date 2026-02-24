@@ -2161,7 +2161,7 @@ fi
           mount=$install_mount
         fi
 
-        if [ "$mount" = "$install_mount" ] && [ "$probe_switch" != "true" ] && [ "$force" != "true" ]; then
+        if [ "$mode" = "update" ] && [ "$mount" = "$install_mount" ] && [ "$probe_switch" != "true" ] && [ "$force" != "true" ]; then
           echo "ERROR: You have specified --mount $mount for your existing mount!"
           echo "INFO: If you know what you are doing you can force reapplying mount overrides with --force"
           exit 1
