@@ -2467,6 +2467,13 @@ fi
     if [ -n "$mount" ]; then
         /usr/data/pellcorp/tools/apply-mount-overrides.sh $probe $mount $model
         apply_mount_overrides=$?
+
+        # if a new mount clean out existing calibrations
+        if [ -n "$install_mount" ] && [ "$mount" != "$install_mount" ] && [ "$probe_switch" != "true" ]; then
+          echo
+          echo "INFO: Removing old $install_mount mount save config ..."
+          $BASEDIR/pellcorp/tools/cleanup-save-config.sh $probe --mount
+        fi
     fi
 
     # cleanup any M109 or M190 redefined
