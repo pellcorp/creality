@@ -2472,7 +2472,7 @@ fi
         if [ -n "$install_mount" ] && [ "$mount" != "$install_mount" ] && [ "$probe_switch" != "true" ]; then
           echo
           echo "INFO: Removing old $install_mount mount save config ..."
-          $BASEDIR/pellcorp/tools/cleanup-save-config.sh $probe --mount
+          /usr/data/pellcorp/tools/cleanup-save-config.sh $probe --mount
         fi
     fi
 
