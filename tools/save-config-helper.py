@@ -12,11 +12,26 @@ else:
 class SaveConfigHelper:
     def __init__(self, file_path):
         self.file_path = file_path
+        self.before = []
         self.lines = []
         if not os.path.exists(self.file_path):
             raise FileNotFoundError(f"Could not find {self.file_path}")
         with open(self.file_path, 'r') as f:
-            self.lines = f.readlines()
+            content = f.readlines()
+
+            # we only want to deal with save config so save them as separate sections
+            save_config = False
+            for line in content:
+                # as soon as we encounter a line starting with #*# just starting writing
+                # to the save config variable
+                if line.startswith("#*#"):
+                    save_config = True
+
+                if save_config:
+                    self.lines.append(line)
+                else:
+                    self.before.append(line)
+
 
     def remove_section(self, section_name):
         is_wildcard = section_name.endswith("*")
@@ -69,6 +84,7 @@ class SaveConfigHelper:
         # Atomic-ish save: write to temp, then replace
         temp_file = self.file_path + ".tmp"
         with open(temp_file, 'w') as f:
+            f.writelines(self.before)
             f.writelines(self.lines)
         os.replace(temp_file, self.file_path)
 
