@@ -5,8 +5,6 @@ if grep -Fqs "ID=buildroot" /etc/os-release; then
     BASEDIR=/usr/data
 fi
 CONFIG_HELPER="$BASEDIR/pellcorp/tools/config-helper.py"
-# special helper just for the save config section
-SAVE_CONFIG_HELPER="$BASEDIR/pellcorp/tools/save-config-helper.py"
 
 apply_overrides() {
     local old_probe=$1
@@ -111,23 +109,8 @@ apply_overrides() {
                 if [ -n "$old_probe" ] && [ -n "$probe" ] && [ "$old_probe" != "$probe" ]; then
                   echo
                   echo "INFO: Removing $old_probe save config ..."
-                  if [ "$old_probe" = "cartotouch" ]; then
-                    $SAVE_CONFIG_HELPER --remove-section 'scanner*' 'axis_twist_compensation' 'bed_mesh*'
-                  elif [ "$old_probe" = "btteddy" ]; then
-                    $SAVE_CONFIG_HELPER --remove-section 'probe_eddy_current*' 'temperature_probe btt_eddy' 'axis_twist_compensation' 'bed_mesh*'
-                  elif [ "$old_probe" = "eddyng" ]; then
-                    $SAVE_CONFIG_HELPER --remove-section 'probe_eddy_ng*' 'axis_twist_compensation' 'bed_mesh*'
-                  elif [ "$old_probe" = "beacon" ]; then
-                    $SAVE_CONFIG_HELPER --remove-section 'beacon*' 'axis_twist_compensation' 'bed_mesh*'
-                  elif [ "$old_probe" = "cartographer" ]; then
-                    $SAVE_CONFIG_HELPER --remove-section 'cartographer*' 'axis_twist_compensation' 'bed_mesh*'
-                  elif [ "$old_probe" = "microprobe" ] || [ "$old_probe" = "klicky" ]; then
-                    $SAVE_CONFIG_HELPER --remove-section 'probe' 'axis_twist_compensation' 'bed_mesh*'
-                  elif [ "$old_probe" = "bltouch" ]; then
-                    $SAVE_CONFIG_HELPER --remove-section 'bltouch' 'axis_twist_compensation' 'bed_mesh*'
-                  fi
+                  $BASEDIR/pellcorp/tools/cleanup-save-config.sh $old_probe
                 fi
-
                 return_status=1
             else
                 echo "WARN: Skipped applying save config state to $BASEDIR/printer_data/config/printer.cfg"
