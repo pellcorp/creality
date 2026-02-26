@@ -1562,7 +1562,7 @@ function setup_cartographer() {
     grep -q "cartographer-probe" /usr/data/pellcorp.done
     if [ $? -ne 0 ]; then
         echo
-        echo "INFO: Setting up cartographer V2 ..."
+        echo "INFO: Setting up cartographer ..."
 
         cleanup_probes
 
@@ -1814,10 +1814,13 @@ function install_packages() {
 }
 
 function apply_overrides() {
+    local old_probe=$1
+    local probe=$2
+
     return_status=0
     grep -q "overrides" /usr/data/pellcorp.done
     if [ $? -ne 0 ]; then
-        /usr/data/pellcorp/tools/apply-overrides.sh
+        /usr/data/pellcorp/tools/apply-overrides.sh "$old_probe" "$probe"
         return_status=$?
         echo "overrides" >> /usr/data/pellcorp.done
         sync
@@ -2055,6 +2058,7 @@ fi
     force=false
     skip_overrides=false
     probe_switch=false
+    old_probe=
     mount=
 
     if [ -f /usr/data/pellcorp.done ]; then
@@ -2089,6 +2093,7 @@ fi
             fi
             if [ -n "$probe" ] && [ "$1" != "$probe" ]; then
               echo "WARNING: About to switch from $probe to $1!"
+              old_probe=${probe}
               probe_switch=true
             fi
             probe=$1
@@ -2453,7 +2458,7 @@ fi
     # there will be no support for generating pellcorp-overrides unless you have done a factory reset
     if [ -f /usr/data/pellcorp-backups/printer.factory.cfg ]; then
         if [ "$skip_overrides" != "true" ]; then
-            apply_overrides
+            apply_overrides "${old_probe}" "${probe}"
             apply_overrides=$?
         fi
     fi

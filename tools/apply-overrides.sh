@@ -5,8 +5,13 @@ if grep -Fqs "ID=buildroot" /etc/os-release; then
     BASEDIR=/usr/data
 fi
 CONFIG_HELPER="$BASEDIR/pellcorp/tools/config-helper.py"
+# special helper just for the save config section
+SAVE_CONFIG_HELPER="$BASEDIR/pellcorp/tools/save-config-helper.py"
 
 apply_overrides() {
+    local old_probe=$1
+    local probe=$2
+
     return_status=0
     if [ -f $BASEDIR/pellcorp-overrides.cfg ] || [ -d $BASEDIR/pellcorp-overrides ]; then
         echo
@@ -98,9 +103,31 @@ apply_overrides() {
         if [ -f $overrides_dir/printer.cfg.save_config ]; then
             # if the printer.cfg already has SAVE_CONFIG skip applying it again
             if ! grep -q "#*# <---------------------- SAVE_CONFIG ---------------------->" $BASEDIR/printer_data/config/printer.cfg ; then
+                echo
                 echo "INFO: Applying save config state to $BASEDIR/printer_data/config/printer.cfg"
                 echo "" >> $BASEDIR/printer_data/config/printer.cfg
                 cat $overrides_dir/printer.cfg.save_config >> $BASEDIR/printer_data/config/printer.cfg
+
+                if [ -n "$old_probe" ] && [ -n "$probe" ] && [ "$old_probe" != "$probe" ]; then
+                  echo
+                  echo "INFO: Removing $old_probe save config ..."
+                  if [ "$old_probe" = "cartotouch" ]; then
+                    $SAVE_CONFIG_HELPER --remove-section 'scanner*' 'axis_twist_compensation' 'bed_mesh*'
+                  elif [ "$old_probe" = "btteddy" ]; then
+                    $SAVE_CONFIG_HELPER --remove-section 'probe_eddy_current*' 'temperature_probe btt_eddy' 'axis_twist_compensation' 'bed_mesh*'
+                  elif [ "$old_probe" = "eddyng" ]; then
+                    $SAVE_CONFIG_HELPER --remove-section 'probe_eddy_ng*' 'axis_twist_compensation' 'bed_mesh*'
+                  elif [ "$old_probe" = "beacon" ]; then
+                    $SAVE_CONFIG_HELPER --remove-section 'beacon*' 'axis_twist_compensation' 'bed_mesh*'
+                  elif [ "$old_probe" = "cartographer" ]; then
+                    $SAVE_CONFIG_HELPER --remove-section 'cartographer*' 'axis_twist_compensation' 'bed_mesh*'
+                  elif [ "$old_probe" = "microprobe" ] || [ "$old_probe" = "klicky" ]; then
+                    $SAVE_CONFIG_HELPER --remove-section 'probe' 'axis_twist_compensation' 'bed_mesh*'
+                  elif [ "$old_probe" = "bltouch" ]; then
+                    $SAVE_CONFIG_HELPER --remove-section 'bltouch' 'axis_twist_compensation' 'bed_mesh*'
+                  fi
+                fi
+
                 return_status=1
             else
                 echo "WARN: Skipped applying save config state to $BASEDIR/printer_data/config/printer.cfg"
@@ -116,5 +143,9 @@ apply_overrides() {
 }
 
 mkdir -p $BASEDIR/backups/
-apply_overrides
+
+old_probe=$1
+probe=$2
+apply_overrides "${old_probe}" "${probe}"
+
 exit $?

@@ -568,7 +568,7 @@ function setup_cartographer() {
     grep -q "cartographer-probe" $BASEDIR/pellcorp.done
     if [ $? -ne 0 ]; then
         echo
-        echo "INFO: Setting up cartographer V2 ..."
+        echo "INFO: Setting up cartographer ..."
 
         cleanup_probes
 
@@ -768,10 +768,13 @@ function setup_eddyng() {
 }
 
 function apply_overrides() {
+    local old_probe=$1
+    local probe=$2
+
     return_status=0
     grep -q "overrides" $BASEDIR/pellcorp.done
     if [ $? -ne 0 ]; then
-        $BASEDIR/pellcorp/tools/apply-overrides.sh
+        $BASEDIR/pellcorp/tools/apply-overrides.sh "$old_probe" "$probe"
         return_status=$?
         echo "overrides" >> $BASEDIR/pellcorp.done
         sync
@@ -967,6 +970,7 @@ fi
     probe=none
   fi
 
+  old_probe=
   mode=install
   force=false
   skip_overrides=false
@@ -1022,6 +1026,7 @@ fi
         exit 1
       fi
       if [ "$mode" = "update" ] && [ -n "$probe" ] && [ "$1" != "$probe" ]; then
+        old_probe=${probe}
         echo "WARNING: About to switch from $probe to $1!"
         probe_switch=true
       fi
@@ -1400,7 +1405,7 @@ fi
   done
 
   if [ "$skip_overrides" != "true" ]; then
-    apply_overrides
+    apply_overrides "${old_probe}" "${probe}"
   fi
 
   if [ "$model" != "unspecified" ] && [ -n "$mount" ]; then
