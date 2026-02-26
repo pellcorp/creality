@@ -33,6 +33,8 @@ class SaveConfigHelper:
         for line in self.lines:
             stripped_line = line.strip()
             if (is_wildcard and stripped_line.startswith(target) and stripped_line.endswith("]")) or stripped_line == target:
+                section_name = stripped_line[4:]
+                print(f"INFO: Removing {section_name} section ...")
                 skipping = True
                 updated = True
                 continue
@@ -44,6 +46,20 @@ class SaveConfigHelper:
                 new_content.append(line)
 
         if updated:
+            # cleanup the bottom of the file, will also remove save config header if we removed all the save config sections
+            cleaned_up = False
+            while new_content:
+                last = new_content[-1].strip()
+                if last == "#*#" or "SAVE_CONFIG" in last or "DO NOT EDIT THIS BLOCK OR BELOW" in last or last == "":
+                    cleaned_up = True
+                    new_content.pop()
+                else:
+                    break
+
+            # just for neatness re-add a new line at the end
+            if cleaned_up:
+                new_content.append("\n")
+
             self.lines = new_content
             return True
         else:
@@ -59,14 +75,14 @@ class SaveConfigHelper:
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Delete specific sections from Klipper SAVE_CONFIG")
-    parser.add_argument("--file", default="{PRINTER_CONFIG_DIR}/printer.cfg", help="Path to printer.cfg")
-    parser.add_argument("--delete-section", nargs='+', required=True, help="Space-separated list of sections to remove")
+    parser.add_argument("--file", default=f"{PRINTER_CONFIG_DIR}/printer.cfg", help="Path to printer.cfg")
+    parser.add_argument("--remove-section", nargs='+', required=True, help="Space-separated list of sections to remove")
 
     args = parser.parse_args()
 
     editor = SaveConfigHelper(args.file)
     changed = False
-    for section in args.delete_section:
+    for section in args.remove_section:
         if editor.remove_section(section):
             changed = True
     if changed:

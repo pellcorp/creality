@@ -1562,7 +1562,7 @@ function setup_cartographer() {
     grep -q "cartographer-probe" /usr/data/pellcorp.done
     if [ $? -ne 0 ]; then
         echo
-        echo "INFO: Setting up cartographer V2 ..."
+        echo "INFO: Setting up cartographer ..."
 
         cleanup_probes
 
