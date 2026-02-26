@@ -89,4 +89,5 @@ if __name__ == "__main__":
         editor.save()
         sys.exit(0)
     else: # no changes made give caller a hint
+        print(f"INFO: No changes")
         sys.exit(1)

@@ -1410,6 +1410,13 @@ fi
 
   if [ "$model" != "unspecified" ] && [ -n "$mount" ]; then
     $BASEDIR/pellcorp/tools/apply-mount-overrides.sh $probe $mount $model
+
+    # if a new mount clean out existing calibrations
+    if [ -n "$install_mount" ] && [ "$mount" != "$install_mount" ] && [ "$probe_switch" != "true" ]; then
+      echo
+      echo "INFO: Removing old $install_mount mount save config ..."
+      $BASEDIR/pellcorp/tools/cleanup-save-config.sh $probe --mount
+    fi
   fi
 
   fixup_client_variables_config
