@@ -156,15 +156,23 @@ function update_klipper() {
   echo "INFO: Stopping Klipper ..."
   sudo systemctl stop klipper
 
-  if [ -d $BASEDIR/cartographer-klipper ] && [ -L $BASEDIR/klipper/klippy/extras/scanner.py ]; then
-      $BASEDIR/cartographer-klipper/install.sh || return $?
-      sync
+  probe=$(cat $BASEDIR/pellcorp.done 2> /dev/null | grep "\-probe" | awk -F '-' '{print $1}')
+
+  if [ "$probe" = "cartotouch" ] && [ -d $BASEDIR/cartographer-klipper ] && [ -L $BASEDIR/klipper/klippy/extras/scanner.py ]; then
+      echo "INFO: Running cartographer-klipper installer ..."
+      $BASEDIR/pellcorp/rpi/cartotouch-install.sh || exit $?
   fi
 
-  if [ -d $BASEDIR/beacon-klipper ] && [ -L $BASEDIR/klipper/klippy/extras/beacon.py ]; then
+  if [ "$probe" = "beacon" ] && [ -d $BASEDIR/beacon-klipper ] && [ -L $BASEDIR/klipper/klippy/extras/beacon.py ]; then
       $BASEDIR/beacon-klipper/install.sh || return $?
-      sync
   fi
+
+  # for the plugin its going to be an actual file
+  if [ "$probe" = "cartographer" ] && [ -f $BASEDIR/klipper/klippy/extras/cartographer.py ]; then
+      curl -s -L https://raw.githubusercontent.com/Cartographer3D/cartographer3d-plugin/refs/heads/main/scripts/install.sh | bash || exit $?
+  fi
+
+  echo
   $BASEDIR/klippy-env/bin/python3 -m compileall $BASEDIR/klipper/klippy || return $?
   update_klipper_mcu
 
@@ -244,6 +252,8 @@ function install_cartographer_klipper() {
         echo
         echo "INFO: Running cartographer-klipper installer ..."
         $BASEDIR/pellcorp/rpi/cartotouch-install.sh || exit $?
+
+        echo
         $BASEDIR/klippy-env/bin/python3 -m compileall $BASEDIR/klipper/klippy || exit $?
 
         echo "cartographer-klipper" >> $BASEDIR/pellcorp.done
@@ -273,6 +283,9 @@ function install_cartographer_plugin() {
             curl -s -L https://raw.githubusercontent.com/Cartographer3D/cartographer3d-plugin/refs/heads/main/scripts/install.sh | bash || exit $?
         fi
 
+        echo
+        $BASEDIR/klippy-env/bin/python3 -m compileall $BASEDIR/klipper/klippy || exit $?
+
         echo "cartographer-plugin" >> $BASEDIR/pellcorp.done
         sync
         return 1
@@ -296,6 +309,8 @@ function install_beacon_klipper() {
         fi
 
         $BASEDIR/beacon-klipper/install.sh || exit $?
+
+        echo
         $BASEDIR/klippy-env/bin/python3 -m compileall $BASEDIR/klipper/klippy || exit $?
 
         echo "beacon-klipper" >> $BASEDIR/pellcorp.done

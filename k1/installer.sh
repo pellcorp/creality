@@ -200,17 +200,27 @@ function update_repo() {
 }
 
 function update_klipper() {
-  if [ -d /usr/data/cartographer-klipper ] && [ -L /usr/data/klipper/klippy/extras/scanner.py ]; then
+  probe=$(cat /usr/data/pellcorp.done 2> /dev/null | grep "\-probe" | awk -F '-' '{print $1}')
+
+  if [ "$probe" = "cartotouch" ] && [ -d /usr/data/cartographer-klipper ] && [ -L /usr/data/klipper/klippy/extras/scanner.py ]; then
       /usr/data/cartographer-klipper/install.sh || return $?
       ln -sf /usr/data/cartographer-klipper/ /root
-      sync
   fi
-  if [ -d /usr/data/beacon-klipper ] && [ -L /usr/data/klipper/klippy/extras/beacon.py ]; then
+
+  if [ "$probe" = "beacon" ] && [ -d /usr/data/beacon-klipper ] && [ -L /usr/data/klipper/klippy/extras/beacon.py ]; then
       /usr/data/pellcorp/k1/beacon-install.sh || return $?
       ln -sf /usr/data/beacon-klipper/ /root
-      sync
   fi
+
+  # for the plugin its going to be an actual file
+  if [ "$probe" = "cartographer" ] && [ -f /usr/data/klipper/klippy/extras/cartographer.py ]; then
+      curl -s -L https://raw.githubusercontent.com/Cartographer3D/cartographer3d-plugin/refs/heads/main/scripts/install.sh | bash -s -- --klipper /usr/data/klipper --klippy-env /usr/share/klippy-env || exit $?
+  fi
+
+  echo
   /usr/share/klippy-env/bin/python3 -m compileall /usr/data/klipper/klippy || return $?
+  sync
+
   /usr/data/pellcorp/k1/tools/check-firmware.sh --status
   if [ $? -eq 0 ]; then
       echo "INFO: Restarting Klipper ..."
@@ -1188,6 +1198,7 @@ function install_cartographer_plugin() {
         if [ -L /usr/data/klipper/klippy/extras/cartographer.py ]; then
             rm -rf /usr/data/klipper/klippy/extras/cartographer.py
         fi
+
         if [ "$mode" != "update" ] && [ -e /usr/data/klipper/klippy/extras/cartographer.py ]; then
             rm -rf /usr/data/klipper/klippy/extras/cartographer.py
         fi
@@ -1195,6 +1206,9 @@ function install_cartographer_plugin() {
         if [ ! -f /usr/data/klipper/klippy/extras/cartographer.py ]; then
             curl -s -L https://raw.githubusercontent.com/Cartographer3D/cartographer3d-plugin/refs/heads/main/scripts/install.sh | bash -s -- --klipper /usr/data/klipper --klippy-env /usr/share/klippy-env || exit $?
         fi
+
+        echo
+        /usr/share/klippy-env/bin/python3 -m compileall /usr/data/klipper/klippy || exit $?
 
         echo "cartographer-plugin" >> /usr/data/pellcorp.done
         sync
@@ -1243,6 +1257,8 @@ function install_cartographer_klipper() {
         echo "INFO: Running cartographer-klipper installer ..."
         bash /usr/data/cartographer-klipper/install.sh || exit $?
         ln -sf /usr/data/cartographer-klipper/ /root
+
+        echo
         /usr/share/klippy-env/bin/python3 -m compileall /usr/data/klipper/klippy || exit $?
 
         echo "cartographer-klipper" >> /usr/data/pellcorp.done
@@ -1269,6 +1285,8 @@ function install_beacon_klipper() {
 
         /usr/data/pellcorp/k1/beacon-install.sh || return $?
         ln -sf /usr/data/beacon-klipper/ /root
+
+        echo
         /usr/share/klippy-env/bin/python3 -m compileall /usr/data/klipper/klippy || exit $?
 
         echo "beacon-klipper" >> /usr/data/pellcorp.done
