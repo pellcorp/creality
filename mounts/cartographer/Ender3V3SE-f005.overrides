@@ -1,18 +1,18 @@
-# https://www.printables.com/model/732262-ender-3-v3-ke-beaconcartographer-mount
+# https://www.printables.com/model/1621139-ender-3-v3-se-cartographer-and-beacon-mount
 # this is a special situation where I am using a KE Nebula Pad on an Ender 3 V3 SE, this override is
 # to save me having to manually fix up the config when using the Default mount
 
 -- cartographer.cfg
 [cartographer]
-x_offset: -23.0
-y_offset: -14.5
+x_offset: -18.0
+y_offset: 0.0
 
 [bed_mesh]
-mesh_min: 20,25
-mesh_max: 200,200
+mesh_min: 15,10
+mesh_max: 205,205
 
 [screws_tilt_adjust]
-screw1: 25,3
-screw2: 195,3
-screw3: 195,173
-screw4: 25,173
+screw1: 50,30
+screw2: 225,30
+screw3: 225,200
+screw4: 50,200
