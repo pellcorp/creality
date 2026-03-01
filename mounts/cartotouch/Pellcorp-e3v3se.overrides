@@ -1,9 +1,7 @@
 # https://www.printables.com/model/1621139-ender-3-v3-se-cartographer-and-beacon-mount
-# this is a special situation where I am using a KE Nebula Pad on an Ender 3 V3 SE, this override is
-# to save me having to manually fix up the config when using the Default mount
 
--- beacon.cfg
-[beacon]
+-- scanner.cfg
+[scanner]
 x_offset: -20.0
 y_offset: 0.0
 
