@@ -141,6 +141,7 @@ if [ $? -ne 0 ]; then
     $BASEDIR/klippy-env/bin/pip install -r $BASEDIR/pellcorp/rpi/klippy-requirements.txt
   fi
 
+  echo
   echo "INFO: Updating klipper config ..."
 
   if [ ! -d $BASEDIR/fluidd-config ]; then
@@ -234,9 +235,14 @@ if [ $? -ne 0 ]; then
   # replace a [fan_generic part] with a [fan]
   pin=$($CONFIG_HELPER --get-section-entry "fan_generic part" "pin")
   if [ -n "$pin" ]; then
+    enable_pin=$($CONFIG_HELPER --get-section-entry "fan_generic part" "enable_pin")
     $CONFIG_HELPER --remove-section "fan_generic part" || exit $?
     $CONFIG_HELPER --add-section "fan" || exit $?
     $CONFIG_HELPER --replace-section-entry "fan" "pin" "$pin" || exit $?
+    # in case the fan_generic part has an enable_pin
+    if [ -n "$enable_pin" ]; then
+      $CONFIG_HELPER --replace-section-entry "fan" "enable_pin" "$enable_pin" || exit $?
+    fi
     $CONFIG_HELPER --replace-section-entry "fan" "cycle_time" "0.0100" || exit $?
     $CONFIG_HELPER --replace-section-entry "fan" "hardware_pwm" "false" || exit $?
   fi
