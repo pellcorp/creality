@@ -724,6 +724,7 @@ function install_klipper() {
         if [ -d /usr/data/klipper/.git ]; then
             cd /usr/data/klipper/
             remote_repo=$(git remote get-url origin | awk -F '/' '{print $NF}' | sed 's/.git//g')
+            branch_ref=$(git rev-parse --abbrev-ref HEAD)
             cd - > /dev/null
 
             # this old repo is no longer supported
@@ -747,8 +748,7 @@ function install_klipper() {
             cd /usr/data/klipper/
             branch_ref=$(git rev-parse --abbrev-ref HEAD)
             remote_repo=$(git remote get-url origin | awk -F '/' '{print $NF}' | sed 's/.git//g')
-            git log | grep -q "support M106 P argument thanks to Chad"
-            klipper_status=$?
+            klipper_status=0
             cd - > /dev/null
 
             # force update
@@ -756,9 +756,14 @@ function install_klipper() {
               klipper_status=1
             fi
 
-            if [ "$remote_repo" = "klipper" ] && [ $klipper_status -ne 0 ] && [ "$branch_ref" = "master" ]; then
-                echo "INFO: Forcing update of klipper to $KLIPPER_PINNED_COMMIT"
-                update_repo /usr/data/klipper master || exit $?
+            # force switch to jun2025 branch
+            if [ "$branch_ref" = "master" ]; then
+              klipper_status=1
+            fi
+
+            if [ "$remote_repo" = "klipper" ] && [ $klipper_status -ne 0 ]; then
+                echo "INFO: Forcing update of klipper to branch jun2025"
+                update_repo /usr/data/klipper jun2025 || exit $?
 
                 cd /usr/data/klipper
                 git reset --hard $KLIPPER_PINNED_COMMIT
