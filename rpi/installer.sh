@@ -139,16 +139,20 @@ function update_repo() {
 
 function update_klipper_mcu() {
   echo
-  echo "INFO: Rebuilding Klipper MCU ..."
-  cd $BASEDIR/klipper
-  cp .config.linux .config
-  make clean
-  make || exit $?
-  rm .config
-  sudo systemctl stop klipper-mcu
-  sudo cp out/klipper.elf /usr/local/bin/klipper_mcu || exit $?
-  sudo systemctl restart klipper-mcu || exit $?
-  cd - > /dev/null
+  if [ -f $BASEDIR/klipper/.config.linux ]; then
+    echo "INFO: Rebuilding Klipper MCU ..."
+    cd $BASEDIR/klipper
+    cp .config.linux .config
+    make clean
+    make || exit $?
+    rm .config
+    sudo systemctl stop klipper-mcu
+    sudo cp out/klipper.elf /usr/local/bin/klipper_mcu || exit $?
+    sudo systemctl restart klipper-mcu || exit $?
+    cd - > /dev/null
+  else
+    echo "INFO: Skipped rebuilding Klipper MCU ..."
+  fi
 }
 
 function update_klipper() {
@@ -931,6 +935,44 @@ elif [ "$1" = "--klipper-branch" ]; then # convenience for testing new features
         echo "Error invalid branch specified"
         exit 1
     fi
+elif [ "$1" = "--klipper-repo" ]; then
+    if [ -n "$2" ]; then
+        klipper_repo=$2
+
+        owner="${klipper_repo%%/*}"
+        repo="${klipper_repo#*/}"
+        if [ "$owner" = "$repo" ]; then
+          owner=pellcorp
+        fi
+
+        if [ -d $BASEDIR/klipper/.git ]; then
+            cd $BASEDIR/klipper/
+            remote_repo=$(git remote get-url origin)
+            remote_repo="${remote_repo#*github.com/}"   # remove everything up to github.com/
+            remote_repo="${remote_repo%.git}"     # remove trailing .git
+            cd - > /dev/null
+
+            if [ "$remote_repo" != "${owner}/${repo}" ]; then
+                echo "INFO: Switching klipper from $remote_repo to ${owner}/${repo} ..."
+                rm -rf $BASEDIR/klipper
+            fi
+        fi
+
+        if [ ! -d $BASEDIR/klipper ]; then
+            git clone https://github.com/${owner}/${repo}.git $BASEDIR/klipper || exit $?
+            if [ -n "$3" ]; then
+              cd $BASEDIR/klipper && git switch $3 && cd - > /dev/null
+            fi
+        else
+            update_repo $BASEDIR/klipper $3 || exit $?
+        fi
+
+        update_klipper || exit $?
+        exit 0
+  else
+      echo "Error invalid klipper repo specified"
+      exit 1
+  fi
 fi
 
 export TIMESTAMP=$(date +"%Y-%m-%d_%H-%M-%S")
