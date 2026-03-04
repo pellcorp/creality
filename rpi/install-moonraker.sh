@@ -44,7 +44,9 @@ if [ $? -ne 0 ]; then
   fi
 
   cp $BASEDIR/pellcorp/rpi/moonraker.conf $BASEDIR/printer_data/config/ || exit $?
-  ln -sf $BASEDIR/pellcorp/rpi/moonraker.asvc $BASEDIR/printer_data/ || exit $?
+  # we want to support adding additional services
+  [ -L $BASEDIR/printer_data/moonraker.asvc ] && rm -f $BASEDIR/printer_data/moonraker.asvc
+  cp $BASEDIR/pellcorp/rpi/moonraker.asvc $BASEDIR/printer_data/ || exit $?
 
   if [ ! -d $BASEDIR/moonraker/.git ]; then
     echo

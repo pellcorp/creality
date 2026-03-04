@@ -1419,6 +1419,10 @@ fi
     fi
   done
 
+  if [ -f $BASEDIR/printer_data/moonraker.asvc ]; then
+    cp $BASEDIR/printer_data/moonraker.asvc $BASEDIR/pellcorp-backups/moonraker.asvc
+  fi
+
   if [ "$skip_overrides" != "true" ]; then
     apply_overrides "${old_probe}" "${probe}"
   fi
