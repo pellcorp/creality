@@ -117,7 +117,7 @@ override_file() {
       # thanks gemini for this magic incantation
       additions=$(awk 'NR==FNR {a[$0]=1; next} !a[$0]' "$original_file" "$updated_file")
       if [ -n "$additions" ]; then
-        echo "INFO: Saving moonraker.asvc changes to $BASEDIR/pellcorp-overrides/moonraker.asvc"
+        echo "INFO: Saving moonraker.asvc additions to $BASEDIR/pellcorp-overrides/moonraker.asvc"
         printf "%s\n" "$additions" > $overrides_file
       fi
     else
