@@ -97,6 +97,11 @@ apply_overrides() {
             return_status=1
         done
 
+        if [ -f $overrides_dir/moonraker.asvc ]; then
+          echo "INFO: Applied additions to $BASEDIR/printer_data/moonraker.asvc"
+          cat $overrides_dir/moonraker.asvc >> $BASEDIR/printer_data/moonraker.asvc
+        fi
+
         # we want to apply the save config last
         if [ -f $overrides_dir/printer.cfg.save_config ]; then
             # if the printer.cfg already has SAVE_CONFIG skip applying it again

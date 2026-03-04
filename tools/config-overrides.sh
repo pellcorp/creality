@@ -74,6 +74,9 @@ override_file() {
         original_file="$BASEDIR/pellcorp/${CONFIG_TYPE}/$file"
     fi
     updated_file="$BASEDIR/printer_data/config/$file"
+    if [ "$file" = "moonraker.asvc" ]; then
+      updated_file="$BASEDIR/printer_data/moonraker.asvc"
+    fi
     
     if [ -f "$BASEDIR/pellcorp-backups/$file" ]; then
         original_file="$BASEDIR/pellcorp-backups/$file"
@@ -84,8 +87,8 @@ override_file() {
     elif [ "$file" = "belts_calibration.cfg" ] || [ "$file" = "KlipperScreen.conf" ]; then
         #echo "INFO: Overrides not supported for $file"
         return 0
-    elif [ "$file" = "grumpyscreen.ini" ] || [ "$file" = "grumpyscreen.cfg" ] || [ "$file" = "printer.cfg" ] || [ "$file" = "internal_macros.cfg" ] || [ "$file" = "useful_macros.cfg" ] || [ "$file" = "webcam.conf" ] || [ "$file" = "beacon.conf" ] || [ "$file" = "cartographer.conf" ] || [ "$file" = "moonraker.conf" ] || [ "$file" = "start_end.cfg" ] || [ "$file" = "fan_control.cfg" ]; then
-        # for grumpyscreen.cfg, printer.cfg, webcam.conf, useful_macros.cfg, start_end.cfg, fan_control.cfg and moonraker.conf - there must be an pellcorp-backups file
+    elif [ "$file" = "moonraker.asvc" ] || [ "$file" = "grumpyscreen.ini" ] || [ "$file" = "grumpyscreen.cfg" ] || [ "$file" = "printer.cfg" ] || [ "$file" = "internal_macros.cfg" ] || [ "$file" = "useful_macros.cfg" ] || [ "$file" = "webcam.conf" ] || [ "$file" = "beacon.conf" ] || [ "$file" = "cartographer.conf" ] || [ "$file" = "moonraker.conf" ] || [ "$file" = "start_end.cfg" ] || [ "$file" = "fan_control.cfg" ]; then
+        # for moonraker.asvc, grumpyscreen.cfg, printer.cfg, webcam.conf, useful_macros.cfg, start_end.cfg, fan_control.cfg and moonraker.conf - there must be an pellcorp-backups file
         #echo "INFO: Overrides not supported for $file"
         return 0
     elif [ ! -f "$BASEDIR/pellcorp/config/$file" ] && [ ! -f "$BASEDIR/pellcorp/${CONFIG_TYPE}/$file" ]; then
@@ -109,6 +112,13 @@ override_file() {
       elif [ -f $BASEDIR/printer_data/config/microprobe-${model}.cfg ] && [ ! -f $BASEDIR/printer_data/config/microprobe.cfg ] && [ ! -f $BASEDIR/pellcorp-overrides/microprobe.cfg ]; then
           overrides_file="$BASEDIR/pellcorp-overrides/microprobe.cfg"
           $CONFIG_OVERRIDES --original "$original_file" --updated "$updated_file" --overrides "$overrides_file" --include-sections probe || exit $?
+      fi
+    elif [ "$file" = "moonraker.asvc" ]; then
+      # thanks gemini for this magic incantation
+      additions=$(awk 'NR==FNR {a[$0]=1; next} !a[$0]' "$original_file" "$updated_file")
+      if [ -n "$additions" ]; then
+        echo "INFO: Saving moonraker.asvc changes to $BASEDIR/pellcorp-overrides/moonraker.asvc"
+        printf "%s\n" "$additions" > $overrides_file
       fi
     else
       $CONFIG_OVERRIDES --original "$original_file" --updated "$updated_file" --overrides "$overrides_file" || exit $?
@@ -204,6 +214,9 @@ else
   rm $BASEDIR/pellcorp-overrides/*.ini 2> /dev/null
   rm $BASEDIR/pellcorp-overrides/*.conf 2> /dev/null
   rm $BASEDIR/pellcorp-overrides/*.json 2> /dev/null
+  if [ -f $BASEDIR/pellcorp-overrides/moonraker.asvc ]; then
+    rm $BASEDIR/pellcorp-overrides/moonraker.asvc
+  fi
   if [ -f $BASEDIR/pellcorp-overrides/printer.cfg.save_config ]; then
     rm $BASEDIR/pellcorp-overrides/printer.cfg.save_config
   fi
@@ -233,8 +246,14 @@ else
       override_file $file
     fi
   done
+
   # we want the printer.cfg to be done last
   override_file printer.cfg
+
+  if [ "$CONFIG_TYPE" = "rpi" ]; then
+    # this is a special case
+    override_file moonraker.asvc
+  fi
 fi
 
 cd $BASEDIR/pellcorp-overrides
