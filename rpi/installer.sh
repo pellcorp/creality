@@ -1285,11 +1285,11 @@ fi
       sudo systemctl stop KlipperScreen
     fi
 
-    if [ -f $BASEDIR/pellcorp.done ]; then
+    # we are not generating overrides for a partial installation
+    if [ "$mode" = "reinstall" ] || [ "$mode" = "update" ]; then
       if [ "$skip_overrides" != "true" ]; then
         $BASEDIR/pellcorp/tools/config-overrides.sh
       fi
-
       rm $BASEDIR/pellcorp.done
     fi
   fi
@@ -1330,7 +1330,7 @@ fi
   if [ "$(sudo systemctl is-enabled crowsnest 2> /dev/null)" = "disabled" ]; then
     echo "INFO: Crowsnest is disabled"
   else
-    $BASEDIR/pellcorp/rpi/install-crowsnest.sh $mode
+    $BASEDIR/pellcorp/rpi/install-crowsnest.sh $mode || exit $?
   fi
 
   $BASEDIR/pellcorp/rpi/install-fluidd.sh $mode || exit $?
