@@ -185,6 +185,15 @@ elif [ "$1" = "--repo" ] || [ "$1" = "--clean-repo" ]; then
         exit 1
     fi
 else
+  if [ $(grep "probe" $BASEDIR/pellcorp.done | wc -l) -lt 2 ]; then
+    echo
+    echo "ERROR: Previous partial installation detected, configuration overrides will not be generated"
+    if [ $(ls $BASEDIR/pellcorp-overrides/ 2> /dev/null | grep -v "config.info" | wc -l) -gt 0 ]; then
+        echo "INFO: Previous configuration overrides will be used instead"
+    fi
+    exit 1
+  fi
+
   if [ ! -f $BASEDIR/pellcorp-backups/printer.cfg ]; then
       echo "ERROR: $BASEDIR/pellcorp-backups/printer.cfg missing"
       exit 1
@@ -198,14 +207,6 @@ else
   if [ ! -f $BASEDIR/pellcorp.done ]; then
       echo "ERROR: No installation found"
       exit 1
-  fi
-
-  if [ $(grep "probe" $BASEDIR/pellcorp.done | wc -l) -lt 2 ]; then
-    echo "ERROR: Previous partial installation detected, configuration overrides will not be generated"
-    if [ -d $BASEDIR/pellcorp-overrides ]; then
-        echo "INFO: Previous configuration overrides will be used instead"
-    fi
-    exit 1
   fi
 
   mkdir -p $BASEDIR/pellcorp-overrides
