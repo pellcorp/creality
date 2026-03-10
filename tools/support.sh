@@ -96,7 +96,8 @@ cp printer_data/logs/grumpyscreen.log $TMPDIR/grumpyscreen.log
 $BASEDIR/pellcorp/tools/supportzip.py $BASEDIR/support.zip support.log pellcorp-overrides/ pellcorp-backups/ printer_data/config/ printer_data/logs/installer-*.log $TMPDIR/klippy.log $latest_klippy_log $TMPDIR/moonraker.log $TMPDIR/grumpyscreen.log $TMPDIR/messages.log /tmp/mcu_update.log
 cd - > /dev/null
 
-rm $TMPDIR/*.log
+# cleanup only the files we created temporarily
+rm $TMPDIR/klippy.log $TMPDIR/moonraker.log $TMPDIR/grumpyscreen.log $TMPDIR/messages.log
 
 if [ -f $BASEDIR/support.zip ]; then
     mv $BASEDIR/support.zip $BASEDIR/printer_data/config/
