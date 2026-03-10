@@ -91,13 +91,13 @@ fi
 # we need to make copies of currently streaming logs to avoid corruption
 cp printer_data/logs/klippy.log $TMPDIR/klippy.log
 cp printer_data/logs/moonraker.log $TMPDIR/moonraker.log
-cp printer_data/logs/grumpyscreen.log $TMPDIR/grumpyscreen.log
+cp printer_data/logs/grumpyscreen.log $TMPDIR/grumpyscreen.log 2> /dev/null
 
 $BASEDIR/pellcorp/tools/supportzip.py $BASEDIR/support.zip support.log pellcorp-overrides/ pellcorp-backups/ printer_data/config/ printer_data/logs/installer-*.log $TMPDIR/klippy.log $latest_klippy_log $TMPDIR/moonraker.log $TMPDIR/grumpyscreen.log $TMPDIR/messages.log /tmp/mcu_update.log
 cd - > /dev/null
 
 # cleanup only the files we created temporarily
-rm $TMPDIR/klippy.log $TMPDIR/moonraker.log $TMPDIR/grumpyscreen.log $TMPDIR/messages.log
+rm $TMPDIR/klippy.log $TMPDIR/moonraker.log $TMPDIR/grumpyscreen.log $TMPDIR/messages.log 2> /dev/null
 
 if [ -f $BASEDIR/support.zip ]; then
     mv $BASEDIR/support.zip $BASEDIR/printer_data/config/
