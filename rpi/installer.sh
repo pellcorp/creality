@@ -497,7 +497,10 @@ function set_serial_cartotouch() {
             return 0
         fi
     else
-        echo "WARNING: There does not seem to be a cartographer attached - skipping auto configuration"
+        echo
+        echo "WARNING: There does not seem to be a cartographer attached - skipping serial auto configuration"
+        echo "  https://pellcorp.github.io/creality-wiki/cartographer_troubleshooting/#manual-cartographer-serial-device-configuration"
+        echo
         return 0
     fi
 }
@@ -514,7 +517,10 @@ function set_serial_cartographer() {
             return 0
         fi
     else
-        echo "WARNING: There does not seem to be a cartographer attached - skipping auto configuration"
+        echo
+        echo "WARNING: There does not seem to be a cartographer attached - skipping serial auto configuration"
+        echo "  https://pellcorp.github.io/creality-wiki/cartographer_troubleshooting/#manual-cartographer-serial-device-configuration"
+        echo
         return 0
     fi
 }
@@ -638,7 +644,10 @@ function set_serial_beacon() {
             return 0
         fi
     else
-        echo "WARNING: There does not seem to be a beacon attached - skipping auto configuration"
+        echo
+        echo "WARNING: There does not seem to be a beacon attached - skipping serial auto configuration"
+        echo "  https://pellcorp.github.io/creality-wiki/beacon_troubleshooting/#manual-beacon-serial-device-configuration"
+        echo
         return 0
     fi
 }
@@ -705,7 +714,10 @@ function set_serial_btteddy() {
             return 0
         fi
     else
-        echo "WARNING: There does not seem to be a btt eddy attached - skipping auto configuration"
+        echo
+        echo "WARNING: There does not seem to be a btt eddy attached - skipping serial auto configuration"
+        echo "  https://pellcorp.github.io/creality-wiki/btteddy_troubleshooting/#manual-btt-eddy-serial-device-configuration"
+        echo
         return 0
     fi
 }
@@ -752,7 +764,10 @@ function set_serial_eddyng() {
             return 0
         fi
     else
-        echo "WARNING: There does not seem to be a btt eddy ng attached - skipping auto configuration"
+        echo
+        echo "WARNING: There does not seem to be a btt eddy attached - skipping serial auto configuration"
+        echo "  https://pellcorp.github.io/creality-wiki/eddyng_troubleshooting/#manual-eddyng-serial-device-configuration"
+        echo
         return 0
     fi
 }
