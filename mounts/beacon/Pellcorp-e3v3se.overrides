@@ -1,7 +1,7 @@
 # https://www.printables.com/model/1621139-ender-3-v3-se-cartographer-and-beacon-mounts
 
--- cartographer.cfg
-[cartographer]
+-- beacon.cfg
+[beacon]
 x_offset: -18.0
 y_offset: 0.0
 
