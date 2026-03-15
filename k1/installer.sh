@@ -954,7 +954,7 @@ function install_klipper() {
             $CONFIG_HELPER --remove-section "output_pin col_pwm" || exit $?
             $CONFIG_HELPER --remove-section "output_pin col" || exit $?
             $CONFIG_HELPER --remove-section "heater_fan nozzle_fan" || exit $?
-        elif [ "$MODEL" = "F005" ]; then
+        elif [ "$MODEL" = "F005" ] || [ "$MODEL" = "NEBULA" ]; then
           $CONFIG_HELPER --remove-section "output_pin MainBoardFan" || exit $?
           $CONFIG_HELPER --remove-section "heater_fan nozzle_fan" || exit $?
           $CONFIG_HELPER --remove-section "bltouch" || exit $?
