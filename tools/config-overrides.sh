@@ -126,7 +126,13 @@ override_file() {
 
     # we renamed the SENSORLESS_PARAMS to hide it
     if [ -f $BASEDIR/pellcorp-overrides/sensorless.cfg ]; then
+      # so this is for ancient
       sed -i 's/gcode_macro SENSORLESS_PARAMS/gcode_macro _SENSORLESS_PARAMS/g' $BASEDIR/pellcorp-overrides/sensorless.cfg
+      # this caters for recent change
+      sed -i 's/gcode_macro _SENSORLESS_PARAMS/gcode_macro _HOMING_PARAMS/g' $BASEDIR/pellcorp-overrides/sensorless.cfg
+    elif [ -f $BASEDIR/pellcorp-overrides/homing_override.cfg ]; then
+      # this is for rpi only
+      sed -i 's/gcode_macro _SENSORLESS_PARAMS/gcode_macro _HOMING_PARAMS/g' $BASEDIR/pellcorp-overrides/homing_override.cfg
     elif [ -f $BASEDIR/pellcorp-overrides/KAMP_Settings.cfg ]; then
       # remove any overrides for these values which do not apply to Smart Park and Line Purge
       sed -i '/variable_verbose_enable/d' $BASEDIR/pellcorp-overrides/KAMP_Settings.cfg

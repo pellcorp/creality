@@ -50,14 +50,14 @@ while true; do
 done
 
 incus file push $HOME/.ssh/id_rsa.pub "klipper/root/id_rsa.pub"
+
+# seems like running this again before setup might fix some issues no idea why, perhaps this is a fedora thing
+sudo iptables -P FORWARD ACCEPT
+
 incus exec klipper -- /opt/projects/incus/setup.sh
 
 IP_ADDRESS=$(incus info klipper | grep inet | head -1 | awk -F ':' '{print $2}' | sed 's:/24 (global)::g' | tr -d '[:space:]')
-#IP_ADDRESS=$(incus exec klipper -- bash -c "ip route | grep 'default' | awk '{print \$9}' | tail -1" 2> /dev/null)
 ssh-keygen -f "$HOME/.ssh/known_hosts" -R $IP_ADDRESS > /dev/null 2>&1
 ssh-keyscan -t rsa "$IP_ADDRESS" >> "$HOME/.ssh/known_hosts" 2> /dev/null
-
-# seems like running this again after setup might fix some issues no idea why, perhaps this is a fedora thing
-sudo iptables -P FORWARD ACCEPT
 
 ssh me@$IP_ADDRESS

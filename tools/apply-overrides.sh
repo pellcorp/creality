@@ -43,6 +43,16 @@ apply_overrides() {
                 base_file=eddyng.cfg
             elif [ "$base_file" = "grumpyscreen.cfg" ] && [ -f $BASEDIR/printer_data/config/grumpyscreen.ini ]; then
                 base_file=grumpyscreen.ini
+            elif [ "$base_file" = "sensorless.cfg" ] && [ -f $BASEDIR/printer_data/config/homing.cfg ]; then
+              # this is for ancient migration of SENSORLESS_PARAMS
+              sed -i 's/gcode_macro SENSORLESS_PARAMS/gcode_macro _SENSORLESS_PARAMS/g' $overrides_dir/sensorless.cfg
+              # this is for recent migration of sensorless.cfg to homing.cfg
+              sed -i 's/gcode_macro _SENSORLESS_PARAMS/gcode_macro _HOMING_PARAMS/g' $overrides_dir/sensorless.cfg
+              base_file=homing.cfg
+            elif [ "$base_file" = "homing_override.cfg" ] && [ -f $BASEDIR/printer_data/config/homing.cfg ]; then
+               # for rpi migration from homing_override.cfg to homing.cfg
+              sed -i 's/gcode_macro _SENSORLESS_PARAMS/gcode_macro _HOMING_PARAMS/g' $overrides_dir/homing_override.cfg
+              base_file=homing.cfg
             fi
 
             if [ "$file" != "$base_file" ] && [ -f "$BASEDIR/pellcorp/k1/$base_file" ] && [ -f $BASEDIR/printer_data/config/${base_file} ]; then
@@ -71,11 +81,6 @@ apply_overrides() {
                 echo "WARN: Ignoring $file ..."
             elif [ -f "$BASEDIR/pellcorp-backups/$file" ] || [ -f "$BASEDIR/pellcorp/config/$file" ] || [ -f "$BASEDIR/pellcorp/k1/$file" ]; then
                 if [ -f $BASEDIR/printer_data/config/$file ]; then
-                    # we renamed the SENSORLESS_PARAMS to hide it
-                    if [ "$file" = "sensorless.cfg" ]; then
-                        sed -i 's/gcode_macro SENSORLESS_PARAMS/gcode_macro _SENSORLESS_PARAMS/g' $BASEDIR/pellcorp-overrides/sensorless.cfg
-                    fi
-
                     # we are migrating the bltouch and microprobe sections from printer.cfg to their own files, so we need to
                     # ignore any existing config overrides for these sections from printer.cfg, we won't try and automatically
                     # migrate them, as we have already done that for generating config overrides so the only time this
