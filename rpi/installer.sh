@@ -251,6 +251,19 @@ function install_cartographer_klipper() {
             echo "INFO: Installing cartographer-klipper ..."
             git clone https://github.com/cartographer3d/cartographer-klipper.git $BASEDIR/cartographer-klipper || exit $?
         fi
+
+        # we are adding a new probe so need to migrate file names
+        if [ -f $BASEDIR/printer_data/config/cartographer.conf ]; then
+          rm $BASEDIR/printer_data/config/cartographer.conf || exit $?
+        fi
+        $CONFIG_HELPER --file moonraker.conf --remove-include "cartographer.conf" || exit $?
+
+        cp $BASEDIR/pellcorp/rpi/cartotouch.conf $BASEDIR/printer_data/config/ || exit $?
+        $CONFIG_HELPER --file moonraker.conf --add-include "cartotouch.conf" || exit $?
+
+        cartotouch_pinned_commit=$($CONFIG_HELPER --file cartotouch.conf --get-section-entry "update_manager cartotouch" "pinned_commit")
+        cd $BASEDIR/cartographer-klipper
+        git reset --hard $cartotouch_pinned_commit
         cd - > /dev/null
 
         echo
@@ -276,6 +289,14 @@ function install_cartographer_plugin() {
             rm -rf $BASEDIR/klipper/klippy/extras/cartographer.py
         fi
 
+        # for old style cartographer that is a soft link
+        if [ -L $BASEDIR/klipper/klippy/extras/cartographer.py ]; then
+            rm -rf $BASEDIR/klipper/klippy/extras/cartographer.py
+        fi
+
+        cp $BASEDIR/pellcorp/rpi/cartographer.conf $BASEDIR/printer_data/config/ || exit $?
+        $CONFIG_HELPER --file moonraker.conf --add-include "cartographer.conf" || exit $?
+
         PIP_VERSION=$($BASEDIR/klippy-env/bin/python3 -m pip --version | awk '{print $2}' | tr -d '.')
         if [ $PIP_VERSION -lt 2200 ]; then
           echo
@@ -283,7 +304,7 @@ function install_cartographer_plugin() {
           $BASEDIR/klippy-env/bin/python3 -m pip install --upgrade pip
         fi
 
-        if [ ! -f $BASEDIR/klipper/klippy/extras/cartographer.py ]; then
+        if [ ! -e $BASEDIR/klipper/klippy/extras/cartographer.py ]; then
             curl -s -L https://raw.githubusercontent.com/Cartographer3D/cartographer3d-plugin/refs/heads/main/scripts/install.sh | bash || exit $?
         fi
 
@@ -305,6 +326,9 @@ function install_beacon_klipper() {
         if [ "$mode" != "update" ] && [ -d $BASEDIR/beacon-klipper ]; then
             rm -rf $BASEDIR/beacon-klipper
         fi
+
+        cp $BASEDIR/pellcorp/rpi/beacon.conf $BASEDIR/printer_data/config/ || exit $?
+        $CONFIG_HELPER --file moonraker.conf --add-include "beacon.conf" || exit $?
 
         if [ ! -d $BASEDIR/beacon-klipper ]; then
             echo
@@ -374,8 +398,6 @@ function setup_bltouch() {
         echo
         echo "INFO: Setting up bltouch/crtouch/3dtouch ..."
 
-        cleanup_probes
-
         cp $BASEDIR/pellcorp/config/bltouch.cfg $BASEDIR/printer_data/config/ || exit $?
         $CONFIG_HELPER --add-include "bltouch.cfg" || exit $?
 
@@ -414,8 +436,6 @@ function setup_microprobe() {
         echo
         echo "INFO: Setting up microprobe ..."
 
-        cleanup_probes
-
         cp $BASEDIR/pellcorp/config/microprobe.cfg $BASEDIR/printer_data/config/ || exit $?
         $CONFIG_HELPER --add-include "microprobe.cfg" || exit $?
 
@@ -453,8 +473,6 @@ function setup_klicky() {
     if [ $? -ne 0 ]; then
         echo
         echo "INFO: Setting up klicky ..."
-
-        cleanup_probes
 
         cp $BASEDIR/pellcorp/config/klicky.cfg $BASEDIR/printer_data/config/ || exit $?
         $CONFIG_HELPER --add-include "klicky.cfg" || exit $?
@@ -531,17 +549,6 @@ function setup_cartotouch() {
         echo
         echo "INFO: Setting up cartotouch ..."
 
-        cleanup_probes
-
-        # we are adding a new probe so need to migrate file names
-        if [ -f $BASEDIR/printer_data/config/cartographer.conf ]; then
-          rm $BASEDIR/printer_data/config/cartographer.conf || exit $?
-        fi
-        $CONFIG_HELPER --file moonraker.conf --remove-include "cartographer.conf" || exit $?
-
-        cp $BASEDIR/pellcorp/rpi/cartotouch.conf $BASEDIR/printer_data/config/ || exit $?
-        $CONFIG_HELPER --file moonraker.conf --add-include "cartotouch.conf" || exit $?
-
         cp $BASEDIR/pellcorp/config/cartotouch_macro.cfg $BASEDIR/printer_data/config/ || exit $?
         $CONFIG_HELPER --add-include "cartotouch_macro.cfg" || exit $?
 
@@ -594,11 +601,6 @@ function setup_cartographer() {
     if [ $? -ne 0 ]; then
         echo
         echo "INFO: Setting up cartographer ..."
-
-        cleanup_probes
-
-        cp $BASEDIR/pellcorp/rpi/cartographer.conf $BASEDIR/printer_data/config/ || exit $?
-        $CONFIG_HELPER --file moonraker.conf --add-include "cartographer.conf" || exit $?
 
         cp $BASEDIR/pellcorp/config/cartographer_macro.cfg $BASEDIR/printer_data/config/ || exit $?
         $CONFIG_HELPER --add-include "cartographer_macro.cfg" || exit $?
@@ -657,11 +659,6 @@ function setup_beacon() {
     if [ $? -ne 0 ]; then
         echo
         echo "INFO: Setting up beacon ..."
-
-        cleanup_probes
-
-        cp $BASEDIR/pellcorp/rpi/beacon.conf $BASEDIR/printer_data/config/ || exit $?
-        $CONFIG_HELPER --file moonraker.conf --add-include "beacon.conf" || exit $?
 
         cp $BASEDIR/pellcorp/config/beacon_macro.cfg $BASEDIR/printer_data/config/ || exit $?
         $CONFIG_HELPER --add-include "beacon_macro.cfg" || exit $?
@@ -728,8 +725,6 @@ function setup_btteddy() {
         echo
         echo "INFO: Setting up btteddy ..."
 
-        cleanup_probes
-
         cp $BASEDIR/pellcorp/config/btteddy.cfg $BASEDIR/printer_data/config/ || exit $?
         $CONFIG_HELPER --add-include "btteddy.cfg" || exit $?
 
@@ -777,8 +772,6 @@ function setup_eddyng() {
     if [ $? -ne 0 ]; then
         echo
         echo "INFO: Setting up btt eddy-ng ..."
-
-        cleanup_probes
 
         cp $BASEDIR/pellcorp/config/eddyng.cfg $BASEDIR/printer_data/config/ || exit $?
         $CONFIG_HELPER --add-include "eddyng.cfg" || exit $?
@@ -1371,6 +1364,8 @@ fi
     echo "FATAL: Klipper installation failed - aborting"
     exit 1
   fi
+
+  cleanup_probes
 
   install_cartographer_klipper=0
   install_cartographer_plugin=0
