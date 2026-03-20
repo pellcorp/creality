@@ -1200,6 +1200,9 @@ function install_cartographer_plugin() {
 
     grep -q "cartographer-plugin" /usr/data/pellcorp.done
     if [ $? -ne 0 ]; then
+        cp /usr/data/pellcorp/k1/cartographer.conf /usr/data/printer_data/config/ || exit $?
+        $CONFIG_HELPER --file moonraker.conf --add-include "cartographer.conf" || exit $?
+
         # for old style cartographer that is a soft link
         if [ -L /usr/data/klipper/klippy/extras/cartographer.py ]; then
             rm -rf /usr/data/klipper/klippy/extras/cartographer.py
@@ -1209,7 +1212,7 @@ function install_cartographer_plugin() {
             rm -rf /usr/data/klipper/klippy/extras/cartographer.py
         fi
 
-        if [ ! -f /usr/data/klipper/klippy/extras/cartographer.py ]; then
+        if [ ! -e /usr/data/klipper/klippy/extras/cartographer.py ]; then
             curl -s -L https://raw.githubusercontent.com/Cartographer3D/cartographer3d-plugin/refs/heads/main/scripts/install.sh | bash -s -- --klipper /usr/data/klipper --klippy-env /usr/share/klippy-env || exit $?
         fi
 
@@ -1232,32 +1235,36 @@ function install_cartographer_klipper() {
             rm -rf /usr/data/cartographer-klipper
         fi
 
-        if [ ! -d /usr/data/cartographer-klipper ]; then
-            echo
-            echo "INFO: Installing cartographer-klipper ..."
-            git clone https://github.com/pellcorp/cartographer-klipper.git /usr/data/cartographer-klipper || exit $?
-        else
-            cd /usr/data/cartographer-klipper
-            REMOTE_URL=$(git remote get-url origin)
-            if [ "$REMOTE_URL" != "https://github.com/pellcorp/cartographer-klipper.git" ]; then
-                echo "INFO: Switching cartographer-klipper to pellcorp fork"
-                git remote set-url origin https://github.com/pellcorp/cartographer-klipper.git
-                git fetch origin
-            fi
+        echo
+        if [ -d /usr/data/cartographer-klipper ]; then
+          cd /usr/data/cartographer-klipper
+          REMOTE_URL=$(git remote get-url origin)
+          cd ~ > /dev/null
 
-            branch=$(git rev-parse --abbrev-ref HEAD)
-            # do not stuff up a different branch
-            if [ "$branch" = "master" ]; then
-                revision=$(git rev-parse --short HEAD)
-                # reset our branch or update from v1.0.5
-                if [ "$revision" = "303ea63" ] || [ "$revision" = "8324877" ]; then
-                    echo "INFO: Forcing cartographer-klipper update"
-                    git fetch origin
-                    git reset --hard v1.1.0
-                fi
-            fi
+          if [ "$REMOTE_URL" != "https://github.com/cartographer3d/cartographer-klipper.git" ]; then
+              echo "INFO: Switching cartographer-klipper back to cartographer3d/cartographer-klipper"
+              rm -rf /usr/data/cartographer-klipper
+          fi
         fi
-        cd - > /dev/null
+
+        # we are adding a new probe so need to migrate file names
+        if [ -f /usr/data/printer_data/config/cartographer.conf ]; then
+          rm /usr/data/printer_data/config/cartographer.conf || exit $?
+        fi
+        $CONFIG_HELPER --file moonraker.conf --remove-include "cartographer.conf" || exit $?
+
+        cp /usr/data/pellcorp/k1/cartotouch.conf /usr/data/printer_data/config/ || exit $?
+        $CONFIG_HELPER --file moonraker.conf --add-include "cartotouch.conf" || exit $?
+
+        if [ ! -d /usr/data/cartographer-klipper ]; then
+            echo "INFO: Installing cartographer-klipper ..."
+            git clone https://github.com/cartographer3d/cartographer-klipper.git /usr/data/cartographer-klipper || exit $?
+
+            cartotouch_pinned_commit=$($CONFIG_HELPER --file cartotouch.conf --get-section-entry "update_manager cartotouch" "pinned_commit")
+            cd /usr/data/cartographer-klipper
+            git reset --hard $cartotouch_pinned_commit || exit $?
+            cd - > /dev/null
+        fi
 
         echo
         echo "INFO: Running cartographer-klipper installer ..."
@@ -1282,6 +1289,9 @@ function install_beacon_klipper() {
         if [ "$mode" != "update" ] && [ -d /usr/data/beacon-klipper ]; then
             rm -rf /usr/data/beacon-klipper
         fi
+
+        cp /usr/data/pellcorp/k1/beacon.conf /usr/data/printer_data/config/ || exit $?
+        $CONFIG_HELPER --file moonraker.conf --add-include "beacon.conf" || exit $?
 
         if [ ! -d /usr/data/beacon-klipper ]; then
             echo
@@ -1357,8 +1367,6 @@ function setup_bltouch() {
         echo
         echo "INFO: Setting up bltouch/crtouch/3dtouch ..."
 
-        cleanup_probes
-
         cp /usr/data/pellcorp/config/bltouch.cfg /usr/data/printer_data/config/ || exit $?
         $CONFIG_HELPER --add-include "bltouch.cfg" || exit $?
 
@@ -1393,8 +1401,6 @@ function setup_microprobe() {
         echo
         echo "INFO: Setting up microprobe ..."
 
-        cleanup_probes
-
         cp /usr/data/pellcorp/config/microprobe.cfg /usr/data/printer_data/config/ || exit $?
         $CONFIG_HELPER --add-include "microprobe.cfg" || exit $?
 
@@ -1428,8 +1434,6 @@ function setup_klicky() {
     if [ $? -ne 0 ]; then
         echo
         echo "INFO: Setting up klicky ..."
-
-        cleanup_probes
 
         cp /usr/data/pellcorp/config/klicky.cfg /usr/data/printer_data/config/ || exit $?
         $CONFIG_HELPER --add-include "klicky.cfg" || exit $?
@@ -1482,22 +1486,11 @@ function setup_cartotouch() {
         echo
         echo "INFO: Setting up cartotouch ..."
 
-        cleanup_probes
-
         # the old calibration macros are no longer supported
         if [ -f /usr/data/printer_data/config/cartographer_calibrate.cfg ]; then
           rm /usr/data/printer_data/config/cartographer_calibrate.cfg || exit $?
         fi
         $CONFIG_HELPER --remove-include "cartographer_calibrate.cfg" || exit $?
-
-        # we are adding a new probe so need to migrate file names
-        if [ -f /usr/data/printer_data/config/cartographer.conf ]; then
-          rm /usr/data/printer_data/config/cartographer.conf || exit $?
-        fi
-        $CONFIG_HELPER --file moonraker.conf --remove-include "cartographer.conf" || exit $?
-
-        cp /usr/data/pellcorp/k1/cartotouch.conf /usr/data/printer_data/config/ || exit $?
-        $CONFIG_HELPER --file moonraker.conf --add-include "cartotouch.conf" || exit $?
 
         cp /usr/data/pellcorp/config/cartotouch_macro.cfg /usr/data/printer_data/config/ || exit $?
         $CONFIG_HELPER --add-include "cartotouch_macro.cfg" || exit $?
@@ -1594,11 +1587,6 @@ function setup_cartographer() {
         echo
         echo "INFO: Setting up cartographer ..."
 
-        cleanup_probes
-
-        cp /usr/data/pellcorp/k1/cartographer.conf /usr/data/printer_data/config/ || exit $?
-        $CONFIG_HELPER --file moonraker.conf --add-include "cartographer.conf" || exit $?
-
         cp /usr/data/pellcorp/config/cartographer_macro.cfg /usr/data/printer_data/config/ || exit $?
         sed -i "s:\$HOME:/usr/data:g" /usr/data/printer_data/config/cartographer_macro.cfg
         $CONFIG_HELPER --add-include "cartographer_macro.cfg" || exit $?
@@ -1674,11 +1662,6 @@ function setup_beacon() {
         echo
         echo "INFO: Setting up beacon ..."
 
-        cleanup_probes
-
-        cp /usr/data/pellcorp/k1/beacon.conf /usr/data/printer_data/config/ || exit $?
-        $CONFIG_HELPER --file moonraker.conf --add-include "beacon.conf" || exit $?
-
         cp /usr/data/pellcorp/config/beacon_macro.cfg /usr/data/printer_data/config/ || exit $?
         $CONFIG_HELPER --add-include "beacon_macro.cfg" || exit $?
 
@@ -1741,8 +1724,6 @@ function setup_btteddy() {
         echo
         echo "INFO: Setting up btteddy ..."
 
-        cleanup_probes
-
         # the old calibration macros are no longer supported
         if [ -f /usr/data/printer_data/config/btteddy_calibrate.cfg ]; then
           rm /usr/data/printer_data/config/btteddy_calibrate.cfg || exit $?
@@ -1792,8 +1773,6 @@ function setup_eddyng() {
     if [ $? -ne 0 ]; then
         echo
         echo "INFO: Setting up btt eddy-ng ..."
-
-        cleanup_probes
 
         # the old calibration macros are no longer supported
         if [ -f /usr/data/printer_data/config/btteddy_calibrate.cfg ]; then
@@ -2433,6 +2412,8 @@ fi
 
     install_klipper $mode $probe
     install_klipper=$?
+
+    cleanup_probes
 
     install_cartographer_klipper=0
     install_cartographer_plugin=0
