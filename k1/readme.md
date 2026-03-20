@@ -6,7 +6,7 @@ The following files were originally from other projects.  Some of these files ar
 - k1/services/S56moonraker_service -> https://github.com/Guilouz/Creality-Helper-Script/blob/main/files/services/S56moonraker_service
 - k1/moonraker.conf -> https://github.com/Guilouz/Creality-Helper-Script/blob/main/files/moonraker/moonraker.conf
 - k1/services/S55klipper_service -> https://raw.githubusercontent.com/K1-Klipper/installer_script_k1_and_max/main/S55klipper_service
-- config/sensorless.cfg -> https://raw.githubusercontent.com/K1-Klipper/installer_script_k1_and_max/main/sensorless.cfg
+- config/homing.cfg -> https://raw.githubusercontent.com/K1-Klipper/installer_script_k1_and_max/main/sensorless.cfg
 - k1/tools/curl -> https://raw.githubusercontent.com/ballaswag/k1-discovery/main/bin/curl
 - k1/tools/supervisorctl -> https://raw.githubusercontent.com/Guilouz/Creality-Helper-Script/main/files/fixes/supervisorctl
 - k1/tools/systemctl -> https://github.com/Guilouz/Creality-Helper-Script/blob/main/files/fixes/systemctl

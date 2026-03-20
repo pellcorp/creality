@@ -806,14 +806,14 @@ function install_klipper() {
             cp /usr/data/pellcorp/k1/services/S13mcu_update /etc/init.d/ || exit $?
         fi
 
-        cp /usr/data/pellcorp/config/sensorless.cfg /usr/data/printer_data/config/ || exit $?
-        $CONFIG_HELPER --add-include "sensorless.cfg" || exit $?
+        cp /usr/data/pellcorp/config/homing.cfg /usr/data/printer_data/config/ || exit $?
+        $CONFIG_HELPER --add-include "homing.cfg" || exit $?
 
         x_position_mid=$($CONFIG_HELPER --get-section-entry "stepper_x" "position_max" --divisor 2 --integer)
-        $CONFIG_HELPER --file sensorless.cfg --replace-section-entry "gcode_macro _SENSORLESS_PARAMS" "variable_home_x" "$x_position_mid" || exit $?
+        $CONFIG_HELPER --file homing.cfg --replace-section-entry "gcode_macro _HOMING_PARAMS" "variable_home_x" "$x_position_mid" || exit $?
 
         y_position_mid=$($CONFIG_HELPER --get-section-entry "stepper_y" "position_max" --divisor 2 --integer)
-        $CONFIG_HELPER --file sensorless.cfg --replace-section-entry "gcode_macro _SENSORLESS_PARAMS" "variable_home_y" "$y_position_mid" || exit $?
+        $CONFIG_HELPER --file homing.cfg --replace-section-entry "gcode_macro _HOMING_PARAMS" "variable_home_y" "$y_position_mid" || exit $?
 
         # just make sure the baud is written
         $CONFIG_HELPER --replace-section-entry "mcu" "baud" 230400 || exit $?
@@ -824,11 +824,11 @@ function install_klipper() {
         # for Ender 5 Max we need to disable sensorless homing, reversing homing order,don't move away and do not repeat homing
         # but we are still going to use homing override even though the max has physical endstops to make things a bit easier
         if [ "$MODEL" = "F004" ]; then
-            $CONFIG_HELPER --file sensorless.cfg --replace-section-entry "gcode_macro _SENSORLESS_PARAMS" "variable_home_y_before_x" "True" || exit $?
+            $CONFIG_HELPER --file homing.cfg --replace-section-entry "gcode_macro _HOMING_PARAMS" "variable_home_y_before_x" "True" || exit $?
         fi
 
         if [ "$kinematics" = "corexy" ]; then # by default we want to home twice when using sensorless
-            $CONFIG_HELPER --file sensorless.cfg --replace-section-entry "gcode_macro _SENSORLESS_PARAMS" "variable_repeat_home_xy" "True" || exit $?
+            $CONFIG_HELPER --file homing.cfg --replace-section-entry "gcode_macro _HOMING_PARAMS" "variable_repeat_home_xy" "True" || exit $?
         fi
 
         cp /usr/data/pellcorp/k1/internal_macros.cfg /usr/data/printer_data/config/ || exit $?
@@ -892,6 +892,7 @@ function install_klipper() {
         $CONFIG_HELPER --remove-section-entry "tmc2209 stepper_x" "hold_current" || exit $?
         $CONFIG_HELPER --remove-section-entry "tmc2209 stepper_y" "hold_current" || exit $?
 
+        $CONFIG_HELPER --remove-include "sensorless.cfg" || exit $?
         $CONFIG_HELPER --remove-include "printer_params.cfg" || exit $?
         $CONFIG_HELPER --remove-include "gcode_macro.cfg" || exit $?
         $CONFIG_HELPER --remove-include "custom_gcode.cfg" || exit $?
@@ -1365,7 +1366,7 @@ function setup_bltouch() {
         $CONFIG_HELPER --add-include "bltouch_macro.cfg" || exit $?
 
         # for bltouch probe deploy issues occur with safe z at 3
-        $CONFIG_HELPER --file sensorless.cfg --replace-section-entry "gcode_macro _SENSORLESS_PARAMS" "variable_safe_z" "5" || exit $?
+        $CONFIG_HELPER --file homing.cfg --replace-section-entry "gcode_macro _HOMING_PARAMS" "variable_safe_z" "5" || exit $?
 
         # need to add a empty bltouch section for baby stepping to work
         $CONFIG_HELPER --remove-section "bltouch" || exit $?
@@ -1687,7 +1688,7 @@ function setup_beacon() {
         $CONFIG_HELPER --add-include "beacon.cfg" || exit $?
 
         # for beacon can't use homing override
-        $CONFIG_HELPER --file sensorless.cfg --remove-section "homing_override"
+        $CONFIG_HELPER --file homing.cfg --remove-section "homing_override"
 
         y_position_mid=$($CONFIG_HELPER --get-section-entry "stepper_y" "position_max" --divisor 2 --integer)
         x_position_mid=$($CONFIG_HELPER --get-section-entry "stepper_x" "position_max" --divisor 2 --integer)
@@ -2485,12 +2486,16 @@ fi
     if [ -f /usr/data/pellcorp-backups/printer.factory.cfg ]; then
         # we want a copy of the file before config overrides are re-applied so we can correctly generate diffs
         # against different generations of the original file
-        for file in printer.cfg start_end.cfg fan_control.cfg ${probe}.conf spoolman.conf internal_macros.cfg useful_macros.cfg timelapse.conf moonraker.conf webcam.conf sensorless.cfg ${probe}_macro.cfg ${probe}.cfg; do
+        for file in printer.cfg start_end.cfg fan_control.cfg ${probe}.conf spoolman.conf internal_macros.cfg useful_macros.cfg timelapse.conf moonraker.conf webcam.conf homing.cfg ${probe}_macro.cfg ${probe}.cfg; do
             if [ -f /usr/data/printer_data/config/$file ]; then
                 cp /usr/data/printer_data/config/$file /usr/data/pellcorp-backups/$file
             fi
         done
     fi
+
+    # remove old cfg files
+    [ -f /usr/data/pellcorp-backups/sensorless.cfg ] && rm /usr/data/pellcorp-backups/sensorless.cfg
+    [ -f /usr/data/printer_data/config/sensorless.cfg ] && rm /usr/data/printer_data/config/sensorless.cfg
 
     apply_overrides=0
     # there will be no support for generating pellcorp-overrides unless you have done a factory reset

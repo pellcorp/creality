@@ -383,7 +383,7 @@ function setup_bltouch() {
         $CONFIG_HELPER --add-include "bltouch_macro.cfg" || exit $?
 
         # for bltouch probe deploy issues occur with safe z at 3
-        $CONFIG_HELPER --file homing_override.cfg --replace-section-entry "gcode_macro _SENSORLESS_PARAMS" "variable_safe_z" "5" || exit $?
+        $CONFIG_HELPER --file homing.cfg --replace-section-entry "gcode_macro _HOMING_PARAMS" "variable_safe_z" "5" || exit $?
 
         # need to add a empty bltouch section for baby stepping to work
         $CONFIG_HELPER --remove-section "bltouch" || exit $?
@@ -672,7 +672,7 @@ function setup_beacon() {
         $CONFIG_HELPER --add-include "beacon.cfg" || exit $?
 
         # for beacon can't use homing override
-        $CONFIG_HELPER --file homing_override.cfg --remove-section "homing_override"
+        $CONFIG_HELPER --file homing.cfg --remove-section "homing_override"
 
         y_position_mid=$($CONFIG_HELPER --get-section-entry "stepper_y" "position_max" --divisor 2 --integer)
         x_position_mid=$($CONFIG_HELPER --get-section-entry "stepper_x" "position_max" --divisor 2 --integer)
@@ -1470,7 +1470,7 @@ fi
 
   # we want a copy of the file before config overrides are re-applied so we can correctly generate diffs
   # against different generations of the original file
-  for file in printer.cfg start_end.cfg fan_control.cfg ${probe}.conf spoolman.conf timelapse.conf moonraker.conf crowsnest.conf webcam.conf useful_macros.cfg homing_override.cfg ${probe}_macro.cfg ${probe}.cfg; do
+  for file in printer.cfg start_end.cfg fan_control.cfg ${probe}.conf spoolman.conf timelapse.conf moonraker.conf crowsnest.conf webcam.conf useful_macros.cfg homing.cfg ${probe}_macro.cfg ${probe}.cfg; do
     if [ -f $BASEDIR/printer_data/config/$file ]; then
       cp $BASEDIR/printer_data/config/$file $BASEDIR/pellcorp-backups/$file
     fi
@@ -1494,6 +1494,12 @@ fi
       $BASEDIR/pellcorp/tools/cleanup-save-config.sh $probe --mount
     fi
   fi
+
+  # remove old cfg files
+  [ -f $BASEDIR/pellcorp-backups/sensorless.cfg ] && rm $BASEDIR/pellcorp-backups/sensorless.cfg
+  [ -f $BASEDIR/pellcorp-backups/homing_override.cfg ] && rm $BASEDIR/pellcorp-backups/homing_override.cfg
+  [ -f $BASEDIR/printer_data/config/sensorless.cfg ] && rm $BASEDIR/printer_data/config/sensorless.cfg
+  [ -f $BASEDIR/printer_data/config/homing_override.cfg ] && rm $BASEDIR/printer_data/config/homing_override.cfg
 
   fixup_client_variables_config
   fixup_client_variables_config=$?

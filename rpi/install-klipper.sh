@@ -187,19 +187,19 @@ if [ $? -ne 0 ]; then
 
   # most stuff only works with corexy and cartesian
   if [ "$kinematics" = "corexy" ] || [ "$kinematics" = "cartesian" ]; then
-    cp $BASEDIR/pellcorp/config/sensorless.cfg $BASEDIR/printer_data/config/homing_override.cfg || exit $?
-    $CONFIG_HELPER --add-include "homing_override.cfg" || exit $?
+    cp $BASEDIR/pellcorp/config/homing.cfg $BASEDIR/printer_data/config/ || exit $?
+    $CONFIG_HELPER --add-include "homing.cfg" || exit $?
 
     x_position_mid=$($CONFIG_HELPER --get-section-entry "stepper_x" "position_max" --divisor 2 --integer)
-    $CONFIG_HELPER --file homing_override.cfg --replace-section-entry "gcode_macro _SENSORLESS_PARAMS" "variable_home_x" "$x_position_mid" || exit $?
+    $CONFIG_HELPER --file homing.cfg --replace-section-entry "gcode_macro _HOMING_PARAMS" "variable_home_x" "$x_position_mid" || exit $?
 
     y_position_mid=$($CONFIG_HELPER --get-section-entry "stepper_y" "position_max" --divisor 2 --integer)
-    $CONFIG_HELPER --file homing_override.cfg --replace-section-entry "gcode_macro _SENSORLESS_PARAMS" "variable_home_y" "$y_position_mid" || exit $?
+    $CONFIG_HELPER --file homing.cfg --replace-section-entry "gcode_macro _HOMING_PARAMS" "variable_home_y" "$y_position_mid" || exit $?
 
     # there is an assumption the same stepper driver will be used for stepper x and y
     tmc_driver=$($CONFIG_HELPER --list-sections tmc% | grep stepper_x | awk -F ' ' '{print $1}')
     if [ -n "$tmc_driver" ] && [ "$tmc_driver" != "tmc2209" ]; then
-      $CONFIG_HELPER --file homing_override.cfg --replace-section-entry "gcode_macro _SENSORLESS_PARAMS" "variable_driver_type" "\"$tmc_driver\"" || exit $?
+      $CONFIG_HELPER --file homing.cfg --replace-section-entry "gcode_macro _HOMING_PARAMS" "variable_driver_type" "\"$tmc_driver\"" || exit $?
     fi
 
     cp $BASEDIR/pellcorp/config/start_end.cfg $BASEDIR/printer_data/config/ || exit $?
