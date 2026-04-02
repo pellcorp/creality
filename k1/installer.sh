@@ -1297,6 +1297,11 @@ function install_beacon_klipper() {
             echo
             echo "INFO: Installing beacon-klipper ..."
             git clone https://github.com/beacon3d/beacon_klipper /usr/data/beacon-klipper || exit $?
+
+            beacon_pinned_commit=$($CONFIG_HELPER --file beacon.conf --get-section-entry "update_manager beacon" "pinned_commit")
+            cd /usr/data/beacon-klipper
+            git reset --hard $beacon_pinned_commit || exit $?
+            cd - > /dev/null
         fi
 
         /usr/data/pellcorp/k1/beacon-install.sh || return $?
