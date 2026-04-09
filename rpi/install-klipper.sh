@@ -292,6 +292,9 @@ if [ $? -ne 0 ]; then
     # the _ON_FILAMENT_RUNOUT macro is going to be in control of filament runout now and avoid triggering another
     # runout event if already paused
     $CONFIG_HELPER --replace-section-entry "filament_switch_sensor filament_sensor" "pause_on_runout" "false" || exit $?
+
+    # if the filament sensor exists enable the check for filament before trying to print ootb
+    $CONFIG_HELPER --file start_end.cfg --replace-section-entry "gcode_macro _CLIENT_VARIABLE" "variable_runout_sensor" "\"filament_switch_sensor filament_sensor\"" || exit $?
   else
     echo
     echo "WARN: No filament sensor configured skipping on filament runout configuration"
