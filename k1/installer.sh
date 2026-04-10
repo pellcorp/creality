@@ -405,7 +405,7 @@ function install_webcam() {
 
     grep -q "webcam" /usr/data/pellcorp.done
     if [ $? -ne 0 ]; then
-      INPUT_TYPE=uvc
+      SERVICE_TYPE=ustreamer
       if [ "$mode" != "update" ] || [ ! -d /usr/data/mjpg-streamer ]; then
         if [ -f /etc/init.d/S50webcam ]; then
           /etc/init.d/S50webcam stop > /dev/null 2>&1
@@ -419,14 +419,24 @@ function install_webcam() {
         if [ -d /usr/data/mjpg-streamer ]; then
           rm -rf /usr/data/mjpg-streamer
         fi
+
+        if [ -d /usr/data/ustreamer ]; then
+          rm -rf /usr/data/ustreamer
+        fi
       fi
 
       if [ ! -d /usr/data/mjpg-streamer ]; then
         echo
         echo "INFO: Installing mjpg-streamer ..."
-        curl -L "https://github.com/pellcorp/k1-mjpg-streamer/releases/download/main/mjpg-streamer.tar.gz" -o /usr/data/mjpg-streamer.tar.gz
-        tar -zxf /usr/data/mjpg-streamer.tar.gz -C /usr/data/ || exit $?
-        rm /usr/data/mjpg-streamer.tar.gz
+        tar -zxf /usr/data/pellcorp/k1/packages/mjpg-streamer.tar.gz -C /usr/data/ || exit $?
+      fi
+
+      # add ustreamer as an option but be quiet about it
+      if [ ! -d /usr/data/ustreamer ]; then
+        echo
+        echo "INFO: Installing ustreamer ..."
+        mkdir -p /usr/data/ustreamer
+        tar -zxf /usr/data/pellcorp/k1/packages/ustreamer.tar.gz -C /usr/data/ustreamer/ || exit $?
       fi
 
       echo
@@ -442,14 +452,15 @@ function install_webcam() {
       chmod 777 /usr/bin/auto_uvc.sh
 
       if [ -f /etc/init.d/S50webcam ]; then
-        CURRENT_INPUT_TYPE=$(cat /etc/init.d/S50webcam | grep INPUT_TYPE= | awk -F '=' '{print $2}')
-        if [ -n "$CURRENT_INPUT_TYPE" ]; then
-          INPUT_TYPE=$CURRENT_INPUT_TYPE
+        CURRENT_SERVICE_TYPE=$(cat /etc/init.d/S50webcam | grep SERVICE_TYPE= | awk -F '=' '{print $2}')
+        if [ -n "$CURRENT_SERVICE_TYPE" ]; then
+          SERVICE_TYPE=$CURRENT_SERVICE_TYPE
         fi
       fi
+
       cp /usr/data/pellcorp/k1/services/S50webcam /etc/init.d/
-      if [ "$INPUT_TYPE" != "uvc" ]; then
-        sed -i "s/INPUT_TYPE=uvc/INPUT_TYPE=$INPUT_TYPE/g" /etc/init.d/S50webcam
+      if [ "$SERVICE_TYPE" != "ustreamer" ]; then
+        sed -i "s/SERVICE_TYPE=ustreamer/SERVICE_TYPE=$SERVICE_TYPE/g" /etc/init.d/S50webcam
       fi
       /etc/init.d/S50webcam start
 
@@ -460,6 +471,7 @@ function install_webcam() {
           rm /usr/data/pellcorp.ipaddress
         fi
       fi
+
       cp /usr/data/pellcorp/k1/webcam.conf /usr/data/printer_data/config/ || exit $?
 
       echo "webcam" >> /usr/data/pellcorp.done
