@@ -1,4 +1,4 @@
-# Rear quick mounted for right angle for testing only
+# https://www.printables.com/model/1680350-cartographer-v4-rear-mounted-k1
 
 -- cartographer.cfg
 [cartographer]
@@ -6,8 +6,8 @@ x_offset: 0.0
 y_offset: 16.86
 
 [bed_mesh]
-mesh_min: 30,25
-mesh_max: 210,210
+mesh_min: 10,17
+mesh_max: 210,200
 
 [screws_tilt_adjust]
 screw1: 25,3
@@ -17,4 +17,4 @@ screw4: 25,173
 
 -- printer.cfg
 [stepper_y]
-position_max: 208
+position_max: 210
