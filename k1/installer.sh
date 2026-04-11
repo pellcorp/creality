@@ -406,11 +406,13 @@ function install_webcam() {
     grep -q "webcam" /usr/data/pellcorp.done
     if [ $? -ne 0 ]; then
       SERVICE_TYPE=ustreamer
-      if [ "$mode" != "update" ] || [ ! -d /usr/data/mjpg-streamer ]; then
-        if [ -f /etc/init.d/S50webcam ]; then
-          /etc/init.d/S50webcam stop > /dev/null 2>&1
-        fi
 
+      # lets always stop and start the webcam
+      if [ -f /etc/init.d/S50webcam ]; then
+        /etc/init.d/S50webcam stop > /dev/null 2>&1
+      fi
+
+      if [ "$mode" != "update" ] || [ ! -d /usr/data/mjpg-streamer ]; then
         if [ -f /opt/bin/mjpg_streamer ]; then
           echo "INFO: Removing entware mjpg_streamer"
           /opt/bin/opkg remove --force-removal-of-dependent-packages mjpg-streamer mjpg-streamer-input-http mjpg-streamer-input-uvc mjpg-streamer-output-http mjpg-streamer-www 2> /dev/null
@@ -425,19 +427,9 @@ function install_webcam() {
         fi
       fi
 
-      if [ ! -d /usr/data/mjpg-streamer ]; then
-        echo
-        echo "INFO: Installing mjpg-streamer ..."
-        tar -zxf /usr/data/pellcorp/k1/packages/mjpg-streamer.tar.gz -C /usr/data/ || exit $?
-      fi
-
-      # add ustreamer as an option but be quiet about it
-      if [ ! -d /usr/data/ustreamer ]; then
-        echo
-        echo "INFO: Installing ustreamer ..."
-        mkdir -p /usr/data/ustreamer
-        tar -zxf /usr/data/pellcorp/k1/packages/ustreamer.tar.gz -C /usr/data/ustreamer/ || exit $?
-      fi
+      # just update them every time
+      tar -zxf /usr/data/pellcorp/k1/packages/mjpg-streamer.tar.gz -C /usr/data/ || exit $?
+      tar -zxf /usr/data/pellcorp/k1/packages/ustreamer.tar.gz -C /usr/data/ustreamer/ || exit $?
 
       echo
       echo "INFO: Updating webcam config ..."
@@ -1525,6 +1517,9 @@ function setup_cartotouch() {
         x_position_mid=$($CONFIG_HELPER --get-section-entry "stepper_x" "position_max" --divisor 2 --integer)
         $CONFIG_HELPER --file cartotouch.cfg --replace-section-entry "bed_mesh" "zero_reference_position" "$x_position_mid,$y_position_mid" || exit $?
 
+        # for cartographer just stop the camera for all homing stuff
+        $CONFIG_HELPER --file start_end.cfg --replace-section-entry "gcode_macro _START_END_PARAMS" "variable_stop_start_camera" "True" || exit $?
+
         set_serial_cartotouch
 
         # a slight change to the way cartotouch is configured
@@ -1624,6 +1619,9 @@ function setup_cartographer() {
         # due to ridiculous issue with cartographer not handling slight out of band temps just set it here and let everyone else use 150
         $CONFIG_HELPER --file start_end.cfg --replace-section-entry "gcode_macro _START_END_PARAMS" "variable_start_preheat_nozzle_temp" 148 || exit $?
 
+        # for cartographer just stop the camera for all homing stuff
+        $CONFIG_HELPER --file start_end.cfg --replace-section-entry "gcode_macro _START_END_PARAMS" "variable_stop_start_camera" "True" || exit $?
+
         set_serial_cartographer
 
         # Ender 5 Max we don't have firmware for it, so need to configure cartographer instead for adxl
@@ -1703,6 +1701,9 @@ function setup_beacon() {
         if [ "$MODEL" = "F004" ]; then
             $CONFIG_HELPER --file beacon.cfg --replace-section-entry "beacon" "home_y_before_x" "True" || exit $?
         fi
+
+        # for beacon just stop the camera for all homing stuff
+        $CONFIG_HELPER --file start_end.cfg --replace-section-entry "gcode_macro _START_END_PARAMS" "variable_stop_start_camera" "True" || exit $?
 
         set_serial_beacon
 
@@ -1803,6 +1804,9 @@ function setup_eddyng() {
 
         cp /usr/data/pellcorp/config/eddyng.cfg /usr/data/printer_data/config/ || exit $?
         $CONFIG_HELPER --add-include "eddyng.cfg" || exit $?
+        
+        # for eddy just stop the camera for all homing stuff
+        $CONFIG_HELPER --file start_end.cfg --replace-section-entry "gcode_macro _START_END_PARAMS" "variable_stop_start_camera" "True" || exit $?
 
         set_serial_eddyng
 
