@@ -1913,6 +1913,15 @@ function fixup_client_variables_config() {
         return 0
     fi
 
+    # if the filament sensor was removed by config overrides we need to clean up the client variable config
+    if ! $CONFIG_HELPER --section-exists "filament_switch_sensor filament_sensor"; then
+      variable_runout_sensor=$($CONFIG_HELPER --file start_end.cfg --get-section-entry "gcode_macro _CLIENT_VARIABLE" "variable_runout_sensor")
+      if [ -n "$variable_runout_sensor" ]; then
+        $CONFIG_HELPER --file start_end.cfg --replace-section-entry "gcode_macro _CLIENT_VARIABLE" "variable_runout_sensor" "\"\"" || exit $?
+        changed=1
+      fi
+    fi
+
     if [ $variable_custom_park_x -eq 0 ] || [ $variable_custom_park_x -ge $position_max_x ] || [ $variable_custom_park_x -le $position_min_x ]; then
         pause_park_x=$((position_max_x - 10))
         if [ $pause_park_x -ne $variable_custom_park_x ]; then
