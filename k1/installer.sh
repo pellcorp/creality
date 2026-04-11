@@ -1525,6 +1525,9 @@ function setup_cartotouch() {
         x_position_mid=$($CONFIG_HELPER --get-section-entry "stepper_x" "position_max" --divisor 2 --integer)
         $CONFIG_HELPER --file cartotouch.cfg --replace-section-entry "bed_mesh" "zero_reference_position" "$x_position_mid,$y_position_mid" || exit $?
 
+        # for cartographer just stop the camera for all homing stuff
+        $CONFIG_HELPER --file start_end.cfg --replace-section-entry "gcode_macro _START_END_PARAMS" "variable_stop_start_camera" "True" || exit $?
+
         set_serial_cartotouch
 
         # a slight change to the way cartotouch is configured
@@ -1624,6 +1627,9 @@ function setup_cartographer() {
         # due to ridiculous issue with cartographer not handling slight out of band temps just set it here and let everyone else use 150
         $CONFIG_HELPER --file start_end.cfg --replace-section-entry "gcode_macro _START_END_PARAMS" "variable_start_preheat_nozzle_temp" 148 || exit $?
 
+        # for cartographer just stop the camera for all homing stuff
+        $CONFIG_HELPER --file start_end.cfg --replace-section-entry "gcode_macro _START_END_PARAMS" "variable_stop_start_camera" "True" || exit $?
+
         set_serial_cartographer
 
         # Ender 5 Max we don't have firmware for it, so need to configure cartographer instead for adxl
@@ -1703,6 +1709,9 @@ function setup_beacon() {
         if [ "$MODEL" = "F004" ]; then
             $CONFIG_HELPER --file beacon.cfg --replace-section-entry "beacon" "home_y_before_x" "True" || exit $?
         fi
+
+        # for beacon just stop the camera for all homing stuff
+        $CONFIG_HELPER --file start_end.cfg --replace-section-entry "gcode_macro _START_END_PARAMS" "variable_stop_start_camera" "True" || exit $?
 
         set_serial_beacon
 
@@ -1803,6 +1812,9 @@ function setup_eddyng() {
 
         cp /usr/data/pellcorp/config/eddyng.cfg /usr/data/printer_data/config/ || exit $?
         $CONFIG_HELPER --add-include "eddyng.cfg" || exit $?
+        
+        # for eddy just stop the camera for all homing stuff
+        $CONFIG_HELPER --file start_end.cfg --replace-section-entry "gcode_macro _START_END_PARAMS" "variable_stop_start_camera" "True" || exit $?
 
         set_serial_eddyng
 
