@@ -626,6 +626,7 @@ function setup_cartographer() {
         # for rpi we don't need to turn the camera off
         $CONFIG_HELPER --file cartographer_macro.cfg --replace-section-entry "gcode_macro BED_MESH_CALIBRATE" "variable_stop_start_camera" "False" || exit $?
         $CONFIG_HELPER --file cartographer_macro.cfg --replace-section-entry "gcode_macro CARTOGRAPHER_AXIS_TWIST_COMPENSATION" "variable_stop_start_camera" "False" || exit $?
+        $CONFIG_HELPER --file cartographer_macro.cfg --replace-section-entry "gcode_macro _CARTOGRAPHER_QUICKSTART" "variable_stop_start_camera" "False" || exit $?
 
         # due to ridiculous issue with cartographer not handling slight out of band temps just set it here and let everyone else use 150
         $CONFIG_HELPER --file start_end.cfg --replace-section-entry "gcode_macro _START_END_PARAMS" "variable_start_preheat_nozzle_temp" 148 || exit $?
