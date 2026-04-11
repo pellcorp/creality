@@ -429,6 +429,7 @@ function install_webcam() {
 
       # just update them every time
       tar -zxf /usr/data/pellcorp/k1/packages/mjpg-streamer.tar.gz -C /usr/data/ || exit $?
+      mkdir -p /usr/data/ustreamer
       tar -zxf /usr/data/pellcorp/k1/packages/ustreamer.tar.gz -C /usr/data/ustreamer/ || exit $?
 
       echo
