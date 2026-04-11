@@ -406,11 +406,13 @@ function install_webcam() {
     grep -q "webcam" /usr/data/pellcorp.done
     if [ $? -ne 0 ]; then
       SERVICE_TYPE=ustreamer
-      if [ "$mode" != "update" ] || [ ! -d /usr/data/mjpg-streamer ]; then
-        if [ -f /etc/init.d/S50webcam ]; then
-          /etc/init.d/S50webcam stop > /dev/null 2>&1
-        fi
 
+      # lets always stop and start the webcam
+      if [ -f /etc/init.d/S50webcam ]; then
+        /etc/init.d/S50webcam stop > /dev/null 2>&1
+      fi
+
+      if [ "$mode" != "update" ] || [ ! -d /usr/data/mjpg-streamer ]; then
         if [ -f /opt/bin/mjpg_streamer ]; then
           echo "INFO: Removing entware mjpg_streamer"
           /opt/bin/opkg remove --force-removal-of-dependent-packages mjpg-streamer mjpg-streamer-input-http mjpg-streamer-input-uvc mjpg-streamer-output-http mjpg-streamer-www 2> /dev/null
@@ -425,19 +427,9 @@ function install_webcam() {
         fi
       fi
 
-      if [ ! -d /usr/data/mjpg-streamer ]; then
-        echo
-        echo "INFO: Installing mjpg-streamer ..."
-        tar -zxf /usr/data/pellcorp/k1/packages/mjpg-streamer.tar.gz -C /usr/data/ || exit $?
-      fi
-
-      # add ustreamer as an option but be quiet about it
-      if [ ! -d /usr/data/ustreamer ]; then
-        echo
-        echo "INFO: Installing ustreamer ..."
-        mkdir -p /usr/data/ustreamer
-        tar -zxf /usr/data/pellcorp/k1/packages/ustreamer.tar.gz -C /usr/data/ustreamer/ || exit $?
-      fi
+      # just update them every time
+      tar -zxf /usr/data/pellcorp/k1/packages/mjpg-streamer.tar.gz -C /usr/data/ || exit $?
+      tar -zxf /usr/data/pellcorp/k1/packages/ustreamer.tar.gz -C /usr/data/ustreamer/ || exit $?
 
       echo
       echo "INFO: Updating webcam config ..."

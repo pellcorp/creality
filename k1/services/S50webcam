@@ -14,7 +14,7 @@ case "$1" in
     fi
 
     if [ "$SERVICE_TYPE" = "ustreamer" ]; then
-      start-stop-daemon -S -b -m -p $PID_FILE --exec /usr/data/ustreamer/ustreamer -- -n -e 30 -r 1280x720 -c HW -m MJPEG -b 1 -w 1 -f 10 -l -d $V4L_DEVICE --host=0.0.0.0 --allow-origin=*
+      start-stop-daemon -S -b -m -p $PID_FILE --exec /usr/data/ustreamer/ustreamer -- -n -r 1280x720 -c HW -m MJPEG -b 1 -w 1 -f 10 -l -d $V4L_DEVICE --host=0.0.0.0 --allow-origin=*
     else
       export LD_LIBRARY_PATH=/usr/data/mjpg-streamer/lib/:/usr/data/mjpg-streamer/lib/mjpg-streamer/
       if [ "$SERVICE_TYPE" = "syncframes" ]; then
