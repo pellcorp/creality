@@ -22,4 +22,4 @@ calibrate_y: 105
 
 -- printer.cfg
 [stepper_y]
-position_max: 210
+position_max: 205
