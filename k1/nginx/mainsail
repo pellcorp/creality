@@ -45,6 +45,9 @@ server {
     }
 
     location /webcam/ {
+        postpone_output 0;
+        proxy_buffering off;
+        proxy_ignore_headers X-Accel-Buffering;
         proxy_pass http://mjpgstreamer/;
     }
 }
