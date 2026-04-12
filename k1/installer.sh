@@ -406,6 +406,7 @@ function install_webcam() {
     grep -q "webcam" /usr/data/pellcorp.done
     if [ $? -ne 0 ]; then
       SERVICE_TYPE=ustreamer
+      FRAMES_PER_SECOND=10
 
       # lets always stop and start the webcam
       if [ -f /etc/init.d/S50webcam ]; then
@@ -428,7 +429,6 @@ function install_webcam() {
       fi
 
       # just update them every time
-      tar -zxf /usr/data/pellcorp/k1/packages/mjpg-streamer.tar.gz -C /usr/data/ || exit $?
       mkdir -p /usr/data/ustreamer
       tar -zxf /usr/data/pellcorp/k1/packages/ustreamer.tar.gz -C /usr/data/ustreamer/ || exit $?
 
@@ -449,12 +449,21 @@ function install_webcam() {
         if [ -n "$CURRENT_SERVICE_TYPE" ]; then
           SERVICE_TYPE=$CURRENT_SERVICE_TYPE
         fi
+
+        CURRENT_FRAMES_PER_SECOND=$(cat /etc/init.d/S50webcam | grep FRAMES_PER_SECOND= | awk -F '=' '{print $2}')
+        if [ -n "$CURRENT_FRAMES_PER_SECOND" ]; then
+          FRAMES_PER_SECOND=$CURRENT_FRAMES_PER_SECOND
+        fi
       fi
 
       cp /usr/data/pellcorp/k1/services/S50webcam /etc/init.d/
       if [ "$SERVICE_TYPE" != "ustreamer" ]; then
         sed -i "s/SERVICE_TYPE=ustreamer/SERVICE_TYPE=$SERVICE_TYPE/g" /etc/init.d/S50webcam
       fi
+      if [ "$FRAMES_PER_SECOND" != "10" ]; then
+        sed -i "s/FRAMES_PER_SECOND=10/FRAMES_PER_SECOND=$FRAMES_PER_SECOND/g" /etc/init.d/S50webcam
+      fi
+
       /etc/init.d/S50webcam start
 
       if [ -f /usr/data/pellcorp.ipaddress ]; then
