@@ -406,6 +406,7 @@ function install_webcam() {
     grep -q "webcam" /usr/data/pellcorp.done
     if [ $? -ne 0 ]; then
       SERVICE_TYPE=ustreamer
+      FRAMES_PER_SECOND=10
 
       # lets always stop and start the webcam
       if [ -f /etc/init.d/S50webcam ]; then
@@ -428,7 +429,6 @@ function install_webcam() {
       fi
 
       # just update them every time
-      tar -zxf /usr/data/pellcorp/k1/packages/mjpg-streamer.tar.gz -C /usr/data/ || exit $?
       mkdir -p /usr/data/ustreamer
       tar -zxf /usr/data/pellcorp/k1/packages/ustreamer.tar.gz -C /usr/data/ustreamer/ || exit $?
 
@@ -449,12 +449,21 @@ function install_webcam() {
         if [ -n "$CURRENT_SERVICE_TYPE" ]; then
           SERVICE_TYPE=$CURRENT_SERVICE_TYPE
         fi
+
+        CURRENT_FRAMES_PER_SECOND=$(cat /etc/init.d/S50webcam | grep FRAMES_PER_SECOND= | awk -F '=' '{print $2}')
+        if [ -n "$CURRENT_FRAMES_PER_SECOND" ]; then
+          FRAMES_PER_SECOND=$CURRENT_FRAMES_PER_SECOND
+        fi
       fi
 
       cp /usr/data/pellcorp/k1/services/S50webcam /etc/init.d/
       if [ "$SERVICE_TYPE" != "ustreamer" ]; then
         sed -i "s/SERVICE_TYPE=ustreamer/SERVICE_TYPE=$SERVICE_TYPE/g" /etc/init.d/S50webcam
       fi
+      if [ "$FRAMES_PER_SECOND" != "10" ]; then
+        sed -i "s/FRAMES_PER_SECOND=10/FRAMES_PER_SECOND=$FRAMES_PER_SECOND/g" /etc/init.d/S50webcam
+      fi
+
       /etc/init.d/S50webcam start
 
       if [ -f /usr/data/pellcorp.ipaddress ]; then
@@ -1518,8 +1527,8 @@ function setup_cartotouch() {
         x_position_mid=$($CONFIG_HELPER --get-section-entry "stepper_x" "position_max" --divisor 2 --integer)
         $CONFIG_HELPER --file cartotouch.cfg --replace-section-entry "bed_mesh" "zero_reference_position" "$x_position_mid,$y_position_mid" || exit $?
 
-        # for cartographer just stop the camera for all homing stuff
-        $CONFIG_HELPER --file start_end.cfg --replace-section-entry "gcode_macro _START_END_PARAMS" "variable_stop_start_camera" "True" || exit $?
+        $CONFIG_HELPER --file cartotouch_macro.cfg --replace-section-entry "gcode_macro AXIS_TWIST_COMPENSATION_CALIBRATE" "variable_stop_start_camera" "True" || exit $?
+        $CONFIG_HELPER --file cartotouch_macro.cfg --replace-section-entry "gcode_macro _CARTOGRAPHER_TOUCH" "variable_stop_start_camera" "True" || exit $?
 
         set_serial_cartotouch
 
@@ -1620,8 +1629,9 @@ function setup_cartographer() {
         # due to ridiculous issue with cartographer not handling slight out of band temps just set it here and let everyone else use 150
         $CONFIG_HELPER --file start_end.cfg --replace-section-entry "gcode_macro _START_END_PARAMS" "variable_start_preheat_nozzle_temp" 148 || exit $?
 
-        # for cartographer just stop the camera for all homing stuff
-        $CONFIG_HELPER --file start_end.cfg --replace-section-entry "gcode_macro _START_END_PARAMS" "variable_stop_start_camera" "True" || exit $?
+        $CONFIG_HELPER --file cartographer_macro.cfg --replace-section-entry "gcode_macro _CARTOGRAPHER_TOUCH_HOME" "variable_stop_start_camera" "True" || exit $?
+        $CONFIG_HELPER --file cartographer_macro.cfg --replace-section-entry "gcode_macro CARTOGRAPHER_AXIS_TWIST_COMPENSATION" "variable_stop_start_camera" "True" || exit $?
+        $CONFIG_HELPER --file cartographer_macro.cfg --replace-section-entry "gcode_macro _CARTOGRAPHER_QUICKSTART" "variable_stop_start_camera" "True" || exit $?
 
         set_serial_cartographer
 
@@ -1703,8 +1713,9 @@ function setup_beacon() {
             $CONFIG_HELPER --file beacon.cfg --replace-section-entry "beacon" "home_y_before_x" "True" || exit $?
         fi
 
-        # for beacon just stop the camera for all homing stuff
-        $CONFIG_HELPER --file start_end.cfg --replace-section-entry "gcode_macro _START_END_PARAMS" "variable_stop_start_camera" "True" || exit $?
+        $CONFIG_HELPER --file beacon_macro.cfg --replace-section-entry "gcode_macro _BEACON_CONTACT_HOME" "variable_stop_start_camera" "True" || exit $?
+        $CONFIG_HELPER --file beacon_macro.cfg --replace-section-entry "gcode_macro BED_MESH_CALIBRATE" "variable_stop_start_camera" "True" || exit $?
+        $CONFIG_HELPER --file beacon_macro.cfg --replace-section-entry "gcode_macro AXIS_TWIST_COMPENSATION_CALIBRATE" "variable_stop_start_camera" "True" || exit $?
 
         set_serial_beacon
 
@@ -1764,6 +1775,10 @@ function setup_btteddy() {
         $CONFIG_HELPER --remove-section "probe_eddy_current btt_eddy" || exit $?
         $CONFIG_HELPER --add-section "probe_eddy_current btt_eddy" || exit $?
 
+        # for rpi we don't need to turn the camera off
+        $CONFIG_HELPER --file btteddy_macro.cfg --replace-section-entry "gcode_macro BTTEDDY_CURRENT_CALIBRATE" "variable_stop_start_camera" "True" || exit $?
+        $CONFIG_HELPER --file btteddy_macro.cfg --replace-section-entry "gcode_macro BTTEDDY_TEMPERATURE_PROBE_CALIBRATE" "variable_stop_start_camera" "True" || exit $?
+
         echo "btteddy-probe" >> /usr/data/pellcorp.done
         sync
         return 1
@@ -1805,14 +1820,13 @@ function setup_eddyng() {
 
         cp /usr/data/pellcorp/config/eddyng.cfg /usr/data/printer_data/config/ || exit $?
         $CONFIG_HELPER --add-include "eddyng.cfg" || exit $?
-        
-        # for eddy just stop the camera for all homing stuff
-        $CONFIG_HELPER --file start_end.cfg --replace-section-entry "gcode_macro _START_END_PARAMS" "variable_stop_start_camera" "True" || exit $?
-
-        set_serial_eddyng
 
         cp /usr/data/pellcorp/config/eddyng_macro.cfg /usr/data/printer_data/config/ || exit $?
         $CONFIG_HELPER --add-include "eddyng_macro.cfg" || exit $?
+
+        $CONFIG_HELPER --file eddyng_macro.cfg --replace-section-entry "gcode_macro _PROBE_EDDY_NG_TAP_HOME" "variable_stop_start_camera" "True" || exit $?
+
+        set_serial_eddyng
 
         $CONFIG_HELPER --remove-section "probe_eddy_ng btt_eddy" || exit $?
         $CONFIG_HELPER --add-section "probe_eddy_ng btt_eddy" || exit $?
