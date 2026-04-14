@@ -102,19 +102,27 @@ if [ $? -ne 0 ]; then
     rm -rf $BASEDIR/klippy-env
   fi
 
+  install_packages=False
   if [ ! -d $BASEDIR/klipper/ ]; then
+    install_packages=True
+
     echo
     echo "INFO: Installing klipper ..."
 
     git clone https://github.com/pellcorp/klipper-rpi.git $BASEDIR/klipper || exit $?
+  fi
 
-    # we want to make sure we do not go past the pinned commit this just allows us to push changes to klipper without
-    # immediately rolling them out to everyone
+  cd $BASEDIR/klipper
+  branch_ref=$(git rev-parse --abbrev-ref HEAD)
+  # don't clobber a feature branch
+  if [ "$branch_ref" = "master" ]; then
     KLIPPER_PINNED_COMMIT=$($CONFIG_HELPER --file moonraker.conf --get-section-entry "update_manager klipper" "pinned_commit")
-    cd $BASEDIR/klipper
     git reset --hard $KLIPPER_PINNED_COMMIT
     cd - > /dev/null
+  fi
 
+  # we want to install packages after forcing klipper to pinned commit
+  if [ "$install_packages" = "true" ]; then
     install_packages
 
     if grep -q "dialout" /etc/group; then
