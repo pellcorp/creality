@@ -748,14 +748,9 @@ function install_klipper() {
             fi
         fi
 
-        KLIPPER_PINNED_COMMIT=$($CONFIG_HELPER --file moonraker.conf --get-section-entry "update_manager klipper" "pinned_commit")
         if [ ! -d /usr/data/klipper/.git ]; then
             echo "INFO: Installing klipper ..."
             git clone https://github.com/pellcorp/klipper.git /usr/data/klipper || exit $?
-
-            cd /usr/data/klipper
-            git reset --hard $KLIPPER_PINNED_COMMIT
-            cd - > /dev/null
 
             [ -d /usr/share/klipper ] && rm -rf /usr/share/klipper
         else
@@ -778,11 +773,15 @@ function install_klipper() {
             if [ "$remote_repo" = "klipper" ] && [ $klipper_status -ne 0 ]; then
                 echo "INFO: Forcing update of klipper to branch jun2025"
                 update_repo /usr/data/klipper jun2025 || exit $?
-
-                cd /usr/data/klipper
-                git reset --hard $KLIPPER_PINNED_COMMIT
-                cd - > /dev/null
             fi
+        fi
+
+        branch_ref=$(git rev-parse --abbrev-ref HEAD)
+        if [ "$branch_ref" = "jun2025" ]; then
+          KLIPPER_PINNED_COMMIT=$($CONFIG_HELPER --file moonraker.conf --get-section-entry "update_manager klipper" "pinned_commit")
+          cd /usr/data/klipper
+          git reset --hard $KLIPPER_PINNED_COMMIT
+          cd - > /dev/null
         fi
 
         # get rid of kamp
