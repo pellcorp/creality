@@ -776,13 +776,13 @@ function install_klipper() {
             fi
         fi
 
+        cd /usr/data/klipper/
         branch_ref=$(git rev-parse --abbrev-ref HEAD)
         if [ "$branch_ref" = "jun2025" ]; then
           KLIPPER_PINNED_COMMIT=$($CONFIG_HELPER --file moonraker.conf --get-section-entry "update_manager klipper" "pinned_commit")
-          cd /usr/data/klipper
           git reset --hard $KLIPPER_PINNED_COMMIT
-          cd - > /dev/null
         fi
+        cd - > /dev/null
 
         # get rid of kamp
         if [ -e /usr/data/printer_data/config/KAMP ]; then
