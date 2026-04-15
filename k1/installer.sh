@@ -222,7 +222,8 @@ function update_klipper() {
 
   # this avoids the chelper _init_.py trying to rebuild it, we need to make sure it has
   # a date later than the .c, .h and _init_.py
-  touch /usr/data/klipper/klippy/c_helper.so || exit $?
+  [ -f /usr/data/klipper/klippy/c_helper.so ] && rm /usr/data/klipper/klippy/c_helper.so
+  touch /usr/data/klipper/klippy/chelper/c_helper.so || exit $?
 
   sync
 
