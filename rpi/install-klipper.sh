@@ -118,8 +118,8 @@ if [ $? -ne 0 ]; then
   if [ "$branch_ref" = "master" ]; then
     KLIPPER_PINNED_COMMIT=$($CONFIG_HELPER --file moonraker.conf --get-section-entry "update_manager klipper" "pinned_commit")
     git reset --hard $KLIPPER_PINNED_COMMIT
-    cd - > /dev/null
   fi
+  cd - > /dev/null
 
   # we want to install packages after forcing klipper to pinned commit
   if [ "$install_packages" = "true" ]; then
