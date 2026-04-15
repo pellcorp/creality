@@ -773,6 +773,7 @@ function install_klipper() {
             if [ "$remote_repo" = "klipper" ] && [ $klipper_status -ne 0 ]; then
                 echo "INFO: Forcing update of klipper to branch jun2025"
                 update_repo /usr/data/klipper jun2025 || exit $?
+                update_klipper
             fi
         fi
 
@@ -780,7 +781,12 @@ function install_klipper() {
         branch_ref=$(git rev-parse --abbrev-ref HEAD)
         if [ "$branch_ref" = "jun2025" ]; then
           KLIPPER_PINNED_COMMIT=$($CONFIG_HELPER --file moonraker.conf --get-section-entry "update_manager klipper" "pinned_commit")
-          git reset --hard $KLIPPER_PINNED_COMMIT
+          KLIPPER_CURRENT_COMMIT=$(git rev-parse HEAD)
+          if [ "$KLIPPER_PINNED_COMMIT" != "$KLIPPER_CURRENT_COMMIT" ]; then
+            git fetch
+            git reset --hard $KLIPPER_PINNED_COMMIT
+            update_klipper
+          fi
         fi
         cd - > /dev/null
 
@@ -798,7 +804,6 @@ function install_klipper() {
         fi
 
         echo "INFO: Updating klipper config ..."
-        /usr/share/klippy-env/bin/python3 -m compileall /usr/data/klipper/klippy || exit $?
 
         ln -sf /usr/data/klipper /usr/share/ || exit $?
 

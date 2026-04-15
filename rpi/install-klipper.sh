@@ -79,29 +79,11 @@ if [ $? -ne 0 ]; then
     rm -rf $BASEDIR/klipper
   fi
 
-  if [ -d $BASEDIR/klipper ]; then
-    cd $BASEDIR/klipper
-    git log | grep -q "support M106 P argument thanks to Chad"
-    klipper_status=$?
-    cd - > /dev/null
-
-    if [ $klipper_status -ne 0 ]; then
-      echo "INFO: Forcing update of klipper to $KLIPPER_PINNED_COMMIT"
-      cd $BASEDIR/klipper
-      git fetch
-      branch_ref=$(git rev-parse --abbrev-ref HEAD)
-      git reset --hard origin/$branch_ref
-      KLIPPER_PINNED_COMMIT=$($CONFIG_HELPER --file moonraker.conf --get-section-entry "update_manager klipper" "pinned_commit")
-      git reset --hard $KLIPPER_PINNED_COMMIT
-      cd - > /dev/null
-      update_klipper
-    fi
-  fi
-
   if [ "$mode" != "update" ] && [ -d $BASEDIR/klippy-env ]; then
     rm -rf $BASEDIR/klippy-env
   fi
 
+  KLIPPER_PINNED_COMMIT=$($CONFIG_HELPER --file moonraker.conf --get-section-entry "update_manager klipper" "pinned_commit")
   install_packages=False
   if [ ! -d $BASEDIR/klipper/ ]; then
     install_packages=True
@@ -110,14 +92,20 @@ if [ $? -ne 0 ]; then
     echo "INFO: Installing klipper ..."
 
     git clone https://github.com/pellcorp/klipper-rpi.git $BASEDIR/klipper || exit $?
+    git reset --hard $KLIPPER_PINNED_COMMIT
+    update_klipper
   fi
 
   cd $BASEDIR/klipper
   branch_ref=$(git rev-parse --abbrev-ref HEAD)
   # don't clobber a feature branch
   if [ "$branch_ref" = "master" ]; then
-    KLIPPER_PINNED_COMMIT=$($CONFIG_HELPER --file moonraker.conf --get-section-entry "update_manager klipper" "pinned_commit")
-    git reset --hard $KLIPPER_PINNED_COMMIT
+    KLIPPER_CURRENT_COMMIT=$(git rev-parse HEAD)
+    if [ "$KLIPPER_PINNED_COMMIT" != "$KLIPPER_CURRENT_COMMIT" ]; then
+      git fetch
+      git reset --hard $KLIPPER_PINNED_COMMIT
+      update_klipper
+    fi
   fi
   cd - > /dev/null
 
