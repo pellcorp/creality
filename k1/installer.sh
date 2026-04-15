@@ -219,6 +219,11 @@ function update_klipper() {
 
   echo
   /usr/share/klippy-env/bin/python3 -m compileall /usr/data/klipper/klippy || return $?
+
+  # this avoids the chelper _init_.py trying to rebuild it, we need to make sure it has
+  # a date later than the .c, .h and _init_.py
+  touch /usr/data/klipper/klippy/c_helper.so || exit $?
+
   sync
 
   /usr/data/pellcorp/k1/tools/check-firmware.sh --status
