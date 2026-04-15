@@ -162,17 +162,16 @@ function update_klipper() {
 
   probe=$(cat $BASEDIR/pellcorp.done 2> /dev/null | grep "\-probe" | awk -F '-' '{print $1}')
 
-  if [ "$probe" = "cartotouch" ] && [ -d $BASEDIR/cartographer-klipper ] && [ -L $BASEDIR/klipper/klippy/extras/scanner.py ]; then
+  if [ "$probe" = "cartotouch" ] && [ -d $BASEDIR/cartographer-klipper ]; then
       echo "INFO: Running cartographer-klipper installer ..."
       $BASEDIR/pellcorp/rpi/cartotouch-install.sh || exit $?
   fi
 
-  if [ "$probe" = "beacon" ] && [ -d $BASEDIR/beacon-klipper ] && [ -L $BASEDIR/klipper/klippy/extras/beacon.py ]; then
+  if [ "$probe" = "beacon" ] && [ -d $BASEDIR/beacon-klipper ]; then
       $BASEDIR/beacon-klipper/install.sh || return $?
   fi
 
-  # for the plugin its going to be an actual file
-  if [ "$probe" = "cartographer" ] && [ -f $BASEDIR/klipper/klippy/extras/cartographer.py ]; then
+  if [ "$probe" = "cartographer" ]; then
       curl -s -L https://raw.githubusercontent.com/Cartographer3D/cartographer3d-plugin/refs/heads/main/scripts/install.sh | bash || exit $?
   fi
 
