@@ -202,18 +202,17 @@ function update_repo() {
 function update_klipper() {
   probe=$(cat /usr/data/pellcorp.done 2> /dev/null | grep "\-probe" | awk -F '-' '{print $1}')
 
-  if [ "$probe" = "cartotouch" ] && [ -d /usr/data/cartographer-klipper ] && [ -L /usr/data/klipper/klippy/extras/scanner.py ]; then
+  if [ "$probe" = "cartotouch" ] && [ -d /usr/data/cartographer-klipper ]; then
       /usr/data/cartographer-klipper/install.sh || return $?
       ln -sf /usr/data/cartographer-klipper/ /root
   fi
 
-  if [ "$probe" = "beacon" ] && [ -d /usr/data/beacon-klipper ] && [ -L /usr/data/klipper/klippy/extras/beacon.py ]; then
+  if [ "$probe" = "beacon" ] && [ -d /usr/data/beacon-klipper ]; then
       /usr/data/pellcorp/k1/beacon-install.sh || return $?
       ln -sf /usr/data/beacon-klipper/ /root
   fi
 
-  # for the plugin its going to be an actual file
-  if [ "$probe" = "cartographer" ] && [ -f /usr/data/klipper/klippy/extras/cartographer.py ]; then
+  if [ "$probe" = "cartographer" ]; then
       curl -s -L https://raw.githubusercontent.com/Cartographer3D/cartographer3d-plugin/refs/heads/main/scripts/install.sh | bash -s -- --klipper /usr/data/klipper --klippy-env /usr/share/klippy-env || exit $?
   fi
 
