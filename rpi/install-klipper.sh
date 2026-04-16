@@ -104,7 +104,10 @@ if [ $? -ne 0 ]; then
     if [ "$KLIPPER_PINNED_COMMIT" != "$KLIPPER_CURRENT_COMMIT" ]; then
       git fetch
       git reset --hard $KLIPPER_PINNED_COMMIT
-      update_klipper
+
+      if [ "$mode" = "update" ]; then
+        update_klipper
+      fi
     fi
   fi
   cd - > /dev/null
