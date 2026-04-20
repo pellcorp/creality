@@ -83,11 +83,7 @@ if [ $? -ne 0 ]; then
     rm -rf $BASEDIR/klippy-env
   fi
 
-  KLIPPER_PINNED_COMMIT=$($CONFIG_HELPER --file moonraker.conf --get-section-entry "update_manager klipper" "pinned_commit")
-  install_packages=false
   if [ ! -d $BASEDIR/klipper/ ]; then
-    install_packages=true
-
     echo
     echo "INFO: Installing klipper ..."
 
@@ -98,6 +94,7 @@ if [ $? -ne 0 ]; then
   branch_ref=$(git rev-parse --abbrev-ref HEAD)
   # don't clobber a feature branch
   if [ "$branch_ref" = "master" ]; then
+    KLIPPER_PINNED_COMMIT=$($CONFIG_HELPER --file moonraker.conf --get-section-entry "update_manager klipper" "pinned_commit")
     KLIPPER_CURRENT_COMMIT=$(git rev-parse HEAD)
     if [ "$KLIPPER_PINNED_COMMIT" != "$KLIPPER_CURRENT_COMMIT" ]; then
       git fetch
@@ -110,17 +107,14 @@ if [ $? -ne 0 ]; then
   fi
   cd - > /dev/null
 
-  # we want to install packages after forcing klipper to pinned commit
-  if [ "$install_packages" = "true" ]; then
-    install_packages
+  install_packages
 
-    if grep -q "dialout" /etc/group; then
-      sudo usermod -a -G dialout $USER
-    fi
+  if grep -q "dialout" /etc/group; then
+    sudo usermod -a -G dialout $USER
+  fi
 
-    if grep -q "tty" /etc/group; then
-      sudo usermod -a -G tty $USER
-    fi
+  if grep -q "tty" /etc/group; then
+    sudo usermod -a -G tty $USER
   fi
 
   # in case there are any updates to the klipper service need to rewrite
