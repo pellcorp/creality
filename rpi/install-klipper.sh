@@ -84,9 +84,9 @@ if [ $? -ne 0 ]; then
   fi
 
   KLIPPER_PINNED_COMMIT=$($CONFIG_HELPER --file moonraker.conf --get-section-entry "update_manager klipper" "pinned_commit")
-  install_packages=False
+  install_packages=false
   if [ ! -d $BASEDIR/klipper/ ]; then
-    install_packages=True
+    install_packages=true
 
     echo
     echo "INFO: Installing klipper ..."
