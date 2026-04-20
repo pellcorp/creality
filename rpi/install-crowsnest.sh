@@ -13,7 +13,7 @@ fi
 
 grep -q "crowsnest" $BASEDIR/pellcorp.done
 if [ $? -ne 0 ]; then
-  if [ "$mode" != "update" ] || [ ! -f /usr/local/bin/crowsnest ]; then
+  if [ "$mode" != "update" ]; then
     echo
     echo "INFO: Installing crowsnest ..."
 
