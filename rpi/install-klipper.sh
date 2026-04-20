@@ -92,8 +92,6 @@ if [ $? -ne 0 ]; then
     echo "INFO: Installing klipper ..."
 
     git clone https://github.com/pellcorp/klipper-rpi.git $BASEDIR/klipper || exit $?
-    git reset --hard $KLIPPER_PINNED_COMMIT
-    update_klipper
   fi
 
   cd $BASEDIR/klipper
