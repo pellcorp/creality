@@ -117,16 +117,40 @@ fw_update() {
 auto_update() {
     local model=$(get_sn_mac.sh model)
     local board=$(get_sn_mac.sh board)
+
+    local bed_serial=
+    local mcu_serial=
+    local noz_serial=
+
     local fw_dir=
     case $board in
         "CR4CU220812S10" | "CR4CU220812S11" | "CR4CU220812S12")
-            if [ "$model" = "CR-K1" -o "$model" = "K1C" -o "$model" = "K1 SE" \
-                -o "$model" = "CR-K1 Max" -o "$model" = "K1 Max SE" ]; then
+            bed_serial=/dev/ttyS9
+            mcu_serial=/dev/ttyS7
+            noz_serial=/dev/ttyS1
+
+            # note we are adding mcu update support for Ender 3 V3 (F001)
+            if [ "$model" = "CR-K1" ] || [ "$model" = "K1C" ] || [ "$model" = "K1 SE" ] || [ "$model" = "CR-K1 Max" ] || [  "$model" = "K1 Max SE" ]; then
                 fw_dir=K1
                 write_log "The directory selected for this hardware is: $fw_dir"
+            elif [ "$model" = "F001" ] || [ "$model" = "F002" ]; then
+                fw_dir=F001
             else
                 write_log "The script is not intended for this printer model ($model)"
                 exit 1
+            fi
+            ;;
+        "NEBULA V1.0.0.1")
+            # note we are adding mcu update support for Ender 5 Max (F004)
+            if [ "$model" = "F005" ]; then
+                mcu_serial=/dev/ttyS1
+                fw_dir=F005
+            elif [ "$model" = "F004" ]; then
+                mcu0_serial=/dev/ttyS1
+                noz0_serial=/dev/ttyS7
+                fw_dir=F004
+            else
+                fw_dir=
             fi
             ;;
         *)
@@ -142,8 +166,7 @@ auto_update() {
 
      # Handshaking
     local mcu_ready=false
-    local mcu_serial=/dev/ttyS7
-    if [ -e $mcu_serial ]; then
+    if [ -n "$mcu_serial" ] && [ -e $mcu_serial ]; then
        local ret=$(mcu_handshake $mcu_serial)
         if [ $ret -eq $RET_SUCCESS ]; then
             mcu_ready=true
@@ -152,8 +175,7 @@ auto_update() {
     fi
 
     local bed_ready=false
-    local bed_serial=/dev/ttyS9
-    if [ -e $bed_serial ]; then
+    if [ -n "$bed_serial" ] && [ -e $bed_serial ]; then
         local ret=$(mcu_handshake $bed_serial)
         if [ $ret -eq $RET_SUCCESS ]; then
             bed_ready=true
@@ -162,8 +184,7 @@ auto_update() {
     fi
 
     local noz_ready=false
-    local noz_serial=/dev/ttyS1
-    if [ -e $noz_serial ]; then
+    if [ -n "$noz_serial" ] && [ -e $noz_serial ]; then
         local ret=$(mcu_handshake $noz_serial)
         if [ $ret -eq $RET_SUCCESS ]; then
             noz_ready=true

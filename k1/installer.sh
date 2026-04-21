@@ -10,7 +10,7 @@ if [ -f /usr/bin/get_sn_mac.sh ]; then
     MODEL=NEBULA
   fi
 
-  if [ "$MODEL" = "CR-K1" ] || [ "$MODEL" = "K1C" ] || [ "$MODEL" = "K1 SE" ]; then
+  if [ "$MODEL" = "CR-K1" ] || [ "$MODEL" = "K1C" ] || [ "$MODEL" = "K1 SE" ] || [ "$MODEL" = "F001" ] || [ "$MODEL" = "F002" ]; then
     model=k1
   elif [ "$MODEL" = "CR-K1 Max" ] || [ "$MODEL" = "K1 Max SE" ]; then
     model=k1m
@@ -18,6 +18,12 @@ if [ -f /usr/bin/get_sn_mac.sh ]; then
     model=f004
   elif [ "$MODEL" = "F005" ]; then
     model=f005
+    # this piece of hackery is just for my Ender 3 V3 SE which has a Nebula Pad and a KE board but a SE toolhead
+    if [ -f /usr/data/creality/userdata/config/system_config.json ]; then
+      if [ "$PRINTER_MODEL" = "Ender-3 V3 SE" ]; then
+        model=e3v3se
+      fi
+    fi
   elif [ "$MODEL" = "NEBULA" ]; then
     if [ -f /usr/data/creality/userdata/config/system_config.json ]; then
       PRINTER_MODEL=$(grep -r model_str /usr/data/creality/userdata/config/system_config.json | awk -F: '{print $2}' | grep -o '".*"' | tr -d '"')
@@ -822,8 +828,8 @@ function install_klipper() {
         
         cp /usr/data/pellcorp/k1/services/S55klipper_service /etc/init.d/ || exit $?
 
-        # currently no support for updating firmware on Ender 5 Max or Ender 3 V3 KE!
-        if [ "$MODEL" != "F004" ] && [ "$MODEL" != "F005" ] && [ "$MODEL" != "NEBULA" ]; then
+        # currently no support for updating firmware on Ender5 Max and Nebula Pad
+        if [ "$MODEL" != "F004" ] && [ "$MODEL" != "NEBULA" ]; then
             cp /usr/data/pellcorp/k1/services/S13mcu_update /etc/init.d/ || exit $?
         fi
 
@@ -842,7 +848,7 @@ function install_klipper() {
 
         kinematics=$($CONFIG_HELPER --get-section-entry "printer" "kinematics")
 
-        # for Ender 5 Max we need to disable sensorless homing, reversing homing order,don't move away and do not repeat homing
+        # for Ender 5 Max we need to disable sensorless homing, reversing homing order, don't move away and do not repeat homing
         # but we are still going to use homing override even though the max has physical endstops to make things a bit easier
         if [ "$MODEL" = "F004" ]; then
             $CONFIG_HELPER --file homing.cfg --replace-section-entry "gcode_macro _HOMING_PARAMS" "variable_home_y_before_x" "True" || exit $?
@@ -866,20 +872,16 @@ function install_klipper() {
         cp /usr/data/pellcorp/k1/belts_calibration.cfg /usr/data/printer_data/config/ || exit $?
         $CONFIG_HELPER --add-include "belts_calibration.cfg" || exit $?
 
-        # ender 5 max does not support ADXL in the toolhead and bed because of klipper
-        # version incompatibility, for Ender 3 V3 KE we are hoping to use the nebula
-        # ADXL adaptors and that requires klipper mcu, so if the klipper mcu is
-        # still enabled leave the adxl config intact
+        # FIXME - if we can get Ender 5 Max firmware working go back to using nozzle adxl by default
         remove_adxl=false
         if [ "$MODEL" = "F004" ]; then
           remove_adxl=true
-        elif [ "$MODEL" = "F005" ] && [ "$MODEL" != "NEBULA" ] && [ ! -f /etc/init.d/S57klipper_mcu ]; then
+        elif [ "$MODEL" = "F005" ] && [ ! -f /etc/init.d/S57klipper_mcu ]; then
           remove_adxl=true
         fi
 
         if [ "$remove_adxl" = "true" ]; then
           # for ender 5 max we can't use on board adxl and only beacon and cartotouch support
-          # for Ender 3 V3 KE we have more work to do to support the nebula pad adxl in the future
           if [ "$probe" != "beacon" ] && [ "$probe" != "cartotouch" ] && [ "$probe" != "cartographer" ]; then
               $CONFIG_HELPER --remove-section "adxl345" || exit $?
               $CONFIG_HELPER --remove-section "resonance_tester" || exit $?
