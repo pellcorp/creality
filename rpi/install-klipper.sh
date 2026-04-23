@@ -205,10 +205,10 @@ if [ $? -ne 0 ]; then
       $CONFIG_HELPER --file start_end.cfg --replace-section-entry "gcode_macro _START_END_PARAMS" "variable_start_print_bed_heating_move_bed_distance" "0" || exit $?
     fi
 
-    ln -sf $BASEDIR/pellcorp/config/Line_Purge.cfg $BASEDIR/printer_data/config/ || exit $?
+    cp --remove-destination $BASEDIR/pellcorp/config/Line_Purge.cfg $BASEDIR/printer_data/config/ || exit $?
     $CONFIG_HELPER --add-include "Line_Purge.cfg" || exit $?
 
-    ln -sf $BASEDIR/pellcorp/config/Smart_Park.cfg $BASEDIR/printer_data/config/ || exit $?
+    cp --remove-destination $BASEDIR/pellcorp/config/Smart_Park.cfg $BASEDIR/printer_data/config/ || exit $?
     $CONFIG_HELPER --add-include "Smart_Park.cfg" || exit $?
   fi
 

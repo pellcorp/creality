@@ -947,10 +947,12 @@ function install_klipper() {
           $CONFIG_HELPER --file start_end.cfg --replace-section-entry "gcode_macro _START_END_PARAMS" "variable_end_print_cool_down" "False" || exit $?
         fi
 
-        ln -sf /usr/data/pellcorp/config/Line_Purge.cfg /usr/data/printer_data/config/ || exit $?
+        [ -L /usr/data/printer_data/config/Line_Purge.cfg ] && rm /usr/data/printer_data/config/Line_Purge.cfg
+        cp /usr/data/pellcorp/config/Line_Purge.cfg /usr/data/printer_data/config/ || exit $?
         $CONFIG_HELPER --add-include "Line_Purge.cfg" || exit $?
 
-        ln -sf /usr/data/pellcorp/config/Smart_Park.cfg /usr/data/printer_data/config/ || exit $?
+        [ -L /usr/data/printer_data/config/Smart_Park.cfg ] && rm /usr/data/printer_data/config/Smart_Park.cfg
+        cp /usr/data/pellcorp/config/Smart_Park.cfg /usr/data/printer_data/config/ || exit $?
         $CONFIG_HELPER --add-include "Smart_Park.cfg" || exit $?
 
         if [ -f /usr/data/pellcorp/k1/fan_control.${model}.cfg ]; then
