@@ -62,6 +62,12 @@ function update_klipper() {
       $BASEDIR/beacon-klipper/install.sh || return $?
       sync
   fi
+
+  if [ -d $BASEDIR/klippain_shaketune ] && [ ! -d $BASEDIR/klipper/klippy/extras/shaketune ]; then
+      echo "Linking Shake&Tune module to Klipper extras"
+      ln -frsn $BASEDIR/klippain_shaketune/shaketune $BASEDIR/klipper/klippy/extras/shaketune
+  fi
+
   $BASEDIR/klippy-env/bin/python3 -m compileall $BASEDIR/klipper/klippy || return $?
   update_klipper_mcu
 
