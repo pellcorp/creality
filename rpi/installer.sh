@@ -175,6 +175,11 @@ function update_klipper() {
       curl -s -L https://raw.githubusercontent.com/Cartographer3D/cartographer3d-plugin/refs/heads/main/scripts/install.sh | bash || exit $?
   fi
 
+  if [ -d $BASEDIR/klippain_shaketune ] && [ ! -d $BASEDIR/klipper/klippy/extras/shaketune ]; then
+      echo "Linking Shake&Tune module to Klipper extras"
+      ln -frsn $BASEDIR/klippain_shaketune/shaketune $BASEDIR/klipper/klippy/extras/shaketune
+  fi
+
   echo
   $BASEDIR/klippy-env/bin/python3 -m compileall $BASEDIR/klipper/klippy || return $?
   update_klipper_mcu
