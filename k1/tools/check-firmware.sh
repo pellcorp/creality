@@ -10,14 +10,19 @@ else
   exit 0
 fi
 
-# Ender 5 Max, Ender 3 V3 KE and Nebula dont have firmware we can update
-if [ "$MODEL" = "F004" ] || [ "$MODEL" = "F005" ] || [ "$MODEL" = "NEBULA" ]; then
+# Ender 5 Max and Nebula dont have firmware we can update
+if [ "$MODEL" = "F004" ] || [ "$MODEL" = "NEBULA" ]; then
     echo "INFO: Your MCU Firmware is up to date!"
     exit 0
 fi
 
 VERSION_FILE=/usr/data/mcu.versions
 FW_DIR=/usr/share/klipper/fw/K1
+if [ "$MODEL" = "F005" ] || [ "$MODEL" = "F004" ]; then
+  FW_DIR=/usr/share/klipper/fw/$MODEL
+elif [ "$MODEL" = "F001" ] || [ "$MODEL" = "F002" ]; then
+  FW_DIR=/usr/share/klipper/fw/F001
+fi
 
 if [ -f /etc/init.d/S13mcu_update ]; then
     mcu_update_version_file=$(cat /etc/init.d/S13mcu_update | grep VERSION_FILE= | awk -F '=' '{print $2}')
@@ -35,24 +40,22 @@ firmware_upgrade_required=true
 # start one or more of the MCUs so a power cycle is recommended anyway
 if [ -f $VERSION_FILE ] && [ -d $FW_DIR ]; then
     firmware_upgrade_required=false
-    fw_mcu_version=$(cat $VERSION_FILE | grep "mcu_version" | awk -F '=' ' {print $2}')
-    fw_bed_version=$(cat $VERSION_FILE | grep "bed_version" | awk -F '=' ' {print $2}')
-    fw_noz_version=$(cat $VERSION_FILE | grep "noz_version" | awk -F '=' ' {print $2}')
 
+    fw_mcu_version=$(cat $VERSION_FILE | grep "mcu_version" | awk -F '=' ' {print $2}')
     file_mcu_version=$(basename $(ls $FW_DIR/mcu*) .bin)
-    file_bed_version=$(basename $(ls $FW_DIR/bed*) .bin)
-    file_noz_version=$(basename $(ls $FW_DIR/noz*) .bin)
 
     if [ "x$fw_mcu_version" = "x" ] || [ "$fw_mcu_version" != "$file_mcu_version" ]; then
         firmware_upgrade_required=true
     fi
 
-    #if [ "x$fw_bed_version" = "x" ] || [ "$fw_bed_version" != "$file_bed_version" ]; then
-    #    firmware_upgrade_required=true
-    #fi
+    # K1 etc and Ender 5 Max do nozzle firmware
+    if [ "$MODEL" != "F005" ]; then
+      fw_noz_version=$(cat $VERSION_FILE | grep "noz_version" | awk -F '=' ' {print $2}')
+      file_noz_version=$(basename $(ls $FW_DIR/noz*) .bin)
 
-    if [ "x$fw_noz_version" = "x" ] || [ "$fw_noz_version" != "$file_noz_version" ]; then
-        firmware_upgrade_required=true
+      if [ "x$fw_noz_version" = "x" ] || [ "$fw_noz_version" != "$file_noz_version" ]; then
+          firmware_upgrade_required=true
+      fi
     fi
 fi
 
