@@ -10,14 +10,17 @@ if [ -f /usr/bin/get_sn_mac.sh ]; then
     MODEL=NEBULA
   fi
 
-  if [ "$MODEL" = "CR-K1" ] || [ "$MODEL" = "K1C" ] || [ "$MODEL" = "K1 SE" ] || [ "$MODEL" = "F001" ] || [ "$MODEL" = "F002" ]; then
+  if [ "$MODEL" = "CR-K1" ] || [ "$MODEL" = "K1C" ] || [ "$MODEL" = "K1 SE" ]; then
     model=k1
   elif [ "$MODEL" = "CR-K1 Max" ] || [ "$MODEL" = "K1 Max SE" ]; then
     model=k1m
+  elif [ "$MODEL" = "F001" ] || [ "$MODEL" = "F002" ]; then
+    echo
+    echo "WARNING: Ender 3 V3 printer support is VERY experimental!!!"
+    echo
+    model=f001
   elif [ "$MODEL" = "F004" ]; then
     model=f004
-  elif [ "$MODEL" = "F002" ] || [ "$MODEL" = "F001" ]; then
-    model=f001
   elif [ "$MODEL" = "F005" ]; then
     model=f005
     # this piece of hackery is just for my Ender 3 V3 SE which has a Nebula Pad and a KE board but a SE toolhead
@@ -814,7 +817,12 @@ function install_klipper() {
             cp /usr/data/pellcorp/k1/services/S13mcu_update /etc/init.d/ || exit $?
         fi
 
-        cp /usr/data/pellcorp/config/homing.cfg /usr/data/printer_data/config/ || exit $?
+        # this is just temporary to make things a bit simpler initially for Ender 3 V3
+        if [ -f /usr/data/pellcorp/k1/homing.${model}.cfg ]; then
+          cp /usr/data/pellcorp/k1/homing.${model}.cfg /usr/data/printer_data/config/homing.cfg || exit $?
+        else
+          cp /usr/data/pellcorp/config/homing.cfg /usr/data/printer_data/config/ || exit $?
+        fi
         $CONFIG_HELPER --add-include "homing.cfg" || exit $?
 
         x_position_mid=$($CONFIG_HELPER --get-section-entry "stepper_x" "position_max" --divisor 2 --integer)
@@ -826,6 +834,13 @@ function install_klipper() {
         # just make sure the baud is written
         $CONFIG_HELPER --replace-section-entry "mcu" "baud" 230400 || exit $?
         $CONFIG_HELPER --replace-section-entry "mcu nozzle_mcu" "baud" 230400 || exit $?
+
+        # we need the levelling mcu for Ender 3 V3 for ADXL
+        if [ "$MODEL" != "F001" ] && [ "$MODEL" != "F002" ]; then
+          $CONFIG_HELPER --remove-section "mcu leveling_mcu" || exit $?
+        else
+          $CONFIG_HELPER --replace-section-entry "mcu leveling_mcu" "baud" 230400 || exit $?
+        fi
 
         kinematics=$($CONFIG_HELPER --get-section-entry "printer" "kinematics")
 
@@ -880,7 +895,7 @@ function install_klipper() {
         $CONFIG_HELPER --remove-section "dirzctl" || exit $?
         $CONFIG_HELPER --remove-section "accel_chip_proxy" || exit $?
         $CONFIG_HELPER --remove-section "z_compensate" || exit $?
-        $CONFIG_HELPER --remove-section "mcu leveling_mcu" || exit $?
+
         $CONFIG_HELPER --remove-section "bl24c16f" || exit $?
         $CONFIG_HELPER --remove-section "prtouch_v2" || exit $?
         $CONFIG_HELPER --remove-section "output_pin power" || exit $?
@@ -923,8 +938,8 @@ function install_klipper() {
             $CONFIG_HELPER --file start_end.cfg --replace-section-entry "gcode_macro _START_END_PARAMS" "variable_start_print_bed_heating_move_bed_distance" "0" || exit $?
         fi
 
-        if [ "$kinematics" = "cartesian" ] || [ "$MODEL" = "K1 SE" ]; then
-          # for cartesian no cool down necessary
+        # this is mostly for K1 series (excluding the SE which has no aux fan)
+        if [ "$kinematics" = "cartesian" ] || [ "$kinematics" = "corexz" ] || [ "$MODEL" = "K1 SE" ]; then
           $CONFIG_HELPER --file start_end.cfg --replace-section-entry "gcode_macro _START_END_PARAMS" "variable_end_print_cool_down" "False" || exit $?
         fi
 
@@ -1029,6 +1044,11 @@ function install_klipper() {
         $CONFIG_HELPER --remove-section "pause_resume" || exit $?
         $CONFIG_HELPER --remove-section "display_status" || exit $?
         $CONFIG_HELPER --remove-section "virtual_sdcard" || exit $?
+
+        # apply various Ender 3 V3 patches to printer.cfg last thing
+        if [ "$MODEL" = "F002" ] || [ "$MODEL" = "F001" ]; then
+          $CONFIG_HELPER --patches /usr/data/pellcorp/k1/printer.cfg.f001
+        fi
 
         if $CONFIG_HELPER --section-exists "filament_switch_sensor filament_sensor"; then
           $CONFIG_HELPER --replace-section-entry "filament_switch_sensor filament_sensor" "runout_gcode" "_ON_FILAMENT_RUNOUT" || exit $?
@@ -2013,13 +2033,6 @@ elif [ "$1" = "--klipper-repo" ]; then # convenience for testing new features
     fi
 fi
 
-# TODO - once Ender 3 V3 support is added remove this, but this allows
-# users to switch to the testing branch
-if [ "$MODEL" = "F001" ] || [ "$MODEL" = "F002" ]; then
-  echo "FATAL: Not supported for $MODEL"
-  exit 1
-fi
-
 export TIMESTAMP=$(date +"%Y-%m-%d_%H-%M-%S")
 LOG_FILE=/usr/data/printer_data/logs/installer-$TIMESTAMP.log
 
@@ -2423,8 +2436,13 @@ fi
     install_guppyscreen $mode "$GRUMPYSCREEN_BRANCH"
     install_guppyscreen=$?
 
-    setup_probe
-    setup_probe=$?
+    setup_probe=0
+
+    # for ender 3 v3 stupid fucking thing need to leave z as endstop
+    if [ "$MODEL" != "F001" ] && [ "$MODEL" != "F002" ]; then
+      setup_probe
+      setup_probe=$?
+    fi
 
     if [ "$probe" = "cartotouch" ]; then
         setup_cartotouch
