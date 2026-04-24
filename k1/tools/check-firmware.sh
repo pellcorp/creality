@@ -42,7 +42,7 @@ if [ -f $VERSION_FILE ] && [ -d $FW_DIR ]; then
     firmware_upgrade_required=false
 
     fw_mcu_version=$(cat $VERSION_FILE | grep "mcu_version" | awk -F '=' ' {print $2}')
-    file_mcu_version=$(basename $(ls $FW_DIR/mcu*) .bin)
+    file_mcu_version=$(basename $(ls $FW_DIR/mcu*) .bin 2> /dev/null)
 
     if [ "x$fw_mcu_version" = "x" ] || [ "$fw_mcu_version" != "$file_mcu_version" ]; then
         firmware_upgrade_required=true
@@ -51,7 +51,7 @@ if [ -f $VERSION_FILE ] && [ -d $FW_DIR ]; then
     # K1 etc and Ender 5 Max do nozzle firmware
     if [ "$MODEL" != "F005" ]; then
       fw_noz_version=$(cat $VERSION_FILE | grep "noz_version" | awk -F '=' ' {print $2}')
-      file_noz_version=$(basename $(ls $FW_DIR/noz*) .bin)
+      file_noz_version=$(basename $(ls $FW_DIR/noz*) .bin 2> /dev/null)
 
       if [ "x$fw_noz_version" = "x" ] || [ "$fw_noz_version" != "$file_noz_version" ]; then
           firmware_upgrade_required=true
