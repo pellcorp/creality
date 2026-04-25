@@ -159,6 +159,7 @@ auto_update() {
     esac
 
     if [ "x$fw_dir" = "x" ] || [ ! -d $FW_ROOT_DIR/$fw_dir ]; then
+        write_log "The firmware directory ($FW_ROOT_DIR/$fw_dir) does not exist for board [$board] and model [$model]"
         exit 1
     fi
 
