@@ -2,7 +2,7 @@
 
 PROG=/usr/bin/mcu_util
 VERSION_FILE=/usr/data/mcu.versions
-LOG_FILE=/usr/data/mcu_update.log
+LOG_FILE=/tmp/mcu_update.log
 FW_ROOT_DIR=/usr/share/klipper/fw
 
 RET_SUCCESS=0
@@ -146,8 +146,8 @@ auto_update() {
                 mcu_serial=/dev/ttyS1
                 fw_dir=F005
             elif [ "$model" = "F004" ]; then
-                mcu0_serial=/dev/ttyS1
-                noz0_serial=/dev/ttyS7
+                mcu_serial=/dev/ttyS1
+                noz_serial=/dev/ttyS7
                 fw_dir=F004
             else
                 write_log "The script is not intended for this printer model ($model)"

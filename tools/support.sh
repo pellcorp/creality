@@ -93,7 +93,7 @@ cp printer_data/logs/klippy.log $TMPDIR/klippy.log
 cp printer_data/logs/moonraker.log $TMPDIR/moonraker.log
 cp printer_data/logs/grumpyscreen.log $TMPDIR/grumpyscreen.log 2> /dev/null
 
-$BASEDIR/pellcorp/tools/supportzip.py $BASEDIR/support.zip support.log pellcorp-overrides/ pellcorp-backups/ printer_data/config/ printer_data/logs/installer-*.log $TMPDIR/klippy.log $latest_klippy_log $TMPDIR/moonraker.log $TMPDIR/grumpyscreen.log $TMPDIR/messages.log $BASEDIR/mcu_update.log
+$BASEDIR/pellcorp/tools/supportzip.py $BASEDIR/support.zip support.log pellcorp-overrides/ pellcorp-backups/ printer_data/config/ printer_data/logs/installer-*.log $TMPDIR/klippy.log $latest_klippy_log $TMPDIR/moonraker.log $TMPDIR/grumpyscreen.log $TMPDIR/messages.log /tmp/mcu_update.log
 cd - > /dev/null
 
 # cleanup only the files we created temporarily
