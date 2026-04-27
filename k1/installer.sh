@@ -411,9 +411,6 @@ function install_webcam() {
 
     grep -q "webcam" /usr/data/pellcorp.done
     if [ $? -ne 0 ]; then
-      SERVICE_TYPE=ustreamer
-      FRAMES_PER_SECOND=10
-
       # lets always stop and start the webcam
       if [ -f /etc/init.d/S50webcam ]; then
         /etc/init.d/S50webcam stop > /dev/null 2>&1
@@ -450,25 +447,9 @@ function install_webcam() {
       cp /usr/data/pellcorp/k1/files/auto_uvc.sh /usr/bin/
       chmod 777 /usr/bin/auto_uvc.sh
 
-      if [ -f /etc/init.d/S50webcam ]; then
-        CURRENT_SERVICE_TYPE=$(cat /etc/init.d/S50webcam | grep SERVICE_TYPE= | awk -F '=' '{print $2}')
-        if [ -n "$CURRENT_SERVICE_TYPE" ]; then
-          SERVICE_TYPE=$CURRENT_SERVICE_TYPE
-        fi
-
-        CURRENT_FRAMES_PER_SECOND=$(cat /etc/init.d/S50webcam | grep FRAMES_PER_SECOND= | awk -F '=' '{print $2}')
-        if [ -n "$CURRENT_FRAMES_PER_SECOND" ]; then
-          FRAMES_PER_SECOND=$CURRENT_FRAMES_PER_SECOND
-        fi
-      fi
-
-      cp /usr/data/pellcorp/k1/services/S50webcam /etc/init.d/
-      if [ "$SERVICE_TYPE" != "ustreamer" ]; then
-        sed -i "s/SERVICE_TYPE=ustreamer/SERVICE_TYPE=$SERVICE_TYPE/g" /etc/init.d/S50webcam
-      fi
-      if [ "$FRAMES_PER_SECOND" != "10" ]; then
-        sed -i "s/FRAMES_PER_SECOND=10/FRAMES_PER_SECOND=$FRAMES_PER_SECOND/g" /etc/init.d/S50webcam
-      fi
+      cp /usr/data/pellcorp/k1/services/S50webcam /etc/init.d/ || exit $?
+      cp /usr/data/pellcorp/k1/webcam.ini /usr/data/printer_data/config/ || exit $?
+      cp /usr/data/pellcorp/k1/webcam.conf /usr/data/printer_data/config/ || exit $?
 
       /etc/init.d/S50webcam start
 
@@ -479,8 +460,6 @@ function install_webcam() {
           rm /usr/data/pellcorp.ipaddress
         fi
       fi
-
-      cp /usr/data/pellcorp/k1/webcam.conf /usr/data/printer_data/config/ || exit $?
 
       echo "webcam" >> /usr/data/pellcorp.done
       sync
@@ -2527,7 +2506,7 @@ fi
     if [ -f /usr/data/pellcorp-backups/printer.factory.cfg ]; then
         # we want a copy of the file before config overrides are re-applied so we can correctly generate diffs
         # against different generations of the original file
-        for file in printer.cfg start_end.cfg fan_control.cfg ${probe}.conf spoolman.conf internal_macros.cfg useful_macros.cfg timelapse.conf moonraker.conf webcam.conf homing.cfg ${probe}_macro.cfg ${probe}.cfg; do
+        for file in printer.cfg start_end.cfg fan_control.cfg ${probe}.conf spoolman.conf internal_macros.cfg useful_macros.cfg timelapse.conf moonraker.conf webcam.conf webcam.ini homing.cfg ${probe}_macro.cfg ${probe}.cfg; do
             if [ -f /usr/data/printer_data/config/$file ]; then
                 cp /usr/data/printer_data/config/$file /usr/data/pellcorp-backups/$file
             fi

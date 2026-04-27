@@ -61,6 +61,8 @@ apply_overrides() {
                 $CONFIG_HELPER --file ${base_file} --overrides $overrides_dir/$file || exit $?
             elif [ "$base_file" = "grumpyscreen.ini" ]; then
                 $CONFIG_HELPER --file ${base_file} --overrides $overrides_dir/$file || exit $?
+            elif [ "$base_file" = "webcam.ini" ]; then
+                $CONFIG_HELPER --file ${base_file} --overrides $overrides_dir/$file || exit $?
             elif [ "$file" = "moonraker.secrets" ]; then
                 echo "INFO: Restoring $BASEDIR/printer_data/$file ..."
                 cp $overrides_dir/$file $BASEDIR/printer_data/
