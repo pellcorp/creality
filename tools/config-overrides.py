@@ -81,32 +81,33 @@ def main():
         # and we are ignoring a new scanner section in config overrides due to migrating to cartotouch.cfg
         if section_name != 'scanner' and 'gcode_macro' not in section_name and (printer_cfg or moonraker_conf or fan_control or webcam_conf or crowsnest_conf or grumpyscreen_cfg):
             if section_name not in original.sections():
-                new_section = updated.get_section(section_name, None)
-                if len(overrides.sections()) > 0:
-                    overrides[overrides.sections()[-1]].add_after.space().section(section_name)
-                else:
-                    overrides.add_section(section_name)
-
-                for key in new_section.keys():
-                    value = new_section.get(key, None)
-                    if len(value.lines) > 1:
-                        lines = value.lines
-                        # get rid of additional newlines at end of multiline string
-                        lines[-1] = lines[-1].rstrip()
-                        # we want a multi-line value to always start with a new line
-                        lines[0] = '\n'
-                        overrides[section_name][key] = ''
-                        overrides[section_name][key].set_values(lines, indent='', separator='')
+                if not overrides.has_section(section_name):
+                    new_section = updated.get_section(section_name, None)
+                    if len(overrides.sections()) > 0:
+                        overrides[overrides.sections()[-1]].add_after.space().section(section_name)
                     else:
-                        value = value.value
-                        if '#' in value:
-                            value = value.split('#', 1)[0].strip()
-                        elif ';' in value:
-                            value = value.split(';', 1)[0].strip()
+                        overrides.add_section(section_name)
+
+                    for key in new_section.keys():
+                        value = new_section.get(key, None)
+                        if len(value.lines) > 1:
+                            lines = value.lines
+                            # get rid of additional newlines at end of multiline string
+                            lines[-1] = lines[-1].rstrip()
+                            # we want a multi-line value to always start with a new line
+                            lines[0] = '\n'
+                            overrides[section_name][key] = ''
+                            overrides[section_name][key].set_values(lines, indent='', separator='')
                         else:
-                            value = value.strip()
-                        overrides[section_name][key] = f' {value}'
-                update_overrides = True
+                            value = value.value
+                            if '#' in value:
+                                value = value.split('#', 1)[0].strip()
+                            elif ';' in value:
+                                value = value.split(';', 1)[0].strip()
+                            else:
+                                value = value.strip()
+                            overrides[section_name][key] = f' {value}'
+                    update_overrides = True
 
     for section_name in updated.sections():
         if (exclude_sections and section_name in exclude_sections) or (include_sections and section_name not in include_sections):
