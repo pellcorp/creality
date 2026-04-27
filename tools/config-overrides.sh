@@ -85,11 +85,9 @@ override_file() {
     elif [ "$file" = "guppyscreen.cfg" ]; then # old file ignore it
         return 0
     elif [ "$file" = "belts_calibration.cfg" ] || [ "$file" = "KlipperScreen.conf" ]; then
-        #echo "INFO: Overrides not supported for $file"
         return 0
-    elif [ "$file" = "moonraker.asvc" ] || [ "$file" = "grumpyscreen.ini" ] || [ "$file" = "grumpyscreen.cfg" ] || [ "$file" = "printer.cfg" ] || [ "$file" = "internal_macros.cfg" ] || [ "$file" = "useful_macros.cfg" ] || [ "$file" = "webcam.conf" ] || [ "$file" = "beacon.conf" ] || [ "$file" = "cartographer.conf" ] || [ "$file" = "moonraker.conf" ] || [ "$file" = "start_end.cfg" ] || [ "$file" = "fan_control.cfg" ]; then
-        # for moonraker.asvc, grumpyscreen.cfg, printer.cfg, webcam.conf, useful_macros.cfg, start_end.cfg, fan_control.cfg and moonraker.conf - there must be an pellcorp-backups file
-        #echo "INFO: Overrides not supported for $file"
+    elif [ "$file" = "moonraker.asvc" ] || [ "$file" = "grumpyscreen.ini" ] || [ "$file" = "grumpyscreen.cfg" ] || [ "$file" = "printer.cfg" ] || [ "$file" = "internal_macros.cfg" ] || [ "$file" = "useful_macros.cfg" ] || [ "$file" = "webcam.conf" ] || [ "$file" = "beacon.conf" ] || [ "$file" = "cartographer.conf" ] || [ "$file" = "moonraker.conf" ] || [ "$file" = "start_end.cfg" ] || [ "$file" = "fan_control.cfg" ] || [ "$file" = "webcam.ini" ]; then
+        # for moonraker.asvc, grumpyscreen.cfg, printer.cfg, webcam.conf, useful_macros.cfg, start_end.cfg, fan_control.cfg, moonraker.conf and webcam.ini - there must be a pellcorp-backups file
         return 0
     elif [ ! -f "$BASEDIR/pellcorp/config/$file" ] && [ ! -f "$BASEDIR/pellcorp/${CONFIG_TYPE}/$file" ]; then
         if ! echo $file | grep -qE "printer([0-9]+).cfg"; then
@@ -97,7 +95,6 @@ override_file() {
             cp $BASEDIR/printer_data/config/$file $BASEDIR/pellcorp-overrides/
             return 0
         else
-            #echo "INFO: Ignoring $BASEDIR/printer_data/config/$file ..."
             return 0
         fi
     fi
