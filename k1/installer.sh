@@ -2435,6 +2435,7 @@ fi
 
     install_packages $mode
     install_webcam $mode
+    install_webcam=$?
     install_boot_display
 
     install_moonraker $mode
@@ -2572,6 +2573,11 @@ fi
     if [ $apply_overrides -ne 0 ] || [ $install_guppyscreen -ne 0 ]; then
         echo "INFO: Restarting Grumpyscreen ..."
         sudo systemctl restart grumpyscreen
+    fi
+
+    if [ $apply_overrides -ne 0 ] || [ $install_webcam -ne 0 ]; then
+        echo "INFO: Restarting Webcam ..."
+        sudo systemctl restart webcam
     fi
 
     echo
