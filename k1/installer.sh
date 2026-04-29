@@ -16,6 +16,8 @@ if [ -f /usr/bin/get_sn_mac.sh ]; then
     model=k1m
   elif [ "$MODEL" = "F004" ]; then
     model=f004
+  elif [ "$MODEL" = "F002" ] || [ "$MODEL" = "F001" ]; then
+    model=f001
   elif [ "$MODEL" = "F005" ]; then
     model=f005
     # this piece of hackery is just for my Ender 3 V3 SE which has a Nebula Pad and a KE board but a SE toolhead
@@ -47,7 +49,7 @@ else
 fi
 
 # we only need to verify we are not trying to install on really old k1 firmware
-if [ "$MODEL" != "F004" ] && [ "$MODEL" != "F005" ] && [ "$MODEL" != "NEBULA" ]; then
+if [ "$MODEL" != "F001" ] && [ "$MODEL" != "F002" ] && [ "$MODEL" != "F004" ] && [ "$MODEL" != "F005" ] && [ "$MODEL" != "NEBULA" ]; then
     # 6. prefix is the prefix I use for pre-rooted firmware
     ota_version=$(cat /etc/ota_info | grep ota_version | awk -F '=' '{print $2}' | sed 's/^6.//g' | tr -d '.')
     if [ -z "$ota_version" ] || [ $ota_version -lt 1335 ]; then
@@ -2067,6 +2069,13 @@ elif [ "$1" = "--klipper-repo" ]; then # convenience for testing new features
         echo "Error invalid klipper repo specified"
         exit 1
     fi
+fi
+
+# TODO - once Ender 3 V3 support is added remove this, but this allows
+# users to switch to the testing branch
+if [ "$MODEL" = "F001" ] || [ "$MODEL" = "F002" ]; then
+  echo "FATAL: Not supported for $MODEL"
+  exit 1
 fi
 
 export TIMESTAMP=$(date +"%Y-%m-%d_%H-%M-%S")
