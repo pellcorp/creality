@@ -853,20 +853,18 @@ function install_klipper() {
         cp /usr/data/pellcorp/k1/belts_calibration.cfg /usr/data/printer_data/config/ || exit $?
         $CONFIG_HELPER --add-include "belts_calibration.cfg" || exit $?
 
-        # FIXME - if we can get Ender 5 Max firmware working go back to using nozzle adxl by default
-        remove_adxl=false
         if [ "$MODEL" = "F004" ]; then
-          remove_adxl=true
-        elif [ "$MODEL" = "F005" ] && [ ! -f /etc/init.d/S57klipper_mcu ]; then
-          remove_adxl=true
-        fi
+          # new versions of Ender 5 Max firmware added accel_chip_proxy to replace adxl
+          $CONFIG_HELPER --remove-section "accel_chip_proxy" || exit $?
 
-        if [ "$remove_adxl" = "true" ]; then
-          # for ender 5 max we can't use on board adxl and only beacon and cartotouch support
-          if [ "$probe" != "beacon" ] && [ "$probe" != "cartotouch" ] && [ "$probe" != "cartographer" ]; then
-              $CONFIG_HELPER --remove-section "adxl345" || exit $?
-              $CONFIG_HELPER --remove-section "resonance_tester" || exit $?
-          fi
+          $CONFIG_HELPER --add-section "adxl345"
+          $CONFIG_HELPER --replace-section-entry "adxl345" "cs_pin" "nozzle_mcu:PA4" || exit $?
+          $CONFIG_HELPER --replace-section-entry "adxl345" "axes_map" "x,-z,y" || exit $?
+          $CONFIG_HELPER --replace-section-entry "adxl345" "spi_speed" "5000000" || exit $?
+          $CONFIG_HELPER --replace-section-entry "adxl345" "spi_software_sclk_pin" "nozzle_mcu:PA5" || exit $?
+          $CONFIG_HELPER --replace-section-entry "adxl345" "spi_software_mosi_pin" "nozzle_mcu:PA7" || exit $?
+          $CONFIG_HELPER --replace-section-entry "adxl345" "spi_software_miso_pin" "nozzle_mcu:PA6" || exit $?
+          $CONFIG_HELPER --replace-section-entry "resonance_tester" "accel_chip" "adxl345" || exit $?
         fi
 
         # F004, F005 and NEBULA already have the /usr/bin/beep command
@@ -1546,32 +1544,6 @@ function setup_cartotouch() {
             $CONFIG_HELPER --replace-section-entry "scanner" "mode" "touch" || exit $?
         fi
 
-        # Ender 5 Max we don't have firmware for it, so need to configure cartographer instead for adxl
-        if [ "$MODEL" = "F004" ]; then
-          # new versions of Ender 5 Max firmware added accel_chip_proxy to replace adxl
-          $CONFIG_HELPER --add-section "adxl345"
-
-          local SERIAL_ID=$(ls /dev/serial/by-id/usb-* | grep "IDM\|Cartographer" | head -1)
-          if [ -n "$SERIAL_ID" ]; then
-            local CARTO_TYPE=$(echo $SERIAL_ID | awk -F '_' '{print $2}')
-            if [ "$CARTO_TYPE" = "stm32g431xx" ]; then # a V4
-              $CONFIG_HELPER --replace-section-entry "adxl345" "cs_pin" "scanner:PA0" || exit $?
-            else
-              $CONFIG_HELPER --replace-section-entry "adxl345" "cs_pin" "scanner:PA3" || exit $?
-            fi
-          else
-            $CONFIG_HELPER --replace-section-entry "adxl345" "cs_pin" "scanner:CHANGEME" || exit $?
-          fi
-
-          $CONFIG_HELPER --replace-section-entry "adxl345" "spi_bus" "spi1" || exit $?
-          $CONFIG_HELPER --replace-section-entry "adxl345" "axes_map" "x,y,z" || exit $?
-          $CONFIG_HELPER --remove-section-entry "adxl345" "spi_speed" || exit $?
-          $CONFIG_HELPER --remove-section-entry "adxl345" "spi_software_sclk_pin" || exit $?
-          $CONFIG_HELPER --remove-section-entry "adxl345" "spi_software_mosi_pin" || exit $?
-          $CONFIG_HELPER --remove-section-entry "adxl345" "spi_software_miso_pin" || exit $?
-          $CONFIG_HELPER --replace-section-entry "resonance_tester" "accel_chip" "adxl345" || exit $?
-        fi
-
         echo "cartotouch-probe" >> /usr/data/pellcorp.done
         sync
         return 1
@@ -1626,30 +1598,6 @@ function setup_cartographer() {
         $CONFIG_HELPER --file cartographer_macro.cfg --replace-section-entry "gcode_macro _CARTOGRAPHER_QUICKSTART" "variable_stop_start_camera" "True" || exit $?
 
         set_serial_cartographer
-
-        # Ender 5 Max we don't have firmware for it, so need to configure cartographer instead for adxl
-        if [ "$MODEL" = "F004" ]; then
-          # new versions of Ender 5 Max firmware added accel_chip_proxy to replace adxl
-          $CONFIG_HELPER --add-section "adxl345"
-          local SERIAL_ID=$(ls /dev/serial/by-id/usb-* | grep "IDM\|Cartographer" | head -1)
-          if [ -n "$SERIAL_ID" ]; then
-            local CARTO_TYPE=$(echo $SERIAL_ID | awk -F '_' '{print $2}')
-            if [ "$CARTO_TYPE" = "stm32g431xx" ]; then # a V4
-              $CONFIG_HELPER --replace-section-entry "adxl345" "cs_pin" "cartographer:PA0" || exit $?
-            else
-              $CONFIG_HELPER --replace-section-entry "adxl345" "cs_pin" "cartographer:PA3" || exit $?
-            fi
-          else
-            $CONFIG_HELPER --replace-section-entry "adxl345" "cs_pin" "cartographer:CHANGEME" || exit $?
-          fi
-          $CONFIG_HELPER --replace-section-entry "adxl345" "spi_bus" "spi1" || exit $?
-          $CONFIG_HELPER --replace-section-entry "adxl345" "axes_map" "x,y,z" || exit $?
-          $CONFIG_HELPER --remove-section-entry "adxl345" "spi_speed" || exit $?
-          $CONFIG_HELPER --remove-section-entry "adxl345" "spi_software_sclk_pin" || exit $?
-          $CONFIG_HELPER --remove-section-entry "adxl345" "spi_software_mosi_pin" || exit $?
-          $CONFIG_HELPER --remove-section-entry "adxl345" "spi_software_miso_pin" || exit $?
-          $CONFIG_HELPER --replace-section-entry "resonance_tester" "accel_chip" "adxl345" || exit $?
-        fi
 
         echo "cartographer-probe" >> /usr/data/pellcorp.done
         sync
@@ -1710,12 +1658,6 @@ function setup_beacon() {
         $CONFIG_HELPER --file beacon_macro.cfg --replace-section-entry "gcode_macro AXIS_TWIST_COMPENSATION_CALIBRATE" "variable_stop_start_camera" "True" || exit $?
 
         set_serial_beacon
-
-        # Ender 5 Max we don't have firmware for it, so need to configure cartographer instead for adxl
-        if [ "$MODEL" = "F004" ]; then
-          $CONFIG_HELPER --remove-section "adxl345" || exit $?
-          $CONFIG_HELPER --replace-section-entry "resonance_tester" "accel_chip" "beacon" || exit $?
-        fi
 
         echo "beacon-probe" >> /usr/data/pellcorp.done
         sync
