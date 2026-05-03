@@ -1,0 +1,14 @@
+-- bltouch.cfg
+[bltouch]
+x_offset: 999
+y_offset: 999
+
+[bed_mesh]
+mesh_min: 999,999
+mesh_max: 999,999
+
+[screws_tilt_adjust]
+__action__: DELETED
+
+[axis_twist_compensation]
+__action__: DELETED

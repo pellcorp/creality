@@ -1,0 +1,64 @@
+[gap_auto_comp]
+__action__: DELETED
+
+[output_pin soc_fan]
+__action__: DELETED
+
+[temperature_fan soc_fan]
+__action__: DELETED
+
+[heater_fan my_nozzle_fan]
+__action__: DELETED
+
+[static_digital_output  my_board_fan]
+__action__: DELETED
+
+[output_pin fan0]
+__action__: DELETED
+
+[output_pin fan2]
+__action__: DELETED
+
+[output_pin fan1]
+__action__: DELETED
+
+[accel_chip_proxy x]
+__action__: DELETED
+
+[accel_chip_proxy y]
+__action__: DELETED
+
+[soft_homing]
+__action__: DELETED
+
+#[lis2dw bed]
+#cs_pin: leveling_mcu:PA4
+#axes_map: y,x,z
+#spi_software_sclk_pin: leveling_mcu:PA5
+#spi_software_mosi_pin: leveling_mcu:PA7
+#spi_software_miso_pin: leveling_mcu:PA6
+
+#[lis2dw nozzle]
+#cs_pin: nozzle_mcu:PA4
+#axes_map: y,-z,x
+#spi_software_sclk_pin: nozzle_mcu:PA5
+#spi_software_mosi_pin: nozzle_mcu:PA7
+#spi_software_miso_pin: nozzle_mcu:PA6
+
+[adxl345 bed]
+cs_pin: leveling_mcu:PA4
+axes_map: y,x,z
+spi_software_sclk_pin: leveling_mcu:PA5
+spi_software_mosi_pin: leveling_mcu:PA7
+spi_software_miso_pin: leveling_mcu:PA6
+
+[adxl345 nozzle]
+cs_pin: nozzle_mcu:PA4
+axes_map: y,-z,x
+spi_software_sclk_pin: nozzle_mcu:PA5
+spi_software_mosi_pin: nozzle_mcu:PA7
+spi_software_miso_pin: nozzle_mcu:PA6
+
+[resonance_tester]
+accel_chip_y: adxl345 bed
+accel_chip_x: adxl345 nozzle
