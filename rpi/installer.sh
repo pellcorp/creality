@@ -942,6 +942,8 @@ elif [ "$1" = "--klipper-branch" ]; then # convenience for testing new features
         exit 1
     fi
 elif [ "$1" = "--klipper-repo" ]; then
+    cd ~ # make sure we are not currently in the klipper dir oops
+
     if [ -n "$2" ]; then
         klipper_repo=$2
 
@@ -949,6 +951,11 @@ elif [ "$1" = "--klipper-repo" ]; then
         repo="${klipper_repo#*/}"
         if [ "$owner" = "$repo" ]; then
           owner=pellcorp
+        fi
+
+        if [ "$owner" = "pellcorp" ]; then
+          repo=$(echo ${repo//-rpi/})
+          repo="${repo}-rpi"
         fi
 
         if [ -d $BASEDIR/klipper/.git ]; then
@@ -969,6 +976,14 @@ elif [ "$1" = "--klipper-repo" ]; then
             if [ -n "$3" ]; then
               cd $BASEDIR/klipper && git switch $3 && cd - > /dev/null
             fi
+
+            # for switching a klipper repo we need to recreate the klippy-env
+            if [ -d $BASEDIR/klippy-env ]; then
+              rm -rf $BASEDIR/klippy-env
+            fi
+            virtualenv -p python3 $BASEDIR/klippy-env
+            $BASEDIR/klippy-env/bin/pip install -r $BASEDIR/klipper/scripts/klippy-requirements.txt
+            $BASEDIR/klippy-env/bin/pip install -r $BASEDIR/pellcorp/rpi/klippy-requirements.txt
         else
             update_repo $BASEDIR/klipper $3 || exit $?
         fi
@@ -1038,6 +1053,7 @@ fi
   force=false
   skip_overrides=false
   probe_switch=false
+  klipper_fork=klipper
   printer=
   mount=
   existing_printer=$(cat $BASEDIR/pellcorp-overrides/config.info 2> /dev/null | grep printer= | awk -F '=' '{print $2}')
@@ -1054,6 +1070,9 @@ fi
         skip_overrides=true
         mode=$(echo $mode | sed 's/clean-//g')
       fi
+    elif [ "$1" = "--kalico" ]; then
+      klipper_fork=kalico
+      shift
     elif [ "$1" = "--mount" ]; then
       shift
       mount=$1
@@ -1357,7 +1376,7 @@ fi
     exit 1
   fi
 
-  $BASEDIR/pellcorp/rpi/install-klipper.sh $mode $probe || exit $?
+  KLIPPER_FORK=$klipper_fork $BASEDIR/pellcorp/rpi/install-klipper.sh $mode $probe || exit $?
   if [ $? -ne 0 ]; then
     echo "FATAL: Klipper installation failed - aborting"
     exit 1
