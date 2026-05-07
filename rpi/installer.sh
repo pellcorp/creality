@@ -941,12 +941,18 @@ elif [ "$1" = "--klipper-branch" ]; then # convenience for testing new features
         echo "Error invalid branch specified"
         exit 1
     fi
-elif [ "$1" = "--klipper-repo" ]; then
+elif [ "$1" = "--klipper-repo" ] || [ "$1" = "--kalico" ] || [ "$1" = "--klipper" ]; then
     cd ~ # make sure we are not currently in the klipper dir oops
 
-    if [ -n "$2" ]; then
-        klipper_repo=$2
+    if [ "$1" = "--kalico" ]; then
+      klipper_repo=kalico
+    elif [ "$1" = "--klipper" ]; then
+      klipper_repo=klipper
+    elif [ -n "$2" ]; then
+      klipper_repo=$2
+    fi
 
+    if [ -n "$klipper_repo" ]; then
         owner="${klipper_repo%%/*}"
         repo="${klipper_repo#*/}"
         if [ "$owner" = "$repo" ]; then
