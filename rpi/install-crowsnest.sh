@@ -26,7 +26,16 @@ if [ $? -ne 0 ]; then
       retry sudo DEBIAN_FRONTEND=noninteractive apt-get --yes install make; error
     fi
 
-    sudo CROWSNEST_UNATTENDED=1 CROWSNEST_ADD_CROWSNEST_MOONRAKER=1 make install || exit $?
+    echo
+    echo "INFO: Installing crowsnest quietly ... "
+
+    sudo CROWSNEST_UNATTENDED=1 CROWSNEST_ADD_CROWSNEST_MOONRAKER=1 make install > $BASEDIR/printer_data/logs/crowsnest-install-$TIMESTAMP.log 2>&1 || exit $?
+    if [ $? -eq 0 ]; then
+      echo "INFO: Crownest Installation complete!"
+    else
+      echo "ERROR: Crowsnest installation failed - see $BASEDIR/printer_data/logs/crowsnest-install-$TIMESTAMP.log for error"
+      exit 1
+    fi
 
     # we replace the one copied in there with ours so that config overrides work
     cp $BASEDIR/pellcorp/rpi/crowsnest.conf $BASEDIR/printer_data/config/ || exit $?

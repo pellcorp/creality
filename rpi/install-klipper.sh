@@ -75,6 +75,12 @@ function update_klipper() {
   sudo systemctl start klipper
 }
 
+if [ -n "$KLIPPER_FORK" ]; then
+  KLIPPER_FORK=$(echo ${KLIPPER_FORK//-rpi/})
+else
+  KLIPPER_FORK=klipper
+fi
+
 grep -q "klipper" $BASEDIR/pellcorp.done
 if [ $? -ne 0 ]; then
   if [ "$mode" != "update" ] && [ -d $BASEDIR/klipper ]; then
@@ -91,9 +97,9 @@ if [ $? -ne 0 ]; then
 
   if [ ! -d $BASEDIR/klipper/ ]; then
     echo
-    echo "INFO: Installing klipper ..."
+    echo "INFO: Installing ${KLIPPER_FORK} ..."
 
-    git clone https://github.com/pellcorp/klipper-rpi.git $BASEDIR/klipper || exit $?
+    git clone https://github.com/pellcorp/${KLIPPER_FORK}-rpi.git $BASEDIR/klipper || exit $?
   fi
 
   cd $BASEDIR/klipper
