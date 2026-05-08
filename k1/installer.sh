@@ -458,14 +458,6 @@ function install_webcam() {
 
       /etc/init.d/S50webcam start
 
-      if [ -f /usr/data/pellcorp.ipaddress ]; then
-        # don't wipe the pellcorp.ipaddress if its been explicitly set to skip
-        PREVIOUS_IP_ADDRESS=$(cat /usr/data/pellcorp.ipaddress 2> /dev/null)
-        if [ "$PREVIOUS_IP_ADDRESS" != "skip" ]; then
-          rm /usr/data/pellcorp.ipaddress
-        fi
-      fi
-
       echo "webcam" >> /usr/data/pellcorp.done
       sync
       return 1
@@ -812,8 +804,8 @@ function install_klipper() {
         
         cp /usr/data/pellcorp/k1/services/S55klipper_service /etc/init.d/ || exit $?
 
-        # currently no support for updating firmware on Ender5 Max and Nebula Pad
-        if [ "$MODEL" != "F004" ] && [ "$MODEL" != "NEBULA" ]; then
+        # currently no support for updating firmware on a Nebula Pad
+        if [ "$MODEL" != "NEBULA" ]; then
             cp /usr/data/pellcorp/k1/services/S13mcu_update /etc/init.d/ || exit $?
         fi
 
@@ -860,8 +852,9 @@ function install_klipper() {
         cp /usr/data/pellcorp/config/useful_macros.cfg /usr/data/printer_data/config/ || exit $?
         $CONFIG_HELPER --add-include "useful_macros.cfg" || exit $?
 
+        # mcu rpi is used for adxl on ender 3 v3 ke and nebula pad (currently only a ender 3 v3 se) but otherwise
+        # serves no purpose and takes up resources so remove it except for those printers.
         if [ "$MODEL" != "F005" ] && [ "$MODEL" != "NEBULA" ]; then
-          # the klipper_mcu is not even used, so just get rid of it
           $CONFIG_HELPER --remove-section "mcu rpi" || exit $?
         fi
 
@@ -2383,8 +2376,9 @@ fi
     # create a directory for pngs to go
     mkdir -p /usr/data/printer_data/config/images
 
-    # add a service to take care of updating various config files if ip address changes
-    cp /usr/data/pellcorp/k1/services/S96ipaddress /etc/init.d/
+    # we are going back to just using the webcam via nginx for simplicity
+    [ -f /etc/init.d/S96ipaddress ] && rm /etc/init.d/S96ipaddress
+    [ -f /usr/data/pellcorp.ipaddress ] && rm /usr/data/pellcorp.ipaddress
 
     if [ -L /usr/data/printer_data/logs/messages ]; then
       rm /usr/data/printer_data/logs/messages
@@ -2519,11 +2513,7 @@ fi
         echo "INFO: No changes made"
     fi
 
-    /usr/data/pellcorp/k1/update-ip-address.sh
-    update_ip_address=$?
-    echo
-    
-    if [ $apply_overrides -ne 0 ] || [ $install_moonraker -ne 0 ] || [ $install_cartographer_plugin -ne 0 ] || [ $install_cartographer_klipper -ne 0 ] || [ $install_beacon_klipper -ne 0 ] || [ $update_ip_address -ne 0 ]; then
+    if [ $apply_overrides -ne 0 ] || [ $install_moonraker -ne 0 ] || [ $install_cartographer_plugin -ne 0 ] || [ $install_cartographer_klipper -ne 0 ] || [ $install_beacon_klipper -ne 0 ]; then
         echo "INFO: Restarting Moonraker ..."
         sudo systemctl restart moonraker
     fi

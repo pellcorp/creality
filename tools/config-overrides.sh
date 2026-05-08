@@ -119,6 +119,19 @@ override_file() {
       fi
     else
       $CONFIG_OVERRIDES --original "$original_file" --updated "$updated_file" --overrides "$overrides_file" || exit $?
+
+      # special handling if migrating back to nginx for webcam, this only happens when we run the tool before completing the
+      # first update after migrating cos the /usr/data/pellcorp.ipaddress will be removed!
+      if [ "$file" = "webcam.conf" ] && [ -f $BASEDIR/pellcorp-overrides/webcam.conf ] && [ -f /usr/data/pellcorp.ipaddress ]; then
+        PREVIOUS_IP_ADDRESS=$(cat /usr/data/pellcorp.ipaddress 2> /dev/null)
+        # in this case it was previously derived by the ipaddress service so clean them out so we can safely go back to nginx
+        # however if someone has enabled the skip action, this means they are managing the webcam.conf themselves and we need
+        # to retain their custom configuration
+        if [ "$PREVIOUS_IP_ADDRESS" != "skip" ]; then
+          sed -i '/stream_url/d' $BASEDIR/pellcorp-overrides/webcam.conf
+          sed -i '/snapshot_url/d' $BASEDIR/pellcorp-overrides/webcam.conf
+        fi
+      fi
     fi
 
     # we renamed the SENSORLESS_PARAMS to hide it
