@@ -2427,11 +2427,17 @@ fi
       install_beacon_klipper=$?
     fi
 
-    install_guppyscreen $mode "$GRUMPYSCREEN_BRANCH"
-    install_guppyscreen=$?
+    install_guppyscreen=0
+    if [ -f /etc/init.d/S99helixscreen ]; then
+      echo
+      echo "INFO: HelixScreen detected skipping GrumpyScreen"
+      echo
+    else
+      install_guppyscreen $mode "$GRUMPYSCREEN_BRANCH"
+      install_guppyscreen=$?
+    fi
 
     setup_probe=0
-
     # for ender 3 v3 stupid fucking thing need to leave z as endstop
     if [ "$MODEL" != "F001" ] && [ "$MODEL" != "F002" ]; then
       setup_probe
