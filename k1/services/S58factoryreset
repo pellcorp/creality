@@ -32,7 +32,6 @@ factory_reset() {
         -path '/usr/data/backups' -prune -o \
         -path '/usr/data/macaddr.txt' -prune -o \
         -path '/usr/data/ethmacaddr.txt' -prune -o \
-        # lets leave the actual /usr/data/pellcorp repo intact for a factory reset
         -path '/usr/data/pellcorp' -prune -o \
         -path '/usr/data/pellcorp-backups' -prune -o \
         -path '/usr/data/pellcorp-overrides' -prune -o \
