@@ -353,7 +353,7 @@ def main():
         if os.path.exists(options.overrides):
             include_sections = options.include_sections.split(',') if options.include_sections else None
             exclude_sections = options.exclude_sections.split(',') if options.exclude_sections else None
-            allow_delete_section = (printer_cfg or fan_control or grumpyscreen_cfg)
+            allow_delete_section = (moonraker_conf or printer_cfg or fan_control or grumpyscreen_cfg)
             allow_delete_entry = printer_cfg
             allow_new_section = (fan_control or printer_cfg or moonraker_conf or webcam_conf or crowsnest_conf or grumpyscreen_cfg)
             updated = override_cfg(updater, options.overrides,
