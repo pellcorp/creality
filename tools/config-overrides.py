@@ -48,7 +48,7 @@ def main():
 
     deleted_sections = []
     for section_name in original.sections():
-        if section_name not in updated.sections() and (printer_cfg or fan_control or grumpyscreen_cfg):
+        if section_name not in updated.sections() and (moonraker_conf or printer_cfg or fan_control or grumpyscreen_cfg):
             deleted_sections.append(section_name)
 
     if fan_control:
@@ -60,12 +60,11 @@ def main():
         if 'static_digital_output nozzle_mcu_fan_always_on' in deleted_sections and 'heater_fan hotend' in deleted_sections:
             deleted_sections.remove('static_digital_output nozzle_mcu_fan_always_on')
 
-    # only support deleting sections from printer.cfg, fan_control.cfg or grumpyscreen.ini for now
     for section_name in deleted_sections:
         if (exclude_sections and section_name in exclude_sections) or (include_sections and section_name not in include_sections):
             continue
 
-        if section_name not in updated.sections() and (printer_cfg or fan_control or grumpyscreen_cfg):
+        if section_name not in updated.sections() and (moonraker_conf or printer_cfg or fan_control or grumpyscreen_cfg):
             if len(overrides.sections()) > 0:
                 overrides[overrides.sections()[-1]].add_after.space().section(section_name)
             else:
