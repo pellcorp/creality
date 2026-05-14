@@ -1481,9 +1481,6 @@ fi
       echo "ERROR: Probe $probe not supported"
       exit 1
     fi
-  else
-    # for delta this file is missing
-    $CONFIG_HELPER --ignore-missing --file start_end.cfg --replace-section-entry "gcode_macro _START_END_PARAMS" "variable_activate_bed_mesh" "False"
   fi
 
   # we want a copy of the file before config overrides are re-applied so we can correctly generate diffs
