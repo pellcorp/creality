@@ -27,13 +27,13 @@ if [ $? -ne 0 ]; then
     fi
 
     echo
-    echo "INFO: Installing crowsnest quietly ... "
+    echo "INFO: Installing crowsnest ... "
 
-    sudo CROWSNEST_UNATTENDED=1 CROWSNEST_ADD_CROWSNEST_MOONRAKER=1 make install > $BASEDIR/printer_data/logs/crowsnest-install-$TIMESTAMP.log 2>&1 || exit $?
+    # thanks Chad for putting me onto script which seems to have resolved the alignment issues
+    script -qefc "sudo CROWSNEST_UNATTENDED=1 CROWSNEST_ADD_CROWSNEST_MOONRAKER=1 make install" /dev/null
     if [ $? -eq 0 ]; then
       echo "INFO: Crownest Installation complete!"
     else
-      echo "ERROR: Crowsnest installation failed - see $BASEDIR/printer_data/logs/crowsnest-install-$TIMESTAMP.log for error"
       exit 1
     fi
 
