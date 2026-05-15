@@ -147,11 +147,11 @@ if [ $? -ne 0 ]; then
   echo
   echo "INFO: Updating klipper config ..."
 
-  if [ ! -d $BASEDIR/fluidd-config ]; then
-    git clone https://github.com/fluidd-core/fluidd-config.git $BASEDIR/fluidd-config || exit $?
+  if [ -d $BASEDIR/fluidd-config ]; then
+    rm -rf $BASEDIR/fluidd-config
   fi
 
-  ln -sf $BASEDIR/fluidd-config/client.cfg $BASEDIR/printer_data/config/
+  cp --remove-destination $BASEDIR/pellcorp/config/client.cfg $BASEDIR/printer_data/config/
   $CONFIG_HELPER --add-include "client.cfg" || exit $?
 
   kinematics=$($CONFIG_HELPER --get-section-entry "printer" "kinematics")
