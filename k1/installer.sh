@@ -1013,20 +1013,11 @@ function install_klipper() {
         # just in case its missing from stock printer.cfg make sure it gets added
         $CONFIG_HELPER --add-section "exclude_object" || exit $?
 
-        if [ "$mode" != "update" ] && [ -d /usr/data/fluidd-config ]; then
+        if [ -d /usr/data/fluidd-config ]; then
             rm -rf /usr/data/fluidd-config
         fi
-
-        if [ ! -d /usr/data/fluidd-config ]; then
-            echo
-            echo "INFO: Updating client macros ..."
-
-            git clone https://github.com/fluidd-core/fluidd-config.git /usr/data/fluidd-config || exit $?
-        fi
-
-        [ -e /usr/data/printer_data/config/fluidd.cfg ] && rm /usr/data/printer_data/config/fluidd.cfg
-
-        ln -sf /usr/data/fluidd-config/client.cfg /usr/data/printer_data/config/
+        [ -L /usr/data/printer_data/config/client.cfg ] && rm /usr/data/printer_data/config/client.cfg
+        cp /usr/data/pellcorp/config/client.cfg /usr/data/printer_data/config/
         $CONFIG_HELPER --add-include "client.cfg" || exit $?
 
         # for moonraker to be able to use moonraker fluidd/mainsail client.cfg out of the box need to
