@@ -139,6 +139,9 @@ def main():
                 if ('gcode_macro' in section_name or section_name == 'homing_override') and key == 'gcode':
                     continue
 
+                if (section_name == 'virtual_sdcard') and key == 'on_error_gcode':
+                    continue
+
                 # we removed the variable_turn_off_chamber and variable_turn_on_chamber from turn on and off fans so don't apply an override here
                 # we normally only apply overrides where the variable exists but we allow new variables for fan control
                 # so we need this hack
