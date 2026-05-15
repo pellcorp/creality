@@ -1024,7 +1024,7 @@ function install_klipper() {
         # have $HOME/printer_data resolve correctly.
         ln -sf /usr/data/printer_data/ /root
 
-        # these are already defined in fluidd config so get rid of them from printer.cfg
+        # these are already defined in client.cfg so get rid of them from printer.cfg
         $CONFIG_HELPER --remove-section "pause_resume" || exit $?
         $CONFIG_HELPER --remove-section "display_status" || exit $?
         $CONFIG_HELPER --remove-section "virtual_sdcard" || exit $?
