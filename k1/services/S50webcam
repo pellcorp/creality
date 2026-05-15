@@ -12,24 +12,34 @@ RESOLUTION="1280x720"
 
 start() {
   # allow configuration via a webcam.ini file
-      if [ -f $CONFIG_FILE ]; then
-        FRAMES_PER_SECOND=$(cat $CONFIG_FILE | grep frames_per_second | awk -F '=' '{print $2}')
-        WORKERS=$(cat $CONFIG_FILE | grep workers | awk -F '=' '{print $2}')
-        BUFFERS=$(cat $CONFIG_FILE | grep buffers | awk -F '=' '{print $2}')
-        RESOLUTION=$(cat $CONFIG_FILE | grep resolution | awk -F '=' '{print $2}')
-      fi
+  if [ -f $CONFIG_FILE ]; then
+    FRAMES_PER_SECOND=$(cat $CONFIG_FILE | grep frames_per_second | awk -F '=' '{print $2}')
+    WORKERS=$(cat $CONFIG_FILE | grep workers | awk -F '=' '{print $2}')
+    BUFFERS=$(cat $CONFIG_FILE | grep buffers | awk -F '=' '{print $2}')
+    RESOLUTION=$(cat $CONFIG_FILE | grep resolution | awk -F '=' '{print $2}')
+  fi
 
-      V4L_DEVICE=$(v4l2-ctl --list-devices|grep -A1 usb|sed 's/^[[:space:]]*//g'|grep '^/dev' | head -1)
-      if [ "x$V4L_DEVICE" = "x" ]; then
-        echo "WARNING: No webcams found!"
-        exit 1
-      fi
+  V4L_DEVICE=$(v4l2-ctl --list-devices|grep -A1 usb|sed 's/^[[:space:]]*//g'|grep '^/dev' | head -1)
+  if [ "x$V4L_DEVICE" = "x" ]; then
+    echo "WARNING: No webcams found!"
+    exit 1
+  fi
 
-      start-stop-daemon -S -b -m -p $PID_FILE --exec /usr/data/ustreamer/ustreamer -- -n -r $RESOLUTION -c HW -m MJPEG -b $BUFFERS -w $WORKERS -f $FRAMES_PER_SECOND -l -d $V4L_DEVICE --host=0.0.0.0 --allow-origin=* --device-timeout 15
+  start-stop-daemon -S -b -m -p $PID_FILE --exec /usr/data/ustreamer/ustreamer -- -n -r $RESOLUTION -c HW -m MJPEG -b $BUFFERS -w $WORKERS -f $FRAMES_PER_SECOND -l -d $V4L_DEVICE --host=0.0.0.0 --allow-origin=* --device-timeout 15
 }
 
 stop() {
   start-stop-daemon -K -p $PID_FILE > /dev/null 2>&1
+
+  # actually wait for the service to stop
+  service_pid="$(cat $PID_FILE 2> /dev/null)"
+  if [ -n "$service_pid" ]; then
+        while true; do
+              if [ ! -d /proc/"$service_pid" ] ; then
+                    break
+              fi
+        done
+  fi
 }
 
 case "$1" in
@@ -41,16 +51,7 @@ case "$1" in
     ;;
 
   restart|reload)
-   stop
-    # this allows a graceful restart of service by actually waiting for it to stop first
-    service_pid="$(cat $PID_FILE 2> /dev/null)"
-    if [ -n "$service_pid" ]; then
-          while true; do
-                if [ ! -d /proc/"$service_pid" ] ; then
-                      break
-                fi
-          done
-    fi
+    stop
     start
     ;;
   *)
