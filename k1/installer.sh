@@ -1483,6 +1483,7 @@ function set_serial_cartotouch() {
         local EXISTING_SERIAL_ID=$($CONFIG_HELPER --file cartotouch.cfg --get-section-entry "scanner" "serial")
         if [ "$EXISTING_SERIAL_ID" != "$SERIAL_ID" ]; then
             $CONFIG_HELPER --file cartotouch.cfg --replace-section-entry "scanner" "serial" "$SERIAL_ID" || exit $?
+            echo "Serial value changed"
             return 1
         else
             echo "Serial value is unchanged"
@@ -1524,8 +1525,6 @@ function setup_cartotouch() {
         $CONFIG_HELPER --file cartotouch_macro.cfg --replace-section-entry "gcode_macro AXIS_TWIST_COMPENSATION_CALIBRATE" "variable_stop_start_camera" "True" || exit $?
         $CONFIG_HELPER --file cartotouch_macro.cfg --replace-section-entry "gcode_macro _CARTOGRAPHER_TOUCH" "variable_stop_start_camera" "True" || exit $?
 
-        set_serial_cartotouch
-
         # a slight change to the way cartotouch is configured
         $CONFIG_HELPER --remove-section "force_move" || exit $?
 
@@ -1560,7 +1559,24 @@ function set_serial_cartographer() {
     if [ -n "$SERIAL_ID" ]; then
         local EXISTING_SERIAL_ID=$($CONFIG_HELPER --file cartographer.cfg --get-section-entry "mcu cartographer" "serial")
         if [ "$EXISTING_SERIAL_ID" != "$SERIAL_ID" ]; then
+            local cs_pin=$($CONFIG_HELPER --get-section-entry "adxl345" "cs_pin")
+            local CARTO_TYPE=$(echo $SERIAL_ID | awk -F '_' '{print $2}')
+            if [ "$CARTO_TYPE" = "stm32g431xx" ]; then # a V4
+              if [ "$cs_pin" = "cartographer:PA3" ]; then
+                echo
+                echo "INFO: Cartographer V3 ADXL Configuration detected for a Cartographer V4 - Repairing"
+                sed -i 's/cartographer:PA3/cartographer:PA0/g' /usr/data/printer_data/config/printer.cfg
+              fi
+            else # a V3
+              if [ "$cs_pin" = "cartographer:PA0" ]; then
+                echo
+                echo "INFO: Cartographer V4 ADXL Configuration detected for a Cartographer V3 - Repairing"
+                sed -i 's/cartographer:PA0/cartographer:PA3/g' /usr/data/printer_data/config/printer.cfg
+              fi
+            fi
+
             $CONFIG_HELPER --file cartographer.cfg --replace-section-entry "mcu cartographer" "serial" "$SERIAL_ID" || exit $?
+            echo "Serial value changed"
             return 1
         else
             echo "Serial value is unchanged"
@@ -1601,8 +1617,6 @@ function setup_cartographer() {
         $CONFIG_HELPER --file cartographer_macro.cfg --replace-section-entry "gcode_macro CARTOGRAPHER_AXIS_TWIST_COMPENSATION" "variable_stop_start_camera" "True" || exit $?
         $CONFIG_HELPER --file cartographer_macro.cfg --replace-section-entry "gcode_macro _CARTOGRAPHER_QUICKSTART" "variable_stop_start_camera" "True" || exit $?
 
-        set_serial_cartographer
-
         echo "cartographer-probe" >> /usr/data/pellcorp.done
         sync
         return 1
@@ -1616,6 +1630,7 @@ function set_serial_beacon() {
         local EXISTING_SERIAL_ID=$($CONFIG_HELPER --file beacon.cfg --get-section-entry "beacon" "serial")
         if [ "$EXISTING_SERIAL_ID" != "$SERIAL_ID" ]; then
             $CONFIG_HELPER --file beacon.cfg --replace-section-entry "beacon" "serial" "$SERIAL_ID" || exit $?
+            echo "Serial value changed"
             return 1
         else
             echo "Serial value is unchanged"
@@ -1661,8 +1676,6 @@ function setup_beacon() {
         $CONFIG_HELPER --file beacon_macro.cfg --replace-section-entry "gcode_macro BED_MESH_CALIBRATE" "variable_stop_start_camera" "True" || exit $?
         $CONFIG_HELPER --file beacon_macro.cfg --replace-section-entry "gcode_macro AXIS_TWIST_COMPENSATION_CALIBRATE" "variable_stop_start_camera" "True" || exit $?
 
-        set_serial_beacon
-
         echo "beacon-probe" >> /usr/data/pellcorp.done
         sync
         return 1
@@ -1676,6 +1689,7 @@ function set_serial_btteddy() {
         local EXISTING_SERIAL_ID=$($CONFIG_HELPER --file btteddy.cfg --get-section-entry "mcu eddy" "serial")
         if [ "$EXISTING_SERIAL_ID" != "$SERIAL_ID" ]; then
             $CONFIG_HELPER --file btteddy.cfg --replace-section-entry "mcu eddy" "serial" "$SERIAL_ID" || exit $?
+            echo "Serial value changed"
             return 1
         else
             echo "Serial value is unchanged"
@@ -1705,8 +1719,6 @@ function setup_btteddy() {
         cp /usr/data/pellcorp/config/btteddy.cfg /usr/data/printer_data/config/ || exit $?
         $CONFIG_HELPER --add-include "btteddy.cfg" || exit $?
 
-        set_serial_btteddy
-
         cp /usr/data/pellcorp/config/btteddy_macro.cfg /usr/data/printer_data/config/ || exit $?
         $CONFIG_HELPER --add-include "btteddy_macro.cfg" || exit $?
 
@@ -1730,6 +1742,7 @@ function set_serial_eddyng() {
         local EXISTING_SERIAL_ID=$($CONFIG_HELPER --file eddyng.cfg --get-section-entry "mcu eddy" "serial")
         if [ "$EXISTING_SERIAL_ID" != "$SERIAL_ID" ]; then
             $CONFIG_HELPER --file eddyng.cfg --replace-section-entry "mcu eddy" "serial" "$SERIAL_ID" || exit $?
+            echo "Serial value changed"
             return 1
         else
             echo "Serial value is unchanged"
@@ -1763,8 +1776,6 @@ function setup_eddyng() {
         $CONFIG_HELPER --add-include "eddyng_macro.cfg" || exit $?
 
         $CONFIG_HELPER --file eddyng_macro.cfg --replace-section-entry "gcode_macro _PROBE_EDDY_NG_TAP_HOME" "variable_stop_start_camera" "True" || exit $?
-
-        set_serial_eddyng
 
         $CONFIG_HELPER --remove-section "probe_eddy_ng btt_eddy" || exit $?
         $CONFIG_HELPER --add-section "probe_eddy_ng btt_eddy" || exit $?
@@ -1941,6 +1952,29 @@ function fix_custom_config() {
     fi
     sync
     return $changed
+}
+
+function fix_serial() {
+  local probe=$1
+
+  set_serial=0
+  if [ "$probe" = "cartotouch" ]; then
+    set_serial_cartotouch
+    set_serial=$?
+  elif [ "$probe" = "cartographer" ]; then
+    set_serial_cartographer
+    set_serial=$?
+  elif [ "$probe" = "beacon" ]; then
+    set_serial_beacon
+    set_serial=$?
+  elif [ "$probe" = "btteddy" ]; then
+    set_serial_btteddy
+    set_serial=$?
+  elif [ "$probe" = "eddyng" ]; then
+    set_serial_eddyng
+    set_serial=$?
+  fi
+  return $set_serial
 }
 
 if [ -f /usr/data/pellcorp.done ] && [ $(grep "probe" /usr/data/pellcorp.done | wc -l) -ge 2 ] && [ ! -L /usr/share/klipper ]; then
@@ -2201,25 +2235,8 @@ fi
 
     if [ "$mode" = "fix-serial" ]; then
         if [ -f /usr/data/pellcorp.done ]; then
-            if [ "$probe" = "cartotouch" ]; then
-                set_serial_cartotouch
-                set_serial=$?
-            elif [ "$probe" = "cartographer" ]; then
-                set_serial_cartographer
-                set_serial=$?
-            elif [ "$probe" = "beacon" ]; then
-                set_serial_beacon
-                set_serial=$?
-            elif [ "$probe" = "btteddy" ]; then
-                set_serial_btteddy
-                set_serial=$?
-            elif [ "$probe" = "eddyng" ]; then
-                set_serial_eddyng
-                set_serial=$?
-            else
-                echo "ERROR: Fix serial not supported for $probe"
-                exit 1
-            fi
+          fix_serial $probe
+          set_serial=$?
         else
             echo "ERROR: No installation found"
             exit 1
@@ -2510,6 +2527,11 @@ fi
         echo "INFO: No changes made"
     fi
 
+    echo
+    fix_serial $probe
+    set_serial=$?
+    echo
+
     if [ $apply_overrides -ne 0 ] || [ $install_moonraker -ne 0 ] || [ $install_cartographer_plugin -ne 0 ] || [ $install_cartographer_klipper -ne 0 ] || [ $install_beacon_klipper -ne 0 ]; then
         echo "INFO: Restarting Moonraker ..."
         sudo systemctl restart moonraker
@@ -2520,7 +2542,7 @@ fi
         sudo systemctl restart nginx
     fi
 
-    if [ $fix_custom_config -ne 0 ] || [ $fixup_client_variables_config -ne 0 ] || [ $apply_overrides -ne 0 ] || [ $apply_mount_overrides -ne 0 ] || [ $install_cartographer_klipper -ne 0 ] || [ $install_beacon_klipper -ne 0 ] || [ $install_klipper -ne 0 ] || [ $setup_probe -ne 0 ] || [ $setup_probe_specific -ne 0 ]; then
+    if [ $set_serial -ne 0 ] || [ $fix_custom_config -ne 0 ] || [ $fixup_client_variables_config -ne 0 ] || [ $apply_overrides -ne 0 ] || [ $apply_mount_overrides -ne 0 ] || [ $install_cartographer_klipper -ne 0 ] || [ $install_beacon_klipper -ne 0 ] || [ $install_klipper -ne 0 ] || [ $setup_probe -ne 0 ] || [ $setup_probe_specific -ne 0 ]; then
         echo "INFO: Restarting Klipper ..."
         sudo systemctl restart klipper
         sudo systemctl restart klipper_mcu

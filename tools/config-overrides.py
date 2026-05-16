@@ -152,10 +152,6 @@ def main():
                 if 'gcode_shell_command' in section_name:
                     continue
 
-                # do not save the serial field
-                if (section_name == 'beacon' or section_name == 'scanner' or section_name == 'cartographer' or section_name == 'mcu eddy') and key == 'serial':
-                    continue
-
                 # do not allow customisation of the pinned commit
                 if moonraker_conf and (section_name == 'update_manager klipper' or section_name == 'update_manager moonraker') and key == 'pinned_commit':
                     continue
