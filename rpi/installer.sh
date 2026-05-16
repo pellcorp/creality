@@ -518,26 +518,7 @@ function set_serial_cartotouch() {
         local EXISTING_SERIAL_ID=$($CONFIG_HELPER --file cartotouch.cfg --get-section-entry "scanner" "serial")
         if [ "$EXISTING_SERIAL_ID" != "$SERIAL_ID" ]; then
             $CONFIG_HELPER --file cartotouch.cfg --replace-section-entry "scanner" "serial" "$SERIAL_ID" || exit $?
-            return 1
-        else
-            echo "Serial value is unchanged"
-            return 0
-        fi
-    else
-        echo
-        echo "WARNING: There does not seem to be a cartographer attached - skipping serial auto configuration"
-        echo "  https://pellcorp.github.io/creality-wiki/cartographer_troubleshooting/#manual-cartographer-serial-device-configuration"
-        echo
-        return 0
-    fi
-}
-
-function set_serial_cartographer() {
-    local SERIAL_ID=$(ls /dev/serial/by-id/usb-* | grep "IDM\|Cartographer" | head -1)
-    if [ -n "$SERIAL_ID" ]; then
-        local EXISTING_SERIAL_ID=$($CONFIG_HELPER --file cartographer.cfg --get-section-entry "mcu cartographer" "serial")
-        if [ "$EXISTING_SERIAL_ID" != "$SERIAL_ID" ]; then
-            $CONFIG_HELPER --file cartographer.cfg --replace-section-entry "mcu cartographer" "serial" "$SERIAL_ID" || exit $?
+            echo "Serial value changed"
             return 1
         else
             echo "Serial value is unchanged"
@@ -573,8 +554,6 @@ function setup_cartotouch() {
         x_position_mid=$($CONFIG_HELPER --get-section-entry "stepper_x" "position_max" --divisor 2 --integer)
         $CONFIG_HELPER --file cartotouch.cfg --replace-section-entry "bed_mesh" "zero_reference_position" "$x_position_mid,$y_position_mid" || exit $?
 
-        set_serial_cartotouch
-
         # as we are referencing the included cartographer now we want to remove the included value
         # from any previous installation
         $CONFIG_HELPER --remove-section "scanner" || exit $?
@@ -599,6 +578,47 @@ function setup_cartotouch() {
         return 1
     fi
     return 0
+}
+
+function set_serial_cartographer() {
+    local SERIAL_ID=$(ls /dev/serial/by-id/usb-* | grep "IDM\|Cartographer" | head -1)
+    if [ -n "$SERIAL_ID" ]; then
+        local canbus_uuid=$($CONFIG_HELPER --file cartographer.cfg --get-section-entry "mcu cartographer" "canbus_uuid")
+        # if cartographer is configured via canbus skip dealing with serial at all
+        if [ -n "$canbus_uuid" ]; then
+          # FIXME - we should just allow deleting the serial where canbus is defined but this should resolve for now
+          $CONFIG_HELPER --file cartographer.cfg --remove-section-entry "mcu cartographer" "serial"
+        else
+          local EXISTING_SERIAL_ID=$($CONFIG_HELPER --file cartographer.cfg --get-section-entry "mcu cartographer" "serial")
+          if [ "$EXISTING_SERIAL_ID" != "$SERIAL_ID" ]; then
+              local cs_pin=$($CONFIG_HELPER --get-section-entry "adxl345" "cs_pin")
+              local CARTO_TYPE=$(echo $SERIAL_ID | awk -F '_' '{print $2}')
+              if [ "$CARTO_TYPE" = "stm32g431xx" ]; then # a V4
+                  if [ "$cs_pin" = "cartographer:PA3" ]; then
+                      echo "INFO: Cartographer V3 ADXL Configuration detected for a Cartographer V4 - Repairing"
+                      sed -i 's/cartographer:PA3/cartographer:PA0/g' $BASEDIR/printer_data/config/printer.cfg
+                  fi
+              else # a V3
+                  if [ "$cs_pin" = "cartographer:PA0" ]; then
+                      echo "INFO: Cartographer V4 ADXL Configuration detected for a Cartographer V3 - Repairing"
+                      sed -i 's/cartographer:PA0/cartographer:PA3/g' $BASEDIR/printer_data/config/printer.cfg
+                  fi
+              fi
+              $CONFIG_HELPER --file cartographer.cfg --replace-section-entry "mcu cartographer" "serial" "$SERIAL_ID" || exit $?
+              echo "Serial value changed"
+              return 1
+          else
+              echo "Serial value is unchanged"
+              return 0
+          fi
+        fi
+    else
+        echo
+        echo "WARNING: There does not seem to be a cartographer attached - skipping serial auto configuration"
+        echo "  https://pellcorp.github.io/creality-wiki/cartographer_troubleshooting/#manual-cartographer-serial-device-configuration"
+        echo
+        return 0
+    fi
 }
 
 function setup_cartographer() {
@@ -626,8 +646,6 @@ function setup_cartographer() {
         # due to ridiculous issue with cartographer not handling slight out of band temps just set it here and let everyone else use 150
         $CONFIG_HELPER --file start_end.cfg --replace-section-entry "gcode_macro _START_END_PARAMS" "variable_start_preheat_nozzle_temp" 148 || exit $?
 
-        set_serial_cartographer
-
         echo "cartographer-probe" >> $BASEDIR/pellcorp.done
         sync
         return 1
@@ -641,6 +659,7 @@ function set_serial_beacon() {
         local EXISTING_SERIAL_ID=$($CONFIG_HELPER --file beacon.cfg --get-section-entry "beacon" "serial")
         if [ "$EXISTING_SERIAL_ID" != "$SERIAL_ID" ]; then
             $CONFIG_HELPER --file beacon.cfg --replace-section-entry "beacon" "serial" "$SERIAL_ID" || exit $?
+            echo "Serial value changed"
             return 1
         else
             echo "Serial value is unchanged"
@@ -677,8 +696,6 @@ function setup_beacon() {
         $CONFIG_HELPER --file beacon.cfg --replace-section-entry "beacon" "home_xy_position" "$x_position_mid,$y_position_mid" || exit $?
         $CONFIG_HELPER --file beacon.cfg --replace-section-entry "bed_mesh" "zero_reference_position" "$x_position_mid,$y_position_mid" || exit $?
 
-        set_serial_beacon
-
         $CONFIG_HELPER --remove-section "beacon" || exit $?
         $CONFIG_HELPER --add-section "beacon" || exit $?
 
@@ -702,6 +719,7 @@ function set_serial_btteddy() {
         local EXISTING_SERIAL_ID=$($CONFIG_HELPER --file btteddy.cfg --get-section-entry "mcu eddy" "serial")
         if [ "$EXISTING_SERIAL_ID" != "$SERIAL_ID" ]; then
             $CONFIG_HELPER --file btteddy.cfg --replace-section-entry "mcu eddy" "serial" "$SERIAL_ID" || exit $?
+            echo "Serial value changed"
             return 1
         else
             echo "Serial value is unchanged"
@@ -725,8 +743,6 @@ function setup_btteddy() {
         cp $BASEDIR/pellcorp/config/btteddy.cfg $BASEDIR/printer_data/config/ || exit $?
         $CONFIG_HELPER --add-include "btteddy.cfg" || exit $?
 
-        set_serial_btteddy
-
         cp $BASEDIR/pellcorp/config/btteddy_macro.cfg $BASEDIR/printer_data/config/ || exit $?
         $CONFIG_HELPER --add-include "btteddy_macro.cfg" || exit $?
 
@@ -746,6 +762,7 @@ function set_serial_eddyng() {
         local EXISTING_SERIAL_ID=$($CONFIG_HELPER --file eddyng.cfg --get-section-entry "mcu eddy" "serial")
         if [ "$EXISTING_SERIAL_ID" != "$SERIAL_ID" ]; then
             $CONFIG_HELPER --file eddyng.cfg --replace-section-entry "mcu eddy" "serial" "$SERIAL_ID" || exit $?
+            echo "Serial value changed"
             return 1
         else
             echo "Serial value is unchanged"
@@ -768,8 +785,6 @@ function setup_eddyng() {
 
         cp $BASEDIR/pellcorp/config/eddyng.cfg $BASEDIR/printer_data/config/ || exit $?
         $CONFIG_HELPER --add-include "eddyng.cfg" || exit $?
-
-        set_serial_eddyng
 
         cp $BASEDIR/pellcorp/config/eddyng_macro.cfg $BASEDIR/printer_data/config/ || exit $?
         $CONFIG_HELPER --add-include "eddyng_macro.cfg" || exit $?
@@ -891,6 +906,29 @@ function fixup_client_variables_config() {
     fi
     sync
     return $changed
+}
+
+function fix_serial() {
+  local probe=$1
+
+  set_serial=0
+  if [ "$probe" = "cartotouch" ]; then
+    set_serial_cartotouch
+    set_serial=$?
+  elif [ "$probe" = "cartographer" ]; then
+    set_serial_cartographer
+    set_serial=$?
+  elif [ "$probe" = "beacon" ]; then
+    set_serial_beacon
+    set_serial=$?
+  elif [ "$probe" = "btteddy" ]; then
+    set_serial_btteddy
+    set_serial=$?
+  elif [ "$probe" = "eddyng" ]; then
+    set_serial_eddyng
+    set_serial=$?
+  fi
+  return $set_serial
 }
 
 mkdir -p $BASEDIR/printer_data/config/images
@@ -1129,25 +1167,7 @@ fi
 
   if [ "$mode" = "fix-serial" ]; then
     if [ -f $BASEDIR/pellcorp.done ]; then
-      if [ "$probe" = "cartotouch" ]; then
-        set_serial_cartotouch
-        set_serial=$?
-      elif [ "$probe" = "cartographer" ]; then
-        set_serial_cartographer
-        set_serial=$?
-      elif [ "$probe" = "beacon" ]; then
-        set_serial_beacon
-        set_serial=$?
-      elif [ "$probe" = "btteddy" ]; then
-        set_serial_btteddy
-        set_serial=$?
-      elif [ "$probe" = "eddyng" ]; then
-        set_serial_eddyng
-        set_serial=$?
-      else
-        echo "ERROR: Fix serial not supported for $probe"
-        exit 1
-      fi
+      fix_serial $probe
     else
       echo "ERROR: No installation found"
       exit 1
@@ -1521,6 +1541,10 @@ fi
   if [ $fixup_client_variables_config -eq 0 ]; then
     echo "INFO: No changes made"
   fi
+
+  echo
+  fix_serial $probe
+  echo
 
   echo "INFO: Restarting Moonraker ..."
   sudo systemctl restart moonraker
