@@ -1025,9 +1025,20 @@ elif [ "$1" = "--klipper-repo" ] || [ "$1" = "--kalico" ] || [ "$1" = "--klipper
             if [ -d $BASEDIR/klippy-env ]; then
               rm -rf $BASEDIR/klippy-env
             fi
+            
+            if [ -d $BASEDIR/klippain_shaketune ]; then
+              rm -rf $BASEDIR/klippain_shaketune
+            fi
+
             virtualenv -p python3 $BASEDIR/klippy-env
             $BASEDIR/klippy-env/bin/pip install -r $BASEDIR/klipper/scripts/klippy-requirements.txt
             $BASEDIR/klippy-env/bin/pip install -r $BASEDIR/pellcorp/rpi/klippy-requirements.txt
+
+            kinematics=$($CONFIG_HELPER --get-section-entry "printer" "kinematics")
+            if [ "$kinematics" = "corexy" ]; then
+              echo "INFO: Installing Klippain ShakeTune ..."
+              wget -O - https://raw.githubusercontent.com/Frix-x/klippain-shaketune/main/install.sh | bash
+            fi
         else
             update_repo $BASEDIR/klipper $3 || exit $?
         fi

@@ -118,6 +118,13 @@ if [ $? -ne 0 ]; then
     if [ -d $BASEDIR/klippy-env ]; then
       rm -rf $BASEDIR/klippy-env
     fi
+
+    if [ ! -d $BASEDIR/klippy-env ]; then
+      # need to force reinstall of klippain too
+      if [ -d $BASEDIR/klippain_shaketune ]; then
+        rm -rf $BASEDIR/klippain_shaketune
+      fi
+    fi
   fi
 
   install_packages
