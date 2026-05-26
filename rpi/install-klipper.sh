@@ -102,23 +102,6 @@ if [ $? -ne 0 ]; then
     git clone https://github.com/pellcorp/${KLIPPER_FORK}-rpi.git $BASEDIR/klipper || exit $?
   fi
 
-  cd $BASEDIR/klipper
-  branch_ref=$(git rev-parse --abbrev-ref HEAD)
-  # don't clobber a feature branch
-  if [ "$branch_ref" = "master" ]; then
-    KLIPPER_PINNED_COMMIT=$($CONFIG_HELPER --file moonraker.conf --get-section-entry "update_manager klipper" "pinned_commit")
-    KLIPPER_CURRENT_COMMIT=$(git rev-parse HEAD)
-    if [ "$KLIPPER_PINNED_COMMIT" != "$KLIPPER_CURRENT_COMMIT" ]; then
-      git fetch
-      git reset --hard $KLIPPER_PINNED_COMMIT
-
-      if [ "$mode" = "update" ]; then
-        update_klipper
-      fi
-    fi
-  fi
-  cd - > /dev/null
-
   install_packages
 
   if grep -q "dialout" /etc/group; then
