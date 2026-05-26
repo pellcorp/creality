@@ -83,6 +83,19 @@ fi
 
 grep -q "klipper" $BASEDIR/pellcorp.done
 if [ $? -ne 0 ]; then
+  if [ -d $BASEDIR/klipper/ ]; then
+    cd $BASEDIR/klipper/
+    remote_repo=$(git remote get-url origin)
+    cd -
+
+    remote_repo="${remote_repo#*github.com/}"   # remove everything up to github.com/
+    remote_repo="${remote_repo%.git}"     # remove trailing .git
+    if [ "$remote_repo" != "pellcorp/$KLIPPER_FORK" ]; then
+      echo "INFO: Switching klipper from $remote_repo to pellcorp/$KLIPPER_FORK ..."
+      rm -rf $BASEDIR/klipper/
+    fi
+  fi
+
   if [ "$mode" != "update" ] && [ -d $BASEDIR/klipper ]; then
     sudo systemctl stop klipper-mcu 2> /dev/null
     sudo systemctl stop klipper 2> /dev/null
@@ -100,6 +113,11 @@ if [ $? -ne 0 ]; then
     echo "INFO: Installing ${KLIPPER_FORK} ..."
 
     git clone https://github.com/pellcorp/${KLIPPER_FORK}-rpi.git $BASEDIR/klipper || exit $?
+
+    # force recreate of the klippy-env if we are switching klipper forks
+    if [ -d $BASEDIR/klippy-env ]; then
+      rm -rf $BASEDIR/klippy-env
+    fi
   fi
 
   install_packages
