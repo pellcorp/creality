@@ -581,43 +581,45 @@ function setup_cartotouch() {
 }
 
 function set_serial_cartographer() {
-    local SERIAL_ID=$(ls /dev/serial/by-id/usb-* | grep "IDM\|Cartographer" | head -1)
-    if [ -n "$SERIAL_ID" ]; then
-        local canbus_uuid=$($CONFIG_HELPER --file cartographer.cfg --get-section-entry "mcu cartographer" "canbus_uuid")
-        # if cartographer is configured via canbus skip dealing with serial at all
-        if [ -n "$canbus_uuid" ]; then
-          # FIXME - we should just allow deleting the serial where canbus is defined but this should resolve for now
-          $CONFIG_HELPER --file cartographer.cfg --remove-section-entry "mcu cartographer" "serial"
-        else
+    local canbus_uuid=$($CONFIG_HELPER --file cartographer.cfg --get-section-entry "mcu cartographer" "canbus_uuid")
+    # if cartographer is configured via canbus skip dealing with serial at all
+    if [ -n "$canbus_uuid" ]; then
+        # FIXME - we should just allow deleting the serial where canbus is defined but this should resolve for now
+        $CONFIG_HELPER --file cartographer.cfg --remove-section-entry "mcu cartographer" "serial"
+        # restart_method not required for canbus
+        $CONFIG_HELPER --file cartographer.cfg --remove-section-entry "mcu cartographer" "restart_method"
+    else
+        local SERIAL_ID=$(ls /dev/serial/by-id/usb-* | grep "IDM\|Cartographer" | head -1)
+        if [ -n "$SERIAL_ID" ]; then
           local EXISTING_SERIAL_ID=$($CONFIG_HELPER --file cartographer.cfg --get-section-entry "mcu cartographer" "serial")
           if [ "$EXISTING_SERIAL_ID" != "$SERIAL_ID" ]; then
-              local cs_pin=$($CONFIG_HELPER --get-section-entry "adxl345" "cs_pin")
-              local CARTO_TYPE=$(echo $SERIAL_ID | awk -F '_' '{print $2}')
-              if [ "$CARTO_TYPE" = "stm32g431xx" ]; then # a V4
-                  if [ "$cs_pin" = "cartographer:PA3" ]; then
-                      echo "INFO: Cartographer V3 ADXL Configuration detected for a Cartographer V4 - Repairing"
-                      sed -i 's/cartographer:PA3/cartographer:PA0/g' $BASEDIR/printer_data/config/printer.cfg
-                  fi
-              else # a V3
-                  if [ "$cs_pin" = "cartographer:PA0" ]; then
-                      echo "INFO: Cartographer V4 ADXL Configuration detected for a Cartographer V3 - Repairing"
-                      sed -i 's/cartographer:PA0/cartographer:PA3/g' $BASEDIR/printer_data/config/printer.cfg
-                  fi
-              fi
-              $CONFIG_HELPER --file cartographer.cfg --replace-section-entry "mcu cartographer" "serial" "$SERIAL_ID" || exit $?
-              echo "Serial value changed"
-              return 1
+            local cs_pin=$($CONFIG_HELPER --get-section-entry "adxl345" "cs_pin")
+            local CARTO_TYPE=$(echo $SERIAL_ID | awk -F '_' '{print $2}')
+            if [ "$CARTO_TYPE" = "stm32g431xx" ]; then # a V4
+                if [ "$cs_pin" = "cartographer:PA3" ]; then
+                    echo "INFO: Cartographer V3 ADXL Configuration detected for a Cartographer V4 - Repairing"
+                    sed -i 's/cartographer:PA3/cartographer:PA0/g' $BASEDIR/printer_data/config/printer.cfg
+                fi
+            else # a V3
+                if [ "$cs_pin" = "cartographer:PA0" ]; then
+                    echo "INFO: Cartographer V4 ADXL Configuration detected for a Cartographer V3 - Repairing"
+                    sed -i 's/cartographer:PA0/cartographer:PA3/g' $BASEDIR/printer_data/config/printer.cfg
+                fi
+            fi
+            $CONFIG_HELPER --file cartographer.cfg --replace-section-entry "mcu cartographer" "serial" "$SERIAL_ID" || exit $?
+            echo "Serial value changed"
+            return 1
           else
               echo "Serial value is unchanged"
               return 0
           fi
+        else
+            echo
+            echo "WARNING: There does not seem to be a cartographer attached - skipping serial auto configuration"
+            echo "  https://pellcorp.github.io/creality-wiki/cartographer_troubleshooting/#manual-cartographer-serial-device-configuration"
+            echo
+            return 0
         fi
-    else
-        echo
-        echo "WARNING: There does not seem to be a cartographer attached - skipping serial auto configuration"
-        echo "  https://pellcorp.github.io/creality-wiki/cartographer_troubleshooting/#manual-cartographer-serial-device-configuration"
-        echo
-        return 0
     fi
 }
 
