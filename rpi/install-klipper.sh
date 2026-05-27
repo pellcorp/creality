@@ -83,19 +83,6 @@ fi
 
 grep -q "klipper" $BASEDIR/pellcorp.done
 if [ $? -ne 0 ]; then
-  if [ -d $BASEDIR/klipper/ ]; then
-    cd $BASEDIR/klipper/
-    remote_repo=$(git remote get-url origin)
-    cd -
-
-    remote_repo="${remote_repo#*github.com/}"   # remove everything up to github.com/
-    remote_repo="${remote_repo%.git}"     # remove trailing .git
-    if [ "$remote_repo" != "pellcorp/$KLIPPER_FORK" ]; then
-      echo "INFO: Switching klipper from $remote_repo to pellcorp/$KLIPPER_FORK ..."
-      rm -rf $BASEDIR/klipper/
-    fi
-  fi
-
   if [ "$mode" != "update" ] && [ -d $BASEDIR/klipper ]; then
     sudo systemctl stop klipper-mcu 2> /dev/null
     sudo systemctl stop klipper 2> /dev/null
