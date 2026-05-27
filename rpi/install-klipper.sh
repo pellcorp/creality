@@ -100,24 +100,19 @@ if [ $? -ne 0 ]; then
     echo "INFO: Installing ${KLIPPER_FORK} ..."
 
     git clone https://github.com/pellcorp/${KLIPPER_FORK}-rpi.git $BASEDIR/klipper || exit $?
-  fi
 
-  cd $BASEDIR/klipper
-  branch_ref=$(git rev-parse --abbrev-ref HEAD)
-  # don't clobber a feature branch
-  if [ "$branch_ref" = "master" ]; then
-    KLIPPER_PINNED_COMMIT=$($CONFIG_HELPER --file moonraker.conf --get-section-entry "update_manager klipper" "pinned_commit")
-    KLIPPER_CURRENT_COMMIT=$(git rev-parse HEAD)
-    if [ "$KLIPPER_PINNED_COMMIT" != "$KLIPPER_CURRENT_COMMIT" ]; then
-      git fetch
-      git reset --hard $KLIPPER_PINNED_COMMIT
+    # force recreate of the klippy-env if we are switching klipper forks
+    if [ -d $BASEDIR/klippy-env ]; then
+      rm -rf $BASEDIR/klippy-env
+    fi
 
-      if [ "$mode" = "update" ]; then
-        update_klipper
+    if [ ! -d $BASEDIR/klippy-env ]; then
+      # need to force reinstall of klippain too
+      if [ -d $BASEDIR/klippain_shaketune ]; then
+        rm -rf $BASEDIR/klippain_shaketune
       fi
     fi
   fi
-  cd - > /dev/null
 
   install_packages
 
