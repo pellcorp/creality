@@ -5,11 +5,9 @@ ROOT_DIR=$(dirname $CURRENT_DIR)
 
 incus delete klipper --force 2> /dev/null
 
-#sudo ufw allow in on incusbr0
-#sudo ufw route allow in on incusbr0
-#sudo ufw route allow out on incusbr0
-#incus network set incusbr0 ipv6.firewall false
-#incus network set incusbr0 ipv4.firewall false
+incus network set incusbr0 ipv6.firewall false
+incus network set incusbr0 ipv4.firewall false
+incus network set incusbr0 ipv4.dhcp true
 
 sudo firewall-cmd --permanent --zone=trusted --add-interface=incusbr0
 sudo firewall-cmd --reload
@@ -59,5 +57,8 @@ incus exec klipper -- /opt/projects/incus/setup.sh
 IP_ADDRESS=$(incus info klipper | grep inet | head -1 | awk -F ':' '{print $2}' | sed 's:/24 (global)::g' | tr -d '[:space:]')
 ssh-keygen -f "$HOME/.ssh/known_hosts" -R $IP_ADDRESS > /dev/null 2>&1
 ssh-keyscan -t rsa "$IP_ADDRESS" >> "$HOME/.ssh/known_hosts" 2> /dev/null
+
+# flip it back yo
+incus network set incusbr0 ipv4.dhcp false
 
 ssh me@$IP_ADDRESS
