@@ -1083,29 +1083,7 @@ if [ $# -gt 0 ] && [ "$1" != "--fix-serial" ]; then
 fi
 
 {
-  # figure out what existing probe if any is being used
   probe=
-  if [ -f $BASEDIR/printer_data/config/bltouch.cfg ]; then
-    probe=bltouch
-  elif [ -f $BASEDIR/printer_data/config/microprobe.cfg ]; then
-    probe=microprobe
-  elif [ -f $BASEDIR/printer_data/config/cartotouch.cfg ]; then
-    probe=cartotouch
-  elif [ -f $BASEDIR/printer_data/config/cartographer.cfg ]; then
-      probe=cartographer
-  elif [ -f $BASEDIR/printer_data/config/beacon.cfg ]; then
-    probe=beacon
-  elif [ -f $BASEDIR/printer_data/config/klicky.cfg ]; then
-    probe=klicky
-  elif [ -f $BASEDIR/printer_data/config/eddyng.cfg ]; then
-    probe=eddyng
-  elif [ -f $BASEDIR/printer_data/config/btteddy.cfg ]; then
-    probe=btteddy
-  elif [ -f $BASEDIR/pellcorp.done ]; then # only if an existing install do we treat is as probe=none
-    probe=none
-  fi
-
-  old_probe=
   mode=install
   force=false
   skip_overrides=false
@@ -1113,7 +1091,31 @@ fi
   klipper_fork=klipper
   printer=
   mount=
+
   existing_printer=$(cat $BASEDIR/pellcorp-overrides/config.info 2> /dev/null | grep printer= | awk -F '=' '{print $2}')
+  # figure out what existing probe if any is being used
+  existing_probe=
+  if [ -f $BASEDIR/pellcorp.done ]; then
+    if [ -f $BASEDIR/printer_data/config/bltouch.cfg ]; then
+      existing_probe=bltouch
+    elif [ -f $BASEDIR/printer_data/config/microprobe.cfg ]; then
+      existing_probe=microprobe
+    elif [ -f $BASEDIR/printer_data/config/cartotouch.cfg ]; then
+      existing_probe=cartotouch
+    elif [ -f $BASEDIR/printer_data/config/cartographer.cfg ]; then
+      existing_probe=cartographer
+    elif [ -f $BASEDIR/printer_data/config/beacon.cfg ]; then
+      existing_probe=beacon
+    elif [ -f $BASEDIR/printer_data/config/klicky.cfg ]; then
+      existing_probe=klicky
+    elif [ -f $BASEDIR/printer_data/config/eddyng.cfg ]; then
+      existing_probe=eddyng
+    elif [ -f $BASEDIR/printer_data/config/btteddy.cfg ]; then
+      existing_probe=btteddy
+    else
+      existing_probe=none
+    fi
+  fi
 
   if [ -f $BASEDIR/pellcorp.done ]; then
     install_mount=$(cat $BASEDIR/pellcorp.done | grep "mount=" | awk -F '=' '{print $2}')
@@ -1164,9 +1166,8 @@ fi
         echo "ERROR: Switching probes is not supported while trying to fix serial!"
         exit 1
       fi
-      if [ "$mode" = "update" ] && [ -n "$probe" ] && [ "$1" != "$probe" ]; then
-        old_probe=${probe}
-        echo "WARNING: About to switch from $probe to $1!"
+      if [ "$mode" = "update" ] && [ -n "$existing_probe" ] && [ "$1" != "$existing_probe" ]; then
+        echo "WARNING: About to switch from $existing_probe to $1!"
         probe_switch=true
       fi
       probe=$1
@@ -1178,9 +1179,13 @@ fi
     fi
   done
 
+  if [ -z "$probe" ] && [ -n "$existing_probe" ]; then
+    probe=$existing_probe
+  fi
+
   if [ "$mode" = "fix-serial" ]; then
     if [ -f $BASEDIR/pellcorp.done ]; then
-      fix_serial $probe
+      fix_serial $existing_probe
     else
       echo "ERROR: No installation found"
       exit 1
@@ -1195,13 +1200,9 @@ fi
       fixup_client_variables_config
       fixup_client_variables_config=$?
       if [ $fixup_client_variables_config -ne 0 ]; then
-        if [ "$client" = "cli" ]; then
-          echo
-          echo "INFO: Restarting Klipper ..."
-          sudo systemctl restart klipper
-        else
-          echo "WARNING: Klipper restart required"
-        fi
+        echo
+        echo "INFO: Restarting Klipper ..."
+        sudo systemctl restart klipper
       else
         echo "INFO: No changes made"
       fi
@@ -1529,7 +1530,7 @@ fi
   fi
 
   if [ "$skip_overrides" != "true" ]; then
-    apply_overrides "${old_probe}" "${probe}"
+    apply_overrides "${existing_probe}" "${probe}"
   fi
 
   if [ "$model" != "unspecified" ] && [ -n "$mount" ]; then
