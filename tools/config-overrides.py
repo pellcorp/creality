@@ -51,6 +51,10 @@ def main():
         if section_name not in updated.sections() and (moonraker_conf or printer_cfg or fan_control or grumpyscreen_cfg):
             deleted_sections.append(section_name)
 
+    # there seems to be some way for the theme config to get deleted that I can't grok so just defend against it for now
+    if grumpyscreen_cfg and 'theme' in deleted_sections:
+        deleted_sections.remove('theme')
+
     if fan_control:
         # as a safety mechanism refuse to delete both static_digital_output mcu_fan_always_on and controller_fan mcu
         if 'static_digital_output mcu_fan_always_on' in deleted_sections and 'controller_fan mcu' in deleted_sections:
