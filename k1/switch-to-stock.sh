@@ -75,6 +75,10 @@ if [ -f /usr/data/backups/creality-backup.tar.gz ]; then
         echo
         echo "INFO: GrumpyScreen has been disabled"
         rm /etc/init.d/S99guppyscreen
+      elif [ -f /etc/init.d/S99grumpyscreen ]; then
+        echo
+        echo "INFO: GrumpyScreen has been disabled"
+        rm /etc/init.d/S99grumpyscreen
       fi
 
       # need these files restored back so that moonraker starts correctly
@@ -143,7 +147,7 @@ EOF
       else
         echo
         echo "INFO: Restoring GrumpyScreen"
-        cp /usr/data/pellcorp/k1/services/S99guppyscreen /etc/init.d/
+        cp /usr/data/pellcorp/k1/services/S99grumpyscreen /etc/init.d/
       fi
 
       ln -sf /usr/data/klipper/fw/K1/klipper_host_mcu /usr/bin/klipper_mcu

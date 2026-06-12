@@ -1,9 +1,5 @@
 #!/bin/sh
 
-# this allows us to make changes to Simple AF and grumpyscreen in parallel
-GRUMPYSCREEN_TIMESTAMP=1781294300
-GRUMPYSCREEN_BRANCH=main
-
 if [ -f /usr/bin/get_sn_mac.sh ]; then
   MODEL=$(/usr/bin/get_sn_mac.sh model)
   if [ "$MODEL" = "Nebula Pad" ]; then
@@ -1057,93 +1053,44 @@ function install_klipper() {
     return 0
 }
 
-function install_guppyscreen() {
+function install_grumpyscreen() {
     local mode=$1
-    local branch=$2
 
-    grep -q "guppyscreen" /usr/data/pellcorp.done
-    if [ $? -ne 0 ] || [ "$mode" = "switch-branch" ]; then
+    grep -q "grumpyscreen" /usr/data/pellcorp.done
+    if [ $? -ne 0 ]; then
         echo
 
-        if [ "$mode" != "update" ] && [ -d /usr/data/guppyscreen ]; then
-            if [ -f /etc/init.d/S99guppyscreen ]; then
-              /etc/init.d/S99guppyscreen stop > /dev/null 2>&1
-              killall -q guppyscreen > /dev/null 2>&1
-            fi
-            rm -rf /usr/data/guppyscreen
-        elif [ -f /etc/init.d/S99guppyscreen ]; then
-            # stop it for the last time before we migrate
-            if grep -q "start-stop-daemon" /etc/init.d/S99guppyscreen; then
-                /etc/init.d/S99guppyscreen stop > /dev/null 2>&1
-                killall -q guppyscreen > /dev/null 2>&1
-            fi
+        if [ -f /etc/init.d/S99guppyscreen ]; then
+          /etc/init.d/S99guppyscreen stop > /dev/null 2>&1
+          killall -q guppyscreen > /dev/null 2>&1
+        elif [ -f /etc/init.d/S99grumpyscreen ]; then
+          /etc/init.d/S99grumpyscreen stop > /dev/null 2>&1
+          killall -q guppyscreen > /dev/null 2>&1
         fi
 
-        GUPPY_BRANCH=$branch
+        echo "INFO: Installing grumpyscreen ..."
 
-        # we have logic here to force grumpyscreen to get updated to a minimum required version
-        if [ -d /usr/data/guppyscreen ]; then
-          TIMESTAMP=0
-          if [ -f /usr/data/guppyscreen/release.info ]; then
-            TIMESTAMP=$(cat /usr/data/guppyscreen/release.info | grep TIMESTAMP | awk -F '=' '{print $2}')
-            if [ -z "$TIMESTAMP" ]; then
-              TIMESTAMP=0
-            fi
-          fi
+        [ -d /usr/data/guppyscreen ] && rm -rf /usr/data/guppyscreen
+        [ -d /usr/data/grumpyscreen ] && rm -rf /usr/data/grumpyscreen
+        mkdir -p /usr/data/grumpyscreen
 
-          GIT_BRANCH=$(cat /usr/data/guppyscreen/release.info | grep GIT_BRANCH | awk -F '=' '{print $2}')
-          if [ -z "$GIT_BRANCH" ]; then
-            GIT_BRANCH=main
-          fi
-
-          # force reinstall if switch branch mode
-          if [ $TIMESTAMP -lt $GRUMPYSCREEN_TIMESTAMP ] || [ "$GIT_BRANCH" != "$GUPPY_BRANCH" ]; then
-            echo
-            echo "INFO: Forcing update of grumpyscreen"
-            rm -rf /usr/data/guppyscreen
-          fi
+        asset_name=guppyscreen.tar.gz
+        # Ender 5 Max and Ender 3 V3 KE have a nebula pad which is small resolution
+        if [ "$MODEL" = "F004" ] || [ "$MODEL" = "F005" ] || [ "$MODEL" = "NEBULA" ]; then
+            asset_name=guppyscreen-smallscreen.tar.gz
         fi
+        tar -zxf /usr/data/pellcorp/k1/packages/$asset_name -C /usr/data/grumpyscreen/ --strip-components=2 || exit $?
 
-        if [ ! -d /usr/data/guppyscreen ]; then
-            echo
-            echo "INFO: Installing grumpyscreen ..."
-
-            asset_name=guppyscreen.tar.gz
-            # Ender 5 Max and Ender 3 V3 KE have a nebula pad which is small resolution
-            if [ "$MODEL" = "F004" ] || [ "$MODEL" = "F005" ] || [ "$MODEL" = "NEBULA" ]; then
-                asset_name=guppyscreen-smallscreen.tar.gz
-            fi
-
-            curl -L "https://github.com/pellcorp/grumpyscreen/releases/download/${GUPPY_BRANCH}/${asset_name}" -o /usr/data/guppyscreen.tar.gz
-            if [ $? -eq 0 ]; then
-                tar xf /usr/data/guppyscreen.tar.gz -C /usr/data/ 2> /dev/null
-                status=$?
-                rm /usr/data/guppyscreen.tar.gz
-                if [ $status -ne 0 ]; then
-                    echo "ERROR: Grumpyscreen (branch ${GUPPY_BRANCH}) could not be downloaded!"
-                    return 0
-                fi
-            else
-                echo "ERROR: Grumpyscreen (branch ${GUPPY_BRANCH}) could not be downloaded!"
-                return 0
-            fi
-
-            # for Ender 5 Max we want display_rotate: 2 and that gets set by grumpyscreen package
-            # so we need to switch it to 3 for KE and Nebula
-            if [ "$MODEL" = "F005" ] || [ "$MODEL" = "NEBULA" ]; then
-              sed -i "s/display_rotate:.*/display_rotate: 0/g" /usr/data/guppyscreen/grumpyscreen.cfg
-            fi
-            cp /usr/data/guppyscreen/grumpyscreen.cfg /usr/data/pellcorp-backups/
+        # for Ender 5 Max we want display_rotate: 2 and that gets set by grumpyscreen package
+        # so we need to switch it to 3 for KE and Nebula
+        if [ "$MODEL" = "F005" ] || [ "$MODEL" = "NEBULA" ]; then
+          sed -i "s/display_rotate:.*/display_rotate: 0/g" /usr/data/grumpyscreen/grumpyscreen.cfg
         fi
+        cp /usr/data/grumpyscreen/grumpyscreen.cfg /usr/data/pellcorp-backups/
+        cp /usr/data/pellcorp-backups/grumpyscreen.cfg /usr/data/printer_data/config/grumpyscreen.ini
 
-        if [ -f /usr/data/pellcorp-backups/grumpyscreen.cfg ]; then
-          # we want an ini file in config directory so that fluidd and mainsail don't provide save and restart button
-          cp /usr/data/pellcorp-backups/grumpyscreen.cfg /usr/data/printer_data/config/grumpyscreen.ini
-
-          [ -f /usr/data/printer_data/config/grumpyscreen.cfg ] && rm /usr/data/printer_data/config/grumpyscreen.cfg
-        fi
-
-        cp /usr/data/pellcorp/k1/services/S99guppyscreen /etc/init.d/ || exit $?
+        [ -f /etc/init.d/S99guppyscreen ] && rm /etc/init.d/S99guppyscreen
+        cp /usr/data/pellcorp/k1/services/S99grumpyscreen /etc/init.d/ || exit $?
 
         ln -sf /usr/data/pellcorp/k1/files/respawn/libeinfo.so.1 /lib/libeinfo.so.1
         ln -sf /usr/data/pellcorp/k1/files/respawn/librc.so.1 /lib/librc.so.1
@@ -1161,12 +1108,13 @@ function install_guppyscreen() {
             fi
         done
 
-        # get rid of the old guppyscreen config
+        # get rid of the old config
         [ -d /usr/data/printer_data/config/GuppyScreen ] && rm -rf /usr/data/printer_data/config/GuppyScreen
         [ -f /usr/data/printer_data/config/guppyscreen.cfg ] && rm /usr/data/printer_data/config/guppyscreen.cfg
+        [ -f /usr/data/printer_data/config/grumpyscreen.cfg ] && rm /usr/data/printer_data/config/grumpyscreen.cfg
 
         if [ "$mode" != "switch-branch" ]; then
-            echo "guppyscreen" >> /usr/data/pellcorp.done
+            echo "grumpyscreen" >> /usr/data/pellcorp.done
         fi
         sync
 
@@ -1989,13 +1937,6 @@ fi
 if [ "$1" = "--update-branch" ]; then
     update_repo /usr/data/pellcorp
     exit $?
-elif [ "$1" = "--grumpy-branch" ]; then
-    install_guppyscreen "switch-branch" "$2"
-    if [ $? -ne 0 ]; then
-        echo "INFO: Restarting Grumpyscreen ..."
-        systemctl restart grumpyscreen
-    fi
-    exit 0
 elif [ "$1" = "--branch" ] && [ -n "$2" ]; then # convenience for testing new features
     update_repo /usr/data/pellcorp $2 || exit $?
     exit $?
@@ -2432,14 +2373,14 @@ fi
       install_beacon_klipper=$?
     fi
 
-    install_guppyscreen=0
+    install_grumpyscreen=0
     if [ -f /etc/init.d/S99helixscreen ]; then
       echo
       echo "INFO: HelixScreen detected skipping GrumpyScreen"
       echo
     else
-      install_guppyscreen $mode "$GRUMPYSCREEN_BRANCH"
-      install_guppyscreen=$?
+      install_grumpyscreen $mode
+      install_grumpyscreen=$?
     fi
 
     setup_probe=0
@@ -2545,7 +2486,7 @@ fi
         sudo systemctl restart klipper_mcu
     fi
 
-    if [ $apply_overrides -ne 0 ] || [ $install_guppyscreen -ne 0 ]; then
+    if [ $apply_overrides -ne 0 ] || [ $install_grumpyscreen -ne 0 ]; then
         echo "INFO: Restarting Grumpyscreen ..."
         sudo systemctl restart grumpyscreen
     fi

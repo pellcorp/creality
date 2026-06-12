@@ -10,6 +10,7 @@ factory_reset() {
     ACTION=stop /usr/bin/auto_uvc.sh >/dev/null 2>&1
     [ -f /etc/init.d/S50nginx_service ] && /etc/init.d/S50nginx_service stop >/dev/null 2>&1
     [ -f /etc/init.d/S99guppyscreen ] && /etc/init.d/S99guppyscreen stop >/dev/null 2>&1
+    [ -f /etc/init.d/S99grumpyscreen ] && /etc/init.d/S99grumpyscreen stop >/dev/null 2>&1
     [ -f /etc/init.d/S50webcam ] && /etc/init.d/S50webcam stop >/dev/null 2>&1
     [ -f /etc/init.d/S56moonraker_service ] && /etc/init.d/S56moonraker_service stop >/dev/null 2>&1
     [ -f /etc/init.d/S55klipper_service ] && /etc/init.d/S55klipper_service stop >/dev/null 2>&1
