@@ -52,8 +52,7 @@ if [ $? -ne 0 ]; then
     tar xf $BASEDIR/guppyscreen.tar.gz -C $BASEDIR/ || exit $?
     rm $BASEDIR/guppyscreen.tar.gz
 
-    # for config-overrides copy the base cfg file
-    mv $BASEDIR/guppyscreen/grumpyscreen.cfg $BASEDIR/pellcorp-backups/
+    cp $BASEDIR/guppyscreen/grumpyscreen.cfg $BASEDIR/pellcorp-backups/
   fi
 
   if [ -f $BASEDIR/pellcorp-backups/grumpyscreen.cfg ]; then
