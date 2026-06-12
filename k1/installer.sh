@@ -1133,7 +1133,7 @@ function install_guppyscreen() {
             if [ "$MODEL" = "F005" ] || [ "$MODEL" = "NEBULA" ]; then
               sed -i "s/display_rotate:.*/display_rotate: 0/g" /usr/data/guppyscreen/grumpyscreen.cfg
             fi
-            mv /usr/data/guppyscreen/grumpyscreen.cfg /usr/data/pellcorp-backups/
+            cp /usr/data/guppyscreen/grumpyscreen.cfg /usr/data/pellcorp-backups/
         fi
 
         if [ -f /usr/data/pellcorp-backups/grumpyscreen.cfg ]; then
