@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # this allows us to make changes to Simple AF and grumpyscreen in parallel
-GRUMPYSCREEN_TIMESTAMP=1780291500
+GRUMPYSCREEN_TIMESTAMP=1781248100
 
 BASEDIR=$HOME
 source $BASEDIR/pellcorp/rpi/functions.sh
@@ -58,9 +58,6 @@ if [ $? -ne 0 ]; then
 
   if [ -f $BASEDIR/pellcorp-backups/grumpyscreen.cfg ]; then
     cp $BASEDIR/pellcorp-backups/grumpyscreen.cfg $BASEDIR/printer_data/config/grumpyscreen.ini
-
-    # we want grumpyscreen.cfg to be editable from fluidd / mainsail we do that with a soft link
-    ln -sf $BASEDIR/printer_data/config/grumpyscreen.ini $BASEDIR/guppyscreen/grumpyscreen.cfg
 
     [ -f $BASEDIR/printer_data/config/grumpyscreen.cfg ] && rm $BASEDIR/printer_data/config/grumpyscreen.cfg
   fi

@@ -1,7 +1,7 @@
 #!/bin/sh
 
 # this allows us to make changes to Simple AF and grumpyscreen in parallel
-GRUMPYSCREEN_TIMESTAMP=1780291500
+GRUMPYSCREEN_TIMESTAMP=1781248100
 GRUMPYSCREEN_BRANCH=main
 
 if [ -f /usr/bin/get_sn_mac.sh ]; then
@@ -1139,9 +1139,6 @@ function install_guppyscreen() {
         if [ -f /usr/data/pellcorp-backups/grumpyscreen.cfg ]; then
           # we want an ini file in config directory so that fluidd and mainsail don't provide save and restart button
           cp /usr/data/pellcorp-backups/grumpyscreen.cfg /usr/data/printer_data/config/grumpyscreen.ini
-
-          # we want grumpyscreen.cfg to be editable from fluidd / mainsail we do that with a soft link
-          ln -sf /usr/data/printer_data/config/grumpyscreen.ini /usr/data/guppyscreen/grumpyscreen.cfg
 
           [ -f /usr/data/printer_data/config/grumpyscreen.cfg ] && rm /usr/data/printer_data/config/grumpyscreen.cfg
         fi

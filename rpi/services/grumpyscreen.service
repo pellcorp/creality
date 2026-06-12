@@ -12,6 +12,7 @@ User=pi
 WorkingDirectory=$HOME/guppyscreen
 # this is the DSI default path on RPI far as I can see
 Environment="LVGL_EVDEV_DEV=/dev/input/by-path/platform-soc:firmware:touchscreen-event"
+Environment="CONFIG_FILE=$HOME/printer_data/config/grumpyscreen.ini"
 Environment="WPA_SUPPLICANT_SOCKET=/var/run/wpa_supplicant"
 ExecStartPre="$HOME/guppyscreen/cursor.sh"
 ExecStart="$HOME/guppyscreen/guppyscreen"
