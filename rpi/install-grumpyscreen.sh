@@ -1,8 +1,5 @@
 #!/bin/bash
 
-# this allows us to make changes to Simple AF and grumpyscreen in parallel
-GRUMPYSCREEN_TIMESTAMP=1781294300
-
 BASEDIR=$HOME
 source $BASEDIR/pellcorp/rpi/functions.sh
 
@@ -24,49 +21,29 @@ if [ $? -ne 0 ]; then
     sudo systemctl disable KlipperScreen > /dev/null 2>&1
   fi
 
-  if [ "$mode" != "update" ] && [ -d $BASEDIR/guppyscreen ]; then
-    if [ -f /etc/systemd/system/grumpyscreen.service ]; then
-      sudo systemctl stop grumpyscreen > /dev/null 2>&1
-    fi
-    rm -rf $BASEDIR/guppyscreen
+  if [ -f /etc/systemd/system/grumpyscreen.service ]; then
+    sudo systemctl stop grumpyscreen > /dev/null 2>&1
   fi
 
-  if [ -d $BASEDIR/guppyscreen ]; then
-    TIMESTAMP=$(cat $BASEDIR/guppyscreen/release.info | grep TIMESTAMP | awk -F '=' '{print $2}')
-    if [ $TIMESTAMP -lt $GRUMPYSCREEN_TIMESTAMP ]; then
-      echo
-      echo "INFO: Forcing update of grumpyscreen"
-      rm -rf $BASEDIR/guppyscreen
-    fi
-  fi
+  # we are going to replace grumpyscreen every time
+  [ -d  $BASEDIR/grumpyscreen ] && rm -rf $BASEDIR/grumpyscreen
+  [ -d  $BASEDIR/guppyscreen ] && rm -rf $BASEDIR/guppyscreen
 
-  if [ ! -d $BASEDIR/guppyscreen ]; then
-    echo "INFO: Installing grumpyscreen ..."
+  echo "INFO: Installing grumpyscreen ..."
 
-    command -v curl > /dev/null
-    if [ $? -ne 0 ]; then
-      retry sudo apt-get install -y curl; retry
-    fi
+  mkdir -p $BASEDIR/grumpyscreen/
+  tar -zxf $BASEDIR/pellcorp/rpi/packages/guppyscreen-rpi.tar.gz -C $BASEDIR/grumpyscreen/ --strip-components=2 || exit $?
 
-    curl -L "https://github.com/pellcorp/grumpyscreen/releases/download/main/guppyscreen-rpi.tar.gz" -o $BASEDIR/guppyscreen.tar.gz || exit $?
-    tar xf $BASEDIR/guppyscreen.tar.gz -C $BASEDIR/ || exit $?
-    rm $BASEDIR/guppyscreen.tar.gz
-
-    cp $BASEDIR/guppyscreen/grumpyscreen.cfg $BASEDIR/pellcorp-backups/
-  fi
-
-  if [ -f $BASEDIR/pellcorp-backups/grumpyscreen.cfg ]; then
-    cp $BASEDIR/pellcorp-backups/grumpyscreen.cfg $BASEDIR/printer_data/config/grumpyscreen.ini
-
-    [ -f $BASEDIR/printer_data/config/grumpyscreen.cfg ] && rm $BASEDIR/printer_data/config/grumpyscreen.cfg
-  fi
+  cp $BASEDIR/grumpyscreen/grumpyscreen.cfg $BASEDIR/pellcorp-backups/
+  cp $BASEDIR/pellcorp-backups/grumpyscreen.cfg $BASEDIR/printer_data/config/grumpyscreen.ini
+  [ -f $BASEDIR/printer_data/config/grumpyscreen.cfg ] && rm $BASEDIR/printer_data/config/grumpyscreen.cfg
 
   # si that you can print
   if [ ! -L $BASEDIR/printer_data/gcodes/usb ]; then
     ln -sf /media/usb $BASEDIR/printer_data/gcodes/usb
   fi
 
-  cp $BASEDIR/pellcorp/rpi/services/cursor.sh $BASEDIR/guppyscreen/
+  cp $BASEDIR/pellcorp/rpi/services/cursor.sh $BASEDIR/grumpyscreen/
   sudo cp $BASEDIR/pellcorp/rpi/services/grumpyscreen.service /etc/systemd/system/ || exit $?
   sudo sed -i "s:\$HOME:$BASEDIR:g" /etc/systemd/system/grumpyscreen.service
   sudo sed -i "s:User=pi:User=$USER:g" /etc/systemd/system/grumpyscreen.service

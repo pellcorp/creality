@@ -251,8 +251,12 @@ else
   fi
 
   if [ -f $BASEDIR/guppyscreen/calibration.json ]; then
-    echo "INFO: Saving guppyscreen calibration.json to $BASEDIR/pellcorp-overrides/calibration.json"
+    echo "INFO: Saving grumpyscreen calibration.json to $BASEDIR/pellcorp-overrides/calibration.json"
     cp $BASEDIR/guppyscreen/calibration.json $BASEDIR/pellcorp-overrides/
+    sync
+  elif [ -f $BASEDIR/grumpyscreen/calibration.json ]; then
+    echo "INFO: Saving grumpyscreen calibration.json to $BASEDIR/pellcorp-overrides/calibration.json"
+    cp $BASEDIR/grumpyscreen/calibration.json $BASEDIR/pellcorp-overrides/
     sync
   fi
 

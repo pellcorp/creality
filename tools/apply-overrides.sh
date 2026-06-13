@@ -67,8 +67,8 @@ apply_overrides() {
                 echo "INFO: Restoring $BASEDIR/printer_data/$file ..."
                 cp $overrides_dir/$file $BASEDIR/printer_data/
             elif [ "$file" = "calibration.json" ]; then
-                echo "INFO: Restoring $BASEDIR/guppyscreen/$file ..."
-                cp $overrides_dir/$file $BASEDIR/guppyscreen/$file
+                echo "INFO: Restoring $BASEDIR/grumpyscreen/$file ..."
+                cp $overrides_dir/$file $BASEDIR/grumpyscreen/$file
             elif [ "$file" = "KAMP_Settings.cfg" ]; then # KAMP_Settings.cfg is gone apply any overrides to start_end.cfg
                 # remove any overrides for these values which do not apply to Smart Park and Line Purge
                 sed -i '/variable_verbose_enable/d' $BASEDIR/pellcorp-overrides/KAMP_Settings.cfg
