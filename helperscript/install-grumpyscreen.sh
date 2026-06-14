@@ -51,4 +51,24 @@ sed -i 's/\[guppy_module_loader\]//g' /usr/data/printer_data/config/GuppyScreen/
 # there are a few macros required by GrumpyScreen
 cp /usr/data/pellcorp/helperscript/grumpy-macros.cfg /usr/data/printer_data/config/GuppyScreen/
 
-/usr/data/pellcorp/helperscript/update-grumpyscreen.sh
+tar xf /usr/data/pellcorp/k1/packages/guppyscreen.tar.gz -C /usr/data/
+if [ $? -ne 0 ]; then
+    echo "ERROR: GrumpyScreen could not be installed!"
+    exit 0
+fi
+
+mv /usr/data/guppyscreen/grumpyscreen.cfg /usr/data/printer_data/config/grumpyscreen.ini
+
+# remove old file
+[ -f /usr/data/printer_data/config/grumpyscreen.cfg ] && rm /usr/data/printer_data/config/grumpyscreen.cfg
+
+cp /usr/data/pellcorp/k1/services/S99guppyscreen /etc/init.d/
+
+sed -i 's/load_filament:.*/load_filament: _GUPPY_LOAD_MATERIAL EXTRUDER_TEMP={}/g' /usr/data/printer_data/config/grumpyscreen.ini
+sed -i 's/unload_filament:.*/unload_filament: _GUPPY_QUIT_MATERIAL EXTRUDER_TEMP={}/g' /usr/data/printer_data/config/grumpyscreen.ini
+sed -i 's/switch_to_stock_cmd:.*/switch_to_stock_cmd:/g' /usr/data/printer_data/config/grumpyscreen.ini
+sed -i 's/support_zip_cmd:.*/support_zip_cmd:/g' /usr/data/printer_data/config/grumpyscreen.ini
+
+sync
+
+/etc/init.d/S99guppyscreen restart
