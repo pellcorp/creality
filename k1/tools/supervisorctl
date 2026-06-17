@@ -63,7 +63,6 @@ print_usage() {
 
 get_script_path() {
   service="$1"
-  [ $service == "grumpyscreen" ] && service="guppyscreen"
   script_path="$(ls -1 /etc/init.d/S[0-9][0-9]${service}_service /etc/init.d/S[0-9][0-9]${service}* 2>/dev/null|head -1)"
   echo "$script_path"
 }
