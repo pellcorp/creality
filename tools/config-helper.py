@@ -98,13 +98,11 @@ def remove_section(updater, section):
 
 
 def _last_grumpy_section(updater, section_name):
-    last_section = None
-    found = False
-
     section_type = section_name.split(' ', maxsplit=1)[0]
 
     # for grumpyscreen.ini to add fan, led, monitored_sensor together
     if section_type in {"fan", "led", "monitored_sensor"}:
+        found = False
         for section in updater.sections():
             if section.startswith(f"{section_type} "):
                 if not found:
@@ -118,12 +116,11 @@ def _last_grumpy_section(updater, section_name):
 def _last_section(updater):
     last_section = None
     for section in updater.sections():
-        last_section = section
-
         # special case currently for fan_control.cfg to add additional config sections before the gcode
-        if section.startswith("gcode_macro "):
+        if not section.startswith("gcode_macro "):
+            last_section = section
+        else:
             break
-
     return last_section
 
 
