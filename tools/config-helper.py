@@ -102,21 +102,17 @@ def _last_grumpy_section(updater, section_name):
     found = False
 
     section_type = section_name.split(' ', maxsplit=1)[0]
-    legal_types = {"fan", "led", "monitored_sensor"}
 
-    for section in updater.sections():
-        last_section = section
+    # for grumpyscreen.ini to add fan, led, monitored_sensor together
+    if section_type in {"fan", "led", "monitored_sensor"}:
+        for section in updater.sections():
+            if section.startswith(f"{section_type} "):
+                if not found:
+                    found = True
+            elif found:
+                return section
 
-        # for grumpyscreen.ini to add fan, led, monitored_sensor together
-        if section_type in legal_types and section.startswith(f"{section_type} "):
-            if not found:
-                found = True
-        elif found:
-            found = False
-            break
-    if found:
-        return None
-    return last_section
+    return None
 
 
 def _last_section(updater):
