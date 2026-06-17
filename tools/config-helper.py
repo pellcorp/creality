@@ -4,7 +4,7 @@
 # https://github.com/pyscaffold/configupdater
 #
 
-import optparse, io, os, sys
+import optparse, os, sys
 import os.path
 from configupdater import ConfigUpdater
 
@@ -97,19 +97,41 @@ def remove_section(updater, section):
     return changed
 
 
-# special case currently for fan_control.cfg to add additional
-# config sections before the gcode
-def _last_section(updater):
+def _last_grumpy_section(updater, section_name):
     last_section = None
+    found = False
+
+    section_type = section_name.split(' ', maxsplit=1)[0]
+    legal_types = {"fan", "led", "monitored_sensor"}
+
     for section in updater.sections():
-        if not section.startswith("gcode_macro "):
-            last_section = section
-        else:
+        last_section = section
+
+        # for grumpyscreen.ini to add fan, led, monitored_sensor together
+        if section_type in legal_types and section.startswith(f"{section_type} "):
+            if not found:
+                found = True
+        elif found:
+            found = False
             break
+    if found:
+        return None
     return last_section
 
 
-# so return the first section which is not a include
+def _last_section(updater):
+    last_section = None
+    for section in updater.sections():
+        last_section = section
+
+        # special case currently for fan_control.cfg to add additional config sections before the gcode
+        if section.startswith("gcode_macro "):
+            break
+
+    return last_section
+
+
+# so return the first section which is not an include
 def _first_section(updater):
     first_section = None
     for section in updater.sections():
@@ -159,7 +181,9 @@ def add_section(updater, section_name):
     return True
 
 
-def override_cfg(updater, override_cfg_file,
+def override_cfg(updater,
+                 override_cfg_file,
+                 grumpyscreen_cfg=False,
                  allow_delete_section=True,
                  allow_delete_entry=True,
                  allow_new_section=True,
@@ -198,7 +222,7 @@ def override_cfg(updater, override_cfg_file,
             elif 'gcode_macro' not in section_name and 'gcode_shell_command' not in section_name and allow_new_section:
                 new_section = overrides.get_section(section_name, None)
                 if new_section:
-                    last_section = _last_section(updater)
+                    last_section = _last_grumpy_section(updater, section_name) if grumpyscreen_cfg else _last_section(updater)
                     if last_section:
                         updater[last_section].add_before.section(new_section.detach()).space()
                     else:  # file is basically empty
@@ -272,12 +296,13 @@ def main():
         with open(config_file, 'r') as file:
             updater.read_file(file)
 
-    printer_cfg = 'printer.cfg' == os.path.basename(config_file)
-    moonraker_conf = 'moonraker.conf' == os.path.basename(config_file)
-    fan_control = 'fan_control.cfg' == os.path.basename(config_file)
-    webcam_conf = 'webcam.conf' == os.path.basename(config_file)
-    crowsnest_conf = 'crowsnest.conf' == os.path.basename(config_file)
-    grumpyscreen_cfg = 'grumpyscreen.cfg' == os.path.basename(config_file) or 'grumpyscreen.ini' == os.path.basename(config_file)
+    basename = os.path.basename(config_file)
+    printer_cfg = 'printer.cfg' == basename
+    moonraker_conf = 'moonraker.conf' == basename
+    fan_control = 'fan_control.cfg' == basename
+    webcam_conf = 'webcam.conf' == basename
+    crowsnest_conf = 'crowsnest.conf' == basename
+    grumpyscreen_cfg = 'grumpyscreen.cfg' == basename or 'grumpyscreen.ini' == basename
 
     updated = False
     if options.remove_section:
@@ -346,7 +371,12 @@ def main():
         updated = add_section(updater, options.add_section)
     elif options.patches:
         if os.path.exists(options.patches):
-            updated = override_cfg(updater, options.patches, True, True, True)
+            updated = override_cfg(
+                updater,
+                options.patches,
+                allow_delete_section=True,
+                allow_delete_entry=True,
+                allow_new_section=True)
         else:
             raise Exception(f"Patches Config File {options.overrides} not found")
     elif options.overrides:
@@ -356,7 +386,9 @@ def main():
             allow_delete_section = (moonraker_conf or printer_cfg or fan_control)
             allow_delete_entry = printer_cfg
             allow_new_section = (fan_control or printer_cfg or moonraker_conf or webcam_conf or crowsnest_conf or grumpyscreen_cfg)
-            updated = override_cfg(updater, options.overrides,
+            updated = override_cfg(updater,
+                                   options.overrides,
+                                   grumpyscreen_cfg=grumpyscreen_cfg,
                                    allow_delete_section=allow_delete_section,
                                    allow_delete_entry=allow_delete_entry,
                                    allow_new_section=allow_new_section,
