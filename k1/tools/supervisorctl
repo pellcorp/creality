@@ -47,10 +47,8 @@ is_running() {
 
 print_process_status() {
   if is_running "$service"; then
-    [ $service == "guppyscreen" ] && service="grumpyscreen"
     printf "%-33s$GREEN""RUNNING$ENDCOLOR\n" "$service"
   else
-    [ $service == "guppyscreen" ] && service="grumpyscreen"
     printf "%-33s$RED""STOPPED$ENDCOLOR\n" "$service"
   fi
 }
@@ -95,7 +93,6 @@ restart() {
 }
 
 main() {
-  # echo "$0 $@" >> /tmp/supervisorctl.log
   action="$1"; shift
   case "$action" in
     status)
