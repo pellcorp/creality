@@ -18,6 +18,7 @@ screw4:50,297
 -- printer.cfg
 [stepper_y]
 position_min:-2
+position_endstop:-2
 position_max:298
 
 [stepper_x]
