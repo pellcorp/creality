@@ -31,11 +31,9 @@ if [ $? -ne 0 ]; then
 
   echo "INFO: Installing grumpyscreen ..."
 
-  mkdir -p $BASEDIR/grumpyscreen/
-  tar -zxf $BASEDIR/pellcorp/rpi/packages/guppyscreen-rpi.tar.gz -C $BASEDIR/grumpyscreen/ --strip-components=2 || exit $?
+  tar -zxf $BASEDIR/pellcorp/rpi/packages/grumpyscreen-rpi.tar.gz -C $BASEDIR || exit $?
 
-  cp $BASEDIR/grumpyscreen/grumpyscreen.cfg $BASEDIR/pellcorp-backups/
-  cp $BASEDIR/pellcorp-backups/grumpyscreen.cfg $BASEDIR/printer_data/config/grumpyscreen.ini
+  cp $BASEDIR/pellcorp/config/grumpyscreen.ini $BASEDIR/printer_data/config/
   [ -f $BASEDIR/printer_data/config/grumpyscreen.cfg ] && rm $BASEDIR/printer_data/config/grumpyscreen.cfg
 
   # si that you can print

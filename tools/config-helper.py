@@ -97,22 +97,6 @@ def remove_section(updater, section):
     return changed
 
 
-def _last_grumpy_section(updater, section_name):
-    section_type = section_name.split(' ', maxsplit=1)[0]
-
-    # for grumpyscreen.ini to add fan, led, monitored_sensor together
-    if section_type in {"fan", "led", "monitored_sensor"}:
-        found = False
-        for section in updater.sections():
-            if section.startswith(f"{section_type} "):
-                if not found:
-                    found = True
-            elif found:
-                return section
-
-    return None
-
-
 def _last_section(updater):
     last_section = None
     for section in updater.sections():
@@ -176,7 +160,6 @@ def add_section(updater, section_name):
 
 def override_cfg(updater,
                  override_cfg_file,
-                 grumpyscreen_cfg=False,
                  allow_delete_section=True,
                  allow_delete_entry=True,
                  allow_new_section=True,
@@ -215,7 +198,7 @@ def override_cfg(updater,
             elif 'gcode_macro' not in section_name and 'gcode_shell_command' not in section_name and allow_new_section:
                 new_section = overrides.get_section(section_name, None)
                 if new_section:
-                    last_section = _last_grumpy_section(updater, section_name) if grumpyscreen_cfg else _last_section(updater)
+                    last_section = _last_section(updater)
                     if last_section:
                         updater[last_section].add_before.section(new_section.detach()).space()
                     else:  # file is basically empty
@@ -295,7 +278,6 @@ def main():
     fan_control = 'fan_control.cfg' == basename
     webcam_conf = 'webcam.conf' == basename
     crowsnest_conf = 'crowsnest.conf' == basename
-    grumpyscreen_cfg = 'grumpyscreen.cfg' == basename or 'grumpyscreen.ini' == basename
 
     updated = False
     if options.remove_section:
@@ -378,10 +360,9 @@ def main():
             exclude_sections = options.exclude_sections.split(',') if options.exclude_sections else None
             allow_delete_section = (moonraker_conf or printer_cfg or fan_control)
             allow_delete_entry = printer_cfg
-            allow_new_section = (fan_control or printer_cfg or moonraker_conf or webcam_conf or crowsnest_conf or grumpyscreen_cfg)
+            allow_new_section = (fan_control or printer_cfg or moonraker_conf or webcam_conf or crowsnest_conf)
             updated = override_cfg(updater,
                                    options.overrides,
-                                   grumpyscreen_cfg=grumpyscreen_cfg,
                                    allow_delete_section=allow_delete_section,
                                    allow_delete_entry=allow_delete_entry,
                                    allow_new_section=allow_new_section,
