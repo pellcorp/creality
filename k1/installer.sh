@@ -1072,22 +1072,20 @@ function install_grumpyscreen() {
 
         [ -d /usr/data/guppyscreen ] && rm -rf /usr/data/guppyscreen
         [ -d /usr/data/grumpyscreen ] && rm -rf /usr/data/grumpyscreen
-        mkdir -p /usr/data/grumpyscreen
 
-        asset_name=guppyscreen.tar.gz
+        asset_name=grumpyscreen.tar.gz
         # Ender 5 Max and Ender 3 V3 KE have a nebula pad which is small resolution
         if [ "$MODEL" = "F004" ] || [ "$MODEL" = "F005" ] || [ "$MODEL" = "NEBULA" ]; then
-            asset_name=guppyscreen-smallscreen.tar.gz
+            asset_name=grumpyscreen-smallscreen.tar.gz
         fi
-        tar -zxf /usr/data/pellcorp/k1/packages/$asset_name -C /usr/data/grumpyscreen/ --strip-components=2 || exit $?
+        tar -zxf /usr/data/pellcorp/k1/packages/$asset_name -C /usr/data/ || exit $?
 
         # for Ender 5 Max we want display_rotate: 2 and that gets set by grumpyscreen package
         # so we need to switch it to 3 for KE and Nebula
         if [ "$MODEL" = "F005" ] || [ "$MODEL" = "NEBULA" ]; then
           sed -i "s/display_rotate:.*/display_rotate: 0/g" /usr/data/grumpyscreen/grumpyscreen.cfg
         fi
-        cp /usr/data/grumpyscreen/grumpyscreen.cfg /usr/data/pellcorp-backups/
-        cp /usr/data/pellcorp-backups/grumpyscreen.cfg /usr/data/printer_data/config/grumpyscreen.ini
+        cp /usr/data/pellcorp/config/grumpyscreen.ini /usr/data/printer_data/config/
 
         [ -f /etc/init.d/S99guppyscreen ] && rm /etc/init.d/S99guppyscreen
         cp /usr/data/pellcorp/k1/services/S99grumpyscreen /etc/init.d/ || exit $?
@@ -2432,6 +2430,8 @@ fi
     # remove old cfg files
     [ -f /usr/data/pellcorp-backups/sensorless.cfg ] && rm /usr/data/pellcorp-backups/sensorless.cfg
     [ -f /usr/data/printer_data/config/sensorless.cfg ] && rm /usr/data/printer_data/config/sensorless.cfg
+    [ -f /usr/data/pellcorp-backups/grumpyscreen.cfg ] && rm /usr/data/pellcorp-backups/grumpyscreen.cfg
+    [ -f /usr/data/pellcorp-backups/grumpyscreen.ini ] && rm /usr/data/pellcorp-backups/grumpyscreen.ini
 
     apply_overrides=0
     # there will be no support for generating pellcorp-overrides unless you have done a factory reset

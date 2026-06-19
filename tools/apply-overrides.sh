@@ -41,8 +41,6 @@ apply_overrides() {
                 base_file=cartotouch.cfg
             elif [ "$base_file" = "btteddy.cfg" ] && [ -f $BASEDIR/printer_data/config/eddyng.cfg ]; then
                 base_file=eddyng.cfg
-            elif [ "$base_file" = "grumpyscreen.cfg" ] && [ -f $BASEDIR/printer_data/config/grumpyscreen.ini ]; then
-                base_file=grumpyscreen.ini
             elif [ "$base_file" = "sensorless.cfg" ] && [ -f $BASEDIR/printer_data/config/homing.cfg ]; then
               # this is for ancient migration of SENSORLESS_PARAMS
               sed -i 's/gcode_macro SENSORLESS_PARAMS/gcode_macro _SENSORLESS_PARAMS/g' $overrides_dir/sensorless.cfg
@@ -59,11 +57,12 @@ apply_overrides() {
                 $CONFIG_HELPER --file ${base_file} --overrides $overrides_dir/$file || exit $?
             elif [ "$file" != "$base_file" ] && [ -f "$BASEDIR/pellcorp/config/$base_file" ] && [ -f $BASEDIR/printer_data/config/${base_file} ]; then
                 $CONFIG_HELPER --file ${base_file} --overrides $overrides_dir/$file || exit $?
-            elif [ "$base_file" = "grumpyscreen.ini" ]; then
-                $CONFIG_HELPER --file ${base_file} --overrides $overrides_dir/$file || exit $?
             elif [ "$base_file" = "webcam.ini" ]; then
                 $CONFIG_HELPER --file ${base_file} --overrides $overrides_dir/$file || exit $?
             elif [ "$file" = "moonraker.secrets" ]; then
+                echo "INFO: Restoring $BASEDIR/printer_data/$file ..."
+                cp $overrides_dir/$file $BASEDIR/printer_data/
+            elif [ "$file" = "grumpyscreen.ini" ]; then
                 echo "INFO: Restoring $BASEDIR/printer_data/$file ..."
                 cp $overrides_dir/$file $BASEDIR/printer_data/
             elif [ "$file" = "calibration.json" ]; then

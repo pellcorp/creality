@@ -1517,6 +1517,10 @@ fi
     fi
   fi
 
+  # we are no longer managing diffs with grumpyscreen just the override file
+  [ -f $BASEDIR/pellcorp-backups/grumpyscreen.cfg ] && rm $BASEDIR/pellcorp-backups/grumpyscreen.cfg
+  [ -f $BASEDIR/pellcorp-backups/grumpyscreen.ini ] && rm $BASEDIR/pellcorp-backups/grumpyscreen.ini
+
   # we want a copy of the file before config overrides are re-applied so we can correctly generate diffs
   # against different generations of the original file
   for file in printer.cfg start_end.cfg fan_control.cfg ${probe}.conf spoolman.conf timelapse.conf moonraker.conf crowsnest.conf webcam.conf useful_macros.cfg homing.cfg ${probe}_macro.cfg ${probe}.cfg; do
