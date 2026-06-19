@@ -22,15 +22,21 @@ get_services() {
 
 get_pid_file() {
   service="$1"
-  [ $service == "klipper" ] && service="klippy"
-  pid_file="/var/run/$service.pid"
+
+  if [ $service == "klipper" ]; then
+    pid_service="klippy"
+  elif [ $service == "grumpyscreen" ]; then
+    pid_service="guppyscreen"
+  else
+    pid_service=$service
+  fi
+  pid_file="/var/run/$pid_service.pid"
   echo $pid_file
 }
 
 is_running() {
   service="$1"
 
-  [ $service == "grumpyscreen" ] && service="guppyscreen"
   pid_file="$(get_pid_file "$service")"
 
   # Check for PID file
