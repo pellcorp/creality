@@ -1179,6 +1179,11 @@ fi
     fi
   done
 
+  if [ "$mode" = "update" ] && [ ! -f $BASEDIR/pellcorp.done ]; then
+    echo "ERROR: No installation found"
+    exit 1
+  fi
+
   if [ -z "$probe" ] && [ -n "$existing_probe" ]; then
     probe=$existing_probe
   fi
@@ -1273,10 +1278,13 @@ fi
     $BASEDIR/pellcorp/rpi/tools/apply-printer-cfg.sh $printer || exit $?
   fi
 
-  model=$(cat $BASEDIR/pellcorp-backups/printer.factory.cfg | grep MODEL: | awk -F ':' '{print $2}')
-  # if a printer.cfg is specified without a MODEL we skip mount overrides
-  if [ -z "$model" ]; then
-    model=unspecified
+  model=unspecified
+  if [ -f $BASEDIR/pellcorp-backups/printer.factory.cfg ]; then
+    model=$(cat $BASEDIR/pellcorp-backups/printer.factory.cfg | grep MODEL: | awk -F ':' '{print $2}')
+    # if a printer.cfg is specified without a MODEL we skip mount overrides
+    if [ -z "$model" ]; then
+      model=unspecified
+    fi
   fi
 
   # we skip mount overrides for a special unspecified model
@@ -1370,7 +1378,9 @@ fi
   fi
 
   mkdir -p $BASEDIR/printer_data/config/
-  cp $BASEDIR/pellcorp-backups/printer.factory.cfg $BASEDIR/printer_data/config/printer.cfg
+  if [ -f $BASEDIR/pellcorp-backups/printer.factory.cfg ]; then
+    cp $BASEDIR/pellcorp-backups/printer.factory.cfg $BASEDIR/printer_data/config/printer.cfg
+  fi
 
   if [ "$model" != "unspecified" ] && [ ! -f $BASEDIR/pellcorp.done ]; then
     # we need a flag to know what mount we are using

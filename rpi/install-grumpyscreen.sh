@@ -1,5 +1,8 @@
 #!/bin/bash
 
+# this allows us to make changes to Simple AF and grumpyscreen in parallel
+GRUMPYSCREEN_TIMESTAMP=1782097900
+
 BASEDIR=$HOME
 source $BASEDIR/pellcorp/rpi/functions.sh
 
@@ -14,6 +17,7 @@ mode=$1
 grep -q "grumpyscreen" $BASEDIR/pellcorp.done
 if [ $? -ne 0 ]; then
   echo
+  echo "INFO: Installing grumpyscreen ..."
 
   if [ "$(sudo systemctl is-enabled KlipperScreen 2> /dev/null)" = "enabled" ]; then
     echo "INFO: Stop and disable KlipperScreen"
@@ -25,13 +29,33 @@ if [ $? -ne 0 ]; then
     sudo systemctl stop grumpyscreen > /dev/null 2>&1
   fi
 
-  # we are going to replace grumpyscreen every time
-  [ -d  $BASEDIR/grumpyscreen ] && rm -rf $BASEDIR/grumpyscreen
   [ -d  $BASEDIR/guppyscreen ] && rm -rf $BASEDIR/guppyscreen
 
-  echo "INFO: Installing grumpyscreen ..."
+  if [ -d $BASEDIR/grumpyscreen ]; then
+    TIMESTAMP=0
+    if [ -f $BASEDIR/grumpyscreen/release.info ]; then
+      TIMESTAMP=$(cat $BASEDIR/grumpyscreen/release.info | grep TIMESTAMP | awk -F '=' '{print $2}')
+      if [ -z "$TIMESTAMP" ]; then
+        TIMESTAMP=0
+      fi
+    fi
+    if [ $TIMESTAMP -lt $GRUMPYSCREEN_TIMESTAMP ]; then
+      echo
+      echo "INFO: Forcing update of grumpyscreen"
+      rm -rf $BASEDIR/grumpyscreen
+    fi
+  fi
 
-  tar -zxf $BASEDIR/pellcorp/rpi/packages/grumpyscreen-rpi.tar.gz -C $BASEDIR || exit $?
+  command -v curl > /dev/null
+  if [ $? -ne 0 ]; then
+    retry sudo apt-get install -y curl || exit $?
+  fi
+
+  if [ ! -d $BASEDIR/grumpyscreen ]; then
+    retry curl -L "https://github.com/pellcorp/grumpyscreen/releases/download/main/grumpyscreen-rpi.tar.gz" -o $BASEDIR/grumpyscreen.tar.gz || exit $?
+    tar xf $BASEDIR/grumpyscreen.tar.gz -C $BASEDIR/ || exit $?
+    rm $BASEDIR/grumpyscreen.tar.gz
+  fi
 
   cp $BASEDIR/pellcorp/config/grumpyscreen.ini $BASEDIR/printer_data/config/
   [ -f $BASEDIR/printer_data/config/grumpyscreen.cfg ] && rm $BASEDIR/printer_data/config/grumpyscreen.cfg
@@ -45,10 +69,7 @@ if [ $? -ne 0 ]; then
   sudo cp $BASEDIR/pellcorp/rpi/services/grumpyscreen.service /etc/systemd/system/ || exit $?
   sudo sed -i "s:\$HOME:$BASEDIR:g" /etc/systemd/system/grumpyscreen.service
   sudo sed -i "s:User=pi:User=$USER:g" /etc/systemd/system/grumpyscreen.service
-  sed -i "s~support_zip_cmd:.*~support_zip_cmd: $BASEDIR/pellcorp/tools/support.sh~g" $BASEDIR/printer_data/config/grumpyscreen.ini
-  sed -i "s~factory_reset_cmd:.*~support_zip_cmd:~g" $BASEDIR/printer_data/config/grumpyscreen.ini
-  # the current grumpy release fucks this up so clean it up for rpi
-  sed -i "s~factory_reset_cmd:.*~factory_reset_cmd:~g" $BASEDIR/printer_data/config/grumpyscreen.ini
+  sed -i "s:\$HOME:$BASEDIR:g" $BASEDIR/grumpyscreen/grumpyscreen.cfg
   sudo systemctl daemon-reload
   sudo systemctl enable grumpyscreen
 

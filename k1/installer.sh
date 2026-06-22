@@ -1,5 +1,8 @@
 #!/bin/sh
 
+# this allows us to make changes to Simple AF and grumpyscreen in parallel
+GRUMPYSCREEN_TIMESTAMP=1782097900
+
 if [ -f /usr/bin/get_sn_mac.sh ]; then
   MODEL=$(/usr/bin/get_sn_mac.sh model)
   if [ "$MODEL" = "Nebula Pad" ]; then
@@ -134,6 +137,34 @@ cp /usr/data/pellcorp/k1/tools/curl /usr/bin/curl || exit $?
 sync
 
 CONFIG_HELPER="/usr/data/pellcorp/tools/config-helper.py"
+
+# stolen from https://github.com/lavabit/robox/
+function retry() {
+  local COUNT=1
+  local DELAY=0
+  local RESULT=0
+  while [[ "${COUNT}" -le 10 ]]; do
+    [[ "${RESULT}" -ne 0 ]] && {
+      [ "`which tput 2> /dev/null`" != "" ] && [ -n "$TERM" ] && tput setaf 1
+      echo -e "\n${*} failed... retrying ${COUNT} of 10.\n" >&2
+      [ "`which tput 2> /dev/null`" != "" ] && [ -n "$TERM" ] && tput sgr0
+    }
+    "${@}" && { RESULT=0 && break; } || RESULT="${?}"
+    COUNT="$((COUNT + 1))"
+
+    # Increase the delay with each iteration.
+    DELAY="$((DELAY + 10))"
+    sleep $DELAY
+  done
+
+  [[ "${COUNT}" -gt 10 ]] && {
+    [ "`which tput 2> /dev/null`" != "" ] && [ -n "$TERM" ] && tput setaf 1
+    echo -e "\nThe command failed 10 times.\n" >&2
+    [ "`which tput 2> /dev/null`" != "" ] && [ -n "$TERM" ] && tput sgr0
+  }
+
+  return "${RESULT}"
+}
 
 # thanks to @Nestaa51 for the timeout changes to not wait forever for moonraker
 function restart_moonraker() {
@@ -1060,6 +1091,8 @@ function install_grumpyscreen() {
     if [ $? -ne 0 ]; then
         echo
 
+        echo "INFO: Installing grumpyscreen ..."
+
         if [ -f /etc/init.d/S99guppyscreen ]; then
           /etc/init.d/S99guppyscreen stop > /dev/null 2>&1
           killall -q guppyscreen > /dev/null 2>&1
@@ -1068,20 +1101,38 @@ function install_grumpyscreen() {
           killall -q guppyscreen > /dev/null 2>&1
         fi
 
-        echo "INFO: Installing grumpyscreen ..."
-
         [ -d /usr/data/guppyscreen ] && rm -rf /usr/data/guppyscreen
-        [ -d /usr/data/grumpyscreen ] && rm -rf /usr/data/grumpyscreen
 
         asset_name=grumpyscreen.tar.gz
         # Ender 5 Max and Ender 3 V3 KE have a nebula pad which is small resolution
         if [ "$MODEL" = "F004" ] || [ "$MODEL" = "F005" ] || [ "$MODEL" = "NEBULA" ]; then
             asset_name=grumpyscreen-smallscreen.tar.gz
         fi
-        tar -zxf /usr/data/pellcorp/k1/packages/$asset_name -C /usr/data/ || exit $?
+
+        if [ -d /usr/data/grumpyscreen ]; then
+          TIMESTAMP=0
+          if [ -f /usr/data/grumpyscreen/release.info ]; then
+            TIMESTAMP=$(cat /usr/data/grumpyscreen/release.info | grep TIMESTAMP | awk -F '=' '{print $2}')
+            if [ -z "$TIMESTAMP" ]; then
+              TIMESTAMP=0
+            fi
+          fi
+
+          if [ $TIMESTAMP -lt $GRUMPYSCREEN_TIMESTAMP ]; then
+            echo
+            echo "INFO: Forcing update of grumpyscreen"
+            rm -rf /usr/data/grumpyscreen
+          fi
+        fi
+
+        if [ ! -d /usr/data/grumpyscreen ]; then
+          retry curl -L "https://github.com/pellcorp/grumpyscreen/releases/download/main/${asset_name}" -o /usr/data/grumpyscreen.tar.gz || exit $?
+          tar xf /usr/data/grumpyscreen.tar.gz -C /usr/data/ 2> /dev/null || exit $?
+          rm /usr/data/grumpyscreen.tar.gz
+        fi
 
         # for Ender 5 Max we want display_rotate: 2 and that gets set by grumpyscreen package
-        # so we need to switch it to 3 for KE and Nebula
+        # so we need to switch it to 0 for KE and Nebula
         if [ "$MODEL" = "F005" ] || [ "$MODEL" = "NEBULA" ]; then
           sed -i "s/display_rotate:.*/display_rotate: 0/g" /usr/data/grumpyscreen/grumpyscreen.cfg
         fi
@@ -2113,6 +2164,11 @@ fi
             echo
             exit 1
         fi
+    fi
+
+    if [ "$mode" = "update" ] && [ ! -f /usr/data/pellcorp.done ]; then
+      echo "ERROR: No installation found"
+      exit 1
     fi
 
     # don't try and validate a mount if all we are wanting to do is fix serial
