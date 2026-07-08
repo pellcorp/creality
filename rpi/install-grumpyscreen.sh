@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # this allows us to make changes to Simple AF and grumpyscreen in parallel
-GRUMPYSCREEN_TIMESTAMP=1783387800
+GRUMPYSCREEN_TIMESTAMP=1783550000
 
 BASEDIR=$HOME
 source $BASEDIR/pellcorp/rpi/functions.sh
@@ -59,6 +59,11 @@ if [ $? -ne 0 ]; then
 
   cp $BASEDIR/pellcorp/config/grumpyscreen.ini $BASEDIR/printer_data/config/
   [ -f $BASEDIR/printer_data/config/grumpyscreen.cfg ] && rm $BASEDIR/printer_data/config/grumpyscreen.cfg
+
+  kinematics=$($CONFIG_HELPER --get-section-entry "printer" "kinematics")
+  if [ "$kinematics" = "cartesian" ]; then
+    $CONFIG_HELPER --file $BASEDIR/grumpyscreen/grumpyscreen.cfg --replace-section-entry "ui" "invert_z_icon" "true" || exit $?
+  fi
 
   # si that you can print
   if [ ! -L $BASEDIR/printer_data/gcodes/usb ]; then

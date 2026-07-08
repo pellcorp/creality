@@ -1,7 +1,7 @@
 #!/bin/sh
 
 # this allows us to make changes to Simple AF and grumpyscreen in parallel
-GRUMPYSCREEN_TIMESTAMP=1783387800
+GRUMPYSCREEN_TIMESTAMP=1783550000
 
 if [ -f /usr/bin/get_sn_mac.sh ]; then
   MODEL=$(/usr/bin/get_sn_mac.sh model)
@@ -1136,6 +1136,12 @@ function install_grumpyscreen() {
         if [ "$MODEL" = "F005" ] || [ "$MODEL" = "NEBULA" ]; then
           sed -i "s/display_rotate:.*/display_rotate: 0/g" /usr/data/grumpyscreen/grumpyscreen.cfg
         fi
+
+        kinematics=$($CONFIG_HELPER --get-section-entry "printer" "kinematics")
+        if [ "$kinematics" = "cartesian" ]; then
+          $CONFIG_HELPER --file /usr/data/grumpyscreen/grumpyscreen.cfg --replace-section-entry "ui" "invert_z_icon" "true" || exit $?
+        fi
+
         cp /usr/data/pellcorp/config/grumpyscreen.ini /usr/data/printer_data/config/
 
         [ -f /etc/init.d/S99guppyscreen ] && rm /etc/init.d/S99guppyscreen
