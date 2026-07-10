@@ -21,6 +21,9 @@ start_server() {
 
 stop_server() {
     RC_SVCNAME=guppyscreen $SUPERVISE_DAEMON guppyscreen --stop --pidfile $PID_FILE > /dev/null 2>&1
+
+    # after stopping grumpyscreen, clear the screen with this afterwards to avoid showing a corrupted image
+    cmd_jpeg_display /usr/data/pellcorp/k1/black.jpg &
 }
 
 case "$1" in
