@@ -11,7 +11,8 @@ The following projects also owned and developed by me (usually from an upstream 
 - https://github.com/pellcorp/creality-wiki
 - https://github.com/pellcorp/klipper
 - https://github.com/pellcorp/klipper-rpi
-- https://github.com/pellcorp/k1-mjpg-streamer
+- https://github.com/pellcorp/kalico
+- https://github.com/pellcorp/kalico-rpi
 - https://github.com/pellcorp/k1-ustreamer
 - https://github.com/pellcorp/k1-bash
 - https://github.com/pellcorp/k1-sftp-server
