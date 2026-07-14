@@ -1061,6 +1061,12 @@ function install_klipper() {
           $CONFIG_HELPER --patches /usr/data/pellcorp/k1/printer.cfg.f001
         fi
 
+        # this is mostly for kalico, so that the sweeping is enabled if people switch to kalico they can
+        # always disable it again
+        if $CONFIG_HELPER --section-exists "resonance_tester"; then
+          $CONFIG_HELPER --replace-section-entry "resonance_tester" "sweeping_period" 1.2 || exit $?
+        fi
+
         if $CONFIG_HELPER --section-exists "filament_switch_sensor filament_sensor"; then
           $CONFIG_HELPER --replace-section-entry "filament_switch_sensor filament_sensor" "runout_gcode" "_ON_FILAMENT_RUNOUT" || exit $?
 
