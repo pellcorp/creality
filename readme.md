@@ -6,13 +6,14 @@ An alternative environment for your printer which requires a separate probe
 
 The following projects also owned and developed by me (usually from an upstream fork) that are also used by this project:
 
-- https://github.com/pellcorp/grumpyscreen
-- https://github.com/pellcorp/k1-klipper-firmware
 - https://github.com/pellcorp/creality-wiki
+- https://github.com/pellcorp/grumpyscreen
 - https://github.com/pellcorp/klipper
 - https://github.com/pellcorp/klipper-rpi
+- https://github.com/pellcorp/k1-klipper-firmware
 - https://github.com/pellcorp/kalico
 - https://github.com/pellcorp/kalico-rpi
+- https://github.com/pellcorp/k1-kalico-firmware
 - https://github.com/pellcorp/k1-ustreamer
 - https://github.com/pellcorp/k1-bash
 - https://github.com/pellcorp/k1-sftp-server
