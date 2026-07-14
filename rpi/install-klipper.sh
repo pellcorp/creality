@@ -256,6 +256,12 @@ if [ $? -ne 0 ]; then
     fi
   fi
 
+  # this is mostly for kalico, so that the sweeping is enabled if people switch to kalico they can
+  # always disable it again
+  if $CONFIG_HELPER --section-exists "resonance_tester"; then
+    $CONFIG_HELPER --replace-section-entry "resonance_tester" "sweeping_period" 1.2 || exit $?
+  fi
+
   # just in case its missing from stock printer.cfg make sure it gets added
   $CONFIG_HELPER --add-section "exclude_object" || exit $?
 
