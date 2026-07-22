@@ -8,6 +8,7 @@ import io, os
 from configupdater import ConfigUpdater
 import argparse
 
+PROBE_CFG_FILES = ('cartographer.cfg', 'cartotouch.cfg', 'beacon.cfg', 'btteddy.cfg', 'eddyng.cfg', 'microprobe.cfg', 'klicky.cfg', 'bltouch.cfg')
 
 def main():
     parser = argparse.ArgumentParser(description='Pellcorp Config Overrides')
@@ -36,15 +37,16 @@ def main():
     include_sections = args.include_sections.split(',') if args.include_sections else None
     exclude_sections = args.exclude_sections.split(',') if args.exclude_sections else None
 
+    basename = os.path.basename(args.original)
     update_overrides = False
-    printer_cfg = 'printer.cfg' == os.path.basename(args.original)
-    moonraker_conf = 'moonraker.conf' == os.path.basename(args.original)
-    fan_control = 'fan_control.cfg' == os.path.basename(args.original)
-    cartographer_cfg = 'cartographer.cfg' == os.path.basename(args.original)
+    printer_cfg = 'printer.cfg' == basename
+    moonraker_conf = 'moonraker.conf' == basename
+    fan_control = 'fan_control.cfg' == basename
+    probe_cfg = basename in PROBE_CFG_FILES
 
     # only support new sections for rpi webcam.conf
-    webcam_conf = 'webcam.conf' == os.path.basename(args.original) and '/usr/data/printer_data/config/webcam.conf' not in args.updated
-    crowsnest_conf = 'crowsnest.conf' == os.path.basename(args.original)
+    webcam_conf = 'webcam.conf' == basename and '/usr/data/printer_data/config/webcam.conf' not in args.updated
+    crowsnest_conf = 'crowsnest.conf' == basename
 
     deleted_sections = []
     for section_name in original.sections():
@@ -116,8 +118,8 @@ def main():
         updated_section = updated.get_section(section_name, None)
         if original_section and updated_section:
             for key in original_section.keys():
-                # cannot delete a section value unless its from printer.cfg
-                if key not in updated_section and printer_cfg:
+                # cannot delete a section value unless its from printer.cfg or a specific probe cfg file
+                if key not in updated_section and (printer_cfg or probe_cfg):
                     if not overrides.has_section(section_name):
                         if len(overrides.sections()) > 0:
                             overrides[overrides.sections()[-1]].add_after.space().section(section_name)
@@ -139,6 +141,7 @@ def main():
                 if ('gcode_macro' in section_name or section_name == 'homing_override') and key == 'gcode':
                     continue
 
+                # we require the on_error_gcode to point at an internal macro so do not support updating it
                 if (section_name == 'virtual_sdcard') and key == 'on_error_gcode':
                     continue
 
@@ -156,8 +159,8 @@ def main():
                 if moonraker_conf and (section_name == 'update_manager klipper' or section_name == 'update_manager moonraker') and key == 'pinned_commit':
                     continue
 
-                # do not add a new value that was missing from original unless this is for printer.cfg, fan_control.cfg, cartographer.cfg or the special is_non_critical field
-                if original_value or printer_cfg or fan_control or cartographer_cfg or key == 'is_non_critical':
+                # do not add a new value that was missing from original unless this is for printer.cfg, fan_control.cfg, specific probe .cfg or the special is_non_critical field
+                if original_value or printer_cfg or fan_control or probe_cfg or key == 'is_non_critical':
                     if (not original_value and updated_value and updated_value.value) or (original_value and original_value.value and updated_value and updated_value.value and original_value.value != updated_value.value):
                         if not overrides.has_section(section_name):
                             if len(overrides.sections()) > 0:
