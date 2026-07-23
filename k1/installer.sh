@@ -24,13 +24,14 @@ if [ -f /usr/bin/get_sn_mac.sh ]; then
     model=f005
     # this piece of hackery is just for my Ender 3 V3 SE which has a Nebula Pad and a KE board but a SE toolhead
     if [ -f /usr/data/creality/userdata/config/system_config.json ]; then
+      PRINTER_MODEL=$(grep -r model_str /usr/data/creality/userdata/config/system_config.json | awk -F: '{print $2}' | grep -o '".*"' | tr -d '"' | sed 's/Nebula-//g')
       if [ "$PRINTER_MODEL" = "Ender-3 V3 SE" ]; then
         model=e3v3se
       fi
     fi
   elif [ "$MODEL" = "NEBULA" ]; then
     if [ -f /usr/data/creality/userdata/config/system_config.json ]; then
-      PRINTER_MODEL=$(grep -r model_str /usr/data/creality/userdata/config/system_config.json | awk -F: '{print $2}' | grep -o '".*"' | tr -d '"')
+      PRINTER_MODEL=$(grep -r model_str /usr/data/creality/userdata/config/system_config.json | awk -F: '{print $2}' | grep -o '".*"' | tr -d '"' | sed 's/Nebula-//g')
       if [ "$PRINTER_MODEL" = "Ender-3 V3 SE" ]; then
         model=e3v3se
       else
