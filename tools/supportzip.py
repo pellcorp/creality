@@ -38,9 +38,11 @@ def make_zip(zip_name, sources, exclude_dirs=None):
                             if is_dead_symlink(fpath):
                                 continue
                             arcpath = str(fpath)
-                            filename = os.path.basename(arcpath)
-                            if 'printer_data/config' in arcpath:
-                                arcpath='config/' + filename
+                            printer_data_prefix = 'printer_data/'
+                            if printer_data_prefix in arcpath:
+                                # Omit the path leading to printer_data, but preserve
+                                # the directory structure within it.
+                                arcpath = arcpath.split(printer_data_prefix, 1)[1]
                             zf.write(fpath, arcname=arcpath)
 
 
