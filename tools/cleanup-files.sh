@@ -114,7 +114,8 @@ for file in $files; do
 done
 sync
 
-files=$(find $BASEDIR/printer_data/logs/ -maxdepth 1 -name "*.log" -type f -mtime +7 -print)
+# note we are now capturing the moonraker and klippy rolled logs
+files=$(find $BASEDIR/printer_data/logs/ -maxdepth 1 -name "*.log*" -type f -mtime +7 -print)
 for file in $files; do
     filename=$(basename $file)
     # lets just make sure we do not delete these files accidentally

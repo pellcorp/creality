@@ -273,7 +273,7 @@ function install_config_updater() {
     if [ $? -ne 0 ]; then
         echo
         echo "INFO: Installing configupdater python package ..."
-        pip3 install configupdater==3.2
+        pip3 install /usr/data/pellcorp/packages/ConfigUpdater-3.2-py2.py3-none-any.whl
 
         python3 -c 'from configupdater import ConfigUpdater' 2> /dev/null
         if [ $? -ne 0 ]; then
