@@ -1,5 +1,6 @@
 #!/bin/sh
 
+# sudo systemctl list-units --full -all -t service --no-legend | grep -q 'klipper.service'
 # K1 compatibility layer for systemctl
 if [ "$1" = "reboot" ]; then
   /sbin/reboot
@@ -30,5 +31,16 @@ elif [ "$1" = "restart" ] || [ "$1" = "stop" ] || [ "$1" = "start" ]; then
     if [ -f /etc/init.d/S99grumpyscreen ]; then
         /etc/init.d/S99grumpyscreen $1
     fi
+  fi
+elif [ "$1" = "list-units" ]; then
+  # Moonraker uses this to discover the services it may manage.  Creality OS
+  # uses init scripts rather than systemd, so expose its service list in the
+  # subset of systemctl's output format that Moonraker needs.
+  services_file=/usr/data/printer_data/moonraker.asvc
+  if [ -f "$services_file" ]; then
+    while IFS= read -r service; do
+      [ -n "$service" ] || continue
+      printf '  %-36s loaded    active   running %s\n' "$service.service" "${service}.service"
+    done < "$services_file"
   fi
 fi
