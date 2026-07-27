@@ -69,6 +69,13 @@ if [ -d /opt ] && [ ! -L /opt ] && [ $(ls -1 /opt | wc -l) -eq 0 ]; then
   rm -rf /opt
 fi
 
+# some third party addons expect python to exist even though we only got python3 so just soft link it
+if [ ! -L /usr/bin/python ]; then
+  cd /usr/bin > /dev/null
+  ln -sf python3 python
+  cd - > /dev/null
+fi
+
 # kill pip cache to free up overlayfs
 rm -rf /root/.cache
 sync
