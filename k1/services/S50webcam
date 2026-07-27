@@ -17,6 +17,7 @@ start() {
     WORKERS=$(cat $CONFIG_FILE | grep workers | awk -F '=' '{print $2}')
     BUFFERS=$(cat $CONFIG_FILE | grep buffers | awk -F '=' '{print $2}')
     RESOLUTION=$(cat $CONFIG_FILE | grep resolution | awk -F '=' '{print $2}')
+    FLIP_VERTICAL=$(cat $CONFIG_FILE | grep flip_vertical | awk -F '=' '{print $2}')
   fi
 
   V4L_DEVICE=$(v4l2-ctl --list-devices|grep -A1 usb|sed 's/^[[:space:]]*//g'|grep '^/dev' | head -1)
@@ -25,7 +26,11 @@ start() {
     exit 1
   fi
 
-  start-stop-daemon -S -b -m -p $PID_FILE --exec /usr/data/ustreamer/ustreamer -- -n -r $RESOLUTION -c HW -m MJPEG -b $BUFFERS -w $WORKERS -f $FRAMES_PER_SECOND -l -d $V4L_DEVICE --host=0.0.0.0 --allow-origin=* --device-timeout 15
+  flip_vertical_arg=""
+  if [ "$FLIP_VERTICAL" = "true" ]; then
+    flip_vertical_arg="--flip-vertical=1"
+  fi
+  start-stop-daemon -S -b -m -p $PID_FILE --exec /usr/data/ustreamer/ustreamer -- -n -r $RESOLUTION -c HW -m MJPEG -b $BUFFERS -w $WORKERS -f $FRAMES_PER_SECOND -l -d $V4L_DEVICE --host=0.0.0.0 --allow-origin=* --device-timeout 15 $flip_vertical_arg
 }
 
 stop() {
