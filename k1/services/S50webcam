@@ -29,8 +29,8 @@ start() {
 
   if [ "$DISABLE_NEBULA_IRLIGHT" = "true" ]; then
     command -v /usr/bin/cam_util > /dev/null
-    if [ $? -ne 0 ]; then
-      /usr/bin/cam_util -i $V4L_DEVICE -s 0
+    if [ $? -eq 0 ]; then
+      /usr/bin/cam_util -i $V4L_DEVICE -s 0 > /dev/null
     fi
   fi
 
