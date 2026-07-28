@@ -18,12 +18,20 @@ start() {
     BUFFERS=$(cat $CONFIG_FILE | grep buffers | awk -F '=' '{print $2}')
     RESOLUTION=$(cat $CONFIG_FILE | grep resolution | awk -F '=' '{print $2}')
     FLIP_VERTICAL=$(cat $CONFIG_FILE | grep flip_vertical | awk -F '=' '{print $2}')
+    DISABLE_NEBULA_IRLIGHT=$(cat $CONFIG_FILE | grep disable_nebula_irlight | awk -F '=' '{print $2}')
   fi
 
   V4L_DEVICE=$(v4l2-ctl --list-devices|grep -A1 usb|sed 's/^[[:space:]]*//g'|grep '^/dev' | head -1)
   if [ "x$V4L_DEVICE" = "x" ]; then
     echo "WARNING: No webcams found!"
     exit 1
+  fi
+
+  if [ "$DISABLE_NEBULA_IRLIGHT" = "true" ]; then
+    command -v /usr/bin/cam_util > /dev/null
+    if [ $? -ne 0 ]; then
+      /usr/bin/cam_util -i $V4L_DEVICE -s 0
+    fi
   fi
 
   flip_vertical_arg=""
