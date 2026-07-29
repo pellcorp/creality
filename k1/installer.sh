@@ -76,6 +76,9 @@ if [ ! -L /usr/bin/python ]; then
   cd - > /dev/null
 fi
 
+# we want a version of ln which magically removes the -r from the ln command
+/bin/busybox ln -sf /usr/data/pellcorp/k1/tools/ln /bin
+
 # kill pip cache to free up overlayfs
 rm -rf /root/.cache
 sync
