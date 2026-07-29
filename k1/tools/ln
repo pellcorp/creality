@@ -1,0 +1,5 @@
+#!/bin/sh
+
+options=$(echo $1 | sed 's/r//g')
+shift
+/bin/busybox ln $options $@
