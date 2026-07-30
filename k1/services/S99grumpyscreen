@@ -20,10 +20,17 @@ start_server() {
 }
 
 stop_server() {
+    local service_pid="$(cat $PID_FILE 2> /dev/null)"
+    local is_running=false
+    if [ -n "$service_pid" ] && [ -d /proc/"$service_pid" ]; then
+      is_running=true
+    fi
     RC_SVCNAME=guppyscreen $SUPERVISE_DAEMON guppyscreen --stop --pidfile $PID_FILE > /dev/null 2>&1
 
-    # after stopping grumpyscreen, clear the screen with this afterwards to avoid showing a corrupted image
-    cmd_jpeg_display /usr/data/pellcorp/k1/black.jpg &
+    if [ "$is_running" = "true" ]; then
+        # after stopping grumpyscreen, clear the screen with this afterwards to avoid showing a corrupted image
+        cmd_jpeg_display /usr/data/pellcorp/k1/black.jpg &
+    fi
 }
 
 case "$1" in
