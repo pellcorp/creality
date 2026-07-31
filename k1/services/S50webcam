@@ -13,12 +13,12 @@ RESOLUTION="1280x720"
 start() {
   # allow configuration via a webcam.ini file
   if [ -f $CONFIG_FILE ]; then
-    FRAMES_PER_SECOND=$(cat $CONFIG_FILE | grep frames_per_second | awk -F '=' '{print $2}')
-    WORKERS=$(cat $CONFIG_FILE | grep workers | awk -F '=' '{print $2}')
-    BUFFERS=$(cat $CONFIG_FILE | grep buffers | awk -F '=' '{print $2}')
-    RESOLUTION=$(cat $CONFIG_FILE | grep resolution | awk -F '=' '{print $2}')
-    FLIP_VERTICAL=$(cat $CONFIG_FILE | grep flip_vertical | awk -F '=' '{print $2}')
-    DISABLE_NEBULA_IRLIGHT=$(cat $CONFIG_FILE | grep disable_nebula_irlight | awk -F '=' '{print $2}')
+    FRAMES_PER_SECOND=$(cat $CONFIG_FILE | grep frames_per_second | awk -F '=' '{print $2}' | tr -d '[:space:]')
+    WORKERS=$(cat $CONFIG_FILE | grep workers | awk -F '=' '{print $2}' | tr -d '[:space:]')
+    BUFFERS=$(cat $CONFIG_FILE | grep buffers | awk -F '=' '{print $2}' | tr -d '[:space:]')
+    RESOLUTION=$(cat $CONFIG_FILE | grep resolution | awk -F '=' '{print $2}' | tr -d '[:space:]')
+    FLIP_VERTICAL=$(cat $CONFIG_FILE | grep flip_vertical | awk -F '=' '{print $2}' | tr -d '[:space:]')
+    DISABLE_NEBULA_IRLIGHT=$(cat $CONFIG_FILE | grep disable_nebula_irlight | awk -F '=' '{print $2}' | tr -d '[:space:]')
   fi
 
   V4L_DEVICE=$(v4l2-ctl --list-devices|grep -A1 usb|sed 's/^[[:space:]]*//g'|grep '^/dev' | head -1)
@@ -28,10 +28,7 @@ start() {
   fi
 
   if [ "$DISABLE_NEBULA_IRLIGHT" = "true" ]; then
-    command -v /usr/bin/cam_util > /dev/null
-    if [ $? -eq 0 ]; then
-      /usr/bin/cam_util -i $V4L_DEVICE -s 0 > /dev/null
-    fi
+    /usr/data/pellcorp/k1/tools/cam_util.py off $V4L_DEVICE > /dev/null
   fi
 
   flip_vertical_arg=""
