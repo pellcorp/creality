@@ -736,6 +736,7 @@ function install_klipper() {
         # but we are still going to use homing override even though the max has physical endstops to make things a bit easier
         if [ "$MODEL" = "F004" ]; then
             $CONFIG_HELPER --file sensorless.cfg --replace-section-entry "gcode_macro _SENSORLESS_PARAMS" "variable_home_y_before_x" "True" || exit $?
+            $CONFIG_HELPER --file sensorless.cfg --replace-section-entry "gcode_macro _SENSORLESS_PARAMS" "variable_return_y_to_max_before_x" "True" || exit $?
         fi
 
         if [ "$kinematics" = "corexy" ]; then # by default we want to home twice when using sensorless
