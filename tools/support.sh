@@ -57,6 +57,10 @@ fi
 DATE_TIME=$(date +"%Y-%m-%d %H:%M:%S")
 echo "----------------------------------------------------------------------------" >> $BASEDIR/support.log
 echo "Simple AF installation details ${DATE_TIME}" >> $BASEDIR/support.log
+if [ -f /etc/ota_info ]; then
+  echo "---------------- cat /etc/ota_info -----------------------------------------" >> $BASEDIR/support.log
+  cat /etc/ota_info >> $BASEDIR/support.log
+fi
 echo "---------------- top -------------------------------------------------------" >> $BASEDIR/support.log
 top -b -n 1 >> $BASEDIR/support.log
 echo "---------------- free ------------------------------------------------------" >> $BASEDIR/support.log
@@ -70,7 +74,6 @@ if [ -d /etc/init.d ]; then
   echo "---------------- ls -la /etc/init.d ----------------------------------------" >> $BASEDIR/support.log
   ls -la /etc/init.d >> $BASEDIR/support.log
 fi
-
 echo "---------------- ls -laR $BASEDIR -----------------------------------------" >> $BASEDIR/support.log
 ls -laR $BASEDIR 2> /dev/null >> $BASEDIR/support.log
 echo "----------------------------------------------------------------------------" >> $BASEDIR/support.log

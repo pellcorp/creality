@@ -1033,6 +1033,9 @@ function install_klipper() {
         # no longer required as we configure the part fan entirely in fan_control.cfg
         $CONFIG_HELPER --remove-section "static_digital_output my_fan_output_pins" || exit $?
 
+        # encountered an as yet unseen config from firmware
+        $CONFIG_HELPER --remove-section "output_pin my_fan_output_pins" || exit $?
+
         # moving the heater_fan to fan_control.cfg
         $CONFIG_HELPER --remove-section "heater_fan hotend_fan" || exit $?
 
