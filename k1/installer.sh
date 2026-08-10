@@ -247,6 +247,9 @@ function update_repo() {
 function update_klipper() {
   probe=$(cat /usr/data/pellcorp.done 2> /dev/null | grep "\-probe" | awk -F '-' '{print $1}')
 
+  # not sure why but some people have pip without execute permissions
+  chmod +x /usr/share/klippy-env/bin/pip
+
   if [ "$probe" = "cartotouch" ] && [ -d /usr/data/cartographer-klipper ]; then
       /usr/data/cartographer-klipper/install.sh || return $?
       ln -sf /usr/data/cartographer-klipper/ /root
@@ -301,6 +304,9 @@ function disable_creality_services() {
       rm /overlay/upper/usr/share/klippy-env/bin/pip*
       mount -o remount /
     fi
+
+    # not sure why but some people have pip without execute permissions
+    chmod +x /usr/share/klippy-env/bin/pip
 
     if [ ! -L /etc/boot-display/part0 ]; then
       # clean up failed installation of custom boot display
