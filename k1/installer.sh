@@ -22,25 +22,22 @@ if [ -f /usr/bin/get_sn_mac.sh ]; then
     model=f004
   elif [ "$MODEL" = "F005" ]; then
     model=f005
-    # this piece of hackery is just for my Ender 3 V3 SE which has a Nebula Pad and a KE board but a SE toolhead
-    if [ -f /usr/data/creality/userdata/config/system_config.json ]; then
-      PRINTER_MODEL=$(grep -r model_str /usr/data/creality/userdata/config/system_config.json | awk -F: '{print $2}' | grep -o '".*"' | tr -d '"' | sed 's/Nebula-//g')
-      if [ "$PRINTER_MODEL" = "Ender-3 V3 SE" ]; then
-        model=e3v3se
-      fi
-    fi
   elif [ "$MODEL" = "NEBULA" ]; then
-    if [ -f /usr/data/creality/userdata/config/system_config.json ]; then
-      PRINTER_MODEL=$(grep -r model_str /usr/data/creality/userdata/config/system_config.json | awk -F: '{print $2}' | grep -o '".*"' | tr -d '"' | sed 's/Nebula-//g')
-      if [ "$PRINTER_MODEL" = "Ender-3 V3 SE" ]; then
-        model=e3v3se
-      else
-        echo "FATAL: This nebula pad uses an unsupported printer: $PRINTER_MODEL!"
-        exit 1
-      fi
-    else
-      echo "FATAL: This nebula pad is not setup for a specific printer!"
+    # the /etc/pellcorp in the overlay suggests someone is trying to pretend this is pellcorp pre-rooted
+    # firmware with various things this installer does already done
+    if [ ! -f /etc/pellcorp ] || [ -e /overlay/upper/etc/pellcorp ]; then
+      echo "FATAL: Nebula Pad installation is only supported on SimpleAF pre-rooted base firmware!"
+      echo "Refer to https://github.com/pellcorp/downloads/tree/main/creality/SimpleAFNebula#readme"
       exit 1
+    fi
+
+    # for an existing installation on a Nebula Pad there will be a # MODEL: header in the original printer.factory.cfg
+    model=unspecified
+    if [ -f /usr/data/pellcorp-backups/printer.factory.cfg ]; then
+      model=$(cat /usr/data/pellcorp-backups/printer.factory.cfg | grep MODEL: | awk -F ':' '{print $2}')
+      if [ -z "$model" ]; then
+        model=unspecified
+      fi
     fi
   else
     echo "FATAL: This script is not supported for $MODEL!"
@@ -95,6 +92,9 @@ if [ "$1" != "--branch" ] && [ "$1" != "--update-branch" ]; then
   elif [ -d /opt ] && [ ! -L /opt ]; then
      echo "FATAL: You must factory reset the printer before installing Simple AF!"
      exit 1
+  elif [ "$MODEL" = "NEBULA" ] && [ ! -f /usr/data/pellcorp.done ] && [ ! -d /usr/data/pellcorp-backups ] && [ -f /usr/data/printer_data/config/printer.cfg ]; then
+     echo "FATAL: You must factory reset the printer before installing Simple AF!"
+     exit 1
   fi
 fi
 
@@ -136,15 +136,18 @@ else
 fi
 echo
 
-cp /usr/data/pellcorp/k1/services/S58wpa_supplicant /etc/init.d/ || exit $?
-cp /usr/data/pellcorp/k1/services/S45cleanup /etc/init.d/ || exit $?
-cp /usr/data/pellcorp/k1/services/S58factoryreset /etc/init.d/ || exit $?
-cp /usr/data/pellcorp/k1/services/S50dropbear /etc/init.d/ || exit $?
-sync
+# base simpleaf firmware already has this stuff
+if [ ! -f /etc/pellcorp ]; then
+  cp /usr/data/pellcorp/k1/services/S58wpa_supplicant /etc/init.d/ || exit $?
+  cp /usr/data/pellcorp/k1/services/S58factoryreset /etc/init.d/ || exit $?
+  cp /usr/data/pellcorp/k1/services/S50dropbear /etc/init.d/ || exit $?
 
-# for k1 the installed curl does not do ssl, so we replace it first
-# and we can then make use of it going forward
-cp /usr/data/pellcorp/k1/tools/curl /usr/bin/curl || exit $?
+  # for k1 the installed curl does not do ssl, so we replace it first
+  # and we can then make use of it going forward
+  cp /usr/data/pellcorp/k1/tools/curl /usr/bin/curl || exit $?
+fi
+
+cp /usr/data/pellcorp/k1/services/S45cleanup /etc/init.d/ || exit $?
 sync
 
 CONFIG_HELPER="/usr/data/pellcorp/tools/config-helper.py"
@@ -851,7 +854,12 @@ function install_klipper() {
         
         cp /usr/data/pellcorp/k1/services/S55klipper_service /etc/init.d/ || exit $?
 
-        # currently no support for updating firmware on a Nebula Pad
+        # lets use our own variant so that its the same across all models that need the rpi
+        if [ "$MODEL" = "NEBULA" ] || [ "$MODEL" = "F005" ] || [ "$MODEL" = "F004" ]; then
+          cp /usr/data/pellcorp/k1/services/S57klipper_mcu /etc/init.d/ || exit $?
+        fi
+
+        # a retail Nebula Pad does not support automatic firmware updates
         if [ "$MODEL" != "NEBULA" ]; then
             cp /usr/data/pellcorp/k1/services/S13mcu_update /etc/init.d/ || exit $?
         fi
@@ -872,7 +880,9 @@ function install_klipper() {
 
         # just make sure the baud is written
         $CONFIG_HELPER --replace-section-entry "mcu" "baud" 230400 || exit $?
-        $CONFIG_HELPER --replace-section-entry "mcu nozzle_mcu" "baud" 230400 || exit $?
+        if [ "$MODEL" != "F005" ] && [ "$MODEL" != "NEBULA" ]; then
+          $CONFIG_HELPER --replace-section-entry "mcu nozzle_mcu" "baud" 230400 || exit $?
+        fi
 
         # we need the levelling mcu for Ender 3 V3 for ADXL
         if [ "$MODEL" != "F001" ] && [ "$MODEL" != "F002" ]; then
@@ -899,12 +909,6 @@ function install_klipper() {
         cp /usr/data/pellcorp/config/useful_macros.cfg /usr/data/printer_data/config/ || exit $?
         $CONFIG_HELPER --add-include "useful_macros.cfg" || exit $?
 
-        # mcu rpi is used for adxl on ender 3 v3 ke and nebula pad (currently only a ender 3 v3 se) but otherwise
-        # serves no purpose and takes up resources so remove it except for those printers.
-        if [ "$MODEL" != "F005" ] && [ "$MODEL" != "NEBULA" ]; then
-          $CONFIG_HELPER --remove-section "mcu rpi" || exit $?
-        fi
-
         cp /usr/data/pellcorp/k1/belts_calibration.cfg /usr/data/printer_data/config/ || exit $?
         $CONFIG_HELPER --add-include "belts_calibration.cfg" || exit $?
 
@@ -927,48 +931,50 @@ function install_klipper() {
           cp /usr/data/pellcorp/k1/files/beep /usr/bin/
         fi
 
-        $CONFIG_HELPER --remove-section "Height_module2" || exit $?
-        $CONFIG_HELPER --remove-section "output_pin aobi" || exit $?
-        $CONFIG_HELPER --remove-section "output_pin USB_EN" || exit $?
-        $CONFIG_HELPER --remove-section "hx711s" || exit $?
-        $CONFIG_HELPER --remove-section "filter" || exit $?
-        $CONFIG_HELPER --remove-section "dirzctl" || exit $?
-        $CONFIG_HELPER --remove-section "accel_chip_proxy" || exit $?
-        $CONFIG_HELPER --remove-section "z_compensate" || exit $?
+        if [ "$MODEL" != "NEBULA" ]; then
+          $CONFIG_HELPER --remove-section "Height_module2" || exit $?
+          $CONFIG_HELPER --remove-section "output_pin aobi" || exit $?
+          $CONFIG_HELPER --remove-section "output_pin USB_EN" || exit $?
+          $CONFIG_HELPER --remove-section "hx711s" || exit $?
+          $CONFIG_HELPER --remove-section "filter" || exit $?
+          $CONFIG_HELPER --remove-section "dirzctl" || exit $?
+          $CONFIG_HELPER --remove-section "accel_chip_proxy" || exit $?
+          $CONFIG_HELPER --remove-section "z_compensate" || exit $?
 
-        $CONFIG_HELPER --remove-section "bl24c16f" || exit $?
-        $CONFIG_HELPER --remove-section "prtouch_v2" || exit $?
-        $CONFIG_HELPER --remove-section "output_pin power" || exit $?
-        $CONFIG_HELPER --remove-section-entry "printer" "square_corner_max_velocity" || exit $?
-        $CONFIG_HELPER --remove-section-entry "printer" "max_accel_to_decel" || exit $?
-        $CONFIG_HELPER --remove-section-entry "stepper_y" "gcode_position_max" || exit $?
-        $CONFIG_HELPER --remove-section-entry "stepper_x" "gcode_position_max" || exit $?
-        $CONFIG_HELPER --remove-section "filament_switch_sensor filament_sensor_2" || exit $?
-        
-        # https://www.klipper3d.org/TMC_Drivers.html#prefer-to-not-specify-a-hold_current
-        $CONFIG_HELPER --remove-section-entry "tmc2209 stepper_x" "hold_current" || exit $?
-        $CONFIG_HELPER --remove-section-entry "tmc2209 stepper_y" "hold_current" || exit $?
+          $CONFIG_HELPER --remove-section "bl24c16f" || exit $?
+          $CONFIG_HELPER --remove-section "prtouch_v2" || exit $?
+          $CONFIG_HELPER --remove-section "output_pin power" || exit $?
+          $CONFIG_HELPER --remove-section-entry "printer" "square_corner_max_velocity" || exit $?
+          $CONFIG_HELPER --remove-section-entry "printer" "max_accel_to_decel" || exit $?
+          $CONFIG_HELPER --remove-section-entry "stepper_y" "gcode_position_max" || exit $?
+          $CONFIG_HELPER --remove-section-entry "stepper_x" "gcode_position_max" || exit $?
+          $CONFIG_HELPER --remove-section "filament_switch_sensor filament_sensor_2" || exit $?
 
-        $CONFIG_HELPER --remove-include "sensorless.cfg" || exit $?
-        $CONFIG_HELPER --remove-include "printer_params.cfg" || exit $?
-        $CONFIG_HELPER --remove-include "gcode_macro.cfg" || exit $?
-        $CONFIG_HELPER --remove-include "custom_gcode.cfg" || exit $?
-        $CONFIG_HELPER --remove-include "box.cfg" || exit $?
+          # https://www.klipper3d.org/TMC_Drivers.html#prefer-to-not-specify-a-hold_current
+          $CONFIG_HELPER --remove-section-entry "tmc2209 stepper_x" "hold_current" || exit $?
+          $CONFIG_HELPER --remove-section-entry "tmc2209 stepper_y" "hold_current" || exit $?
 
-        if [ -f /usr/data/printer_data/config/custom_gcode.cfg ]; then
-            rm /usr/data/printer_data/config/custom_gcode.cfg
-        fi
+          $CONFIG_HELPER --remove-include "sensorless.cfg" || exit $?
+          $CONFIG_HELPER --remove-include "printer_params.cfg" || exit $?
+          $CONFIG_HELPER --remove-include "gcode_macro.cfg" || exit $?
+          $CONFIG_HELPER --remove-include "custom_gcode.cfg" || exit $?
+          $CONFIG_HELPER --remove-include "box.cfg" || exit $?
 
-        if [ -f /usr/data/printer_data/config/gcode_macro.cfg ]; then
-            rm /usr/data/printer_data/config/gcode_macro.cfg
-        fi
+          if [ -f /usr/data/printer_data/config/custom_gcode.cfg ]; then
+              rm /usr/data/printer_data/config/custom_gcode.cfg
+          fi
 
-        if [ -f /usr/data/printer_data/config/printer_params.cfg ]; then
-            rm /usr/data/printer_data/config/printer_params.cfg
-        fi
+          if [ -f /usr/data/printer_data/config/gcode_macro.cfg ]; then
+              rm /usr/data/printer_data/config/gcode_macro.cfg
+          fi
 
-        if [ -f /usr/data/printer_data/config/factory_printer.cfg ]; then
-            rm /usr/data/printer_data/config/factory_printer.cfg
+          if [ -f /usr/data/printer_data/config/printer_params.cfg ]; then
+              rm /usr/data/printer_data/config/printer_params.cfg
+          fi
+
+          if [ -f /usr/data/printer_data/config/factory_printer.cfg ]; then
+              rm /usr/data/printer_data/config/factory_printer.cfg
+          fi
         fi
 
         cp /usr/data/pellcorp/config/start_end.cfg /usr/data/printer_data/config/ || exit $?
@@ -991,12 +997,15 @@ function install_klipper() {
         cp /usr/data/pellcorp/config/Smart_Park.cfg /usr/data/printer_data/config/ || exit $?
         $CONFIG_HELPER --add-include "Smart_Park.cfg" || exit $?
 
-        if [ -f /usr/data/pellcorp/k1/fan_control.${model}.cfg ]; then
-            cp /usr/data/pellcorp/k1/fan_control.${model}.cfg /usr/data/printer_data/config/fan_control.cfg || exit $?
-        else
-            cp /usr/data/pellcorp/k1/fan_control.cfg /usr/data/printer_data/config || exit $?
+        # for the Nebula Pad the useful_macros.cfg TURN_OFF_FANS and TURN_ON_FANS will be used
+        if [ "$MODEL" != "NEBULA" ]; then
+          if [ -f /usr/data/pellcorp/k1/fan_control.${model}.cfg ]; then
+              cp /usr/data/pellcorp/k1/fan_control.${model}.cfg /usr/data/printer_data/config/fan_control.cfg || exit $?
+          else
+              cp /usr/data/pellcorp/k1/fan_control.cfg /usr/data/printer_data/config || exit $?
+          fi
+          $CONFIG_HELPER --add-include "fan_control.cfg" || exit $?
         fi
-        $CONFIG_HELPER --add-include "fan_control.cfg" || exit $?
 
         # K1 SE has no chamber fan
         if [ "$MODEL" = "K1 SE" ]; then
@@ -1014,51 +1023,53 @@ function install_klipper() {
             $CONFIG_HELPER --remove-section "output_pin col_pwm" || exit $?
             $CONFIG_HELPER --remove-section "output_pin col" || exit $?
             $CONFIG_HELPER --remove-section "heater_fan nozzle_fan" || exit $?
-        elif [ "$MODEL" = "F005" ] || [ "$MODEL" = "NEBULA" ]; then
+        elif [ "$MODEL" = "F005" ]; then
           $CONFIG_HELPER --remove-section "output_pin MainBoardFan" || exit $?
           $CONFIG_HELPER --remove-section "heater_fan nozzle_fan" || exit $?
           $CONFIG_HELPER --remove-section "bltouch" || exit $?
           $CONFIG_HELPER --remove-section-entry "heater_bed" "temp_offset_flag" || exit $?
         fi
 
-        $CONFIG_HELPER --remove-section "output_pin fan0" || exit $?
-        $CONFIG_HELPER --remove-section "output_pin fan1" || exit $?
-        $CONFIG_HELPER --remove-section "output_pin fan2" || exit $?
+        if [ "$MODEL" != "NEBULA" ]; then
+          $CONFIG_HELPER --remove-section "output_pin fan0" || exit $?
+          $CONFIG_HELPER --remove-section "output_pin fan1" || exit $?
+          $CONFIG_HELPER --remove-section "output_pin fan2" || exit $?
 
-        # a few strange duplicate pins appear in some firmware
-        $CONFIG_HELPER --remove-section "output_pin PA0" || exit $?
-        $CONFIG_HELPER --remove-section "output_pin PB2" || exit $?
-        $CONFIG_HELPER --remove-section "output_pin PB10" || exit $?
-        $CONFIG_HELPER --remove-section "output_pin PC8" || exit $?
-        $CONFIG_HELPER --remove-section "output_pin PC9" || exit $?
+          # a few strange duplicate pins appear in some firmware
+          $CONFIG_HELPER --remove-section "output_pin PA0" || exit $?
+          $CONFIG_HELPER --remove-section "output_pin PB2" || exit $?
+          $CONFIG_HELPER --remove-section "output_pin PB10" || exit $?
+          $CONFIG_HELPER --remove-section "output_pin PC8" || exit $?
+          $CONFIG_HELPER --remove-section "output_pin PC9" || exit $?
 
-        # duplicate pin can only be assigned once, so we remove it from printer.cfg so we can
-        # configure it in fan_control.cfg
-        $CONFIG_HELPER --remove-section "duplicate_pin_override" || exit $?
+          # duplicate pin can only be assigned once, so we remove it from printer.cfg so we can
+          # configure it in fan_control.cfg
+          $CONFIG_HELPER --remove-section "duplicate_pin_override" || exit $?
 
-        # no longer required as we configure the part fan entirely in fan_control.cfg
-        $CONFIG_HELPER --remove-section "static_digital_output my_fan_output_pins" || exit $?
+          # no longer required as we configure the part fan entirely in fan_control.cfg
+          $CONFIG_HELPER --remove-section "static_digital_output my_fan_output_pins" || exit $?
 
-        # encountered an as yet unseen config from firmware
-        $CONFIG_HELPER --remove-section "output_pin my_fan_output_pins" || exit $?
+          # encountered an as yet unseen config from firmware
+          $CONFIG_HELPER --remove-section "output_pin my_fan_output_pins" || exit $?
 
-        # moving the heater_fan to fan_control.cfg
-        $CONFIG_HELPER --remove-section "heater_fan hotend_fan" || exit $?
+          # moving the heater_fan to fan_control.cfg
+          $CONFIG_HELPER --remove-section "heater_fan hotend_fan" || exit $?
 
-        # all the fans and temp sensors are going to fan control now
-        $CONFIG_HELPER --remove-section "temperature_sensor mcu_temp" || exit $?
-        $CONFIG_HELPER --remove-section "temperature_sensor chamber_temp" || exit $?
-        $CONFIG_HELPER --remove-section "temperature_fan chamber_fan" || exit $?
+          # all the fans and temp sensors are going to fan control now
+          $CONFIG_HELPER --remove-section "temperature_sensor mcu_temp" || exit $?
+          $CONFIG_HELPER --remove-section "temperature_sensor chamber_temp" || exit $?
+          $CONFIG_HELPER --remove-section "temperature_fan chamber_fan" || exit $?
 
-        # just in case anyone manually has added this to printer.cfg
-        $CONFIG_HELPER --remove-section "temperature_fan mcu_fan" || exit $?
+          # just in case anyone manually has added this to printer.cfg
+          $CONFIG_HELPER --remove-section "temperature_fan mcu_fan" || exit $?
 
-        # the nozzle should not trigger the MCU anymore
-        $CONFIG_HELPER --remove-section "multi_pin heater_fans" || exit $?
+          # the nozzle should not trigger the MCU anymore
+          $CONFIG_HELPER --remove-section "multi_pin heater_fans" || exit $?
 
-        # moving idle timeout to start_end.cfg so we can have some integration with
-        # start and end print and warp stabilisation if needed
-        $CONFIG_HELPER --remove-section "idle_timeout" || exit $?
+          # moving idle timeout to start_end.cfg so we can have some integration with
+          # start and end print and warp stabilisation if needed
+          $CONFIG_HELPER --remove-section "idle_timeout" || exit $?
+        fi
 
         # just in case its missing from stock printer.cfg make sure it gets added
         $CONFIG_HELPER --add-section "exclude_object" || exit $?
@@ -1074,10 +1085,12 @@ function install_klipper() {
         # have $HOME/printer_data resolve correctly.
         ln -sf /usr/data/printer_data/ /root
 
-        # these are already defined in client.cfg so get rid of them from printer.cfg
-        $CONFIG_HELPER --remove-section "pause_resume" || exit $?
-        $CONFIG_HELPER --remove-section "display_status" || exit $?
-        $CONFIG_HELPER --remove-section "virtual_sdcard" || exit $?
+        if [ "$MODEL" != "NEBULA" ]; then
+          # these are already defined in client.cfg so get rid of them from printer.cfg
+          $CONFIG_HELPER --remove-section "pause_resume" || exit $?
+          $CONFIG_HELPER --remove-section "display_status" || exit $?
+          $CONFIG_HELPER --remove-section "virtual_sdcard" || exit $?
+        fi
 
         # apply various Ender 3 V3 patches to printer.cfg last thing
         if [ "$MODEL" = "F002" ] || [ "$MODEL" = "F001" ]; then
@@ -1133,7 +1146,7 @@ function install_grumpyscreen() {
         [ -d /usr/data/guppyscreen ] && rm -rf /usr/data/guppyscreen
 
         asset_name=grumpyscreen.tar.gz
-        # Ender 5 Max and Ender 3 V3 KE have a nebula pad which is small resolution
+        # Ender 5 Max and Ender 3 V3 KE have a Nebula Pad which is small resolution
         if [ "$MODEL" = "F004" ] || [ "$MODEL" = "F005" ] || [ "$MODEL" = "NEBULA" ]; then
             asset_name=grumpyscreen-smallscreen.tar.gz
         fi
@@ -1166,6 +1179,11 @@ function install_grumpyscreen() {
           sed -i "s/display_rotate:.*/display_rotate: 0/g" /usr/data/grumpyscreen/grumpyscreen.cfg
         fi
 
+        # switch to stock makes no sense for nebula because we are starting with base firmware with no stock mode
+        if [ "$MODEL" = "NEBULA" ]; then
+          sed -i "s/switch_to_stock_cmd:.*/switch_to_stock_cmd:/g" /usr/data/grumpyscreen/grumpyscreen.cfg
+        fi
+
         kinematics=$($CONFIG_HELPER --get-section-entry "printer" "kinematics")
         if [ "$kinematics" = "cartesian" ]; then
           $CONFIG_HELPER --file /usr/data/grumpyscreen/grumpyscreen.cfg --replace-section-entry "ui" "invert_z_icon" "true" || exit $?
@@ -1196,6 +1214,11 @@ function install_grumpyscreen() {
         [ -d /usr/data/printer_data/config/GuppyScreen ] && rm -rf /usr/data/printer_data/config/GuppyScreen
         [ -f /usr/data/printer_data/config/guppyscreen.cfg ] && rm /usr/data/printer_data/config/guppyscreen.cfg
         [ -f /usr/data/printer_data/config/grumpyscreen.cfg ] && rm /usr/data/printer_data/config/grumpyscreen.cfg
+
+        # for Nebula Pad we had to do calibration to setup the base firmware, no point doing it again
+        if [ "$MODEL" = "NEBULA" ] && [ -f /usr/bin/calibration.json ] && [ ! -f /usr/data/grumpyscreen/calibration.json ] && [ ! -f /usr/data/pellcorp-overrides/calibration.json ]; then
+          mv /usr/bin/calibration.json /usr/data/grumpyscreen/
+        fi
 
         if [ "$mode" != "switch-branch" ]; then
             echo "grumpyscreen" >> /usr/data/pellcorp.done
@@ -1430,6 +1453,10 @@ function setup_bltouch() {
           $CONFIG_HELPER --replace-section-entry "bltouch" "# z_offset" "0.0" || exit $?
         else
           $CONFIG_HELPER --replace-section-entry "bltouch" "z_offset" "0.0" || exit $?
+        fi
+
+        if [ "$MODEL" = "NEBULA" ] && [ -f /usr/data/pellcorp-backups/bltouch.factory.cfg ]; then
+            $CONFIG_HELPER --file bltouch.cfg --patches /usr/data/pellcorp-backups/bltouch.factory.cfg --quiet || exit $?
         fi
 
         echo "bltouch-probe" >> /usr/data/pellcorp.done
@@ -2081,6 +2108,25 @@ elif [ "$1" = "--klipper-repo" ] || [ "$1" = "--kalico" ] || [ "$1" = "--klipper
     fi
 fi
 
+# make sure some basic dirs are present
+mkdir -p /usr/data/printer_data/logs/
+mkdir -p /usr/data/printer_data/config/
+mkdir -p /usr/data/printer_data/gcodes/
+
+# to avoid cluttering the printer_data/config directory lets move stuff
+if [ -d /usr/data/printer_data/config/backups ] && [ ! -d /usr/data/backups ]; then
+    mv /usr/data/printer_data/config/backups /usr/data/
+fi
+
+mkdir -p /usr/data/backups
+ln -sf /usr/data/backups /usr/data/printer_data/config/
+ln -sf /usr/data/backups/ /root
+
+mkdir -p /usr/data/pellcorp-overrides
+ln -sf /usr/data/pellcorp-overrides/ /root
+mkdir -p /usr/data/pellcorp-backups
+ln -sf /usr/data/pellcorp-backups/ /root
+
 export TIMESTAMP=$(date +"%Y-%m-%d_%H-%M-%S")
 LOG_FILE=/usr/data/printer_data/logs/installer-$TIMESTAMP.log
 
@@ -2113,7 +2159,7 @@ fi
         probe=eddyng
     elif [ -f /usr/data/printer_data/config/btteddy.cfg ]; then
         probe=btteddy
-    elif grep -q "\[scanner\]" /usr/data/printer_data/config/printer.cfg; then
+    elif grep -q "\[scanner\]" /usr/data/printer_data/config/printer.cfg 2> /dev/null; then
         probe=cartotouch
     elif [ -f /usr/data/printer_data/config/bltouch-${model}.cfg ]; then
         probe=bltouch
@@ -2144,6 +2190,38 @@ fi
             fi
         elif [ "$1" = "--probe" ]; then # allow the installer to specify a `--probe` argument for clarity
             shift
+        elif [ "$1" = "--printer" ]; then
+          if [ "$MODEL" = "NEBULA" ]; then
+            shift
+            printer=$1
+            shift
+
+            if [ ! -f /usr/data/pellcorp/k1/nebula/${printer}.cfg ]; then
+              echo "FATAL: Invalid printer specified: $printer"
+              exit 1
+            fi
+
+            rm /usr/data/pellcorp-backups/*.factory.cfg 2> /dev/null
+            printer_cfg=/usr/data/pellcorp/k1/nebula/${printer}.cfg
+            file=
+
+            model=$(cat $printer_cfg | grep MODEL: | awk -F ':' '{print $2}')
+            while IFS= read -r line; do
+              if echo "$line" | grep -q "^--"; then
+                file=$(echo $line | sed 's/-- //g' | sed 's/.cfg//g')
+                if [ -n "$model" ] && [ "$file" = "printer" ] && [ ! -f /usr/data/pellcorp-backups/printer.factory.cfg ]; then
+                  echo "# MODEL:$model" > /usr/data/pellcorp-backups/printer.factory.cfg
+                else
+                  touch /usr/data/pellcorp-backups/${file}.factory.cfg
+                fi
+              elif [ -n "$file" ] && [ -f /usr/data/pellcorp-backups/${file}.factory.cfg ]; then
+                echo "$line" >> /usr/data/pellcorp-backups/${file}.factory.cfg
+              fi
+            done < "$printer_cfg"
+          else
+            echo "ERROR: Specifying a --printer argument is only supported for retail Nebula Pad!"
+            exit 1
+          fi
         elif [ "$1" = "--mount" ]; then
             shift
             mount=$1
@@ -2174,6 +2252,26 @@ fi
         fi
     done
 
+    if [ -f /usr/data/pellcorp-backups/printer.factory.cfg ]; then
+      model=$(cat /usr/data/pellcorp-backups/printer.factory.cfg | grep MODEL: | awk -F ':' '{print $2}')
+      if [ -z "$model" ]; then
+        model=unspecified
+      fi
+    fi
+
+    if [ "$MODEL" = "NEBULA" ] && [ "$model" = "unspecified" ]; then
+      echo "ERROR: You must specify a printer you are using with your Nebula Pad"
+      echo "The following printers are supported:"
+      echo
+      files=$(find /usr/data/pellcorp/k1/nebula -maxdepth 1 -name "*.cfg")
+      for file in $files; do
+        file=$(basename $file .cfg)
+        comment=$(cat /usr/data/pellcorp/k1/nebula/${file}.cfg | grep "^#" | head -1 | sed 's/#\s*//g')
+        echo "  * $file - $comment"
+      done
+      exit 1
+    fi
+
     if [ -z "$probe" ]; then
         echo "ERROR: You must specify a probe you want to configure"
         echo "One of: [microprobe, bltouch, cartotouch, cartographer, btteddy, eddyng, beacon, klicky]"
@@ -2182,6 +2280,9 @@ fi
 
     echo "INFO: Mode is $mode"
     echo "INFO: Probe is $probe"
+    if [ "$MODEL" = "NEBULA" ]; then
+      echo "INFO: Model is $model"
+    fi
 
     if [ -n "$PELLCORP_UPDATED_SHA" ]; then
         if [ "$mode" = "install" ]; then
@@ -2298,25 +2399,11 @@ fi
         fi
     fi
 
-    # to avoid cluttering the printer_data/config directory lets move stuff
-    if [ -d /usr/data/printer_data/config/backups ] && [ ! -d /usr/data/backups ]; then
-        mv /usr/data/printer_data/config/backups /usr/data/
-    fi
-
-    mkdir -p /usr/data/backups
-    ln -sf /usr/data/backups /usr/data/printer_data/config/
-    ln -sf /usr/data/backups/ /root
-
-    mkdir -p /usr/data/pellcorp-overrides
-    ln -sf /usr/data/pellcorp-overrides/ /root
-    mkdir -p /usr/data/pellcorp-backups
-    ln -sf /usr/data/pellcorp-backups/ /root
-
     # we don't do these kinds of backups anymore
     rm /usr/data/printer_data/config/*.bkp 2> /dev/null
 
     echo "INFO: Backing up existing configuration ..."
-    if [ -f /etc/init.d/S99start_app ]; then
+    if [ -f /etc/init.d/S99start_app ] && [ "$MODEL" != "NEBULA" ]; then
         # create a backup of creality config files
         if [ -f /usr/data/backups/creality-backup.tar.gz ]; then
             rm /usr/data/backups/creality-backup.tar.gz
@@ -2328,28 +2415,32 @@ fi
         sync
         cd - > /dev/null
     else
-        TIMESTAMP=${TIMESTAMP} /usr/data/pellcorp/tools/backups.sh --create
-        echo
-    fi
-
-    mkdir -p /usr/data/pellcorp-backups
-    # the pellcorp-backups do not need .pellcorp extension, so this is to fix backwards compatible
-    if [ -f /usr/data/pellcorp-backups/printer.pellcorp.cfg ]; then
-        mv /usr/data/pellcorp-backups/printer.pellcorp.cfg /usr/data/pellcorp-backups/printer.cfg
-    fi
-
-    # so if the installer has never been run we should grab a backup of the printer.cfg
-    if [ ! -f /usr/data/pellcorp.done ] && [ ! -f /usr/data/pellcorp-backups/printer.factory.cfg ]; then
-        # just to make sure we don't accidentally copy printer.cfg to backup if the backup directory
-        # is deleted, add a stamp to config files to we can know for sure.
-        if ! grep -q "# Modified by Simple AF " /usr/data/printer_data/config/printer.cfg; then
-            cp /usr/data/printer_data/config/printer.cfg /usr/data/pellcorp-backups/printer.factory.cfg
-            sed -i '/^#*#/d' /usr/data/pellcorp-backups/printer.factory.cfg
-        else
-          echo "WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING"
-          echo "WARNING: No pristine factory printer.cfg available - config overrides are disabled!"
-          echo "WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING"
+        # do not backup unless there are actually files in the config directory
+        if [ $(find /usr/data/printer_data/config -type f | wc -l) -gt 0 ]; then
+          TIMESTAMP=${TIMESTAMP} /usr/data/pellcorp/tools/backups.sh --create
+          echo
         fi
+    fi
+
+    if [ "$MODEL" != "NEBULA" ]; then
+      # the pellcorp-backups do not need .pellcorp extension, so this is to fix backwards compatible
+      if [ -f /usr/data/pellcorp-backups/printer.pellcorp.cfg ]; then
+          mv /usr/data/pellcorp-backups/printer.pellcorp.cfg /usr/data/pellcorp-backups/printer.cfg
+      fi
+
+      # so if the installer has never been run we should grab a backup of the printer.cfg
+      if [ ! -f /usr/data/pellcorp.done ] && [ ! -f /usr/data/pellcorp-backups/printer.factory.cfg ]; then
+          # just to make sure we don't accidentally copy printer.cfg to backup if the backup directory
+          # is deleted, add a stamp to config files to we can know for sure.
+          if ! grep -q "# Modified by Simple AF " /usr/data/printer_data/config/printer.cfg; then
+              cp /usr/data/printer_data/config/printer.cfg /usr/data/pellcorp-backups/printer.factory.cfg
+              sed -i '/^#*#/d' /usr/data/pellcorp-backups/printer.factory.cfg
+          else
+            echo "WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING"
+            echo "WARNING: No pristine factory printer.cfg available - config overrides are disabled!"
+            echo "WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING"
+          fi
+      fi
     fi
 
     if [ "$skip_overrides" = "true" ]; then
@@ -2360,22 +2451,29 @@ fi
 
     # we want to disable creality services at the very beginning otherwise shit gets weird
     # if the crazy creality S55klipper_service is still copying files
-    disable_creality_services
+    # pellcorp simpleaf base firmware does this already
+    if [ ! -f /etc/pellcorp ]; then
+      disable_creality_services
 
-    # no point doing this if its a new installation
-    if [ -f /usr/data/pellcorp.done ]; then
-        # completely remove all iterations of zero SimpleAddon
-        for dir in addons SimpleAddon; do
-          if [ -d /usr/data/printer_data/config/$dir ]; then
-            rm -rf /usr/data/printer_data/config/$dir
-          fi
-        done
-        for file in save-zoffset.cfg eddycalibrate.cfg quickstart.cfg cartographer_calibrate.cfg btteddy_calibrate.cfg; do
-          $CONFIG_HELPER --remove-include "SimpleAddon/$file"
+      # no point doing this if its a new installation
+      if [ -f /usr/data/pellcorp.done ]; then
+          # completely remove all iterations of zero SimpleAddon
+          for dir in addons SimpleAddon; do
+            if [ -d /usr/data/printer_data/config/$dir ]; then
+              rm -rf /usr/data/printer_data/config/$dir
+            fi
+          done
+          for file in save-zoffset.cfg eddycalibrate.cfg quickstart.cfg cartographer_calibrate.cfg btteddy_calibrate.cfg; do
+            $CONFIG_HELPER --remove-include "SimpleAddon/$file"
+            sync
+          done
+          $CONFIG_HELPER --remove-include "addons/*.cfg"
           sync
-        done
-        $CONFIG_HELPER --remove-include "addons/*.cfg"
-        sync
+      fi
+    elif [ -f /etc/init.d/S99start_app ]; then
+      /etc/init.d/S99start_app stop 2> /dev/null
+      rm /etc/init.d/S99start_app
+      sync
     fi
 
     if [ "$mode" = "reinstall" ] || [ "$mode" = "update" ]; then
@@ -2393,18 +2491,27 @@ fi
           rm /usr/data/pellcorp.done
         fi
 
-        # if we took a post factory reset backup for a reinstall restore it now
-        if [ -f /usr/data/pellcorp-backups/printer.factory.cfg ]; then
-            if grep -q "#*# <---------------------- SAVE_CONFIG ---------------------->" /usr/data/pellcorp-backups/printer.factory.cfg; then
-                sed -i '/^#*#/d' /usr/data/pellcorp-backups/printer.factory.cfg
-            fi
+        # for all but NEBULA a brand new install just cleans up the existing printer.cfg and leaves it there
+        if [ "$MODEL" != "NEBULA" ]; then
+          # if we took a post factory reset backup for a reinstall restore it now
+          if [ -f /usr/data/pellcorp-backups/printer.factory.cfg ]; then
+              if grep -q "#*# <---------------------- SAVE_CONFIG ---------------------->" /usr/data/pellcorp-backups/printer.factory.cfg; then
+                  sed -i '/^#*#/d' /usr/data/pellcorp-backups/printer.factory.cfg
+              fi
 
-            cp /usr/data/pellcorp-backups/printer.factory.cfg /usr/data/printer_data/config/printer.cfg
-            sed -i "1s/^/# Modified by Simple AF ${TIMESTAMP}\n/" /usr/data/printer_data/config/printer.cfg
-        elif [ "$mode" = "update" ]; then
-            echo "ERROR: Update mode is not available as pristine factory printer.cfg is missing"
-            exit 1
+              cp /usr/data/pellcorp-backups/printer.factory.cfg /usr/data/printer_data/config/printer.cfg
+              sed -i "1s/^/# Modified by Simple AF ${TIMESTAMP}\n/" /usr/data/printer_data/config/printer.cfg
+          elif [ "$mode" = "update" ]; then
+              echo "ERROR: Update mode is not available as pristine factory printer.cfg is missing"
+              exit 1
+          fi
         fi
+    fi
+
+    # we do this step for install, reinstall and update
+    if [ "$MODEL" = "NEBULA" ] && [ -f /usr/data/pellcorp-backups/printer.factory.cfg ]; then
+      cp /usr/data/pellcorp-backups/printer.factory.cfg /usr/data/printer_data/config/printer.cfg
+      sed -i "1s/^/# Modified by Simple AF ${TIMESTAMP}\n/" /usr/data/printer_data/config/printer.cfg
     fi
 
     if [ ! -f /usr/data/pellcorp.done ]; then
@@ -2437,7 +2544,11 @@ fi
     install_packages $mode
     install_webcam $mode
     install_webcam=$?
-    install_boot_display
+
+    # boot-display already setup on firmware with the /etc/pellcorp flag
+    if [ ! -f /etc/pellcorp ]; then
+      install_boot_display
+    fi
 
     install_moonraker $mode
     install_moonraker=$?
@@ -2581,8 +2692,10 @@ fi
 
     if [ $set_serial -ne 0 ] || [ $fix_custom_config -ne 0 ] || [ $fixup_client_variables_config -ne 0 ] || [ $apply_overrides -ne 0 ] || [ $apply_mount_overrides -ne 0 ] || [ $install_cartographer_klipper -ne 0 ] || [ $install_beacon_klipper -ne 0 ] || [ $install_klipper -ne 0 ] || [ $setup_probe -ne 0 ] || [ $setup_probe_specific -ne 0 ]; then
         echo "INFO: Restarting Klipper ..."
-        sudo systemctl restart klipper
+        sudo systemctl stop klipper
         sudo systemctl restart klipper_mcu
+        sudo systemctl start klipper
+        echo
     fi
 
     if [ $apply_overrides -ne 0 ] || [ $install_grumpyscreen -ne 0 ]; then
@@ -2595,8 +2708,10 @@ fi
         sudo systemctl restart webcam
     fi
 
-    echo
-    /usr/data/pellcorp/k1/tools/check-firmware.sh
+    if [ "$MODEL" != "NEBULA" ]; then
+      echo
+      /usr/data/pellcorp/k1/tools/check-firmware.sh
+    fi
 
     echo "installed_sha=$PELLCORP_GIT_SHA" >> /usr/data/pellcorp.done
     sync

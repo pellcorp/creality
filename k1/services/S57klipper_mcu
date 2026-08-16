@@ -1,0 +1,50 @@
+#!/bin/sh
+
+KLIPPER_HOST_MCU=/usr/bin/klipper_mcu
+KLIPPER_HOST_ARGS="-r"
+PID_FILE=/var/run/klipper_mcu.pid
+
+mcu_host_start() {
+        [ -x $KLIPPER_HOST_MCU ] || return
+
+        if [ -c /tmp/klipper_host_mcu ]; then
+                mcu_host_stop
+        fi
+
+        start-stop-daemon -S -q -b -m -p $PID_FILE --exec $KLIPPER_HOST_MCU -- $KLIPPER_HOST_ARGS
+}
+
+mcu_host_stop() {
+        # Shutdown existing Klipper instance (if applicable). The goal is to put the GPIO pins in a safe state.
+        if [ -c /tmp/klipper_host_mcu ]; then
+            set -e
+            ( echo "FORCE_SHUTDOWN" > /tmp/klipper_host_mcu ) 2> /dev/null || ( printf "Firmware busy! Please shutdown Klipper and then retry." && exit 1 )
+            sleep 1
+            ( echo "FORCE_SHUTDOWN" > /tmp/klipper_host_mcu ) 2> /dev/null || ( printf "Firmware busy! Please shutdown Klipper and then retry." && exit 1 )
+            sleep 1
+            set +e
+        fi
+
+        start-stop-daemon -K -q -p $PID_FILE
+}
+restart() {
+        mcu_host_stop
+        mcu_host_start
+}
+
+case "$1" in
+  start)
+        mcu_host_start
+        ;;
+  stop)
+        mcu_host_stop
+        ;;
+  restart|reload)
+        restart
+        ;;
+  *)
+        echo "Usage: $0 {start|stop|restart}"
+        exit 1
+esac
+
+exit $?

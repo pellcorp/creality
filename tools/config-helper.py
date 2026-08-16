@@ -152,7 +152,7 @@ def add_section(updater, section_name):
     if not updater.has_section(section_name):
         last_section = _last_section(updater)
         if last_section:
-            updater[last_section].add_before.section(section_name).space()
+            updater[last_section].add_after.section(section_name).space()
         else:  # file is basically empty
             updater.add_section(section_name)
     return True

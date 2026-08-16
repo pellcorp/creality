@@ -1,0 +1,21 @@
+# Default Ender 3 V1, V1 Pro, V2, Neo and Neo V2 bltouch mount
+
+-- bltouch.cfg
+[bltouch]
+x_offset: -45.0
+y_offset: -5.0
+
+[screws_tilt_adjust]
+screw1: 30,20
+screw2: 200,20
+screw3: 200,200
+screw4: 30,200
+
+[bed_mesh]
+mesh_min: 10,10
+mesh_max: 190,225
+
+[axis_twist_compensation]
+calibrate_start_x: 30
+calibrate_end_x: 192
+calibrate_y: 105

@@ -3,7 +3,8 @@
 if [ -f /usr/bin/get_sn_mac.sh ]; then
   MODEL=$(/usr/bin/get_sn_mac.sh model)
   if [ "$MODEL" = "Nebula Pad" ]; then
-    MODEL=NEBULA
+    echo "FATAL: Switch to Stock is not supported on Nebula Pad"
+    exit 1
   fi
 else
   echo "FATAL: This script is not supported on non Creality OS!"
@@ -120,7 +121,7 @@ EOF
       if [ -f /etc/init.d/S57klipper_mcu ]; then
           /etc/init.d/S57klipper_mcu stop 2> /dev/null
           # Ender 3 V3 KE uses rpi mcu for adxl so we need to leave it alone
-          if [ "$MODEL" != "F005" ] && [ "$MODEL" != "NEBULA" ]; then
+          if [ "$MODEL" != "F005" ]; then
             rm /etc/init.d/S57klipper_mcu
           fi
       fi
