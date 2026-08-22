@@ -15,14 +15,9 @@ mcu_host_start() {
 }
 
 mcu_host_stop() {
-        # Shutdown existing Klipper instance (if applicable). The goal is to put the GPIO pins in a safe state.
         if [ -c /tmp/klipper_host_mcu ]; then
-            set -e
-            ( echo "FORCE_SHUTDOWN" > /tmp/klipper_host_mcu ) 2> /dev/null || ( printf "Firmware busy! Please shutdown Klipper and then retry." && exit 1 )
+            echo "FORCE_SHUTDOWN" > /tmp/klipper_host_mcu 2> /dev/null
             sleep 1
-            ( echo "FORCE_SHUTDOWN" > /tmp/klipper_host_mcu ) 2> /dev/null || ( printf "Firmware busy! Please shutdown Klipper and then retry." && exit 1 )
-            sleep 1
-            set +e
         fi
 
         start-stop-daemon -K -q -p $PID_FILE
