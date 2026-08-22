@@ -25,10 +25,6 @@ start() {
 
 stop() {
       start-stop-daemon -K -q -p $PID_FILE > /dev/null 2>&1
-}
-
-restart() {
-      stop
       # this allows a graceful restart of service by actually waiting for it to stop first
       service_pid="$(cat $PID_FILE 2> /dev/null)"
       if [ -n "$service_pid" ]; then
@@ -38,6 +34,10 @@ restart() {
                   fi
             done
       fi
+}
+
+restart() {
+      stop
       start
 }
 

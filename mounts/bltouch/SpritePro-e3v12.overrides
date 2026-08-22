@@ -1,0 +1,30 @@
+# Sprite Pro ender 3 v2 bltouch or crtouch
+
+-- printer.cfg
+[extruder]
+gear_ratio: 3.5:1
+rotation_distance: 26.36
+
+[stepper_x]
+position_max: 235
+
+-- bltouch.cfg
+[bltouch]
+x_offset: -31.8
+y_offset: -41.0
+
+[screws_tilt_adjust]
+screw1: 25, 205
+screw2: 195, 205
+screw3: 195, 35
+screw4: 25, 35
+
+[bed_mesh]
+mesh_min: 10,10
+mesh_max: 202,188
+probe_count: 9,9
+
+[axis_twist_compensation]
+calibrate_start_x: 30
+calibrate_end_x: 192
+calibrate_y: 105

@@ -50,10 +50,9 @@ factory_reset() {
             -path '/usr/data/printer_data/' -o -print \
             -exec rm -rf {} \; >/dev/null 2>&1
     /bin/sync >/dev/null 2>&1
-    # cleanup the logs all except for guppyscreen and factoryreset logs
+    # cleanup the logs all except for guppyscreen logs
     /usr/bin/find /usr/data/printer_data/logs \
                 -path '/usr/data/printer_data/logs/grumpyscreen.log' -prune -o \
-                -path '/usr/data/printer_data/logs/factoryreset.log' -prune -o \
                 -path '/usr/data/printer_data/logs' -o -type d -o -print \
                 -exec rm {} \; >/dev/null 2>&1
     /bin/sync >/dev/null 2>&1
@@ -88,7 +87,6 @@ case "$1" in
           FLAG_FILE=$(echo $FLAG_FILE | awk '{print $1}')
           echo "INFO: Executing factory reset..."
           mv "$FLAG_FILE" "${FLAG_FILE}.old" >/dev/null 2>&1
-          echo "Factory reset triggered by flag file $FLAG_FILE" > /usr/data/printer_data/logs/factoryreset.log
           /bin/sync >/dev/null 2>&1
 
           # we want to unmount the device cleanly
@@ -114,7 +112,6 @@ case "$1" in
             /bin/sync >/dev/null 2>&1
         fi
 
-        echo "Factory reset triggered by command" > /usr/data/printer_data/logs/factoryreset.log
         echo "INFO: Executing factory reset..."
         factory_reset
     ;;
