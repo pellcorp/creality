@@ -855,7 +855,7 @@ function install_klipper() {
         cp /usr/data/pellcorp/k1/services/S55klipper_service /etc/init.d/ || exit $?
 
         # lets use our own variant so that its the same across all models that need the rpi
-        if [ "$MODEL" = "NEBULA" ] || [ "$MODEL" = "F005" ] || [ "$MODEL" = "F004" ]; then
+        if [ "$MODEL" = "NEBULA" ] || [ "$MODEL" = "F005" ]; then
           cp /usr/data/pellcorp/k1/services/S57klipper_mcu /etc/init.d/ || exit $?
         fi
 
@@ -911,7 +911,7 @@ function install_klipper() {
 
         # mcu rpi is used for adxl on ender 3 v3 ke, ender 5 max and nebula pad but otherwise
         # serves no purpose and takes up resources so remove it except for those printers.
-        if [ "$MODEL" != "F004" ] && [ "$MODEL" != "F005" ] && [ "$MODEL" != "NEBULA" ]; then
+        if [ "$MODEL" != "F005" ] && [ "$MODEL" != "NEBULA" ]; then
           $CONFIG_HELPER --remove-section "mcu rpi" || exit $?
         fi
 
