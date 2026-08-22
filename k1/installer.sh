@@ -2258,7 +2258,7 @@ fi
         fi
     done
 
-    if [ -f /usr/data/pellcorp-backups/printer.factory.cfg ]; then
+    if [ "$MODEL" = "NEBULA" ] && [ -f /usr/data/pellcorp-backups/printer.factory.cfg ]; then
       model=$(cat /usr/data/pellcorp-backups/printer.factory.cfg | grep MODEL: | awk -F ':' '{print $2}')
       if [ -z "$model" ]; then
         model=unspecified
