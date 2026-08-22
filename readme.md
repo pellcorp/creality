@@ -1,4 +1,12 @@
-# Simple AF for K1, K1C, K1M, K1SE, Ender 3 V3 KE, Ender 5 Max and any Klipper printing with a RPi, OrangePi or the like SBC!
+# Simple AF is for:
+
+- K1, K1C, K1 Max and K1SE
+- Ender 3 V3 KE
+- Ender 5 Max
+- Ender 3 V3
+- Ender 3 V3 SE (retail Nebula Pad)
+- Ender 3 V1, V1 Pro, Neo, V2 and V2 Neo (retail Nebula Pad)
+- Any cartesian or corexy printer with a RPi, OrangePi or the like SBC!
 
 An alternative environment for your printer which requires a separate probe
 
