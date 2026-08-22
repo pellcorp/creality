@@ -4,6 +4,7 @@
 [extruder]
 gear_ratio: 3.5:1
 rotation_distance: 26.36
+max_temp: 300
 
 [stepper_x]
 position_max: 235
