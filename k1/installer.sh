@@ -2258,24 +2258,26 @@ fi
         fi
     done
 
-    if [ "$MODEL" = "NEBULA" ] && [ -f /usr/data/pellcorp-backups/printer.factory.cfg ]; then
-      model=$(cat /usr/data/pellcorp-backups/printer.factory.cfg | grep MODEL: | awk -F ':' '{print $2}')
-      if [ -z "$model" ]; then
-        model=unspecified
+    if [ "$MODEL" = "NEBULA" ]; then
+      if [ -f /usr/data/pellcorp-backups/printer.factory.cfg ]; then
+        model=$(cat /usr/data/pellcorp-backups/printer.factory.cfg | grep MODEL: | awk -F ':' '{print $2}')
+        if [ -z "$model" ]; then
+          model=unspecified
+        fi
       fi
-    fi
-
-    if [ "$MODEL" = "NEBULA" ] && [ "$model" = "unspecified" ]; then
-      echo "ERROR: You must specify a printer you are using with your Nebula Pad"
-      echo "The following printers are supported:"
-      echo
-      files=$(find /usr/data/pellcorp/k1/nebula -maxdepth 1 -name "*.cfg")
-      for file in $files; do
-        file=$(basename $file .cfg)
-        comment=$(cat /usr/data/pellcorp/k1/nebula/${file}.cfg | grep "^#" | head -1 | sed 's/#\s*//g')
-        echo "  * $file - $comment"
-      done
-      exit 1
+  
+      if [ "$model" = "unspecified" ]; then
+        echo "ERROR: You must specify a printer you are using with your Nebula Pad"
+        echo "The following printers are supported:"
+        echo
+        files=$(find /usr/data/pellcorp/k1/nebula -maxdepth 1 -name "*.cfg")
+        for file in $files; do
+          file=$(basename $file .cfg)
+          comment=$(cat /usr/data/pellcorp/k1/nebula/${file}.cfg | grep "^#" | head -1 | sed 's/#\s*//g')
+          echo "  * $file - $comment"
+        done
+        exit 1
+      fi
     fi
 
     if [ -z "$probe" ]; then
