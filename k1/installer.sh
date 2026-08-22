@@ -909,6 +909,12 @@ function install_klipper() {
         cp /usr/data/pellcorp/config/useful_macros.cfg /usr/data/printer_data/config/ || exit $?
         $CONFIG_HELPER --add-include "useful_macros.cfg" || exit $?
 
+        # mcu rpi is used for adxl on ender 3 v3 ke, ender 5 max and nebula pad but otherwise
+        # serves no purpose and takes up resources so remove it except for those printers.
+        if [ "$MODEL" != "F004" ] && [ "$MODEL" != "F005" ] && [ "$MODEL" != "NEBULA" ]; then
+          $CONFIG_HELPER --remove-section "mcu rpi" || exit $?
+        fi
+
         cp /usr/data/pellcorp/k1/belts_calibration.cfg /usr/data/printer_data/config/ || exit $?
         $CONFIG_HELPER --add-include "belts_calibration.cfg" || exit $?
 
