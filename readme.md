@@ -26,3 +26,4 @@ The following projects also owned and developed by me (usually from an upstream 
 - https://github.com/pellcorp/k1-bash
 - https://github.com/pellcorp/k1-sftp-server
 - https://github.com/pellcorp/k1-nginx
+- https://github.com/pellcorp/creality-firmware
