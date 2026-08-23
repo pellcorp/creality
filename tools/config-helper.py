@@ -82,7 +82,13 @@ def replace_section_value(updater, section_name, key, value):
                     section[key] = f' {value.strip()}'
                     return True
             else:
-                section.last_block.add_before.option(key, f' {value.strip()}')
+                # special a-type personality change specifically for the SpritePro because I want the
+                # gear_ratio to appear above rotation_distance
+                if key == 'gear_ratio' and 'rotation_distance' in section:
+                    rotation_distance = section.get('rotation_distance', None)
+                    rotation_distance.add_before.option(key, f' {value.strip()}')
+                else:
+                    section.last_block.add_before.option(key, f' {value.strip()}')
                 return True
     return False
 
