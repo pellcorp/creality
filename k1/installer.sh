@@ -20,6 +20,8 @@ if [ -f /usr/bin/get_sn_mac.sh ]; then
     model=f001
   elif [ "$MODEL" = "F004" ]; then
     model=f004
+  elif [ "$MODEL" = "F003" ]; then # just so we can switch to the proper test branch
+    model=f003
   elif [ "$MODEL" = "F005" ]; then
     model=f005
   elif [ "$MODEL" = "NEBULA" ]; then
