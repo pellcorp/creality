@@ -3,7 +3,7 @@ set -eu
 
 usage() {
   echo "Usage: $0 <model> <structure_version>"
-  echo "Models: CR-K1, K1C, K1 SE, CR-K1 Max, F001, F002, F004, F005, Nebula Pad"
+  echo "Models: CR-K1, K1C, K1 SE, CR-K1 Max, F001, F002, F003, F004, F005, Nebula Pad"
   echo "Example: $0 'K1 SE' 1"
   exit 1
 }
@@ -41,7 +41,7 @@ case $BOARD in
     ;;
   "NEBULA V1.0.0.1")
     case "$NEW_MODEL" in
-      "F004"|"F005"|"Nebula Pad") ;;
+      "F003"|"F004"|"F005"|"Nebula Pad") ;;
       *) echo "Unsupported model: $NEW_MODEL"; usage ;;
     esac
     ;;

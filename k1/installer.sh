@@ -21,6 +21,7 @@ if [ -f /usr/bin/get_sn_mac.sh ]; then
   elif [ "$MODEL" = "F004" ]; then
     model=f004
   elif [ "$MODEL" = "F003" ]; then # just so we can switch to the proper test branch
+    echo "WARNING: Experimental support for CR10SE"
     model=f003
   elif [ "$MODEL" = "F005" ]; then
     model=f005
@@ -451,7 +452,7 @@ function install_boot_display() {
       cp /usr/data/pellcorp/k1/boot-display.conf /etc/boot-display/
       tar -zxf /usr/data/pellcorp/k1/boot-display.tar.gz -C /usr/data/boot-display || exit $?
       ln -s /usr/data/boot-display/part0 /etc/boot-display/
-    elif [ "$MODEL" = "F005" ]; then # default boot display for Ender 3 V3 and Ender 5 Max for now
+    elif [ "$MODEL" = "F005" ] || [ "$MODEL" = "F003" ]; then # default boot display for Ender 3 V3 and Ender 5 Max for now
       rm -rf /etc/boot-display/*
       cp /usr/data/pellcorp/k1/boot-display-nebula.conf /etc/boot-display/boot-display.conf
       tar -zxf /usr/data/pellcorp/k1/boot-display-nebula.tar.gz -C /usr/data/boot-display || exit $?
@@ -857,7 +858,7 @@ function install_klipper() {
         cp /usr/data/pellcorp/k1/services/S55klipper_service /etc/init.d/ || exit $?
 
         # lets use our own variant so that its the same across all models that need the rpi
-        if [ "$MODEL" = "NEBULA" ] || [ "$MODEL" = "F005" ]; then
+        if [ "$MODEL" = "NEBULA" ] || [ "$MODEL" = "F003" ] || [ "$MODEL" = "F005" ]; then
           cp /usr/data/pellcorp/k1/services/S57klipper_mcu /etc/init.d/ || exit $?
         fi
 
@@ -913,7 +914,7 @@ function install_klipper() {
 
         # mcu rpi is used for adxl on ender 3 v3 ke, ender 5 max and nebula pad but otherwise
         # serves no purpose and takes up resources so remove it except for those printers.
-        if [ "$MODEL" != "F005" ] && [ "$MODEL" != "NEBULA" ]; then
+        if [ "$MODEL" != "F003" ] && [ "$MODEL" != "F005" ] && [ "$MODEL" != "NEBULA" ]; then
           $CONFIG_HELPER --remove-section "mcu rpi" || exit $?
         fi
 
@@ -935,7 +936,7 @@ function install_klipper() {
         fi
 
         # F004, F005 and NEBULA already have the /usr/bin/beep command
-        if [ "$MODEL" != "F004" ] && [ "$MODEL" != "F005" ] && [ "$MODEL" != "NEBULA" ]; then
+        if [ "$MODEL" != "F003" ] && [ "$MODEL" != "F004" ] && [ "$MODEL" != "F005" ] && [ "$MODEL" != "NEBULA" ]; then
           cp /usr/data/pellcorp/k1/files/beep /usr/bin/
         fi
 
@@ -948,6 +949,7 @@ function install_klipper() {
           $CONFIG_HELPER --remove-section "dirzctl" || exit $?
           $CONFIG_HELPER --remove-section "accel_chip_proxy" || exit $?
           $CONFIG_HELPER --remove-section "z_compensate" || exit $?
+          $CONFIG_HELPER --remove-section "soft_homing" || exit $?
 
           $CONFIG_HELPER --remove-section "bl24c16f" || exit $?
           $CONFIG_HELPER --remove-section "prtouch_v2" || exit $?
@@ -1031,7 +1033,7 @@ function install_klipper() {
             $CONFIG_HELPER --remove-section "output_pin col_pwm" || exit $?
             $CONFIG_HELPER --remove-section "output_pin col" || exit $?
             $CONFIG_HELPER --remove-section "heater_fan nozzle_fan" || exit $?
-        elif [ "$MODEL" = "F005" ]; then
+        elif [ "$MODEL" = "F003" ] || [ "$MODEL" = "F005" ]; then
           $CONFIG_HELPER --remove-section "output_pin MainBoardFan" || exit $?
           $CONFIG_HELPER --remove-section "heater_fan nozzle_fan" || exit $?
           $CONFIG_HELPER --remove-section "bltouch" || exit $?
@@ -1154,8 +1156,8 @@ function install_grumpyscreen() {
         [ -d /usr/data/guppyscreen ] && rm -rf /usr/data/guppyscreen
 
         asset_name=grumpyscreen.tar.gz
-        # Ender 5 Max and Ender 3 V3 KE have a Nebula Pad which is small resolution
-        if [ "$MODEL" = "F004" ] || [ "$MODEL" = "F005" ] || [ "$MODEL" = "NEBULA" ]; then
+        # Ender 5 Max, Ender 3 V3 KE and CR10SE have a Nebula Pad which is small resolution
+        if [ "$MODEL" = "F003" ] || [ "$MODEL" = "F004" ] || [ "$MODEL" = "F005" ] || [ "$MODEL" = "NEBULA" ]; then
             asset_name=grumpyscreen-smallscreen.tar.gz
         fi
 
@@ -1183,7 +1185,7 @@ function install_grumpyscreen() {
 
         # for Ender 5 Max we want display_rotate: 2 and that gets set by grumpyscreen package
         # so we need to switch it to 0 for KE and Nebula
-        if [ "$MODEL" = "F005" ] || [ "$MODEL" = "NEBULA" ]; then
+        if [ "$MODEL" = "F003" ] || [ "$MODEL" = "F005" ] || [ "$MODEL" = "NEBULA" ]; then
           sed -i "s/display_rotate:.*/display_rotate: 0/g" /usr/data/grumpyscreen/grumpyscreen.cfg
         fi
 
