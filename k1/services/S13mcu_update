@@ -145,6 +145,10 @@ auto_update() {
             if [ "$model" = "F005" ]; then
                 mcu_serial=/dev/ttyS1
                 fw_dir=F005
+            elif [ "$model" = "F003" ]; then
+                mcu_serial=/dev/ttyS1
+                noz_serial=/dev/ttyS7
+                fw_dir=F003
             elif [ "$model" = "F004" ]; then
                 mcu_serial=/dev/ttyS1
                 noz_serial=/dev/ttyS7

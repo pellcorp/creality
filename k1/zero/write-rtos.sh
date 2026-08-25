@@ -29,7 +29,7 @@ if [ "$board" = "CR4CU220812S11" ]  || [ "$board" = "CR4CU220812S12" ]; then
     exit 1
   fi
 elif [ "$board" = "NEBULA V1.0.0.1" ]; then
-  if [ "$model" = "F005" ]; then
+  if [ "$model" = "F005" ] || [ "$model" = "F003" ]; then
     image=/usr/data/pellcorp/k1/zero/zero-nebula.bin
   else
     echo "FATAL: Board model $model not supported!"
