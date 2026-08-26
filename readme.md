@@ -3,6 +3,7 @@
 - K1, K1C, K1 Max and K1SE
 - Ender 3 V3 KE
 - Ender 5 Max
+- CR10SE
 - Ender 3 V3
 - Ender 3 V3 SE (retail Nebula Pad)
 - Ender 3 V1, V1 Pro, Neo, V2 and V2 Neo (retail Nebula Pad)
