@@ -120,9 +120,12 @@ EOF
 
       if [ -f /etc/init.d/S57klipper_mcu ]; then
           /etc/init.d/S57klipper_mcu stop 2> /dev/null
-          # Ender 3 V3 KE uses rpi mcu for adxl so we need to leave it alone
-          if [ "$MODEL" != "F005" ]; then
-            rm /etc/init.d/S57klipper_mcu
+          rm /etc/init.d/S57klipper_mcu
+
+          # Note the Nebula pad is not supported for switch to stock so that is why the
+          # copy does not include it here
+          if [ "$MODEL" = "F003" ] || [ "$MODEL" = "F005" ]; then
+            cp /usr/data/pellcorp/k1/services/S57klipper_mcu /etc/init.d/ || exit $?
           fi
       fi
 
