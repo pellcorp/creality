@@ -20,8 +20,7 @@ if [ -f /usr/bin/get_sn_mac.sh ]; then
     model=f001
   elif [ "$MODEL" = "F004" ]; then
     model=f004
-  elif [ "$MODEL" = "F003" ]; then # just so we can switch to the proper test branch
-    echo "WARNING: Experimental support for CR10SE"
+  elif [ "$MODEL" = "F003" ]; then
     model=f003
   elif [ "$MODEL" = "F005" ]; then
     model=f005
@@ -362,9 +361,7 @@ function disable_creality_services() {
 
         if [ -f /etc/init.d/S57klipper_mcu ]; then
             /etc/init.d/S57klipper_mcu stop > /dev/null 2>&1
-            if [ "$MODEL" != "F005" ] && [ "$MODEL" != "NEBULA" ]; then
-              rm /etc/init.d/S57klipper_mcu
-            fi
+            rm /etc/init.d/S57klipper_mcu
         fi
 
         # the log main process takes up so much memory a lot of it swapped, killing this process might make the
@@ -430,9 +427,7 @@ function disable_creality_services() {
     if [ -f /etc/init.d/S57klipper_mcu ]; then
         /etc/init.d/S55klipper_service stop > /dev/null 2>&1
         /etc/init.d/S57klipper_mcu stop > /dev/null 2>&1
-        if [ "$MODEL" != "F005" ] && [ "$MODEL" != "NEBULA" ]; then
-          rm /etc/init.d/S57klipper_mcu
-        fi
+        rm /etc/init.d/S57klipper_mcu
     fi
     sync
 }
@@ -880,6 +875,11 @@ function install_klipper() {
 
         y_position_mid=$($CONFIG_HELPER --get-section-entry "stepper_y" "position_max" --divisor 2 --integer)
         $CONFIG_HELPER --file homing.cfg --replace-section-entry "gcode_macro _HOMING_PARAMS" "variable_home_y" "$y_position_mid" || exit $?
+
+        # For the CR10SE we need to lower the homing current
+        if [ "$MODEL" = "F003" ]; then
+          $CONFIG_HELPER --file homing.cfg --replace-section-entry "gcode_macro _HOMING_PARAMS" "variable_homing_current" "0.5" || exit $?
+        fi
 
         # just make sure the baud is written
         $CONFIG_HELPER --replace-section-entry "mcu" "baud" 230400 || exit $?

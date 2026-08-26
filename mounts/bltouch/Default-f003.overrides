@@ -4,8 +4,8 @@
 [bltouch]
 sensor_pin: nozzle_mcu: PA9
 control_pin: nozzle_mcu: PA10
-y_offset: -27
-x_offset: 0.69
+x_offset: -27.0
+y_offset: 0.69
 speed: 10
 
 [bed_mesh]
