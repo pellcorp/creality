@@ -57,12 +57,6 @@ if [ $? -ne 0 ]; then
 
     git clone https://github.com/Arksine/moonraker.git $BASEDIR/moonraker || exit $?
 
-    MOONRAKER_PINNED_COMMIT=$($CONFIG_HELPER --file moonraker.conf --get-section-entry "update_manager moonraker" "pinned_commit")
-    # to protect against bricking we want to keep control of what commit we support
-    cd $BASEDIR/moonraker
-    git reset --hard $MOONRAKER_PINNED_COMMIT
-    cd - > /dev/null
-
     if [ -f $BASEDIR/moonraker-database.tar.gz ]; then
       echo
       echo "INFO: Restoring moonraker database ..."
