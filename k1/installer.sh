@@ -760,9 +760,13 @@ function install_mainsail() {
     return 0
 }
 
+# note the klipper_fork will usually be 'klipper', just because of how the code works
+# but if --kalico is provided to the installer when klipper_fork will be kalico and we will clone
+# kalico, we don't install kalico unless its a new installation anyway so its fine
 function install_klipper() {
-    local mode=$1
-    local probe=$2
+    local klipper_fork=$1
+    local mode=$2
+    local probe=$3
 
     grep -q "klipper" /usr/data/pellcorp.done
     if [ $? -ne 0 ]; then
@@ -776,14 +780,14 @@ function install_klipper() {
 
             # this old repo is no longer supported
             if [ "$remote_repo" = "k1-carto-klipper" ]; then
-                echo "INFO: Forcing Klipper repo to be switched from pellcorp/${remote_repo} to pellcorp/klipper"
+                echo "INFO: Forcing Klipper repo to be switched from pellcorp/${remote_repo} to pellcorp/${klipper_fork}"
                 rm -rf /usr/data/klipper/
             fi
         fi
 
         if [ ! -d /usr/data/klipper/.git ]; then
-            echo "INFO: Installing klipper ..."
-            git clone https://github.com/pellcorp/klipper.git /usr/data/klipper || exit $?
+            echo "INFO: Installing ${klipper_fork} ..."
+            git clone https://github.com/pellcorp/${klipper_fork}.git /usr/data/klipper || exit $?
 
             [ -d /usr/share/klipper ] && rm -rf /usr/share/klipper
         else
@@ -2076,6 +2080,11 @@ elif [ "$1" = "--klipper-repo" ] || [ "$1" = "--kalico" ] || [ "$1" = "--klipper
     /etc/init.d/S55klipper_service stop
 
     if [ "$1" = "--kalico" ]; then
+      if [ "$MODEL" = "F001" ] || [ "$MODEL" = "F002" ] || [ "$MODEL" = "F004" ]; then
+        echo "FATAL: Kalico is not currently supported for Ender 3 V3 or Ender 5 Max"
+        echo "Refer to https://pellcorp.github.io/creality-wiki/kalico/#limitations"
+        exit 1
+      fi
       klipper_repo=kalico
     elif [ "$1" = "--klipper" ]; then
       klipper_repo=klipper
@@ -2181,6 +2190,7 @@ fi
         probe=btteddy
     fi
 
+    klipper_fork=klipper
     mode=install
     force=false
     skip_overrides=false
@@ -2200,6 +2210,14 @@ fi
                 skip_overrides=true
                 mode=$(echo $mode | sed 's/clean-//g')
             fi
+        elif [ "$1" = "--kalico" ]; then
+            if [ "$MODEL" = "F001" ] || [ "$MODEL" = "F002" ] || [ "$MODEL" = "F004" ]; then
+              echo "FATAL: Kalico is not currently supported for Ender 3 V3 or Ender 5 Max"
+              echo "Refer to https://pellcorp.github.io/creality-wiki/kalico/#limitations"
+              exit 1
+            fi
+            klipper_fork=kalico
+            shift
         elif [ "$1" = "--probe" ]; then # allow the installer to specify a `--probe` argument for clarity
             shift
         elif [ "$1" = "--printer" ]; then
@@ -2576,7 +2594,7 @@ fi
     install_mainsail $mode
     install_mainsail=$?
 
-    install_klipper $mode $probe
+    install_klipper $klipper_fork $mode $probe
     install_klipper=$?
 
     cleanup_probes
