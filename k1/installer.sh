@@ -3,6 +3,9 @@
 # this allows us to make changes to Simple AF and grumpyscreen in parallel
 GRUMPYSCREEN_TIMESTAMP=1787520400
 
+# this is the minimum pellcorp/klipper commit
+KLIPPER_MINIMUM_COMMIT=cbda3771337a62cf6f2eae1d5f96c3aa9609af76
+
 if [ -f /usr/bin/get_sn_mac.sh ]; then
   MODEL=$(/usr/bin/get_sn_mac.sh model)
   if [ "$MODEL" = "Nebula Pad" ]; then
@@ -810,11 +813,10 @@ function install_klipper() {
         cd /usr/data/klipper/
         branch_ref=$(git rev-parse --abbrev-ref HEAD)
         if [ "$branch_ref" = "jun2025" ]; then
-          KLIPPER_PINNED_COMMIT=$($CONFIG_HELPER --file moonraker.conf --get-section-entry "update_manager klipper" "pinned_commit")
-          KLIPPER_CURRENT_COMMIT=$(git rev-parse HEAD)
-          if [ "$KLIPPER_PINNED_COMMIT" != "$KLIPPER_CURRENT_COMMIT" ]; then
-            git fetch
-            git reset --hard $KLIPPER_PINNED_COMMIT
+          git merge-base --is-ancestor $KLIPPER_MINIMUM_COMMIT HEAD 2> /dev/null
+          if [ $? -ne 0 ]; then
+            echo "INFO: Forcing update of klipper to latest of branch jun2025"
+            update_repo /usr/data/klipper jun2025 || exit $?
 
             if [ "$mode" = "update" ]; then
               update_klipper
