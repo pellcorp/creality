@@ -202,9 +202,9 @@ function install_config_updater() {
         # from debian 12 onwards you are expected to create a virtualenv but we can
         # force the config module to be installed in system
         if [ $debian_release -ge 12 ]; then
-            sudo pip install --break-system-packages configupdater==3.2 2> /dev/null
+            sudo pip install --break-system-packages $BASEDIR/pellcorp/packages/ConfigUpdater-3.2-py2.py3-none-any.whl 2> /dev/null
         else
-            sudo pip install configupdater==3.2
+            sudo pip install $BASEDIR/pellcorp/packages/ConfigUpdater-3.2-py2.py3-none-any.whl
         fi
         python3 -c 'from configupdater import ConfigUpdater' 2> /dev/null
         if [ $? -ne 0 ]; then
@@ -1088,7 +1088,7 @@ fi
   force=false
   skip_overrides=false
   probe_switch=false
-  klipper_fork=klipper
+  klipper_fork=kalico
   printer=
   mount=
 
