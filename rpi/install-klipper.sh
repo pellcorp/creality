@@ -183,6 +183,14 @@ if [ $? -ne 0 ]; then
   cp $BASEDIR/pellcorp/config/useful_macros.cfg $BASEDIR/printer_data/config/ || exit $?
   $CONFIG_HELPER --add-include "useful_macros.cfg" || exit $?
 
+  if ! $CONFIG_HELPER --section-exists "temperature_fan chamber_fan"; then
+    $CONFIG_HELPER --file useful_macros.cfg --remove-section "gcode_macro M141"
+  fi
+
+  if ! $CONFIG_HELPER --section-exists "temperature_sensor chamber_temp"; then
+    $CONFIG_HELPER --file useful_macros.cfg --remove-section "gcode_macro M191"
+  fi
+
   # most stuff only works with corexy and cartesian
   if [ "$kinematics" = "corexy" ] || [ "$kinematics" = "cartesian" ]; then
     cp $BASEDIR/pellcorp/config/homing.cfg $BASEDIR/printer_data/config/ || exit $?
@@ -219,17 +227,6 @@ if [ $? -ne 0 ]; then
     $CONFIG_HELPER --add-include "Smart_Park.cfg" || exit $?
   fi
 
-  cp $BASEDIR/pellcorp/rpi/fan_control.cfg $BASEDIR/printer_data/config || exit $?
-  if ! $CONFIG_HELPER --section-exists "temperature_fan chamber_fan"; then
-    $CONFIG_HELPER --file fan_control.cfg --remove-section "gcode_macro M141"
-  fi
-
-  if ! $CONFIG_HELPER --section-exists "temperature_sensor chamber_temp"; then
-    $CONFIG_HELPER --file fan_control.cfg --remove-section "gcode_macro M191"
-  fi
-
-  $CONFIG_HELPER --add-include "fan_control.cfg" || exit $?
-
   # replace a [fan_generic part] with a [fan]
   pin=$($CONFIG_HELPER --get-section-entry "fan_generic part" "pin")
   if [ -n "$pin" ]; then
@@ -261,9 +258,6 @@ if [ $? -ne 0 ]; then
   if $CONFIG_HELPER --section-exists "resonance_tester"; then
     $CONFIG_HELPER --replace-section-entry "resonance_tester" "sweeping_period" 1.2 || exit $?
   fi
-
-  # just in case its missing from stock printer.cfg make sure it gets added
-  $CONFIG_HELPER --add-section "exclude_object" || exit $?
 
   if [ ! -f /usr/local/bin/klipper_mcu ]; then
     echo
