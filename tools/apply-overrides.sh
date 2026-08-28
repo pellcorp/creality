@@ -82,6 +82,8 @@ apply_overrides() {
                 sed -i '/variable_detach_macro/d' $BASEDIR/pellcorp-overrides/KAMP_Settings.cfg
 
                 $CONFIG_HELPER --file start_end.cfg --overrides $overrides_dir/$file || exit $?
+            elif [ "$file" = "fan_control.cfg" ]; then # we are going to apply fan control overrides to printer.cfg now
+                $CONFIG_HELPER --file printer.cfg --overrides $overrides_dir/$file || exit $?
             elif [ -L $BASEDIR/printer_data/config/$file ] || [ "$file" = "belts_calibration.cfg" ]; then
                 echo "WARN: Ignoring $file ..."
             elif [ -f "$BASEDIR/pellcorp-backups/$file" ] || [ -f "$BASEDIR/pellcorp/config/$file" ] || [ -f "$BASEDIR/pellcorp/k1/$file" ]; then
@@ -91,9 +93,9 @@ apply_overrides() {
                     # migrate them, as we have already done that for generating config overrides so the only time this
                     # will be an issue is for a factory reset with old overrides!
                     if [ "$file" = "printer.cfg" ]; then
-                      $CONFIG_HELPER --file $file --overrides $overrides_dir/$file --exclude-sections probe,bltouch || exit $?
+                        $CONFIG_HELPER --file $file --overrides $overrides_dir/$file --exclude-sections probe,bltouch || exit $?
                     else
-                      $CONFIG_HELPER --file $file --overrides $overrides_dir/$file || exit $?
+                        $CONFIG_HELPER --file $file --overrides $overrides_dir/$file || exit $?
                     fi
                     if [ "$file" = "moonraker.conf" ]; then  # we moved cartographer to a separate cartographer.conf include
                         $CONFIG_HELPER --file moonraker.conf --remove-section "update_manager cartographer"
@@ -108,8 +110,8 @@ apply_overrides() {
         done
 
         if [ -f $overrides_dir/moonraker.asvc ]; then
-          echo "INFO: Applied additions to $BASEDIR/printer_data/moonraker.asvc"
-          cat $overrides_dir/moonraker.asvc >> $BASEDIR/printer_data/moonraker.asvc
+            echo "INFO: Applied additions to $BASEDIR/printer_data/moonraker.asvc"
+            cat $overrides_dir/moonraker.asvc >> $BASEDIR/printer_data/moonraker.asvc
         fi
 
         # we want to apply the save config last

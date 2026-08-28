@@ -100,7 +100,7 @@ function cleanup_printer_cfg() {
     $CONFIG_HELPER --file $file --replace-section-entry "heater_fan hotend" "heater_temp" "40" || exit $?
   fi
 
-  # this stuff will be provided by fluidd client macros
+  # this stuff will be provided by client.cfg and start_end.cfg
   $CONFIG_HELPER --file $file --remove-section "idle_timeout" || exit $?
   $CONFIG_HELPER --file $file --remove-section "exclude_object" || exit $?
   $CONFIG_HELPER --file $file --remove-section "pause_resume" || exit $?

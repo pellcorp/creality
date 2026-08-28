@@ -106,7 +106,6 @@ def remove_section(updater, section):
 def _last_section(updater):
     last_section = None
     for section in updater.sections():
-        # special case currently for fan_control.cfg to add additional config sections before the gcode
         if not section.startswith("gcode_macro "):
             last_section = section
         else:
@@ -233,6 +232,7 @@ def main():
     opts.add_option("", "--add-include", dest="add_include", nargs=1, type="string")
     opts.add_option("", "--include-exists", dest="include_exists", nargs=1, type="string")
     opts.add_option("", "--section-exists", dest="section_exists", nargs=1, type="string")
+    opts.add_option("", "--sections-exist", dest="sections_exist", nargs=1, type="string")
     opts.add_option("", "--list-sections", dest="list_exists", nargs=1, type="string")
     opts.add_option("", "--includes-exist", dest="includes_exist", default=False, action='store_true')
     opts.add_option("", "--sections", dest="sections", default=False, action='store_true')
@@ -281,7 +281,6 @@ def main():
     basename = os.path.basename(config_file)
     printer_cfg = 'printer.cfg' == basename
     moonraker_conf = 'moonraker.conf' == basename
-    fan_control = 'fan_control.cfg' == basename
     webcam_conf = 'webcam.conf' == basename
     crowsnest_conf = 'crowsnest.conf' == basename
 
@@ -335,6 +334,12 @@ def main():
             exit_code = 0
         else:
             exit_code = 1
+    elif options.sections_exist:
+        sections_exist = options.sections_exist.split(',')
+        for section in sections_exist:
+            if not updater.has_section(section):
+                exit_code = 1
+                break
     elif options.includes_exist:
         exit_code = 1
         for section in updater.sections():
@@ -364,9 +369,9 @@ def main():
         if os.path.exists(options.overrides):
             include_sections = options.include_sections.split(',') if options.include_sections else None
             exclude_sections = options.exclude_sections.split(',') if options.exclude_sections else None
-            allow_delete_section = (moonraker_conf or printer_cfg or fan_control)
+            allow_delete_section = (moonraker_conf or printer_cfg)
             allow_delete_entry = printer_cfg
-            allow_new_section = (fan_control or printer_cfg or moonraker_conf or webcam_conf or crowsnest_conf)
+            allow_new_section = (printer_cfg or moonraker_conf or webcam_conf or crowsnest_conf)
             updated = override_cfg(updater,
                                    options.overrides,
                                    allow_delete_section=allow_delete_section,
