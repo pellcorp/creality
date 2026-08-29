@@ -115,8 +115,8 @@ fw_update() {
 }
 
 auto_update() {
-    local model=$(get_sn_mac.sh model)
-    local board=$(get_sn_mac.sh board)
+    local model=$(/usr/bin/get_sn_mac.sh model)
+    local board=$(/usr/bin/get_sn_mac.sh board)
 
     local bed_serial=
     local mcu_serial=
@@ -124,13 +124,12 @@ auto_update() {
 
     local fw_dir=
     case $board in
-        "CR4CU220812S10" | "CR4CU220812S11" | "CR4CU220812S12")
+        "CR4CU220812S12")
             bed_serial=/dev/ttyS9
             mcu_serial=/dev/ttyS7
             noz_serial=/dev/ttyS1
 
-            # note we are adding mcu update support for Ender 3 V3 (F001)
-            if [ "$model" = "CR-K1" ] || [ "$model" = "K1C" ] || [ "$model" = "K1 SE" ] || [ "$model" = "CR-K1 Max" ] || [  "$model" = "K1 Max SE" ]; then
+            if [ "$model" = "CR-K1" ] || [ "$model" = "K1C" ] || [ "$model" = "K1 SE" ] || [ "$model" = "CR-K1 Max" ]; then
                 fw_dir=K1
                 write_log "The directory selected for this hardware is: $fw_dir"
             elif [ "$model" = "F001" ] || [ "$model" = "F002" ]; then
@@ -145,14 +144,14 @@ auto_update() {
             if [ "$model" = "F005" ]; then
                 mcu_serial=/dev/ttyS1
                 fw_dir=F005
-            elif [ "$model" = "F003" ]; then
-                mcu_serial=/dev/ttyS1
-                noz_serial=/dev/ttyS7
-                fw_dir=F003
             elif [ "$model" = "F004" ]; then
                 mcu_serial=/dev/ttyS1
                 noz_serial=/dev/ttyS7
                 fw_dir=F004
+            elif [ "$model" = "F003" ]; then
+                mcu_serial=/dev/ttyS1
+                noz_serial=/dev/ttyS7
+                fw_dir=F003
             else
                 write_log "The script is not intended for this printer model ($model)"
                 exit 1
