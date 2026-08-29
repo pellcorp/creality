@@ -12,30 +12,50 @@ if [ -f /usr/bin/get_sn_mac.sh ]; then
     MODEL=NEBULA
   fi
 
+  STRUCTURE_VERSION=$(/usr/bin/get_sn_mac.sh structure_version)
+  PRINTER_CFG=
+
   if [ "$MODEL" = "CR-K1" ]; then
     model=k1
+    if [ "$STRUCTURE_VERSION" = "1" ]; then
+      PRINTER_CFG=k1-2024.cfg
+    else
+      PRINTER_CFG=k1-2023.cfg
+    fi
   elif [ "$MODEL" = "K1C" ]; then
     model=k1
+    PRINTER_CFG=k1c.cfg
   elif [ "$MODEL" = "K1 SE" ]; then
     model=k1
+    PRINTER_CFG=k1se.cfg
   elif [ "$MODEL" = "CR-K1 Max" ]; then
     model=k1m
+    if [ "$STRUCTURE_VERSION" = "1" ]; then
+      PRINTER_CFG=k1m-2024.cfg
+    else
+      PRINTER_CFG=k1m-2023.cfg
+    fi
   elif [ "$MODEL" = "F001" ]; then
     echo
     echo "WARNING: Ender 3 V3 printer support is VERY experimental!!!"
     echo
     model=f001
+    PRINTER_CFG=e3v3.cfg
   elif [ "$MODEL" = "F002" ]; then
     echo
     echo "WARNING: Ender 3 V3 Plus printer support is VERY experimental!!!"
     echo
     model=f001
+    PRINTER_CFG=e3v3-plus.cfg
   elif [ "$MODEL" = "F004" ]; then
     model=f004
+    PRINTER_CFG=ender5max.cfg
   elif [ "$MODEL" = "F003" ]; then
     model=f003
+    PRINTER_CFG=cr10se.cfg
   elif [ "$MODEL" = "F005" ]; then
     model=f005
+    PRINTER_CFG=e3v3ke.cfg
   elif [ "$MODEL" = "NEBULA" ]; then
     # the /etc/pellcorp in the overlay suggests someone is trying to pretend this is pellcorp pre-rooted
     # firmware with various things this installer does already done
@@ -2324,19 +2344,12 @@ fi
         sync
       fi
 
-      # so if the installer has never been run we should grab a backup of the printer.cfg
+      # so for a new install we copy base printer.cfg to /usr/data/pellcorp-backups
       if [ ! -f /usr/data/pellcorp.done ] && [ ! -f /usr/data/pellcorp-backups/printer.factory.cfg ]; then
-          # just to make sure we don't accidentally copy printer.cfg to backup if the backup directory
-          # is deleted, add a stamp to config files to we can know for sure.
-          if ! grep -q "# Modified by Simple AF " /usr/data/printer_data/config/printer.cfg; then
-              mv /usr/data/printer_data/config/printer.cfg /usr/data/pellcorp-backups/printer.factory.cfg
-              echo "INFO: Preparing a base printer.factory.cfg from the stock printer.cfg (this might take a while) ..."
-              cleanup_base_factory_printer_cfg
-          else
-            echo "WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING"
-            echo "WARNING: No pristine factory printer.cfg available - config overrides are disabled!"
-            echo "WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING"
-          fi
+        # a retail Nebula Pad will be skipped here
+        if [ -n "${PRINTER_CFG}" ]; then
+          cp /usr/data/pellcorp/k1/printers/${PRINTER_CFG} /usr/data/pellcorp-backups/printer.factory.cfg
+        fi
       elif [ -f /usr/data/pellcorp.done ] && [ -f /usr/data/pellcorp-backups/printer.factory.cfg ]; then
         # for an existing installation where the printer.factory.cfg has not been pre-cleaned we do it once
         if ! grep -q "# Simple AF Base Printer ($MODEL)" /usr/data/pellcorp-backups/printer.factory.cfg; then
