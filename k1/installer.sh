@@ -14,7 +14,7 @@ if [ -f /usr/bin/get_sn_mac.sh ]; then
 
   if [ "$MODEL" = "CR-K1" ] || [ "$MODEL" = "K1C" ] || [ "$MODEL" = "K1 SE" ]; then
     model=k1
-  elif [ "$MODEL" = "CR-K1 Max" ] || [ "$MODEL" = "K1 Max SE" ]; then
+  elif [ "$MODEL" = "CR-K1 Max" ]; then
     model=k1m
   elif [ "$MODEL" = "F001" ] || [ "$MODEL" = "F002" ]; then
     echo
