@@ -2063,11 +2063,6 @@ elif [ "$1" = "--klipper-repo" ] || [ "$1" = "--kalico" ] || [ "$1" = "--klipper
     /etc/init.d/S55klipper_service stop
 
     if [ "$1" = "--kalico" ]; then
-      if [ "$MODEL" = "F001" ] || [ "$MODEL" = "F002" ] || [ "$MODEL" = "F004" ]; then
-        echo "FATAL: Kalico is not currently supported for Ender 3 V3 or Ender 5 Max"
-        echo "Refer to https://pellcorp.github.io/creality-wiki/kalico/#limitations"
-        exit 1
-      fi
       klipper_repo=kalico
     elif [ "$1" = "--klipper" ]; then
       klipper_repo=klipper
@@ -2203,11 +2198,6 @@ fi
                 mode=$(echo $mode | sed 's/clean-//g')
             fi
         elif [ "$1" = "--kalico" ]; then
-            if [ "$MODEL" = "F001" ] || [ "$MODEL" = "F002" ] || [ "$MODEL" = "F004" ]; then
-              echo "FATAL: Kalico is not currently supported for Ender 3 V3 or Ender 5 Max"
-              echo "Refer to https://pellcorp.github.io/creality-wiki/kalico/#limitations"
-              exit 1
-            fi
             klipper_fork=kalico
             shift
         elif [ "$1" = "--probe" ]; then # allow the installer to specify a `--probe` argument for clarity
