@@ -7,6 +7,7 @@
 import optparse, os, sys
 import os.path
 from configupdater import ConfigUpdater
+from configupdater.block import Comment, Space
 
 if os.path.isdir("/usr/data/printer_data/config"):
     PRINTER_CONFIG_DIR = "/usr/data/printer_data/config"
@@ -20,11 +21,6 @@ def remove_section_value(updater, section_name, key):
             current_value = section.get(key, None)
             if current_value:
                 del section[key]
-                if current_value.lines == 1:
-                    section.last_block.add_before.comment(f"{current_value}")
-                else:
-                    for _, line in enumerate(current_value.lines):
-                        section.last_block.add_before.comment(f"{line}")
                 return True
     return False
 
@@ -103,14 +99,36 @@ def remove_section(updater, section):
     return changed
 
 
-def _last_section(updater):
-    last_section = None
-    for section in updater.sections():
-        if not section.startswith("gcode_macro "):
-            last_section = section
-        else:
+def _normalise_save_config(updater):
+    # ConfigUpdater attaches trailing comments to the preceding section.  Move
+    # Klipper's generated SAVE_CONFIG block to the document level so adding a
+    # section after the last real section places it before SAVE_CONFIG.
+    sections = updater.sections()
+    if not sections:
+        return
+
+    last_section = updater[sections[-1]]
+    trailing_blocks = []
+    for block in reversed(last_section.structure):
+        if not isinstance(block, (Comment, Space)):
             break
-    return last_section
+        trailing_blocks.append(block)
+
+    trailing_blocks.reverse()
+    save_config_index = next(
+        (index for index, block in enumerate(trailing_blocks)
+         if isinstance(block, Comment) and "SAVE_CONFIG" in str(block)),
+        None)
+    if save_config_index is not None:
+        for block in trailing_blocks[save_config_index:]:
+            block.detach()
+            block.attach(updater)
+            updater.append(block)
+
+
+def _last_section(updater):
+    sections = updater.sections()
+    return sections[-1] if sections else None
 
 
 # so return the first section which is not an include
@@ -205,7 +223,10 @@ def override_cfg(updater,
                 if new_section:
                     last_section = _last_section(updater)
                     if last_section:
-                        updater[last_section].add_before.section(new_section.detach()).space()
+                        new_section = new_section.detach()
+                        builder = updater[last_section].add_after.section(new_section)
+                        if not isinstance(new_section.last_block, (Comment, Space)):
+                            builder.space()
                     else:  # file is basically empty
                         updater.add_section(new_section.detach())
                     updated = True
@@ -277,6 +298,7 @@ def main():
     else:
         with open(config_file, 'r') as file:
             updater.read_file(file)
+        _normalise_save_config(updater)
 
     basename = os.path.basename(config_file)
     printer_cfg = 'printer.cfg' == basename
