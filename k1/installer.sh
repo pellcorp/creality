@@ -1,7 +1,7 @@
 #!/bin/sh
 
 # this allows us to make changes to Simple AF and grumpyscreen in parallel
-GRUMPYSCREEN_TIMESTAMP=1788045800
+GRUMPYSCREEN_TIMESTAMP=1788075000
 
 # this is the minimum pellcorp/klipper commit
 KLIPPER_MINIMUM_COMMIT=cbda3771337a62cf6f2eae1d5f96c3aa9609af76
