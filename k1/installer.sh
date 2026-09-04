@@ -12,13 +12,22 @@ if [ -f /usr/bin/get_sn_mac.sh ]; then
     MODEL=NEBULA
   fi
 
-  if [ "$MODEL" = "CR-K1" ] || [ "$MODEL" = "K1C" ] || [ "$MODEL" = "K1 SE" ]; then
+  if [ "$MODEL" = "CR-K1" ]; then
+    model=k1
+  elif [ "$MODEL" = "K1C" ]; then
+    model=k1
+  elif [ "$MODEL" = "K1 SE" ]; then
     model=k1
   elif [ "$MODEL" = "CR-K1 Max" ]; then
     model=k1m
-  elif [ "$MODEL" = "F001" ] || [ "$MODEL" = "F002" ]; then
+  elif [ "$MODEL" = "F001" ]; then
     echo
     echo "WARNING: Ender 3 V3 printer support is VERY experimental!!!"
+    echo
+    model=f001
+  elif [ "$MODEL" = "F002" ]; then
+    echo
+    echo "WARNING: Ender 3 V3 Plus printer support is VERY experimental!!!"
     echo
     model=f001
   elif [ "$MODEL" = "F004" ]; then
