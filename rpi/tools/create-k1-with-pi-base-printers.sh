@@ -5,10 +5,9 @@ RPI_DIR=$(dirname $CURRENT_DIR)
 CREALITY_DIR=$(dirname $RPI_DIR)
 ROOT_DIR=$(dirname $CREALITY_DIR)
 
-CONFIG_DIR=$ROOT_DIR/Creality-K1-Extracted-Firmwares/Firmware/usr/share/klipper/config/
-
+CONFIG_DIR=$ROOT_DIR/creality-firmware/configs/usr/share/klipper/config/
 if [ ! -d $CONFIG_DIR ]; then
-  echo "Missing $ROOT_DIR/Creality-K1-Extracted-Firmwares/Firmware/usr/share/klipper/config/"
+  echo "Missing $ROOT_DIR/creality-firmware/configs/usr/share/klipper/config/"
   exit 1
 fi
 
@@ -18,7 +17,7 @@ if [ $? -ne 0 ]; then
   echo "Try:"
   echo "  python3 -m venv $ROOT_DIR/.venv"
   echo "  source $ROOT_DIR/.venv/bin/activate"
-  echo "  pip install configupdater==3.2"
+  echo "  pip install $CREALITY_DIR/packages/ConfigUpdater-3.2-py2.py3-none-any.whl"
   exit 1
 fi
 

@@ -54,12 +54,11 @@ else
 fi
 
 # we only need to verify we are not trying to install on really old k1 firmware
-if [ "$MODEL" != "F001" ] && [ "$MODEL" != "F002" ] && [ "$MODEL" != "F004" ] && [ "$MODEL" != "F005" ] && [ "$MODEL" != "NEBULA" ]; then
-    # 6. prefix is the prefix I use for pre-rooted firmware
+if [ "$model" = "k1" ] || [ "$model" = "k1m" ]; then
     ota_version=$(cat /etc/ota_info | grep ota_version | awk -F '=' '{print $2}' | sed 's/^6.//g' | tr -d '.')
     if [ -z "$ota_version" ] || [ $ota_version -lt 1335 ]; then
       echo "FATAL: Firmware is too old, you must update to at least version 1.3.3.5 of Creality OS"
-      echo "https://www.creality.com/pages/download-k1-flagship"
+      echo "https://pellcorp.github.io/creality-wiki/prerooted_firmware/"
       exit 1
     fi
 fi
@@ -308,13 +307,13 @@ function install_config_updater() {
 
 # this is never called for a NEBULA installation where we have curated a clean base printer.cfg
 function cleanup_base_factory_printer_cfg() {
-  local PRINTER_CFG=/usr/data/pellcorp-backups/printer.factory.cfg
+  local FACTORY_CFG=/usr/data/pellcorp-backups/printer.factory.cfg
 
   # the save config must be called printer.cfg.save_config so that config_helper.py knows to remove the #*# to allow reading the file
-  cat $PRINTER_CFG | grep '^#\*#' > /usr/data/printer.cfg.save_config
+  cat $FACTORY_CFG | grep '^#\*#' > /usr/data/printer.cfg.save_config
 
   # clean out the calibration data from the end of the printer.factory.cfg file
-  sed -i '/#\*#.*/d' $PRINTER_CFG
+  sed -i '/#\*#.*/d' $FACTORY_CFG
 
   extruder_pid=$($CONFIG_HELPER --file /usr/data/printer.cfg.save_config --get-section-entry "extruder" "control")
   # we have save config overrides for extruder so we have to restore the defaults so that the printer actually starts
@@ -322,10 +321,10 @@ function cleanup_base_factory_printer_cfg() {
       extruder_pid_kp=$($CONFIG_HELPER --file /usr/data/printer.cfg.save_config --get-section-entry "extruder" "pid_kp" --default-value "0")
       extruder_pid_ki=$($CONFIG_HELPER --file /usr/data/printer.cfg.save_config --get-section-entry "extruder" "pid_ki" --default-value "0")
       extruder_pid_kd=$($CONFIG_HELPER --file /usr/data/printer.cfg.save_config --get-section-entry "extruder" "pid_kd" --default-value "0")
-      $CONFIG_HELPER --file $PRINTER_CFG --replace-section-entry "extruder" "control" "pid"
-      $CONFIG_HELPER --file $PRINTER_CFG --replace-section-entry "extruder" "pid_kp" "$extruder_pid_kp"
-      $CONFIG_HELPER --file $PRINTER_CFG --replace-section-entry "extruder" "pid_ki" "$extruder_pid_ki"
-      $CONFIG_HELPER --file $PRINTER_CFG --replace-section-entry "extruder" "pid_kd" "$extruder_pid_kd"
+      $CONFIG_HELPER --file $FACTORY_CFG --replace-section-entry "extruder" "control" "pid"
+      $CONFIG_HELPER --file $FACTORY_CFG --replace-section-entry "extruder" "pid_kp" "$extruder_pid_kp"
+      $CONFIG_HELPER --file $FACTORY_CFG --replace-section-entry "extruder" "pid_ki" "$extruder_pid_ki"
+      $CONFIG_HELPER --file $FACTORY_CFG --replace-section-entry "extruder" "pid_kd" "$extruder_pid_kd"
   fi
 
   heater_pid=$($CONFIG_HELPER --file /usr/data/printer.cfg.save_config --get-section-entry "heater_bed" "control")
@@ -333,155 +332,21 @@ function cleanup_base_factory_printer_cfg() {
     heater_pid_kp=$($CONFIG_HELPER --file /usr/data/printer.cfg.save_config --get-section-entry "heater_bed" "pid_kp" --default-value "0")
     heater_pid_ki=$($CONFIG_HELPER --file /usr/data/printer.cfg.save_config --get-section-entry "extruder" "pid_ki" --default-value "0")
     heater_pid_kd=$($CONFIG_HELPER --file /usr/data/printer.cfg.save_config --get-section-entry "extruder" "pid_kd" --default-value "0")
-    $CONFIG_HELPER --file $PRINTER_CFG --replace-section-entry "heater_bed" "control" "pid"
-    $CONFIG_HELPER --file $PRINTER_CFG --replace-section-entry "heater_bed" "pid_kp" "$heater_pid_kp"
-    $CONFIG_HELPER --file $PRINTER_CFG --replace-section-entry "heater_bed" "pid_ki" "$heater_pid_ki"
-    $CONFIG_HELPER --file $PRINTER_CFG --replace-section-entry "heater_bed" "pid_kd" "$heater_pid_kd"
+    $CONFIG_HELPER --file $FACTORY_CFG --replace-section-entry "heater_bed" "control" "pid"
+    $CONFIG_HELPER --file $FACTORY_CFG --replace-section-entry "heater_bed" "pid_kp" "$heater_pid_kp"
+    $CONFIG_HELPER --file $FACTORY_CFG --replace-section-entry "heater_bed" "pid_ki" "$heater_pid_ki"
+    $CONFIG_HELPER --file $FACTORY_CFG --replace-section-entry "heater_bed" "pid_kd" "$heater_pid_kd"
   fi
+
+  # clean up the extra commented out crap
+  sed -i '/^#\s*control:/d' $FACTORY_CFG
+  sed -i '/^#\s*pid_[Kk]p:/d' $FACTORY_CFG
+  sed -i '/^#\s*pid_[Kk]i:/d' $FACTORY_CFG
+  sed -i '/^#\s*pid_[Kk]d:/d' $FACTORY_CFG
 
   rm /usr/data/printer.cfg.save_config
 
-  # clean up the extra commented out crap
-  sed -i '/^#\s*control:/d' $PRINTER_CFG
-  sed -i '/^#\s*pid_[Kk]p:/d' $PRINTER_CFG
-  sed -i '/^#\s*pid_[Kk]i:/d' $PRINTER_CFG
-  sed -i '/^#\s*pid_[Kk]d:/d' $PRINTER_CFG
-
-  # install_klipper will restore it where its required
-  $CONFIG_HELPER --file $PRINTER_CFG --remove-section "mcu rpi" || exit $?
-
-  # just make sure the baud is written
-  $CONFIG_HELPER --file $PRINTER_CFG --replace-section-entry "mcu" "baud" 230400 || exit $?
-  if [ "$MODEL" != "F005" ]; then
-    $CONFIG_HELPER --file $PRINTER_CFG --replace-section-entry "mcu nozzle_mcu" "baud" 230400 || exit $?
-  fi
-
-  # we need the levelling mcu for Ender 3 V3 for ADXL
-  if [ "$MODEL" != "F001" ] && [ "$MODEL" != "F002" ]; then
-    $CONFIG_HELPER --file $PRINTER_CFG --remove-section "mcu leveling_mcu" || exit $?
-  else
-    $CONFIG_HELPER --file $PRINTER_CFG --replace-section-entry "mcu leveling_mcu" "baud" 230400 || exit $?
-  fi
-
-  if [ "$MODEL" = "F004" ]; then
-    # new versions of Ender 5 Max firmware added accel_chip_proxy to replace adxl
-    $CONFIG_HELPER --file $PRINTER_CFG --remove-section "accel_chip_proxy" || exit $?
-
-    $CONFIG_HELPER --file $PRINTER_CFG --add-section "adxl345"
-    $CONFIG_HELPER --file $PRINTER_CFG --replace-section-entry "adxl345" "cs_pin" "nozzle_mcu:PA4" || exit $?
-    $CONFIG_HELPER --file $PRINTER_CFG --replace-section-entry "adxl345" "axes_map" "x,-z,y" || exit $?
-    $CONFIG_HELPER --file $PRINTER_CFG --replace-section-entry "adxl345" "spi_speed" "5000000" || exit $?
-    $CONFIG_HELPER --file $PRINTER_CFG --replace-section-entry "adxl345" "spi_software_sclk_pin" "nozzle_mcu:PA5" || exit $?
-    $CONFIG_HELPER --file $PRINTER_CFG --replace-section-entry "adxl345" "spi_software_mosi_pin" "nozzle_mcu:PA7" || exit $?
-    $CONFIG_HELPER --file $PRINTER_CFG --replace-section-entry "adxl345" "spi_software_miso_pin" "nozzle_mcu:PA6" || exit $?
-    $CONFIG_HELPER --file $PRINTER_CFG --replace-section-entry "resonance_tester" "accel_chip" "adxl345" || exit $?
-  fi
-
-  $CONFIG_HELPER --file $PRINTER_CFG --remove-section "Height_module2" || exit $?
-  $CONFIG_HELPER --file $PRINTER_CFG --remove-section "output_pin aobi" || exit $?
-  $CONFIG_HELPER --file $PRINTER_CFG --remove-section "output_pin USB_EN" || exit $?
-  $CONFIG_HELPER --file $PRINTER_CFG --remove-section "hx711s" || exit $?
-  $CONFIG_HELPER --file $PRINTER_CFG --remove-section "filter" || exit $?
-  $CONFIG_HELPER --file $PRINTER_CFG --remove-section "dirzctl" || exit $?
-  $CONFIG_HELPER --file $PRINTER_CFG --remove-section "accel_chip_proxy" || exit $?
-  $CONFIG_HELPER --file $PRINTER_CFG --remove-section "z_compensate" || exit $?
-  $CONFIG_HELPER --file $PRINTER_CFG --remove-section "soft_homing" || exit $?
-
-  $CONFIG_HELPER --file $PRINTER_CFG --remove-section "bl24c16f" || exit $?
-  $CONFIG_HELPER --file $PRINTER_CFG --remove-section "prtouch_v2" || exit $?
-  $CONFIG_HELPER --file $PRINTER_CFG --remove-section "output_pin power" || exit $?
-  $CONFIG_HELPER --file $PRINTER_CFG --remove-section-entry "printer" "square_corner_max_velocity" || exit $?
-  $CONFIG_HELPER --file $PRINTER_CFG --remove-section-entry "printer" "max_accel_to_decel" || exit $?
-  $CONFIG_HELPER --file $PRINTER_CFG --remove-section-entry "stepper_y" "gcode_position_max" || exit $?
-  $CONFIG_HELPER --file $PRINTER_CFG --remove-section-entry "stepper_x" "gcode_position_max" || exit $?
-  $CONFIG_HELPER --file $PRINTER_CFG --remove-section "filament_switch_sensor filament_sensor_2" || exit $?
-
-  # https://www.klipper3d.org/TMC_Drivers.html#prefer-to-not-specify-a-hold_current
-  $CONFIG_HELPER --file $PRINTER_CFG --remove-section-entry "tmc2209 stepper_x" "hold_current" || exit $?
-  $CONFIG_HELPER --file $PRINTER_CFG --remove-section-entry "tmc2209 stepper_y" "hold_current" || exit $?
-
-  $CONFIG_HELPER --file $PRINTER_CFG --remove-include "sensorless.cfg" || exit $?
-  $CONFIG_HELPER --file $PRINTER_CFG --remove-include "printer_params.cfg" || exit $?
-  $CONFIG_HELPER --file $PRINTER_CFG --remove-include "gcode_macro.cfg" || exit $?
-  $CONFIG_HELPER --file $PRINTER_CFG --remove-include "custom_gcode.cfg" || exit $?
-  $CONFIG_HELPER --file $PRINTER_CFG --remove-include "box.cfg" || exit $?
-
-  if [ "$MODEL" = "F004" ]; then
-    $CONFIG_HELPER --file $PRINTER_CFG --remove-section "output_pin MainBoardFan" || exit $?
-    $CONFIG_HELPER --file $PRINTER_CFG --remove-section "output_pin en_nozzle_fan" || exit $?
-    $CONFIG_HELPER --file $PRINTER_CFG --remove-section "output_pin en_fan0" || exit $?
-    $CONFIG_HELPER --file $PRINTER_CFG --remove-section "output_pin en_fan1" || exit $?
-    $CONFIG_HELPER --file $PRINTER_CFG --remove-section "output_pin col_pwm" || exit $?
-    $CONFIG_HELPER --file $PRINTER_CFG --remove-section "output_pin col" || exit $?
-    $CONFIG_HELPER --file $PRINTER_CFG --remove-section "heater_fan nozzle_fan" || exit $?
-  elif [ "$MODEL" = "F003" ] || [ "$MODEL" = "F005" ]; then
-    $CONFIG_HELPER --file $PRINTER_CFG --remove-section "output_pin MainBoardFan" || exit $?
-    $CONFIG_HELPER --file $PRINTER_CFG --remove-section "heater_fan nozzle_fan" || exit $?
-    $CONFIG_HELPER --file $PRINTER_CFG --remove-section "bltouch" || exit $?
-    $CONFIG_HELPER --file $PRINTER_CFG --remove-section-entry "heater_bed" "temp_offset_flag" || exit $?
-  fi
-
-  $CONFIG_HELPER --file $PRINTER_CFG --remove-section "output_pin fan0" || exit $?
-  $CONFIG_HELPER --file $PRINTER_CFG --remove-section "output_pin fan1" || exit $?
-  $CONFIG_HELPER --file $PRINTER_CFG --remove-section "output_pin fan2" || exit $?
-
-  # a few strange duplicate pins appear in some firmware
-  $CONFIG_HELPER --file $PRINTER_CFG --remove-section "output_pin PA0" || exit $?
-  $CONFIG_HELPER --file $PRINTER_CFG --remove-section "output_pin PB2" || exit $?
-  $CONFIG_HELPER --file $PRINTER_CFG --remove-section "output_pin PB10" || exit $?
-  $CONFIG_HELPER --file $PRINTER_CFG --remove-section "output_pin PC8" || exit $?
-  $CONFIG_HELPER --file $PRINTER_CFG --remove-section "output_pin PC9" || exit $?
-
-  $CONFIG_HELPER --file $PRINTER_CFG --remove-section "duplicate_pin_override" || exit $?
-
-  $CONFIG_HELPER --file $PRINTER_CFG --remove-section "static_digital_output my_fan_output_pins" || exit $?
-
-  # encountered an as yet unseen config from firmware
-  $CONFIG_HELPER --file $PRINTER_CFG --remove-section "output_pin my_fan_output_pins" || exit $?
-
-  $CONFIG_HELPER --file $PRINTER_CFG --remove-section "heater_fan hotend_fan" || exit $?
-
-  # all the fans and temp sensors are going to fan control now
-  $CONFIG_HELPER --file $PRINTER_CFG --remove-section "temperature_sensor mcu_temp" || exit $?
-  $CONFIG_HELPER --file $PRINTER_CFG --remove-section "temperature_sensor chamber_temp" || exit $?
-  $CONFIG_HELPER --file $PRINTER_CFG --remove-section "temperature_fan chamber_fan" || exit $?
-
-  # just in case anyone manually has added this to printer.cfg
-  $CONFIG_HELPER --file $PRINTER_CFG --remove-section "temperature_fan mcu_fan" || exit $?
-
-  # the nozzle should not trigger the MCU anymore
-  $CONFIG_HELPER --file $PRINTER_CFG --remove-section "multi_pin heater_fans" || exit $?
-
-  # moving idle timeout to start_end.cfg so we can have some integration with
-  # start and end print and warp stabilisation if needed
-  $CONFIG_HELPER --file $PRINTER_CFG --remove-section "idle_timeout" || exit $?
-
-  # exclude object is defined in start_end.cfg
-  $CONFIG_HELPER --file $PRINTER_CFG --remove-section "exclude_object" || exit $?
-
-  # these are defined in client.cfg
-  $CONFIG_HELPER --file $PRINTER_CFG --remove-section "pause_resume" || exit $?
-  $CONFIG_HELPER --file $PRINTER_CFG --remove-section "display_status" || exit $?
-  $CONFIG_HELPER --file $PRINTER_CFG --remove-section "virtual_sdcard" || exit $?
-
-  # apply various Ender 3 V3 patches to printer.cfg last thing
-  if [ "$MODEL" = "F002" ] || [ "$MODEL" = "F001" ]; then
-    $CONFIG_HELPER --file $PRINTER_CFG --quiet --patches /usr/data/pellcorp/k1/patches/printer.cfg.f001 || exit $?
-  fi
-
-  if [ -f /usr/data/pellcorp/k1/patches/fan_control.${model}.cfg ]; then
-    $CONFIG_HELPER --file $PRINTER_CFG --quiet --patches /usr/data/pellcorp/k1/patches/fan_control.${model}.cfg || exit $?
-  elif [ "$MODEL" = "K1 SE" ]; then
-    $CONFIG_HELPER --file $PRINTER_CFG --quiet --patches /usr/data/pellcorp/k1/patches/fan_control.k1se.cfg || exit $?
-  else
-    $CONFIG_HELPER --file $PRINTER_CFG --quiet --patches /usr/data/pellcorp/k1/patches/fan_control.cfg || exit $?
-  fi
-
-  # stamp the base factory printer so we know we have done the cleaning
-  sed -i "1s/^/# Simple AF Base Printer ($MODEL)\n/" $PRINTER_CFG
-
-  # add a new line at the end for neatness
-  echo "" >> $PRINTER_CFG
+  /usr/data/pellcorp/k1/tools/cleanup-printer-cfg.sh $FACTORY_CFG || exit $?
 
   sync
 }
@@ -1007,6 +872,11 @@ function install_klipper() {
         if [ "$MODEL" = "F003" ] || [ "$MODEL" = "F005" ] || [ "$MODEL" = "NEBULA" ]; then
           $CONFIG_HELPER --add-section "mcu rpi" || exit $?
           $CONFIG_HELPER --replace-section-entry "mcu rpi" "serial" "/tmp/klipper_host_mcu" || exit $?
+        fi
+
+        # we need the levelling mcu for Ender 3 V3 for ADXL
+        if [ "$MODEL" != "F001" ] && [ "$MODEL" != "F002" ]; then
+          $CONFIG_HELPER --remove-section "mcu leveling_mcu" || exit $?
         fi
 
         # for scripts like ~/klipper/scripts, a soft link makes things a little bit easier
@@ -2437,12 +2307,12 @@ fi
           fi
       fi
 
-      # we want to disable creality services at the very beginning otherwise shit gets weird
-      # if the crazy creality S55klipper_service is still copying files
-      # pellcorp simpleaf base firmware does this already
       if [ ! -f /etc/pellcorp ]; then
+        # we want to disable creality services at the very beginning otherwise shit gets weird
+        # if the crazy creality S55klipper_service is still copying files
         disable_creality_services
       elif [ -f /etc/init.d/S99start_app ]; then
+        # pellcorp simpleaf base firmware already disables most services so just stop bootstrap
         /etc/init.d/S99start_app stop 2> /dev/null
         rm /etc/init.d/S99start_app
         sync
