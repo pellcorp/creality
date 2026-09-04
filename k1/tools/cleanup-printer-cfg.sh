@@ -141,8 +141,11 @@ $CONFIG_HELPER --file $PRINTER_CFG --remove-section "multi_pin heater_fans" || e
 # start and end print and warp stabilisation if needed
 $CONFIG_HELPER --file $PRINTER_CFG --remove-section "idle_timeout" || exit $?
 
-# exclude object is defined in start_end.cfg
+# exclude_object is defined in start_end.cfg
 $CONFIG_HELPER --file $PRINTER_CFG --remove-section "exclude_object" || exit $?
+
+# force_move is defined in homing.cfg
+$CONFIG_HELPER --file $PRINTER_CFG --remove-section "force_move" || exit $?
 
 # these are defined in client.cfg
 $CONFIG_HELPER --file $PRINTER_CFG --remove-section "pause_resume" || exit $?

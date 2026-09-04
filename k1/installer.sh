@@ -1459,9 +1459,6 @@ function setup_cartotouch() {
         $CONFIG_HELPER --file cartotouch_macro.cfg --replace-section-entry "gcode_macro AXIS_TWIST_COMPENSATION_CALIBRATE" "variable_stop_start_camera" "True" || exit $?
         $CONFIG_HELPER --file cartotouch_macro.cfg --replace-section-entry "gcode_macro _CARTOGRAPHER_TOUCH" "variable_stop_start_camera" "True" || exit $?
 
-        # a slight change to the way cartotouch is configured
-        $CONFIG_HELPER --remove-section "force_move" || exit $?
-
         # as we are referencing the included cartographer now we want to remove the included value
         # from any previous installation
         $CONFIG_HELPER --remove-section "scanner" || exit $?
