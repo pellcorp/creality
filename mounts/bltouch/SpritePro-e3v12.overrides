@@ -6,6 +6,12 @@ gear_ratio: 3.5:1
 rotation_distance: 26.36
 max_temp: 300
 
+[stepper_y]
+position_max: 229
+
+[stepper_x]
+position_max: 229
+
 -- bltouch.cfg
 [bltouch]
 x_offset: -31.8
@@ -19,10 +25,10 @@ screw4: 25, 35
 
 [bed_mesh]
 mesh_min: 10,10
-mesh_max: 202,188
+mesh_max: 190,188
 probe_count: 9,9
 
 [axis_twist_compensation]
 calibrate_start_x: 30
-calibrate_end_x: 192
+calibrate_end_x: 190
 calibrate_y: 105
