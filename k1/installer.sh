@@ -37,9 +37,7 @@ if [ -f /usr/bin/get_sn_mac.sh ]; then
   elif [ "$MODEL" = "F005" ]; then
     model=f005
   elif [ "$MODEL" = "NEBULA" ]; then
-    # the /etc/pellcorp in the overlay suggests someone is trying to pretend this is pellcorp pre-rooted
-    # firmware with various things this installer does already done
-    if [ ! -f /etc/pellcorp ] || [ -e /overlay/upper/etc/pellcorp ]; then
+    if [ ! -f /etc/pellcorp ]; then
       echo "FATAL: Nebula Pad installation is only supported on SimpleAF pre-rooted base firmware!"
       echo "Refer to https://github.com/pellcorp/downloads/tree/main/creality/SimpleAFNebula#readme"
       exit 1
@@ -2084,28 +2082,27 @@ fi
             printer=$1
             shift
 
-            if [ ! -f /usr/data/pellcorp/k1/nebula/${printer}.cfg ]; then
-              echo "FATAL: Invalid printer specified: $printer"
-              exit 1
-            fi
+            if [ -n "$printer" ] && [ -f /usr/data/pellcorp/k1/nebula/${printer}.cfg ]; then
+              rm /usr/data/pellcorp-backups/*.factory.cfg 2> /dev/null
+              printer_cfg=/usr/data/pellcorp/k1/nebula/${printer}.cfg
+              file=
 
-            rm /usr/data/pellcorp-backups/*.factory.cfg 2> /dev/null
-            printer_cfg=/usr/data/pellcorp/k1/nebula/${printer}.cfg
-            file=
-
-            model=$(cat $printer_cfg | grep MODEL: | awk -F ':' '{print $2}')
-            while IFS= read -r line; do
-              if echo "$line" | grep -q "^--"; then
-                file=$(echo $line | sed 's/-- //g' | sed 's/.cfg//g')
-                if [ -n "$model" ] && [ "$file" = "printer" ] && [ ! -f /usr/data/pellcorp-backups/printer.factory.cfg ]; then
-                  echo "# MODEL:$model" > /usr/data/pellcorp-backups/printer.factory.cfg
-                else
-                  touch /usr/data/pellcorp-backups/${file}.factory.cfg
+              model=$(cat $printer_cfg | grep MODEL: | awk -F ':' '{print $2}')
+              while IFS= read -r line; do
+                if echo "$line" | grep -q "^--"; then
+                  file=$(echo $line | sed 's/-- //g' | sed 's/.cfg//g')
+                  if [ -n "$model" ] && [ "$file" = "printer" ] && [ ! -f /usr/data/pellcorp-backups/printer.factory.cfg ]; then
+                    echo "# MODEL:$model" > /usr/data/pellcorp-backups/printer.factory.cfg
+                  else
+                    touch /usr/data/pellcorp-backups/${file}.factory.cfg
+                  fi
+                elif [ -n "$file" ] && [ -f /usr/data/pellcorp-backups/${file}.factory.cfg ]; then
+                  echo "$line" >> /usr/data/pellcorp-backups/${file}.factory.cfg
                 fi
-              elif [ -n "$file" ] && [ -f /usr/data/pellcorp-backups/${file}.factory.cfg ]; then
-                echo "$line" >> /usr/data/pellcorp-backups/${file}.factory.cfg
-              fi
-            done < "$printer_cfg"
+              done < "$printer_cfg"
+            elif [ -n "$printer" ]; then
+              echo "ERROR: Invalid printer specified: $printer"
+            fi
           else
             echo "ERROR: Specifying a --printer argument is only supported for retail Nebula Pad!"
             exit 1
@@ -2291,39 +2288,42 @@ fi
 
     install_config_updater
 
-    if [ "$MODEL" != "NEBULA" ]; then
-      echo
-      echo "INFO: Backing up existing configuration ..."
-      if [ -f /etc/init.d/S99start_app ]; then
-          # create a backup of creality config files
-          if [ -f /usr/data/backups/creality-backup.tar.gz ]; then
-              rm /usr/data/backups/creality-backup.tar.gz
-          fi
-
-          # note the filename format is intentional so that the cleanup service and backups tool ignores it
-          cd /usr/data
-          tar -zcf /usr/data/backups/creality-backup.tar.gz printer_data/config/*.cfg
-          sync
-          cd - > /dev/null
-      else
-          # do not backup unless there are actually files in the config directory
-          if [ $(find /usr/data/printer_data/config -type f | wc -l) -gt 0 ]; then
-            TIMESTAMP=${TIMESTAMP} /usr/data/pellcorp/tools/backups.sh --create
-            echo
-          fi
-      fi
-
+    echo
+    echo "INFO: Backing up existing configuration ..."
+    if [ -f /etc/init.d/S99start_app ]; then
+      # no initial creality backup for a pellcorp base image
       if [ ! -f /etc/pellcorp ]; then
-        # we want to disable creality services at the very beginning otherwise shit gets weird
-        # if the crazy creality S55klipper_service is still copying files
-        disable_creality_services
-      elif [ -f /etc/init.d/S99start_app ]; then
-        # pellcorp simpleaf base firmware already disables most services so just stop bootstrap
-        /etc/init.d/S99start_app stop 2> /dev/null
-        rm /etc/init.d/S99start_app
-        sync
-      fi
+        # create a backup of creality config files
+        if [ -f /usr/data/backups/creality-backup.tar.gz ]; then
+            rm /usr/data/backups/creality-backup.tar.gz
+        fi
 
+        # note the filename format is intentional so that the cleanup service and backups tool ignores it
+        cd /usr/data
+        tar -zcf /usr/data/backups/creality-backup.tar.gz printer_data/config/*.cfg
+        sync
+        cd - > /dev/null
+      fi
+    else
+      # do not backup unless there are actually files in the config directory
+      if [ $(find /usr/data/printer_data/config -type f | wc -l) -gt 0 ]; then
+        TIMESTAMP=${TIMESTAMP} /usr/data/pellcorp/tools/backups.sh --create
+        echo
+      fi
+    fi
+
+    if [ ! -f /etc/pellcorp ]; then
+      # we want to disable creality services at the very beginning otherwise shit gets weird
+      # if the crazy creality S55klipper_service is still copying files
+      disable_creality_services
+    elif [ -f /etc/init.d/S99start_app ]; then
+      # pellcorp simpleaf base firmware already disables most services so just stop bootstrap
+      /etc/init.d/S99start_app stop 2> /dev/null
+      rm /etc/init.d/S99start_app
+      sync
+    fi
+
+    if [ "$MODEL" != "NEBULA" ]; then
       # so if the installer has never been run we should grab a backup of the printer.cfg
       if [ ! -f /usr/data/pellcorp.done ] && [ ! -f /usr/data/pellcorp-backups/printer.factory.cfg ]; then
           # just to make sure we don't accidentally copy printer.cfg to backup if the backup directory
