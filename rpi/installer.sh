@@ -1082,6 +1082,7 @@ if [ $# -gt 0 ] && [ "$1" != "--fix-serial" ]; then
   install_config_updater
 fi
 
+set -o pipefail # preserve installer failures through tee
 {
   probe=
   mode=install
@@ -1150,9 +1151,7 @@ fi
 
       if [ "$mode" = "reinstall" ] || [ ! -f $BASEDIR/pellcorp.done ]; then
         $BASEDIR/pellcorp/rpi/tools/apply-printer-cfg.sh --verify $printer
-        if [ $? -eq 0 ]; then
-          echo "INFO: Printer is $printer"
-        else
+        if [ $? -ne 0 ]; then
           exit 1
         fi
       fi
@@ -1222,7 +1221,6 @@ fi
   if [ -z "$printer" ] && [ "$mode" != "update" ]; then
     if [ "$mode" = "reinstall" ] && [ -n "$existing_printer" ] && [ -f $BASEDIR/pellcorp/rpi/printers/${existing_printer}.cfg ]; then
       printer=${existing_printer}
-      echo "INFO: Printer is $printer"
     else
       echo "ERROR: Printer --printer argument is required"
       exit 1
@@ -1240,9 +1238,6 @@ fi
 
   mkdir -p $BASEDIR/pellcorp-overrides
   mkdir -p $BASEDIR/pellcorp-backups
-
-  echo "INFO: Mode is $mode"
-  echo "INFO: Probe is $probe"
 
   if [ -n "$PELLCORP_UPDATED_SHA" ]; then
     if [ "$mode" = "install" ]; then
@@ -1313,9 +1308,7 @@ fi
 
     if [ -n "$mount" ]; then
       $BASEDIR/pellcorp/tools/apply-mount-overrides.sh --verify $probe $mount $model
-      if [ $? -eq 0 ]; then
-        echo "INFO: Mount is $mount"
-      else
+      if [ $? -ne 0 ]; then
         exit 1
       fi
     elif [ "$skip_overrides" = "true" ] || [ "$mode" = "install" ] || [ "$mode" = "reinstall" ]; then
@@ -1325,13 +1318,22 @@ fi
       if [ -z "$install_mount" ] || [ "$probe_switch" = "true" ]; then
         echo "ERROR: Mount option must be specified"
         exit 1
-      else
-        echo "INFO: Mount is $install_mount"
       fi
     fi
     echo
   fi
 
+  if [ -n "$printer" ]; then
+    echo "INFO: Printer is $printer"
+  fi
+  echo "INFO: Probe is $probe"
+  if [ -n "$mount" ]; then
+    echo "INFO: Mount is $mount"
+  elif [ -n "$install_mount" ]; then
+    echo "INFO: Mount is $install_mount"
+  fi
+
+  echo "INFO: Starting $mode ..."
   if [ "$skip_overrides" = "true" ]; then
     echo "INFO: Configuration overrides will not be saved or applied"
   fi
