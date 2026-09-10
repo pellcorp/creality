@@ -66,7 +66,6 @@ if [ $? -ne 0 ]; then
     ln -sf /media/usb $BASEDIR/printer_data/gcodes/usb
   fi
 
-  cp $BASEDIR/pellcorp/rpi/services/cursor.sh $BASEDIR/grumpyscreen/
   sudo cp $BASEDIR/pellcorp/rpi/services/grumpyscreen.service /etc/systemd/system/ || exit $?
   sudo sed -i "s:\$HOME:$BASEDIR:g" /etc/systemd/system/grumpyscreen.service
   sudo sed -i "s:User=pi:User=$USER:g" /etc/systemd/system/grumpyscreen.service
