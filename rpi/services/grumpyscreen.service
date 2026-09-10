@@ -9,13 +9,18 @@ Type=simple
 Restart=always
 RestartSec=1
 User=pi
+StandardOutput=tty
+StandardError=tty
+TTYPath=/dev/tty1
+# This prints the modern equivalent of 'tput civis' securely inside the tty thread
+ExecStartPre=/bin/sh -c 'echo -ne "\033[?25l"'
 WorkingDirectory=$HOME/grumpyscreen
 # this is the DSI default path on RPI far as I can see
 Environment="LVGL_EVDEV_DEV=/dev/input/by-path/platform-soc:firmware:touchscreen-event"
 Environment="CONFIG_FILE=$HOME/grumpyscreen/grumpyscreen.cfg"
 Environment="CONFIG_OVERRIDE_FILE=$HOME/printer_data/config/grumpyscreen.ini
 Environment="WPA_SUPPLICANT_SOCKET=/var/run/wpa_supplicant"
-ExecStartPre="$HOME/grumpyscreen/cursor.sh"
+
 ExecStart="$HOME/grumpyscreen/grumpyscreen"
 
 [Install]
