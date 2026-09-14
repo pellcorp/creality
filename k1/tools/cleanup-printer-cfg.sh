@@ -154,6 +154,8 @@ $CONFIG_HELPER --file $PRINTER_CFG --remove-section "virtual_sdcard" || exit $?
 
 # apply various Ender 3 V3 patches to printer.cfg last thing
 if [ "$MODEL" = "F002" ] || [ "$MODEL" = "F001" ]; then
+  $CONFIG_HELPER --file $PRINTER_CFG --remove-section "adxl345 adx_x" || exit $?
+  $CONFIG_HELPER --file $PRINTER_CFG --remove-section "adxl345 adx_y" || exit $?
   $CONFIG_HELPER --file $PRINTER_CFG --quiet --patches $BASEDIR/k1/patches/printer.cfg.f001 || exit $?
 fi
 
