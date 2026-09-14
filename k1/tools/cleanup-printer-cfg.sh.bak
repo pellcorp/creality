@@ -154,11 +154,6 @@ $CONFIG_HELPER --file $PRINTER_CFG --remove-section "virtual_sdcard" || exit $?
 
 # apply various Ender 3 V3 patches to printer.cfg last thing
 if [ "$MODEL" = "F002" ] || [ "$MODEL" = "F001" ]; then
-  # the stock factory config's adxl345 sections are superseded by the
-  # bed/nozzle sections printer.cfg.f001 adds below, but were never removed,
-  # so both end up sharing the same cs_pin and Klipper refuses to start
-  $CONFIG_HELPER --file $PRINTER_CFG --remove-section "adxl345 adx_x" || exit $?
-  $CONFIG_HELPER --file $PRINTER_CFG --remove-section "adxl345 adx_y" || exit $?
   $CONFIG_HELPER --file $PRINTER_CFG --quiet --patches $BASEDIR/k1/patches/printer.cfg.f001 || exit $?
 fi
 

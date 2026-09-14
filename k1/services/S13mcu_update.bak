@@ -55,9 +55,6 @@ get_version() {
 compare_version() {
     local version=$1
     local fw_dir=$2
-    # role (mcu0/bed0/noz0) selects the file; self-reported hw_version
-    # below is logged only, not trusted for selection
-    local role=$3
 
     # version example: mcu0_110_G32-mcu0_000_000
     local hw_version=$(echo $version | awk 'BEGIN{FS="-"} {print $1} END{}')
@@ -69,24 +66,20 @@ compare_version() {
         invalid_fw_version=true
     fi
 
-    if [ "$version" != "unknown" ] && [ "$hw_version" != "$role" ]; then
-        write_log "WARNING: $role reports hw_version '$hw_version', not '$role' -- selecting firmware by port role anyway, ignoring the self-report"
-    fi
-
     cd $fw_dir
 
     local ret_fw_bin=
-    if [ $(ls "$role"*.bin | wc -l) -eq 1 ]; then
-        local fw_bin=$(ls "$role"*.bin)
+    if [ $(ls "$hw_version"*.bin | wc -l) -eq 1 ]; then
+        local fw_bin=$(ls "$hw_version"*.bin)
         local tmp=${fw_bin%.*}
         local orig_fw_version=${version:18:3}
         local target_fw_version=${tmp:18:3}
-        if [ "$invalid_fw_version" = "true" ] || [ "$version" = "unknown" ] || [ $target_fw_version -ne $orig_fw_version ]; then
+        if [ "$invalid_fw_version" = "true" ] || [ $target_fw_version -ne $orig_fw_version ]; then
             ret_fw_bin=$fw_dir/$fw_bin
             write_log "old version: $version, will update: $ret_fw_bin"
         fi
     else
-        write_log "we should keep only one firmware file for $role board!"
+        write_log "we should keep only one firmware file for $hw_version board!"
     fi
 
     echo "$ret_fw_bin"
@@ -216,7 +209,7 @@ auto_update() {
         local mcu_version=$(get_version $mcu_serial)
         if [ $mcu_version != "unknown" ]; then
             write_log "mcu_version: $mcu_version"
-            local fw_bin=$(compare_version $mcu_version $FW_ROOT_DIR/$fw_dir mcu0)
+            local fw_bin=$(compare_version $mcu_version $FW_ROOT_DIR/$fw_dir)
             if [ "x$fw_bin" != "x" ]; then
                 local ret=$(fw_update $mcu_serial $fw_bin)
                 if [ $ret -eq $RET_SUCCESS ]; then
@@ -234,7 +227,7 @@ auto_update() {
         local bed_version=$(get_version $bed_serial)
         if [ $bed_version != "unknown" ]; then
             write_log "bed_version: $bed_version"
-            local fw_bin=$(compare_version $bed_version $FW_ROOT_DIR/$fw_dir bed0)
+            local fw_bin=$(compare_version $bed_version $FW_ROOT_DIR/$fw_dir)
             if [ "x$fw_bin" != "x" ]; then
                 local ret=$(fw_update $bed_serial $fw_bin)
                 if [ $ret -eq $RET_SUCCESS ]; then
@@ -252,7 +245,7 @@ auto_update() {
         local noz_version=$(get_version $noz_serial)
         if [ $noz_version != "unknown" ]; then
             write_log "noz_version: $noz_version"
-            local fw_bin=$(compare_version $noz_version $FW_ROOT_DIR/$fw_dir noz0)
+            local fw_bin=$(compare_version $noz_version $FW_ROOT_DIR/$fw_dir)
             if [ "x$fw_bin" != "x" ]; then
                 local ret=$(fw_update $noz_serial $fw_bin)
                 if [ $ret -eq $RET_SUCCESS ]; then
