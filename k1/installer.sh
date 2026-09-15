@@ -2551,10 +2551,6 @@ fi
             echo "ERROR: hx711_driver requires --kalico, stock Klipper does not have the load_cell support this needs"
             exit 1
         fi
-        if [ "$MODEL" != "F001" ]; then
-            echo "ERROR: hx711_driver is only supported on F001 for now"
-            exit 1
-        fi
         echo "***************************************************************"
         echo "* WARNING: hx711_driver is EXTREMELY EXPERIMENTAL.             *"
         echo "* The author takes no responsibility if your machine is     *"
