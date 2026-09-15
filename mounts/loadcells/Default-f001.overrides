@@ -1,4 +1,4 @@
--- hx711_driver.cfg
+-- loadcells.cfg
 [bed_mesh]
 mesh_min: 5,5
 mesh_max: 215,215

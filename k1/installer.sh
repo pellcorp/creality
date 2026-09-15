@@ -1304,7 +1304,7 @@ function cleanup_probes() {
   cleanup_probe beacon
   cleanup_probe klicky
   cleanup_probe bltouch
-  cleanup_probe hx711_driver
+  cleanup_probe loadcells
 }
 
 function setup_bltouch() {
@@ -1410,19 +1410,19 @@ function setup_klicky() {
     return 0
 }
 
-function setup_hx711_driver() {
-    grep -q "hx711_driver-probe" /usr/data/pellcorp.done
+function setup_loadcells() {
+    grep -q "loadcells-probe" /usr/data/pellcorp.done
     if [ $? -ne 0 ]; then
         echo
-        echo "INFO: Setting up hx711_driver ..."
+        echo "INFO: Setting up loadcells ..."
 
-        cp /usr/data/pellcorp/config/hx711_driver.cfg /usr/data/printer_data/config/ || exit $?
-        $CONFIG_HELPER --add-include "hx711_driver.cfg" || exit $?
+        cp /usr/data/pellcorp/config/loadcells.cfg /usr/data/printer_data/config/ || exit $?
+        $CONFIG_HELPER --add-include "loadcells.cfg" || exit $?
 
-        cp /usr/data/pellcorp/config/hx711_driver_macro.cfg /usr/data/printer_data/config/ || exit $?
-        $CONFIG_HELPER --add-include "hx711_driver_macro.cfg" || exit $?
+        cp /usr/data/pellcorp/config/loadcells_macro.cfg /usr/data/printer_data/config/ || exit $?
+        $CONFIG_HELPER --add-include "loadcells_macro.cfg" || exit $?
 
-        echo "hx711_driver-probe" >> /usr/data/pellcorp.done
+        echo "loadcells-probe" >> /usr/data/pellcorp.done
         sync
 
         # means klipper needs to be restarted
@@ -2140,7 +2140,7 @@ fi
         elif [ "$1" = "--force" ]; then
           force=true
           shift
-        elif [ "$1" = "microprobe" ] || [ "$1" = "bltouch" ] || [ "$1" = "beacon" ] || [ "$1" = "klicky" ] || [ "$1" = "cartographer" ] || [ "$1" = "cartotouch" ] || [ "$1" = "btteddy" ] || [ "$1" = "eddyng" ] || [ "$1" = "hx711_driver" ]; then
+        elif [ "$1" = "microprobe" ] || [ "$1" = "bltouch" ] || [ "$1" = "beacon" ] || [ "$1" = "klicky" ] || [ "$1" = "cartographer" ] || [ "$1" = "cartotouch" ] || [ "$1" = "btteddy" ] || [ "$1" = "eddyng" ] || [ "$1" = "loadcells" ]; then
             if [ "$mode" = "fix-serial" ]; then
                 echo "ERROR: Switching probes is not supported while trying to fix serial!"
                 exit 1
@@ -2546,13 +2546,13 @@ fi
     elif [ "$probe" = "klicky" ]; then
         setup_klicky
         setup_probe_specific=$?
-    elif [ "$probe" = "hx711_driver" ]; then
+    elif [ "$probe" = "loadcells" ]; then
         if [ "$klipper_fork" != "kalico" ]; then
-            echo "ERROR: hx711_driver requires --kalico, stock Klipper does not have the load_cell support this needs"
+            echo "ERROR: loadcells requires --kalico, stock Klipper does not have the load_cell support this needs"
             exit 1
         fi
         echo "***************************************************************"
-        echo "* WARNING: hx711_driver is EXTREMELY EXPERIMENTAL.             *"
+        echo "* WARNING: loadcells is EXTREMELY EXPERIMENTAL.                *"
         echo "* The author takes no responsibility if your machine is     *"
         echo "* damaged as a result of using it.                          *"
         echo "***************************************************************"
@@ -2562,7 +2562,7 @@ fi
             echo "Aborted."
             exit 1
         fi
-        setup_hx711_driver
+        setup_loadcells
         setup_probe_specific=$?
     else
         echo "ERROR: Probe $probe not supported"
