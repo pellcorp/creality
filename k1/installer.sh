@@ -1422,6 +1422,16 @@ function setup_loadcells() {
         cp /usr/data/pellcorp/config/loadcells_macro.cfg /usr/data/printer_data/config/ || exit $?
         $CONFIG_HELPER --add-include "loadcells_macro.cfg" || exit $?
 
+        # need to add a empty load_cell_probe section for baby stepping to work
+        $CONFIG_HELPER --remove-section "load_cell_probe" || exit $?
+        $CONFIG_HELPER --add-section "load_cell_probe" || exit $?
+        z_offset=$($CONFIG_HELPER --ignore-missing --file /usr/data/pellcorp-overrides/printer.cfg.save_config --get-section-entry load_cell_probe z_offset)
+        if [ -n "$z_offset" ]; then
+          $CONFIG_HELPER --replace-section-entry "load_cell_probe" "# z_offset" "0.0" || exit $?
+        else
+          $CONFIG_HELPER --replace-section-entry "load_cell_probe" "z_offset" "0.0" || exit $?
+        fi
+
         echo "loadcells-probe" >> /usr/data/pellcorp.done
         sync
 
