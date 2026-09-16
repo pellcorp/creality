@@ -1,4 +1,9 @@
 -- loadcells.cfg
+[load_cell_probe]
+# order: FR, FL, RL, RR -- real F001 leveling_mcu pins
+dout_pins: leveling_mcu:PB12, leveling_mcu:PB14, leveling_mcu:PA8, leveling_mcu:PA10
+sclk_pins: leveling_mcu:PB13, leveling_mcu:PB15, leveling_mcu:PA9, leveling_mcu:PA11
+
 [bed_mesh]
 mesh_min: 5,5
 mesh_max: 215,215
