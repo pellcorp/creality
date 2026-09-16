@@ -2553,15 +2553,9 @@ fi
         fi
         echo "***************************************************************"
         echo "* WARNING: loadcells is EXTREMELY EXPERIMENTAL.                *"
-        echo "* The author takes no responsibility if your machine is     *"
-        echo "* damaged as a result of using it.                          *"
+        echo "* The author takes no responsibility if your machine is        *"
+        echo "* damaged as a result of using it.                             *"
         echo "***************************************************************"
-        printf "Continue? [y/N] "
-        read confirm
-        if [ "$confirm" != "y" ] && [ "$confirm" != "Y" ]; then
-            echo "Aborted."
-            exit 1
-        fi
         setup_loadcells
         setup_probe_specific=$?
     else
