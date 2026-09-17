@@ -908,6 +908,11 @@ function install_klipper() {
         if [ -f /usr/data/pellcorp/k1/homing.${model}.cfg ]; then
           cp /usr/data/pellcorp/k1/homing.${model}.cfg /usr/data/printer_data/config/homing.cfg || exit $?
           $CONFIG_HELPER --replace-section-entry "stepper_x" "homing_retract_dist" "10" || exit $?
+          $CONFIG_HELPER --replace-section-entry "stepper_x" "second_homing_speed" "25" || exit $?
+          $CONFIG_HELPER --replace-section-entry "stepper_y" "homing_retract_dist" "5" || exit $?
+          $CONFIG_HELPER --replace-section-entry "stepper_y" "second_homing_speed" "10" || exit $?
+          $CONFIG_HELPER --replace-section-entry "stepper_z" "homing_retract_dist" "10" || exit $?
+          $CONFIG_HELPER --replace-section-entry "stepper_z" "second_homing_speed" "5" || exit $?
         else
           cp /usr/data/pellcorp/config/homing.cfg /usr/data/printer_data/config/ || exit $?
         fi
