@@ -394,6 +394,16 @@ function disable_creality_services() {
         # force a black display when stopping the start app
         cmd_jpeg_display /usr/data/pellcorp/k1/black.jpg &
 
+        # ender 3 v3 has nginx
+        if [ -f /etc/init.d/S50nginx ]; then
+            /etc/init.d/S50nginx stop > /dev/null 2>&1
+            rm /etc/init.d/S50nginx
+        fi
+        # ender 3 v3 has moonraker
+        if [ -f /etc/init.d/S56moonraker_service ]; then
+            /etc/init.d/S56moonraker_service stop > /dev/null 2>&1
+            rm /etc/init.d/S56moonraker_service
+        fi
         if [ -f /etc/init.d/S70cx_ai_middleware ]; then
             /etc/init.d/S70cx_ai_middleware stop > /dev/null 2>&1
             rm /etc/init.d/S70cx_ai_middleware
