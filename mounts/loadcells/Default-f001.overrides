@@ -3,11 +3,20 @@
 # order: FR, FL, RL, RR -- real F001 leveling_mcu pins
 dout_pins: leveling_mcu:PB12, leveling_mcu:PB14, leveling_mcu:PA8, leveling_mcu:PA10
 sclk_pins: leveling_mcu:PB13, leveling_mcu:PB15, leveling_mcu:PA9, leveling_mcu:PA11
+# OpenCentauri's real values (machine.cfg) -- Load_Cell.md explicitly
+# recommends capping HX711 probing speed at 2mm/s
+speed: 2.0
+lift_speed: 10.0
+z_offset: 0.0
+pullback_speed: 1.0
+sample_retract_dist: 0.5
 
 [bed_mesh]
 mesh_min: 5,5
 mesh_max: 215,215
 zero_reference_position: 110,110
+horizontal_move_z: 8
+horizontal_z_clearance: 8
 
 [screws_tilt_adjust]
 __action__: DELETED
