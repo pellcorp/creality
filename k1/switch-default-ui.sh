@@ -15,6 +15,7 @@ else # else fluidd
     sed -i 's/.*listen 80 default_server;/    #listen 80 default_server;/g' /usr/data/nginx/etc/sites/mainsail || exit $?
     sed -i 's/.*#listen 80 default_server;/    listen 80 default_server;/g' /usr/data/nginx/etc/sites/fluidd || exit $?
 fi
+sync
 
 echo "Restarting nginx ..."
 sudo systemctl restart nginx
