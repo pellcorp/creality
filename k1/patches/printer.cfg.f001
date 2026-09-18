@@ -62,3 +62,15 @@ spi_software_miso_pin: nozzle_mcu:PA6
 [resonance_tester]
 accel_chip_y: adxl345 bed
 accel_chip_x: adxl345 nozzle
+
+[stepper_x]
+homing_retract_dist: 10
+second_homing_speed: 25
+
+[stepper_y]
+homing_retract_dist: 5
+second_homing_speed: 10
+
+[stepper_z]
+homing_retract_dist: 10
+second_homing_speed: 5
