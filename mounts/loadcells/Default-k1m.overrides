@@ -2,6 +2,7 @@
 [load_cell_probe]
 dout_pins: leveling_mcu:PA4, leveling_mcu:PA3, leveling_mcu:PA0, leveling_mcu:PA1
 sclk_pins: leveling_mcu:PA7, leveling_mcu:PA6, leveling_mcu:PA2, leveling_mcu:PA5
+trigger_force: 150
 
 [bed_mesh]
 mesh_min: 5,5
