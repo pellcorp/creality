@@ -1,0 +1,22 @@
+-- loadcells.cfg
+[load_cell_probe]
+dout_pins: leveling_mcu:PA1, leveling_mcu:PA0, leveling_mcu:PA3, leveling_mcu:PA4
+sclk_pins: leveling_mcu:PA5, leveling_mcu:PA2, leveling_mcu:PA6, leveling_mcu:PA7
+trigger_force: 150
+
+[bed_mesh]
+mesh_min: 5,5
+mesh_max: 215,215
+zero_reference_position: 110,110 # needs confirmation
+horizontal_move_z: 8 # set higher than needed, this is the height calibration first moves to, needs confirmation
+
+[screws_tilt_adjust]
+screw1: 25,0 # needs confirmation
+screw2: 195,0 # needs confirmation
+screw3: 195,165 # needs confirmation
+screw4: 25,165 # needs confirmation
+
+[axis_twist_compensation]
+calibrate_start_x: 30 # needs confirmation
+calibrate_end_x: 210 # needs confirmation
+calibrate_y: 105 # needs confirmation

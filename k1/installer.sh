@@ -1314,6 +1314,7 @@ function cleanup_probes() {
   cleanup_probe beacon
   cleanup_probe klicky
   cleanup_probe bltouch
+  cleanup_probe loadcells
 }
 
 function setup_bltouch() {
@@ -1411,6 +1412,37 @@ function setup_klicky() {
         $CONFIG_HELPER --add-include "klicky_macro.cfg" || exit $?
 
         echo "klicky-probe" >> /usr/data/pellcorp.done
+        sync
+
+        # means klipper needs to be restarted
+        return 1
+    fi
+    return 0
+}
+
+function setup_loadcells() {
+    grep -q "loadcells-probe" /usr/data/pellcorp.done
+    if [ $? -ne 0 ]; then
+        echo
+        echo "INFO: Setting up loadcells ..."
+
+        cp /usr/data/pellcorp/config/loadcells.cfg /usr/data/printer_data/config/ || exit $?
+        $CONFIG_HELPER --add-include "loadcells.cfg" || exit $?
+
+        cp /usr/data/pellcorp/config/loadcells_macro.cfg /usr/data/printer_data/config/ || exit $?
+        $CONFIG_HELPER --add-include "loadcells_macro.cfg" || exit $?
+
+        # need to add a empty load_cell_probe section for baby stepping to work
+        $CONFIG_HELPER --remove-section "load_cell_probe" || exit $?
+        $CONFIG_HELPER --add-section "load_cell_probe" || exit $?
+        z_offset=$($CONFIG_HELPER --ignore-missing --file /usr/data/pellcorp-overrides/printer.cfg.save_config --get-section-entry load_cell_probe z_offset)
+        if [ -n "$z_offset" ]; then
+          $CONFIG_HELPER --replace-section-entry "load_cell_probe" "# z_offset" "0.0" || exit $?
+        else
+          $CONFIG_HELPER --replace-section-entry "load_cell_probe" "z_offset" "0.0" || exit $?
+        fi
+
+        echo "loadcells-probe" >> /usr/data/pellcorp.done
         sync
 
         # means klipper needs to be restarted
@@ -2128,7 +2160,7 @@ fi
         elif [ "$1" = "--force" ]; then
           force=true
           shift
-        elif [ "$1" = "microprobe" ] || [ "$1" = "bltouch" ] || [ "$1" = "beacon" ] || [ "$1" = "klicky" ] || [ "$1" = "cartographer" ] || [ "$1" = "cartotouch" ] || [ "$1" = "btteddy" ] || [ "$1" = "eddyng" ]; then
+        elif [ "$1" = "microprobe" ] || [ "$1" = "bltouch" ] || [ "$1" = "beacon" ] || [ "$1" = "klicky" ] || [ "$1" = "cartographer" ] || [ "$1" = "cartotouch" ] || [ "$1" = "btteddy" ] || [ "$1" = "eddyng" ] || [ "$1" = "loadcells" ]; then
             if [ "$mode" = "fix-serial" ]; then
                 echo "ERROR: Switching probes is not supported while trying to fix serial!"
                 exit 1
@@ -2171,7 +2203,7 @@ fi
 
     if [ -z "$probe" ]; then
         echo "ERROR: You must specify a probe you want to configure"
-        echo "One of: [microprobe, bltouch, cartotouch, cartographer, btteddy, eddyng, beacon, klicky]"
+        echo "One of: [microprobe, bltouch, cartotouch, cartographer, btteddy, eddyng, beacon, klicky, loadcells]"
         exit 1
     fi
 
@@ -2533,6 +2565,18 @@ fi
         setup_probe_specific=$?
     elif [ "$probe" = "klicky" ]; then
         setup_klicky
+        setup_probe_specific=$?
+    elif [ "$probe" = "loadcells" ]; then
+        if [ "$klipper_fork" != "kalico" ]; then
+            echo "ERROR: loadcells requires --kalico, stock Klipper does not have the load_cell support this needs"
+            exit 1
+        fi
+        echo "***************************************************************"
+        echo "* WARNING: loadcells is EXTREMELY EXPERIMENTAL.                *"
+        echo "* The author takes no responsibility if your machine is        *"
+        echo "* damaged as a result of using it.                             *"
+        echo "***************************************************************"
+        setup_loadcells
         setup_probe_specific=$?
     else
         echo "ERROR: Probe $probe not supported"
