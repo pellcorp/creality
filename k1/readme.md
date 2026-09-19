@@ -15,6 +15,7 @@ The following files were originally from other projects.  Some of these files ar
 - k1/services/S50webcam -> http://openk1.org/static/k1/scripts/multi-non-creality-webcams.sh
 - config/btteddy.cfg, config/btteddy_macro.cfg -> https://github.com/ballaswag/creality_k1_klipper_mod/tree/master/printer_configs
 - config/Smart_Park.cfg, config/Line_Purge.cfg -> https://github.com/kyleisah/Klipper-Adaptive-Meshing-Purging
+- config/camera-settings.cfg, config/camera-settings-nebula.cfg -> https://github.com/Guilouz/Creality-Helper-Script/tree/main/files/camera-settings
 
 The k1/nginx.conf is originally from moonraker.tar.gz:nginx/nginx/nginx.conf, but I modified it locally to already
 listen on port 80.
