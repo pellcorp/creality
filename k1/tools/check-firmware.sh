@@ -58,7 +58,7 @@ if [ -f $VERSION_FILE ] && [ -d $FW_DIR ]; then
       fi
 
       fw_bed_version=$(cat $VERSION_FILE | grep "bed_version" | awk -F '=' ' {print $2}')
-      file_bed_version=$(basename $(ls $FW_DIR/noz*) .bin 2> /dev/null)
+      file_bed_version=$(basename $(ls $FW_DIR/bed*) .bin 2> /dev/null)
 
       if [ "x$fw_bed_version" = "x" ] || [ "$fw_bed_version" != "$file_bed_version" ]; then
           firmware_upgrade_required=true
