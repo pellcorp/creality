@@ -48,8 +48,8 @@ if [ -f $VERSION_FILE ] && [ -d $FW_DIR ]; then
         firmware_upgrade_required=true
     fi
 
-    # K1 etc and Ender 5 Max do nozzle firmware
-    if [ "$MODEL" != "F003" ] && [ "$MODEL" != "F005" ]; then
+    # The Ender 3 V3 KE does not have a nozzle mcu!
+    if [ "$MODEL" != "F005" ]; then
       fw_noz_version=$(cat $VERSION_FILE | grep "noz_version" | awk -F '=' ' {print $2}')
       file_noz_version=$(basename $(ls $FW_DIR/noz*) .bin 2> /dev/null)
 
@@ -57,11 +57,16 @@ if [ -f $VERSION_FILE ] && [ -d $FW_DIR ]; then
           firmware_upgrade_required=true
       fi
 
-      fw_bed_version=$(cat $VERSION_FILE | grep "bed_version" | awk -F '=' ' {print $2}')
-      file_bed_version=$(basename $(ls $FW_DIR/bed*) .bin 2> /dev/null)
+      # So the Ender 5 Max (F004) and CR10SE (F003) have no bed mcu far as I can tell
+      # The Ender 3 V3 CoreXZ (F001/F002) do have but they often seem to use the nozzle mcu for the bed
+      # so the current test gets confused, I will fix for Ender 3 V3 CoreXZ but not today
+      if [ "$MODEL" != "F003" ] && [ "$MODEL" != "F004" ] && [ "$MODEL" != "F001" ] && [ "$MODEL" != "F002" ]; then
+        fw_bed_version=$(cat $VERSION_FILE | grep "bed_version" | awk -F '=' ' {print $2}')
+        file_bed_version=$(basename $(ls $FW_DIR/bed*) .bin 2> /dev/null)
 
-      if [ "x$fw_bed_version" = "x" ] || [ "$fw_bed_version" != "$file_bed_version" ]; then
-          firmware_upgrade_required=true
+        if [ "x$fw_bed_version" = "x" ] || [ "$fw_bed_version" != "$file_bed_version" ]; then
+            firmware_upgrade_required=true
+        fi
       fi
     fi
 fi
