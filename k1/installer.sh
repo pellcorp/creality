@@ -570,6 +570,60 @@ function install_webcam() {
     return 0
 }
 
+# Mechanical probes (bltouch, microprobe, klicky) can use the higher FPS mjpegstreamer stream.
+# Eddy / inductive probes (cartographer, cartotouch, beacon, btteddy, eddyng) stay on the
+# more conservative mjpegstreamer-adaptive @ 10fps to leave headroom for probing.
+# See https://github.com/pellcorp/creality/issues/1286
+function configure_webcam_for_probe() {
+    local probe=$1
+    local webcam_conf=/usr/data/printer_data/config/webcam.conf
+    local webcam_ini=/usr/data/printer_data/config/webcam.ini
+    local changed=0
+
+    if [ ! -f "$webcam_conf" ] || [ ! -f "$webcam_ini" ]; then
+        return 0
+    fi
+
+    case "$probe" in
+        bltouch|microprobe|klicky)
+            # high performance camera settings
+            if grep -q "service: mjpegstreamer-adaptive" "$webcam_conf"; then
+                sed -i 's/service: mjpegstreamer-adaptive/service: mjpegstreamer/' "$webcam_conf"
+                changed=1
+            fi
+            if grep -q "target_fps: 10" "$webcam_conf"; then
+                sed -i 's/target_fps: 10/target_fps: 15/' "$webcam_conf"
+                changed=1
+            fi
+            if grep -q "frames_per_second=10" "$webcam_ini"; then
+                sed -i 's/frames_per_second=10/frames_per_second=15/' "$webcam_ini"
+                changed=1
+            fi
+            ;;
+        cartographer|cartotouch|beacon|btteddy|eddyng)
+            # conservative camera settings for eddy probes
+            if grep -qE "service: mjpegstreamer$" "$webcam_conf"; then
+                sed -i 's/service: mjpegstreamer$/service: mjpegstreamer-adaptive/' "$webcam_conf"
+                changed=1
+            fi
+            if grep -q "target_fps: 15" "$webcam_conf"; then
+                sed -i 's/target_fps: 15/target_fps: 10/' "$webcam_conf"
+                changed=1
+            fi
+            if grep -q "frames_per_second=15" "$webcam_ini"; then
+                sed -i 's/frames_per_second=15/frames_per_second=10/' "$webcam_ini"
+                changed=1
+            fi
+            ;;
+    esac
+
+    if [ $changed -eq 1 ]; then
+        echo "INFO: Configured webcam settings for $probe probe"
+        return 1
+    fi
+    return 0
+}
+
 function install_moonraker() {
     local mode=$1
 
@@ -1992,11 +2046,6 @@ elif [ "$1" = "--branch" ] && [ -n "$2" ]; then # convenience for testing new fe
     update_repo /usr/data/pellcorp $2 || exit $?
     exit $?
 elif [ "$1" = "--klipper-branch" ]; then # convenience for testing new features
-    if [ ! -f /usr/data/pellcorp.done ]; then
-      echo "ERROR: No installation found"
-      exit 1
-    fi
-
     if [ -n "$2" ]; then
         update_repo /usr/data/klipper $2 || exit $?
         update_klipper || exit $?
@@ -2006,10 +2055,6 @@ elif [ "$1" = "--klipper-branch" ]; then # convenience for testing new features
         exit 1
     fi
 elif [ "$1" = "--klipper-repo" ] || [ "$1" = "--kalico" ] || [ "$1" = "--klipper" ]; then
-    if [ ! -f /usr/data/pellcorp.done ]; then
-      echo "ERROR: No installation found - try putting $1 last on the command line if this is a new install!"
-      exit 1
-    fi
     /etc/init.d/S55klipper_service stop
 
     if [ "$1" = "--kalico" ]; then
@@ -2647,6 +2692,11 @@ fi
         exit 1
     fi
 
+    # apply probe-specific webcam settings (mjpegstreamer @15fps for mechanical probes,
+    # mjpegstreamer-adaptive @10fps for eddy probes). Runs on install and update.
+    configure_webcam_for_probe $probe
+    configure_webcam=$?
+
     if [ -f /usr/data/pellcorp-backups/printer.factory.cfg ]; then
         # we want a copy of the file before config overrides are re-applied so we can correctly generate diffs
         # against different generations of the original file
@@ -2716,7 +2766,7 @@ fi
         sudo systemctl restart grumpyscreen
     fi
 
-    if [ $apply_overrides -ne 0 ] || [ $install_webcam -ne 0 ]; then
+    if [ $apply_overrides -ne 0 ] || [ $install_webcam -ne 0 ] || [ $configure_webcam -ne 0 ]; then
         echo "INFO: Restarting Webcam ..."
         sudo systemctl restart webcam
     fi
