@@ -1935,6 +1935,11 @@ elif [ "$1" = "--branch" ] && [ -n "$2" ]; then # convenience for testing new fe
     update_repo /usr/data/pellcorp $2 || exit $?
     exit $?
 elif [ "$1" = "--klipper-branch" ]; then # convenience for testing new features
+    if [ ! -f /usr/data/pellcorp.done ]; then
+      echo "ERROR: No installation found"
+      exit 1
+    fi
+
     if [ -n "$2" ]; then
         update_repo /usr/data/klipper $2 || exit $?
         update_klipper || exit $?
@@ -1944,6 +1949,10 @@ elif [ "$1" = "--klipper-branch" ]; then # convenience for testing new features
         exit 1
     fi
 elif [ "$1" = "--klipper-repo" ] || [ "$1" = "--kalico" ] || [ "$1" = "--klipper" ]; then
+    if [ ! -f /usr/data/pellcorp.done ]; then
+      echo "ERROR: No installation found - try putting $1 last on the command line if this is a new install!"
+      exit 1
+    fi
     /etc/init.d/S55klipper_service stop
 
     if [ "$1" = "--kalico" ]; then
