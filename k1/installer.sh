@@ -570,9 +570,10 @@ function install_webcam() {
     return 0
 }
 
-# Mechanical probes (bltouch, microprobe, klicky) can use the higher FPS mjpegstreamer stream.
-# Eddy / inductive probes (cartographer, cartotouch, beacon, btteddy, eddyng) stay on the
-# more conservative mjpegstreamer-adaptive @ 10fps to leave headroom for probing.
+# Mechanical probes (bltouch, microprobe, klicky) and load cells can use the higher FPS
+# mjpegstreamer stream. Eddy / inductive probes (cartographer, cartotouch, beacon,
+# btteddy, eddyng) stay on the more conservative mjpegstreamer-adaptive @ 10fps to leave
+# headroom for probing.
 # See https://github.com/pellcorp/creality/issues/1286
 function configure_webcam_for_probe() {
     local probe=$1
@@ -585,7 +586,7 @@ function configure_webcam_for_probe() {
     fi
 
     case "$probe" in
-        bltouch|microprobe|klicky)
+        bltouch|microprobe|klicky|loadcells)
             # high performance camera settings
             if grep -q "service: mjpegstreamer-adaptive" "$webcam_conf"; then
                 sed -i 's/service: mjpegstreamer-adaptive/service: mjpegstreamer/' "$webcam_conf"
@@ -2692,7 +2693,7 @@ fi
         exit 1
     fi
 
-    # apply probe-specific webcam settings (mjpegstreamer @15fps for mechanical probes,
+    # apply probe-specific webcam settings (mjpegstreamer @15fps for mechanical probes + load cells,
     # mjpegstreamer-adaptive @10fps for eddy probes). Runs on install and update.
     configure_webcam_for_probe $probe
     configure_webcam=$?
