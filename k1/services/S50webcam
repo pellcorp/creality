@@ -13,16 +13,16 @@ RESOLUTION="1280x720"
 CAMERA_SETTINGS_SRC=/usr/data/pellcorp/config
 CAMERA_SETTINGS_DIR=/usr/data/printer_data/config/camera-settings
 
-# only include the camera settings macros if the camera has the ranges they were written for
 update_camera_settings() {
   rm -rf $CAMERA_SETTINGS_DIR
   mkdir -p $CAMERA_SETTINGS_DIR
 
-  controls=$(v4l2-ctl -d $1 -l 2> /dev/null)
-  if echo "$controls" | grep -w brightness | grep -q "min=-64 max=64" && echo "$controls" | grep -w contrast | grep -q "min=0 max=64"; then
-    cp $CAMERA_SETTINGS_SRC/camera-settings.cfg $CAMERA_SETTINGS_DIR/
-  elif echo "$controls" | grep -w brightness | grep -q "min=50 max=160"; then
-    cp $CAMERA_SETTINGS_SRC/camera-settings-nebula.cfg $CAMERA_SETTINGS_DIR/
+  if [ -n "$1" ]; then
+    if v4l2-ctl --list-devices | grep -q 'CCX2F3298'; then
+      cp $CAMERA_SETTINGS_SRC/camera-settings-nebula.cfg $CAMERA_SETTINGS_DIR/
+    else
+      cp $CAMERA_SETTINGS_SRC/camera-settings.cfg $CAMERA_SETTINGS_DIR/
+    fi
   fi
 }
 
