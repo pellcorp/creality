@@ -561,19 +561,6 @@ function install_webcam() {
       /etc/init.d/S50webcam start
 
       echo "webcam" >> /usr/data/pellcorp.done
-      echo "camera-settings" >> /usr/data/pellcorp.done
-      sync
-      return 1
-    fi
-
-    grep -q "camera-settings" /usr/data/pellcorp.done
-    if [ $? -ne 0 ]; then
-      echo
-      echo "INFO: Updating camera settings ..."
-      cp /usr/data/pellcorp/k1/services/S50webcam /etc/init.d/ || exit $?
-      $CONFIG_HELPER --add-include "camera-settings/*.cfg" || exit $?
-      /etc/init.d/S50webcam restart
-      echo "camera-settings" >> /usr/data/pellcorp.done
       sync
       return 1
     fi
@@ -2619,7 +2606,7 @@ fi
         sudo systemctl restart nginx
     fi
 
-    if [ $set_serial -ne 0 ] || [ $fix_custom_config -ne 0 ] || [ $fixup_client_variables_config -ne 0 ] || [ $apply_overrides -ne 0 ] || [ $apply_mount_overrides -ne 0 ] || [ $install_cartographer_klipper -ne 0 ] || [ $install_beacon_klipper -ne 0 ] || [ $install_klipper -ne 0 ] || [ $setup_probe -ne 0 ] || [ $setup_probe_specific -ne 0 ] || [ $install_webcam -ne 0 ]; then
+    if [ $set_serial -ne 0 ] || [ $fix_custom_config -ne 0 ] || [ $fixup_client_variables_config -ne 0 ] || [ $apply_overrides -ne 0 ] || [ $apply_mount_overrides -ne 0 ] || [ $install_cartographer_klipper -ne 0 ] || [ $install_beacon_klipper -ne 0 ] || [ $install_klipper -ne 0 ] || [ $setup_probe -ne 0 ] || [ $setup_probe_specific -ne 0 ]; then
         echo "INFO: Restarting Klipper ..."
         sudo systemctl stop klipper
         sudo systemctl restart klipper_mcu
