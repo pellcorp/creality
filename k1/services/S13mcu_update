@@ -152,6 +152,7 @@ auto_update() {
             elif [ "$model" = "F004" ]; then
                 mcu_serial=/dev/ttyS1
                 noz_serial=/dev/ttyS7
+                bed_serial=/dev/ttyS6
                 fw_dir=F004
             else
                 write_log "The script is not intended for this printer model ($model)"
