@@ -10,6 +10,22 @@ WORKERS=1
 BUFFERS=1
 RESOLUTION="1280x720"
 
+CAMERA_SETTINGS_SRC=/usr/data/pellcorp/config
+CAMERA_SETTINGS_DIR=/usr/data/printer_data/config/camera-settings
+
+update_camera_settings() {
+  rm -rf $CAMERA_SETTINGS_DIR
+  mkdir -p $CAMERA_SETTINGS_DIR
+
+  if [ -n "$1" ]; then
+    if v4l2-ctl --list-devices | grep -q 'CCX2F3298'; then
+      cp $CAMERA_SETTINGS_SRC/camera-settings-nebula.cfg $CAMERA_SETTINGS_DIR/
+    else
+      cp $CAMERA_SETTINGS_SRC/camera-settings.cfg $CAMERA_SETTINGS_DIR/
+    fi
+  fi
+}
+
 start() {
   # allow configuration via a webcam.ini file
   if [ -f $CONFIG_FILE ]; then
@@ -22,6 +38,7 @@ start() {
   fi
 
   V4L_DEVICE=$(v4l2-ctl --list-devices|grep -A1 usb|sed 's/^[[:space:]]*//g'|grep '^/dev' | head -1)
+  update_camera_settings $V4L_DEVICE
   if [ "x$V4L_DEVICE" = "x" ]; then
     echo "WARNING: No webcams found!"
     exit 1
