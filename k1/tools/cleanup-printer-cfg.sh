@@ -159,6 +159,10 @@ if [ "$MODEL" = "F002" ] || [ "$MODEL" = "F001" ]; then
   $CONFIG_HELPER --file $PRINTER_CFG --quiet --patches $BASEDIR/k1/patches/printer.cfg.f001 || exit $?
 fi
 
+if [ "$MODEL" = "F004" ]; then
+  $CONFIG_HELPER --file $PRINTER_CFG --quiet --patches $BASEDIR/k1/patches/printer.cfg.f004 || exit $?
+fi
+
 # the base config files have a few known irregular config using =
 sed -i 's/^control = /control: /g' $PRINTER_CFG
 sed -i 's/^pid_kd = /pid_kd: /g' $PRINTER_CFG

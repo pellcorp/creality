@@ -1,0 +1,16 @@
+[accel_chip_proxy]
+__action__: DELETED
+
+[adxl345]
+__action__: DELETED
+
+[lis2dw]
+cs_pin: nozzle_mcu:PA4
+axes_map: x,-z,y
+spi_speed: 5000000
+spi_software_sclk_pin: nozzle_mcu:PA5
+spi_software_mosi_pin: nozzle_mcu:PA7
+spi_software_miso_pin: nozzle_mcu:PA6
+
+[resonance_tester]
+accel_chip: lis2dw
