@@ -42,18 +42,17 @@ if [ -f $VERSION_FILE ] && [ -d $FW_DIR ]; then
     firmware_upgrade_required=false
 
     fw_mcu_version=$(cat $VERSION_FILE | grep "mcu_version" | awk -F '=' ' {print $2}')
-    file_mcu_version=$(basename $(ls $FW_DIR/mcu*) .bin 2> /dev/null)
 
-    if [ "x$fw_mcu_version" = "x" ] || [ "$fw_mcu_version" != "$file_mcu_version" ]; then
+    # check for the exact file it reports being current rather than assuming which family to compare against
+    if [ "x$fw_mcu_version" = "x" ] || [ ! -f "$FW_DIR/${fw_mcu_version}.bin" ]; then
         firmware_upgrade_required=true
     fi
 
     # The Ender 3 V3 KE does not have a nozzle mcu!
     if [ "$MODEL" != "F005" ]; then
       fw_noz_version=$(cat $VERSION_FILE | grep "noz_version" | awk -F '=' ' {print $2}')
-      file_noz_version=$(basename $(ls $FW_DIR/noz*) .bin 2> /dev/null)
 
-      if [ "x$fw_noz_version" = "x" ] || [ "$fw_noz_version" != "$file_noz_version" ]; then
+      if [ "x$fw_noz_version" = "x" ] || [ ! -f "$FW_DIR/${fw_noz_version}.bin" ]; then
           firmware_upgrade_required=true
       fi
 
@@ -62,10 +61,9 @@ if [ -f $VERSION_FILE ] && [ -d $FW_DIR ]; then
       # so the current test gets confused, I will fix for Ender 3 V3 CoreXZ but not today
       if [ "$MODEL" != "F003" ] && [ "$MODEL" != "F004" ] && [ "$MODEL" != "F001" ] && [ "$MODEL" != "F002" ]; then
         fw_bed_version=$(cat $VERSION_FILE | grep "bed_version" | awk -F '=' ' {print $2}')
-        file_bed_version=$(basename $(ls $FW_DIR/bed*) .bin 2> /dev/null)
 
         # ignore missing firmware for the bed which will occur if someone has removed their bed mcu
-        if [ "x$fw_bed_version" != "x" ] && [ "$fw_bed_version" != "$file_bed_version" ]; then
+        if [ "x$fw_bed_version" != "x" ] && [ ! -f "$FW_DIR/${fw_bed_version}.bin" ]; then
             firmware_upgrade_required=true
         fi
       fi
