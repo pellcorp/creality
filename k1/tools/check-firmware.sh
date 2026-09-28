@@ -48,8 +48,8 @@ if [ -f $VERSION_FILE ]; then
         echo "INFO: You have mixed matched firmware on your nozzle mcu this is okay see https://pellcorp.github.io/creality-wiki/known-creality-issues"
     fi
 
-    # So the Ender 5 Max (F004), CR10SE (F003) and Ender 3 V3 KE (F005) have no bed mcu far as I can tell
-    if [ "$MODEL" != "F003" ] && [ "$MODEL" != "F004" ] && [ "$MODEL" != "F005" ]; then
+    # So the CR10SE (F003) and Ender 3 V3 KE (F005) have no bed mcu far as I can tell
+    if [ "$MODEL" != "F003" ] && [ "$MODEL" != "F005" ]; then
       fw_bed_version=$(cat $VERSION_FILE | grep "bed_version" | awk -F '=' ' {print $2}')
       if [ -z "$fw_bed_version" ]; then
           echo "INFO: You have removed your bed mcu this is okay this is just a confirmation"
@@ -80,8 +80,8 @@ if [ -f $VERSION_FILE ] && [ -d $FW_DIR ]; then
           firmware_upgrade_required=true
       fi
 
-      # So the Ender 5 Max (F004) and CR10SE (F003) have no bed mcu far as I can tell
-      if [ "$MODEL" != "F003" ] && [ "$MODEL" != "F004" ]; then
+      # So the CR10SE (F003) has no bed mcu far as I can tell
+      if [ "$MODEL" != "F003" ]; then
         fw_bed_version=$(cat $VERSION_FILE | grep "bed_version" | awk -F '=' ' {print $2}')
 
         # ignore missing firmware for the bed which will occur if someone has removed their bed mcu
