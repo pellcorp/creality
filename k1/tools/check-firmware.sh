@@ -10,15 +10,15 @@ else
   exit 0
 fi
 
-# Ender 5 Max and Nebula dont have firmware we can update
-if [ "$MODEL" = "F004" ] || [ "$MODEL" = "NEBULA" ]; then
+# Nebula doesnt have firmware we can update
+if [ "$MODEL" = "NEBULA" ]; then
     echo "INFO: Your MCU Firmware is up to date!"
     exit 0
 fi
 
 VERSION_FILE=/usr/data/mcu.versions
 FW_DIR=/usr/share/klipper/fw/K1
-if [ "$MODEL" = "F005" ] || [ "$MODEL" = "F004" ]; then
+if [ "$MODEL" = "F003" ] || [ "$MODEL" = "F005" ] || [ "$MODEL" = "F004" ]; then
   FW_DIR=/usr/share/klipper/fw/$MODEL
 elif [ "$MODEL" = "F001" ] || [ "$MODEL" = "F002" ]; then
   FW_DIR=/usr/share/klipper/fw/F001
@@ -57,9 +57,7 @@ if [ -f $VERSION_FILE ] && [ -d $FW_DIR ]; then
       fi
 
       # So the Ender 5 Max (F004) and CR10SE (F003) have no bed mcu far as I can tell
-      # The Ender 3 V3 CoreXZ (F001/F002) do have but they often seem to use the nozzle mcu for the bed
-      # so the current test gets confused, I will fix for Ender 3 V3 CoreXZ but not today
-      if [ "$MODEL" != "F003" ] && [ "$MODEL" != "F004" ] && [ "$MODEL" != "F001" ] && [ "$MODEL" != "F002" ]; then
+      if [ "$MODEL" != "F003" ] && [ "$MODEL" != "F004" ]; then
         fw_bed_version=$(cat $VERSION_FILE | grep "bed_version" | awk -F '=' ' {print $2}')
 
         # ignore missing firmware for the bed which will occur if someone has removed their bed mcu
