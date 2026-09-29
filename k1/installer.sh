@@ -780,6 +780,25 @@ function install_fluidd() {
     return 0
 }
 
+function setup_fluidd_theme() {
+    grep -q "fluidd-theme" /usr/data/pellcorp.done
+    if [ $? -ne 0 ]; then
+        echo
+        echo "INFO: Setting up Simple AF Fluidd theme ..."
+
+        mkdir -p /usr/data/printer_data/config/.fluidd-theme || exit $?
+        cp /usr/data/pellcorp/config/fluidd-theme/custom.css /usr/data/printer_data/config/.fluidd-theme/ || exit $?
+        cp /usr/data/pellcorp/config/fluidd-theme/background.gif /usr/data/printer_data/config/.fluidd-theme/ || exit $?
+        cp /usr/data/pellcorp/config/fluidd-theme/logo_SimpleAF.svg /usr/data/printer_data/config/.fluidd-theme/ || exit $?
+
+        curl -s -X POST "http://localhost:7125/server/database/item" -H "Content-Type: application/json" \
+          -d '{"namespace":"fluidd","key":"uiSettings.theme","value":{"isDark":true,"logo":{"src":"logo_SimpleAF.svg"},"color":"#5a7df2","backgroundLogo":true}}' > /dev/null
+
+        echo "fluidd-theme" >> /usr/data/pellcorp.done
+        sync
+    fi
+}
+
 function install_mainsail() {
     local mode=$1
 
@@ -2621,6 +2640,8 @@ fi
         echo "INFO: Restarting Webcam ..."
         sudo systemctl restart webcam
     fi
+
+    setup_fluidd_theme
 
     if [ "$MODEL" != "NEBULA" ]; then
       echo

@@ -1,0 +1,149 @@
+html {
+  background-color: #1a1a2e;
+  background-image:
+    linear-gradient(135deg, #20395e, #536d93),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.025) 1px, transparent 1px),
+    linear-gradient(rgba(255, 255, 255, 0.025) 1px, transparent 1px);
+  background-size: cover, 20px 20px, 20px 20px;
+  background-repeat: no-repeat, repeat, repeat;
+  background-position: center center, top left, top left;
+  background-attachment: fixed, fixed, fixed;
+}
+
+html, body {
+  margin: 0;
+  padding: 0;
+  color: #eee;
+}
+
+body {
+  background-color: transparent !important;
+}
+
+#app,
+#app > *,
+.v-application,
+.v-application--wrap,
+.v-application .v-main {
+  background-color: transparent !important;
+}
+
+#app {
+  position: relative;
+  z-index: 10;
+}
+
+/* Fluidd applies .fluidd-theme/background.* as a full cover background on v-main,
+   neutralize that and re-show it as a corner watermark instead, same recipe Fluidd
+   itself uses for its own logo (position: fixed, oversized, pushed off-canvas, faint) */
+.v-main {
+  background-image: none !important;
+}
+
+.background-logo {
+  display: none !important;
+}
+
+/* config.json (and the logo file it points to) live in Fluidd's own install folder and
+   get wiped on every Fluidd update, so re-show the header logo from the safe config dir
+   instead, independent of whether config.json's own copy survives */
+.logo-wrapper svg {
+  display: none !important;
+}
+
+.logo-wrapper {
+  width: 56px;
+  height: 56px;
+  background-image: url("/server/files/config/.fluidd-theme/logo_SimpleAF.svg");
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
+}
+
+body::after {
+  content: "";
+  background-image: url("/server/files/config/.fluidd-theme/background.gif");
+  background-size: 100% 100%;
+  background-repeat: no-repeat;
+  position: fixed;
+  pointer-events: none;
+  z-index: 1;
+  width: 560px;
+  height: 606px;
+  right: 0;
+  bottom: 0;
+  opacity: 40%;
+}
+
+#printer-bg-video {
+  position: fixed !important;
+  bottom: 1rem;
+  right: 1rem;
+  width: 320px;
+  max-width: 30vw;
+  height: auto;
+  max-height: 20vh;
+  border-radius: 8px;
+  pointer-events: none;
+  z-index: 5;
+  background: transparent;
+  opacity: 0.8;
+  object-fit: contain;
+}
+
+.theme--dark.v-card,
+.theme--dark.v-sheet,
+.theme--dark.v-navigation-drawer,
+.theme--dark.v-toolbar.v-sheet,
+.v-menu__content,
+.v-dialog.v-dialog--active,
+.v-card__actions.pt-4,
+.v-card__text.py-4 {
+  background-color: rgba(23, 23, 23, 0.3) !important;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+.theme--dark.v-toolbar.v-sheet {
+  background-color: rgba(45, 48, 56, 0.2) !important;
+  backdrop-filter: blur(40px);
+}
+
+.theme--dark.v-data-table thead th {
+  background: rgba(79, 80, 82, 0.5) !important;
+  backdrop-filter: blur(40px);
+}
+
+.v-navigation-drawer__content {
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+.v-btn,
+.v-tab,
+.v-card,
+.v-chip,
+.v-text-field,
+.v-menu__content,
+.v-snack__wrapper.theme--dark {
+  background-color: rgba(23, 23, 23, 0.3) !important;
+  border-radius: 0.5em;
+}
+
+.v-application--wrap ::-webkit-scrollbar-thumb,
+.v-dialog__content ::-webkit-scrollbar-thumb {
+  background: #ffffff78 !important;
+}
+
+.theme--dark.v-data-table tbody tr.v-data-table__selected,
+.theme--dark.v-data-table tbody tr:hover:not(.v-data-table__expanded__content):not(.v-data-table__empty-wrapper) {
+  background: rgba(23, 23, 23, 0.4) !important;
+}
+
+.console-wrapper.v-card,
+.filesystem-wrapper.v-card,
+.theme--dark.v-data-table,
+.theme--dark.v-tabs-items,
+.theme--dark.v-expansion-panels .v-expansion-panel {
+  background-color: transparent !important;
+}

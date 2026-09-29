@@ -1592,6 +1592,8 @@ set -o pipefail # preserve installer failures through tee
     sudo systemctl restart KlipperScreen
   fi
 
+  $BASEDIR/pellcorp/rpi/setup-fluidd-theme.sh || exit $?
+
   echo "installed_sha=$PELLCORP_GIT_SHA" >> $BASEDIR/pellcorp.done
   sync
 
