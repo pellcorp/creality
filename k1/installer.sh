@@ -830,6 +830,27 @@ function install_mainsail() {
     return 0
 }
 
+function setup_mainsail_theme() {
+    grep -q "mainsail-theme" /usr/data/pellcorp.done
+    if [ $? -ne 0 ]; then
+        echo
+        echo "INFO: Setting up Simple AF Mainsail theme ..."
+
+        mkdir -p /usr/data/printer_data/config/.theme || exit $?
+        cp /usr/data/pellcorp/config/mainsail-theme/custom.css /usr/data/printer_data/config/.theme/ || exit $?
+        cp /usr/data/pellcorp/config/mainsail-theme/background.gif /usr/data/printer_data/config/.theme/ || exit $?
+        cp /usr/data/pellcorp/config/mainsail-theme/sidebar-logo.svg /usr/data/printer_data/config/.theme/ || exit $?
+
+        curl -s -X POST "http://localhost:7125/server/database/item" -H "Content-Type: application/json" \
+          -d '{"namespace":"mainsail","key":"uiSettings.mode","value":"dark"}' > /dev/null
+        curl -s -X POST "http://localhost:7125/server/database/item" -H "Content-Type: application/json" \
+          -d '{"namespace":"mainsail","key":"uiSettings.primary","value":"#5a7df2"}' > /dev/null
+
+        echo "mainsail-theme" >> /usr/data/pellcorp.done
+        sync
+    fi
+}
+
 # note the klipper_fork will usually be 'klipper', just because of how the code works
 # but if --kalico is provided to the installer when klipper_fork will be kalico and we will clone
 # kalico, we don't install kalico unless its a new installation anyway so its fine
@@ -2642,6 +2663,7 @@ fi
     fi
 
     setup_fluidd_theme
+    setup_mainsail_theme
 
     if [ "$MODEL" != "NEBULA" ]; then
       echo

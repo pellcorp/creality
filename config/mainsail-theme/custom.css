@@ -1,0 +1,106 @@
+html {
+  background-color: #1a1a2e;
+  background-image:
+    linear-gradient(135deg, #20395e, #536d93),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.025) 1px, transparent 1px),
+    linear-gradient(rgba(255, 255, 255, 0.025) 1px, transparent 1px);
+  background-size: cover, 20px 20px, 20px 20px;
+  background-repeat: no-repeat, repeat, repeat;
+  background-position: center center, top left, top left;
+  background-attachment: fixed, fixed, fixed;
+}
+
+html, body {
+  margin: 0;
+  padding: 0;
+  color: #eee;
+}
+
+body {
+  background-color: transparent !important;
+}
+
+#app,
+#app > *,
+.v-application,
+.v-application--wrap {
+  background-color: transparent !important;
+}
+
+#app {
+  position: relative;
+  z-index: 10;
+}
+
+/* Mainsail applies .theme/main-background.* as a full cover background on #content,
+   we don't ship a main-background file so this is just a defensive reset */
+#content {
+  background-image: none !important;
+}
+
+body::after {
+  content: "";
+  background-image: url("/server/files/config/.theme/background.gif");
+  background-size: 100% 100%;
+  background-repeat: no-repeat;
+  position: fixed;
+  pointer-events: none;
+  z-index: 1;
+  width: 560px;
+  height: 606px;
+  right: 0;
+  bottom: 0;
+  opacity: 40%;
+}
+
+.theme--dark.v-card,
+.theme--dark.v-sheet,
+.theme--dark.v-navigation-drawer,
+.theme--dark.v-toolbar.v-sheet,
+.v-menu__content,
+.v-dialog.v-dialog--active {
+  background-color: rgba(23, 23, 23, 0.3) !important;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+.topbar.theme--dark.v-toolbar.v-sheet {
+  background-color: rgba(45, 48, 56, 0.2) !important;
+  backdrop-filter: blur(40px);
+}
+
+.theme--dark.v-data-table thead th {
+  background: rgba(79, 80, 82, 0.5) !important;
+  backdrop-filter: blur(40px);
+}
+
+.v-navigation-drawer__content {
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+.v-btn,
+.v-tab,
+.v-card,
+.v-chip,
+.v-text-field,
+.v-menu__content {
+  background-color: rgba(23, 23, 23, 0.3) !important;
+  border-radius: 0.5em;
+}
+
+.v-application--wrap ::-webkit-scrollbar-thumb,
+.v-dialog__content ::-webkit-scrollbar-thumb {
+  background: #ffffff78 !important;
+}
+
+.theme--dark.v-data-table tbody tr.v-data-table__selected,
+.theme--dark.v-data-table tbody tr:hover:not(.v-data-table__expanded__content):not(.v-data-table__empty-wrapper) {
+  background: rgba(23, 23, 23, 0.4) !important;
+}
+
+.theme--dark.v-data-table,
+.theme--dark.v-tabs-items,
+.theme--dark.v-expansion-panels .v-expansion-panel {
+  background-color: transparent !important;
+}
