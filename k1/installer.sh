@@ -2662,8 +2662,10 @@ fi
         sudo systemctl restart webcam
     fi
 
-    setup_fluidd_theme
-    setup_mainsail_theme
+    if [ "$mode" = "install" ]; then
+        setup_fluidd_theme
+        setup_mainsail_theme
+    fi
 
     if [ "$MODEL" != "NEBULA" ]; then
       echo
