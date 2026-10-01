@@ -23,8 +23,6 @@ VERSION_FILE=/usr/data/mcu.versions
 FW_DIR=/usr/share/klipper/fw/K1
 if [ "$MODEL" = "F001" ] || [ "$MODEL" = "F003" ] || [ "$MODEL" = "F004" ] || [ "$MODEL" = "F005" ]; then
   FW_DIR=/usr/share/klipper/fw/$MODEL
-elif [ "$MODEL" = "F001" ] || [ "$MODEL" = "F002" ]; then
-  FW_DIR=/usr/share/klipper/fw/F001
 fi
 
 if [ -f /etc/init.d/S13mcu_update ]; then
