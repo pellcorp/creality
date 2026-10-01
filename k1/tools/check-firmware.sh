@@ -43,26 +43,51 @@ if [ -f $VERSION_FILE ] && [ -d $FW_DIR ]; then
 
     fw_mcu_version=$(cat $VERSION_FILE | grep "mcu_version" | awk -F '=' ' {print $2}')
 
-    # check for the exact file it reports being current rather than assuming which family to compare against
-    if [ "x$fw_mcu_version" = "x" ] || [ ! -f "$FW_DIR/${fw_mcu_version}.bin" ]; then
-        firmware_upgrade_required=true
+    if [ "$MODEL" = "F001" ]; then
+        # check for the exact file it reports being current rather than assuming which family to compare against
+        if [ "x$fw_mcu_version" = "x" ] || [ ! -f "$FW_DIR/${fw_mcu_version}.bin" ]; then
+            firmware_upgrade_required=true
+        fi
+    else
+        file_mcu_version=$(basename $(ls $FW_DIR/mcu*) .bin 2> /dev/null)
+
+        if [ "x$fw_mcu_version" = "x" ] || [ "$fw_mcu_version" != "$file_mcu_version" ]; then
+            firmware_upgrade_required=true
+        fi
     fi
 
     # The Ender 3 V3 KE does not have a nozzle mcu!
     if [ "$MODEL" != "F005" ]; then
       fw_noz_version=$(cat $VERSION_FILE | grep "noz_version" | awk -F '=' ' {print $2}')
 
-      if [ "x$fw_noz_version" = "x" ] || [ ! -f "$FW_DIR/${fw_noz_version}.bin" ]; then
-          firmware_upgrade_required=true
+      if [ "$MODEL" = "F001" ]; then
+        if [ "x$fw_noz_version" = "x" ] || [ ! -f "$FW_DIR/${fw_noz_version}.bin" ]; then
+            firmware_upgrade_required=true
+        fi
+      else
+        file_noz_version=$(basename $(ls $FW_DIR/noz*) .bin 2> /dev/null)
+
+        if [ "x$fw_noz_version" = "x" ] || [ "$fw_noz_version" != "$file_noz_version" ]; then
+            firmware_upgrade_required=true
+        fi
       fi
 
       # So the CR10SE (F003) has no bed mcu far as I can tell
       if [ "$MODEL" != "F003" ]; then
         fw_bed_version=$(cat $VERSION_FILE | grep "bed_version" | awk -F '=' ' {print $2}')
 
-        # ignore missing firmware for the bed which will occur if someone has removed their bed mcu
-        if [ "x$fw_bed_version" != "x" ] && [ ! -f "$FW_DIR/${fw_bed_version}.bin" ]; then
-            firmware_upgrade_required=true
+        if [ "$MODEL" = "F001" ]; then
+          # ignore missing firmware for the bed which will occur if someone has removed their bed mcu
+          if [ "x$fw_bed_version" != "x" ] && [ ! -f "$FW_DIR/${fw_bed_version}.bin" ]; then
+              firmware_upgrade_required=true
+          fi
+        else
+          file_bed_version=$(basename $(ls $FW_DIR/bed*) .bin 2> /dev/null)
+
+          # ignore missing firmware for the bed which will occur if someone has removed their bed mcu
+          if [ "x$fw_bed_version" != "x" ] && [ "$fw_bed_version" != "$file_bed_version" ]; then
+              firmware_upgrade_required=true
+          fi
         fi
       fi
     fi
