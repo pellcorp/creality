@@ -5,6 +5,9 @@ if [ -f /usr/bin/get_sn_mac.sh ]; then
   if [ "$MODEL" = "Nebula Pad" ]; then
     MODEL=NEBULA
   fi
+  if [ "$MODEL" = "F002" ]; then
+    MODEL=F001
+  fi
 else
   echo "FATAL: This script is not supported on non Creality OS!"
   exit 0
@@ -18,10 +21,8 @@ fi
 
 VERSION_FILE=/usr/data/mcu.versions
 FW_DIR=/usr/share/klipper/fw/K1
-if [ "$MODEL" = "F003" ] || [ "$MODEL" = "F005" ] || [ "$MODEL" = "F004" ]; then
+if [ "$MODEL" = "F001" ] || [ "$MODEL" = "F003" ] || [ "$MODEL" = "F004" ] || [ "$MODEL" = "F005" ]; then
   FW_DIR=/usr/share/klipper/fw/$MODEL
-elif [ "$MODEL" = "F001" ] || [ "$MODEL" = "F002" ]; then
-  FW_DIR=/usr/share/klipper/fw/F001
 fi
 
 if [ -f /etc/init.d/S13mcu_update ]; then
@@ -42,52 +43,31 @@ if [ -f $VERSION_FILE ] && [ -d $FW_DIR ]; then
     firmware_upgrade_required=false
 
     fw_mcu_version=$(cat $VERSION_FILE | grep "mcu_version" | awk -F '=' ' {print $2}')
+    file_mcu_version=$(basename $(ls $FW_DIR/mcu*) .bin 2> /dev/null)
 
-    if [ "$MODEL" = "F001" ]; then
-        # check for the exact file it reports being current rather than assuming which family to compare against
-        if [ "x$fw_mcu_version" = "x" ] || [ ! -f "$FW_DIR/${fw_mcu_version}.bin" ]; then
-            firmware_upgrade_required=true
-        fi
-    else
-        file_mcu_version=$(basename $(ls $FW_DIR/mcu*) .bin 2> /dev/null)
-
-        if [ "x$fw_mcu_version" = "x" ] || [ "$fw_mcu_version" != "$file_mcu_version" ]; then
-            firmware_upgrade_required=true
-        fi
+    if [ "x$fw_mcu_version" = "x" ] || [ "$fw_mcu_version" != "$file_mcu_version" ]; then
+        firmware_upgrade_required=true
     fi
 
     # The Ender 3 V3 KE does not have a nozzle mcu!
     if [ "$MODEL" != "F005" ]; then
       fw_noz_version=$(cat $VERSION_FILE | grep "noz_version" | awk -F '=' ' {print $2}')
+      file_noz_version=$(basename $(ls $FW_DIR/noz*) .bin 2> /dev/null)
 
-      if [ "$MODEL" = "F001" ]; then
-        if [ "x$fw_noz_version" = "x" ] || [ ! -f "$FW_DIR/${fw_noz_version}.bin" ]; then
-            firmware_upgrade_required=true
-        fi
-      else
-        file_noz_version=$(basename $(ls $FW_DIR/noz*) .bin 2> /dev/null)
-
-        if [ "x$fw_noz_version" = "x" ] || [ "$fw_noz_version" != "$file_noz_version" ]; then
-            firmware_upgrade_required=true
-        fi
+      if [ "x$fw_noz_version" = "x" ] || [ "$fw_noz_version" != "$file_noz_version" ]; then
+          firmware_upgrade_required=true
       fi
 
       # So the CR10SE (F003) has no bed mcu far as I can tell
-      if [ "$MODEL" != "F003" ]; then
+      # The Ender 3 V3 CoreXZ (F001/F002) do have but they often seem to use the nozzle mcu for the bed
+      # so the current test gets confused, I will fix for Ender 3 V3 CoreXZ but not today
+      if [ "$MODEL" != "F003" ] && [ "$MODEL" != "F001" ]; then
         fw_bed_version=$(cat $VERSION_FILE | grep "bed_version" | awk -F '=' ' {print $2}')
+        file_bed_version=$(basename $(ls $FW_DIR/bed*) .bin 2> /dev/null)
 
-        if [ "$MODEL" = "F001" ]; then
-          # ignore missing firmware for the bed which will occur if someone has removed their bed mcu
-          if [ "x$fw_bed_version" != "x" ] && [ ! -f "$FW_DIR/${fw_bed_version}.bin" ]; then
-              firmware_upgrade_required=true
-          fi
-        else
-          file_bed_version=$(basename $(ls $FW_DIR/bed*) .bin 2> /dev/null)
-
-          # ignore missing firmware for the bed which will occur if someone has removed their bed mcu
-          if [ "x$fw_bed_version" != "x" ] && [ "$fw_bed_version" != "$file_bed_version" ]; then
-              firmware_upgrade_required=true
-          fi
+        # ignore missing firmware for the bed which will occur if someone has removed their bed mcu
+        if [ "x$fw_bed_version" != "x" ] && [ "$fw_bed_version" != "$file_bed_version" ]; then
+            firmware_upgrade_required=true
         fi
       fi
     fi
