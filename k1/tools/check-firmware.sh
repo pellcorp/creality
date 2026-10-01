@@ -35,30 +35,6 @@ else
     exit 1
 fi
 
-# purely informational - a reported mcu/noz/bed hardware id in a different family to the one
-# expected for that slot (eg. a nozzle mcu shipped in the bed slot) is a known, harmless quirk
-if [ -f $VERSION_FILE ]; then
-    fw_mcu_version=$(cat $VERSION_FILE | grep "mcu_version" | awk -F '=' ' {print $2}')
-    if [ -n "$fw_mcu_version" ] && [ "$(echo $fw_mcu_version | awk -F '_' '{print $1}')" != "mcu0" ]; then
-        echo "INFO: You have mixed matched firmware on your main mcu this is okay see https://pellcorp.github.io/creality-wiki/known-creality-issues"
-    fi
-
-    fw_noz_version=$(cat $VERSION_FILE | grep "noz_version" | awk -F '=' ' {print $2}')
-    if [ -n "$fw_noz_version" ] && [ "$(echo $fw_noz_version | awk -F '_' '{print $1}')" != "noz0" ]; then
-        echo "INFO: You have mixed matched firmware on your nozzle mcu this is okay see https://pellcorp.github.io/creality-wiki/known-creality-issues"
-    fi
-
-    # So the CR10SE (F003) and Ender 3 V3 KE (F005) have no bed mcu far as I can tell
-    if [ "$MODEL" != "F003" ] && [ "$MODEL" != "F005" ]; then
-      fw_bed_version=$(cat $VERSION_FILE | grep "bed_version" | awk -F '=' ' {print $2}')
-      if [ -z "$fw_bed_version" ]; then
-          echo "INFO: You have removed your bed mcu this is okay this is just a confirmation"
-      elif [ "$(echo $fw_bed_version | awk -F '_' '{print $1}')" != "bed0" ]; then
-          echo "INFO: You have mixed matched firmware on your bed mcu this is okay see https://pellcorp.github.io/creality-wiki/known-creality-issues"
-      fi
-    fi
-fi
-
 firmware_upgrade_required=true
 # a missing version file either means its an older installation or there was a failure to properly
 # start one or more of the MCUs so a power cycle is recommended anyway
