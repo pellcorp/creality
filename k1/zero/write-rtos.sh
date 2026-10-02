@@ -24,6 +24,8 @@ image=
 if [ "$board" = "CR4CU220812S11" ]  || [ "$board" = "CR4CU220812S12" ]; then
   if [ "$model" = "CR-K1" ] || [ "$model" = "K1C" ] || [ "$model" = "K1 SE" ] || [ "$model" = "CR-K1 Max" ]; then
     image=/usr/data/pellcorp/k1/zero/zero-k1.bin
+  elif [ "$model" = "F001" ] || [ "$model" = "F002" ]; then
+    image=/usr/data/pellcorp/k1/zero/zero-f001.bin
   else
     echo "FATAL: Board model $model not supported!"
     exit 1
@@ -45,6 +47,7 @@ image_size=$(wc -c < "$image")
 case "$image_size" in
     432824) model_name='Nebula Pad' ;;
     452408) model_name='K1' ;;
+    527936) model_name='F001' ;;
     *) die "Unsupported zero.bin size: $image_size bytes." ;;
 esac
 

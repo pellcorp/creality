@@ -495,7 +495,7 @@ function install_boot_display() {
     cp /usr/data/pellcorp/k1/services/S11jpeg_display_shell /etc/init.d/
     mkdir -p /usr/data/boot-display
 
-    if [ "$model" = "k1" ] || [ "$model" = "k1m" ]; then
+    if [ "$model" = "k1" ] || [ "$model" = "k1m" ] || [ "$model" = "f001" ]; then
       rm -rf /etc/boot-display/*
       cp /usr/data/pellcorp/k1/boot-display.conf /etc/boot-display/
       tar -zxf /usr/data/pellcorp/k1/boot-display.tar.gz -C /usr/data/boot-display || exit $?
