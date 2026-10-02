@@ -5,23 +5,24 @@ if [ -f /usr/bin/get_sn_mac.sh ]; then
   if [ "$MODEL" = "Nebula Pad" ]; then
     MODEL=NEBULA
   fi
+  if [ "$MODEL" = "F002" ]; then
+    MODEL=F001
+  fi
 else
   echo "FATAL: This script is not supported on non Creality OS!"
   exit 0
 fi
 
-# Ender 5 Max and Nebula dont have firmware we can update
-if [ "$MODEL" = "F004" ] || [ "$MODEL" = "NEBULA" ]; then
+# Nebula doesnt have firmware we can update
+if [ "$MODEL" = "NEBULA" ]; then
     echo "INFO: Your MCU Firmware is up to date!"
     exit 0
 fi
 
 VERSION_FILE=/usr/data/mcu.versions
 FW_DIR=/usr/share/klipper/fw/K1
-if [ "$MODEL" = "F005" ] || [ "$MODEL" = "F004" ]; then
+if [ "$MODEL" = "F001" ] || [ "$MODEL" = "F003" ] || [ "$MODEL" = "F004" ] || [ "$MODEL" = "F005" ]; then
   FW_DIR=/usr/share/klipper/fw/$MODEL
-elif [ "$MODEL" = "F001" ] || [ "$MODEL" = "F002" ]; then
-  FW_DIR=/usr/share/klipper/fw/F001
 fi
 
 if [ -f /etc/init.d/S13mcu_update ]; then
@@ -57,10 +58,8 @@ if [ -f $VERSION_FILE ] && [ -d $FW_DIR ]; then
           firmware_upgrade_required=true
       fi
 
-      # So the Ender 5 Max (F004) and CR10SE (F003) have no bed mcu far as I can tell
-      # The Ender 3 V3 CoreXZ (F001/F002) do have but they often seem to use the nozzle mcu for the bed
-      # so the current test gets confused, I will fix for Ender 3 V3 CoreXZ but not today
-      if [ "$MODEL" != "F003" ] && [ "$MODEL" != "F004" ] && [ "$MODEL" != "F001" ] && [ "$MODEL" != "F002" ]; then
+     # So the CR10SE (F003) has no bed mcu far as I can tell
+      if [ "$MODEL" != "F003" ]; then
         fw_bed_version=$(cat $VERSION_FILE | grep "bed_version" | awk -F '=' ' {print $2}')
         file_bed_version=$(basename $(ls $FW_DIR/bed*) .bin 2> /dev/null)
 
