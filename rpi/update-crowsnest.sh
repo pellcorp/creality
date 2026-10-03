@@ -16,7 +16,6 @@ fi
 crowsnest_major=$(git -C $BASEDIR/crowsnest describe --tags 2> /dev/null | sed -n 's/^v\([0-9]*\)\..*/\1/p')
 if [ -n "$crowsnest_major" ] && [ "$crowsnest_major" -ge 5 ]; then
   echo "INFO: Crowsnest is already on v5 or later"
-  echo "crowsnest-v5" >> $BASEDIR/pellcorp.done
   exit 0
 fi
 
@@ -35,7 +34,6 @@ cd $BASEDIR/crowsnest
 git pull && script -qefc "make upgrade" /dev/null
 if [ $? -eq 0 ]; then
   echo "INFO: Crowsnest upgrade complete!"
-  echo "crowsnest-v5" >> $BASEDIR/pellcorp.done
 else
   echo "WARNING: Crowsnest upgrade failed, your configs are backed up in $BASEDIR/pellcorp-backups"
   exit 1
