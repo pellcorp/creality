@@ -2243,6 +2243,11 @@ fi
           # for load cells the mount is hard coded
           mount=Default
 
+          # for a install or reinstall just force kalico
+          if [ "$mode" = "install" ] || [ "$mode" = "reinstall" ]; then
+            klipper_fork=kalico
+          fi
+
           echo
           echo "***************************************************************"
           echo "* WARNING: loadcells support is HIGHLY EXPERIMENTAL           *"
@@ -2257,6 +2262,7 @@ fi
             cd - > /dev/null
             [ "$remote_repo" = "kalico" ] && current_fork=kalico
         fi
+
         if [ "$current_fork" != "kalico" ]; then
             echo "ERROR: loadcells requires kalico, use --kalico"
             exit 1
