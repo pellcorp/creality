@@ -46,3 +46,12 @@ if [ $? -ne 0 ]; then
   sudo systemctl restart crowsnest
   echo "crowsnest" >> $BASEDIR/pellcorp.done
 fi
+
+
+ [ -d $BASEDIR/crowsnest ]; then
+        crowsnest_major=$(git -C $BASEDIR/crowsnest describe --tags 2> /dev/null | sed -n 's/^v\([0-9]*\)\..*/\1/p')
+        if [ -n "$crowsnest_major" ] && [ "$crowsnest_major" -lt 5 ]; then
+                echo
+                echo "INFO: Crowsnest v4 is no longer being updated. To upgrade to v5 yourself, run: $BASEDIR/pellcorp/rpi/update-crowsnest.sh"
+        fi
+  fi
