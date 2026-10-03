@@ -2220,9 +2220,15 @@ fi
     fi
 
     if [ "$probe" = "loadcells" ]; then
-        if [ "$mode" = "install" ] || [ "$mode" = "reinstall" ]; then
+        if [ "$mode" = "install" ] || [ "$mode" = "reinstall" ] || [ "$probe_switch" = "true" ]; then
           # for load cells the mount is hard coded
           mount=Default
+
+          echo
+          echo "***************************************************************"
+          echo "* WARNING: loadcells support is HIGHLY EXPERIMENTAL           *"
+          echo "***************************************************************"
+          echo
         fi
 
         current_fork=$klipper_fork
@@ -2598,9 +2604,6 @@ fi
         setup_klicky
         setup_probe_specific=$?
     elif [ "$probe" = "loadcells" ]; then
-        echo "***************************************************************"
-        echo "* WARNING: loadcells is EXTREMELY EXPERIMENTAL.               *"
-        echo "***************************************************************"
         setup_loadcells
         setup_probe_specific=$?
     else
