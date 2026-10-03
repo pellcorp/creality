@@ -780,25 +780,6 @@ function install_fluidd() {
     return 0
 }
 
-function setup_fluidd_theme() {
-    grep -q "fluidd-theme" /usr/data/pellcorp.done
-    if [ $? -ne 0 ]; then
-        echo
-        echo "INFO: Setting up Simple AF Fluidd theme ..."
-
-        mkdir -p /usr/data/printer_data/config/.fluidd-theme || exit $?
-        cp /usr/data/pellcorp/config/fluidd-theme/custom.css /usr/data/printer_data/config/.fluidd-theme/ || exit $?
-        cp /usr/data/pellcorp/config/fluidd-theme/background.gif /usr/data/printer_data/config/.fluidd-theme/ || exit $?
-        cp /usr/data/pellcorp/config/fluidd-theme/logo_SimpleAF.svg /usr/data/printer_data/config/.fluidd-theme/ || exit $?
-
-        curl -s -X POST "http://localhost:7125/server/database/item" -H "Content-Type: application/json" \
-          -d '{"namespace":"fluidd","key":"uiSettings.theme","value":{"isDark":true,"logo":{"src":"logo_SimpleAF.svg"},"color":"#5a7df2","backgroundLogo":true}}' > /dev/null
-
-        echo "fluidd-theme" >> /usr/data/pellcorp.done
-        sync
-    fi
-}
-
 function install_mainsail() {
     local mode=$1
 
@@ -828,27 +809,6 @@ function install_mainsail() {
         return 1
     fi
     return 0
-}
-
-function setup_mainsail_theme() {
-    grep -q "mainsail-theme" /usr/data/pellcorp.done
-    if [ $? -ne 0 ]; then
-        echo
-        echo "INFO: Setting up Simple AF Mainsail theme ..."
-
-        mkdir -p /usr/data/printer_data/config/.theme || exit $?
-        cp /usr/data/pellcorp/config/mainsail-theme/custom.css /usr/data/printer_data/config/.theme/ || exit $?
-        cp /usr/data/pellcorp/config/mainsail-theme/background.gif /usr/data/printer_data/config/.theme/ || exit $?
-        cp /usr/data/pellcorp/config/mainsail-theme/sidebar-logo.svg /usr/data/printer_data/config/.theme/ || exit $?
-
-        curl -s -X POST "http://localhost:7125/server/database/item" -H "Content-Type: application/json" \
-          -d '{"namespace":"mainsail","key":"uiSettings.mode","value":"dark"}' > /dev/null
-        curl -s -X POST "http://localhost:7125/server/database/item" -H "Content-Type: application/json" \
-          -d '{"namespace":"mainsail","key":"uiSettings.primary","value":"#5a7df2"}' > /dev/null
-
-        echo "mainsail-theme" >> /usr/data/pellcorp.done
-        sync
-    fi
 }
 
 # note the klipper_fork will usually be 'klipper', just because of how the code works
@@ -2660,11 +2620,6 @@ fi
     if [ $apply_overrides -ne 0 ] || [ $install_webcam -ne 0 ]; then
         echo "INFO: Restarting Webcam ..."
         sudo systemctl restart webcam
-    fi
-
-    if [ "$mode" = "install" ]; then
-        setup_fluidd_theme
-        setup_mainsail_theme
     fi
 
     if [ "$MODEL" != "NEBULA" ]; then
