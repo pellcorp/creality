@@ -26,10 +26,11 @@ if [ -f /usr/bin/get_sn_mac.sh ]; then
     echo
     model=f001
   elif [ "$MODEL" = "F002" ]; then
-    echo
-    echo "WARNING: Ender 3 V3 Plus printer support is VERY experimental!!!"
-    echo
-    model=f001
+    echo "FATAL: Ender 3 V3 Plus (F002) is not currently supported!"
+    echo "If you own an Ender 3 V3 Plus and can help verify support, please open an issue or join us on Discord:"
+    echo "  https://github.com/pellcorp/creality/issues"
+    echo "  https://discord.gg/M5rmBQqRSG"
+    exit 1
   elif [ "$MODEL" = "F004" ]; then
     model=f004
   elif [ "$MODEL" = "F003" ]; then
@@ -891,8 +892,8 @@ function install_klipper() {
           $CONFIG_HELPER --replace-section-entry "mcu rpi" "serial" "/tmp/klipper_host_mcu" || exit $?
         fi
 
-        # we need the levelling mcu for Ender 3 V3 for ADXL
-        if [ "$MODEL" != "F001" ] && [ "$MODEL" != "F002" ]; then
+        # leveling mcu is needed for ADXL on Ender 3 V3 and for loadcells
+        if [ "$MODEL" = "F003" ] || [ "$MODEL" = "F005" ] || [ "$MODEL" = "NEBULA" ]; then
           $CONFIG_HELPER --remove-section "mcu leveling_mcu" || exit $?
         fi
 
@@ -1314,6 +1315,7 @@ function cleanup_probes() {
   cleanup_probe beacon
   cleanup_probe klicky
   cleanup_probe bltouch
+  cleanup_probe loadcells
 }
 
 function setup_bltouch() {
@@ -1411,6 +1413,37 @@ function setup_klicky() {
         $CONFIG_HELPER --add-include "klicky_macro.cfg" || exit $?
 
         echo "klicky-probe" >> /usr/data/pellcorp.done
+        sync
+
+        # means klipper needs to be restarted
+        return 1
+    fi
+    return 0
+}
+
+function setup_loadcells() {
+    grep -q "loadcells-probe" /usr/data/pellcorp.done
+    if [ $? -ne 0 ]; then
+        echo
+        echo "INFO: Setting up loadcells ..."
+
+        cp /usr/data/pellcorp/config/loadcells.cfg /usr/data/printer_data/config/ || exit $?
+        $CONFIG_HELPER --add-include "loadcells.cfg" || exit $?
+
+        cp /usr/data/pellcorp/config/loadcells_macro.cfg /usr/data/printer_data/config/ || exit $?
+        $CONFIG_HELPER --add-include "loadcells_macro.cfg" || exit $?
+
+        # need to add a empty load_cell_probe section for baby stepping to work
+        $CONFIG_HELPER --remove-section "load_cell_probe" || exit $?
+        $CONFIG_HELPER --add-section "load_cell_probe" || exit $?
+        z_offset=$($CONFIG_HELPER --ignore-missing --file /usr/data/pellcorp-overrides/printer.cfg.save_config --get-section-entry load_cell_probe z_offset)
+        if [ -n "$z_offset" ]; then
+          $CONFIG_HELPER --replace-section-entry "load_cell_probe" "# z_offset" "0.0" || exit $?
+        else
+          $CONFIG_HELPER --replace-section-entry "load_cell_probe" "z_offset" "0.0" || exit $?
+        fi
+
+        echo "loadcells-probe" >> /usr/data/pellcorp.done
         sync
 
         # means klipper needs to be restarted
@@ -2060,6 +2093,8 @@ fi
         probe=eddyng
     elif [ -f /usr/data/printer_data/config/btteddy.cfg ]; then
         probe=btteddy
+    elif [ -f /usr/data/printer_data/config/loadcells.cfg ]; then
+        probe=loadcells
     elif grep -q "\[scanner\]" /usr/data/printer_data/config/printer.cfg 2> /dev/null; then
         probe=cartotouch
     elif [ -f /usr/data/printer_data/config/bltouch-${model}.cfg ]; then
@@ -2137,7 +2172,7 @@ fi
         elif [ "$1" = "--force" ]; then
           force=true
           shift
-        elif [ "$1" = "microprobe" ] || [ "$1" = "bltouch" ] || [ "$1" = "beacon" ] || [ "$1" = "klicky" ] || [ "$1" = "cartographer" ] || [ "$1" = "cartotouch" ] || [ "$1" = "btteddy" ] || [ "$1" = "eddyng" ]; then
+        elif [ "$1" = "microprobe" ] || [ "$1" = "bltouch" ] || [ "$1" = "beacon" ] || [ "$1" = "klicky" ] || [ "$1" = "cartographer" ] || [ "$1" = "cartotouch" ] || [ "$1" = "btteddy" ] || [ "$1" = "eddyng" ] || [ "$1" = "loadcells" ]; then
             if [ "$mode" = "fix-serial" ]; then
                 echo "ERROR: Switching probes is not supported while trying to fix serial!"
                 exit 1
@@ -2180,8 +2215,22 @@ fi
 
     if [ -z "$probe" ]; then
         echo "ERROR: You must specify a probe you want to configure"
-        echo "One of: [microprobe, bltouch, cartotouch, cartographer, btteddy, eddyng, beacon, klicky]"
+        echo "One of: [microprobe, bltouch, cartotouch, cartographer, btteddy, eddyng, beacon, klicky, loadcells]"
         exit 1
+    fi
+
+    if [ "$probe" = "loadcells" ]; then
+        current_fork=$klipper_fork
+        if [ -d /usr/data/klipper/.git ]; then
+            cd /usr/data/klipper/
+            remote_repo=$(git remote get-url origin | awk -F '/' '{print $NF}' | sed 's/.git//g')
+            cd - > /dev/null
+            [ "$remote_repo" = "kalico" ] && current_fork=kalico
+        fi
+        if [ "$current_fork" != "kalico" ]; then
+            echo "ERROR: loadcells requires kalico, use --kalico"
+            exit 1
+        fi
     fi
 
     echo "INFO: Mode is $mode"
@@ -2542,6 +2591,12 @@ fi
         setup_probe_specific=$?
     elif [ "$probe" = "klicky" ]; then
         setup_klicky
+        setup_probe_specific=$?
+    elif [ "$probe" = "loadcells" ]; then
+        echo "***************************************************************"
+        echo "* WARNING: loadcells is EXTREMELY EXPERIMENTAL.               *"
+        echo "***************************************************************"
+        setup_loadcells
         setup_probe_specific=$?
     else
         echo "ERROR: Probe $probe not supported"

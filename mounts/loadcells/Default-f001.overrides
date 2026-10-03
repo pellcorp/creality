@@ -1,0 +1,25 @@
+-- loadcells.cfg
+[load_cell_probe]
+dout_pins: leveling_mcu:PB12, leveling_mcu:PB14, leveling_mcu:PA8, leveling_mcu:PA10
+sclk_pins: leveling_mcu:PB13, leveling_mcu:PB15, leveling_mcu:PA9, leveling_mcu:PA11
+trigger_force: 75
+
+[bed_mesh]
+mesh_min: 5,5
+mesh_max: 215,215
+zero_reference_position: 110,110
+horizontal_move_z: 4
+
+[screws_tilt_adjust]
+screw1:30,25
+screw1_name: front left screw
+screw2: 200,25
+screw2_name: front right screw
+screw3: 200,190
+screw3_name: rear right screw
+screw4: 30,190
+screw4_name: rear left screw
+speed: 100
+horizontal_move_z: 5
+screw_thread: CW-M4
+
