@@ -2,7 +2,6 @@
 [bed_mesh]
 mesh_min: 5,5
 mesh_max: 295,295
-horizontal_move_z: 8 # set higher than needed, this is the height calibration first moves to, needs confirmation
 
 [screws_tilt_adjust]
 screw1: 19,23
