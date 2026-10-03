@@ -65,8 +65,12 @@ body::after {
 }
 
 .topbar.theme--dark.v-toolbar.v-sheet {
-  background-color: rgba(45, 48, 56, 0.2) !important;
+  background-color: rgba(90, 125, 242, 0.2) !important;
   backdrop-filter: blur(40px);
+}
+
+.panel-toolbar.theme--dark.v-toolbar.v-sheet {
+  background-color: rgba(90, 125, 242, 0.2) !important;
 }
 
 .theme--dark.v-data-table thead th {
