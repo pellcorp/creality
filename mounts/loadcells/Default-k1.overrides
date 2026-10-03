@@ -11,12 +11,14 @@ zero_reference_position: 110,110 # needs confirmation
 horizontal_move_z: 8 # set higher than needed, this is the height calibration first moves to, needs confirmation
 
 [screws_tilt_adjust]
-screw1: 25,0 # needs confirmation
-screw2: 195,0 # needs confirmation
-screw3: 195,165 # needs confirmation
-screw4: 25,165 # needs confirmation
-
-[axis_twist_compensation]
-calibrate_start_x: 30 # needs confirmation
-calibrate_end_x: 210 # needs confirmation
-calibrate_y: 105 # needs confirmation
+screw1: 25,20
+screw1_name: front left screw
+screw2: 195,20
+screw2_name: front right screw
+screw3: 195,190
+screw3_name: rear right screw
+screw4: 25,190
+screw4_name: rear left screw
+speed: 100
+horizontal_move_z: 5
+screw_thread: CW-M4

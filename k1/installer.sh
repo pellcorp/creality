@@ -2572,9 +2572,7 @@ fi
             exit 1
         fi
         echo "***************************************************************"
-        echo "* WARNING: loadcells is EXTREMELY EXPERIMENTAL.                *"
-        echo "* The author takes no responsibility if your machine is        *"
-        echo "* damaged as a result of using it.                             *"
+        echo "* WARNING: loadcells is EXTREMELY EXPERIMENTAL.               *"
         echo "***************************************************************"
         setup_loadcells
         setup_probe_specific=$?

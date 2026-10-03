@@ -11,7 +11,14 @@ zero_reference_position: 200,200
 horizontal_move_z: 8 # set higher than needed, this is the height calibration first moves to
 
 [screws_tilt_adjust]
-__action__: DELETED
-
-[axis_twist_compensation]
-__action__: DELETED
+screw1: 340, 345
+screw1_name: rear right screw
+screw2: 80, 345
+screw2_name: rear left screw
+screw3: 80, 75
+screw3_name: front left screw
+screw4: 340, 75
+screw4_name: front right screw
+horizontal_move_z: 5
+speed: 150
+screw_thread: CW-M4
