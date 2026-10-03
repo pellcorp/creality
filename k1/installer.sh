@@ -2220,6 +2220,9 @@ fi
     fi
 
     if [ "$probe" = "loadcells" ]; then
+        # for load cells the mount is hard coded
+        mount=Default
+
         current_fork=$klipper_fork
         if [ -d /usr/data/klipper/.git ]; then
             cd /usr/data/klipper/
