@@ -1,4 +1,9 @@
--- loadcells.cfg
+[load_cell_probe]
+dout_pins: leveling_mcu:PA0, leveling_mcu:PA1, leveling_mcu:PA3, leveling_mcu:PA4
+sclk_pins: leveling_mcu:PA2, leveling_mcu:PA5, leveling_mcu:PA6, leveling_mcu:PA7
+trigger_force: 75 # needs confirmation
+speed: 2.0
+
 [bed_mesh]
 mesh_min: 5,5
 mesh_max: 395,395
@@ -12,6 +17,4 @@ screw3: 80, 75
 screw3_name: front left screw
 screw4: 340, 75
 screw4_name: front right screw
-horizontal_move_z: 5
 speed: 150
-screw_thread: CW-M4
