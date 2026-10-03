@@ -1430,19 +1430,8 @@ function setup_loadcells() {
         cp /usr/data/pellcorp/config/loadcells.cfg /usr/data/printer_data/config/ || exit $?
         $CONFIG_HELPER --add-include "loadcells.cfg" || exit $?
 
-        if [ "$model" = "k1" ] || [ "$model" = "k1m" ]; then
-          $CONFIG_HELPER --file loadcells.cfg --replace-section-entry "load_cell_probe" "dout_pins" "leveling_mcu:PA4, leveling_mcu:PA3, leveling_mcu:PA0, leveling_mcu:PA1" || exit $?
-          $CONFIG_HELPER --file loadcells.cfg --replace-section-entry "load_cell_probe" "sclk_pins" "leveling_mcu:PA7, leveling_mcu:PA6, leveling_mcu:PA2, leveling_mcu:PA5" || exit $?
-          $CONFIG_HELPER --file loadcells.cfg --replace-section-entry "load_cell_probe" "trigger_force" "160" || exit $?
-        elif [ "$model" = "f001" ]; then
-          $CONFIG_HELPER --file loadcells.cfg --replace-section-entry "load_cell_probe" "dout_pins" "leveling_mcu:PB12, leveling_mcu:PB14, leveling_mcu:PA8, leveling_mcu:PA10" || exit $?
-          $CONFIG_HELPER --file loadcells.cfg --replace-section-entry "load_cell_probe" "sclk_pins" "leveling_mcu:PB13, leveling_mcu:PB15, leveling_mcu:PA9, leveling_mcu:PA11" || exit $?
-          $CONFIG_HELPER --file loadcells.cfg --replace-section-entry "load_cell_probe" "trigger_force" "75" || exit $?
-        elif [ "$model" = "f004" ]; then
-          $CONFIG_HELPER --file loadcells.cfg --replace-section-entry "load_cell_probe" "dout_pins" "leveling_mcu:PA0, leveling_mcu:PA1, leveling_mcu:PA3, leveling_mcu:PA4" || exit $?
-          $CONFIG_HELPER --file loadcells.cfg --replace-section-entry "load_cell_probe" "sclk_pins" "leveling_mcu:PA2, leveling_mcu:PA5, leveling_mcu:PA6, leveling_mcu:PA7" || exit $?
-          $CONFIG_HELPER --file loadcells.cfg --replace-section-entry "load_cell_probe" "trigger_force" "75" || exit $?
-          $CONFIG_HELPER --file loadcells.cfg --replace-section-entry "load_cell_probe" "speed" "2.0" || exit $?
+        if [ -f /usr/data/pellcorp/k1/patches/loadcells.cfg.${model} ]; then
+          $CONFIG_HELPER --file loadcells.cfg --patches /usr/data/pellcorp/k1/patches/loadcells.cfg.${model} --quiet || exit $?
         fi
 
         y_position_mid=$($CONFIG_HELPER --get-section-entry "stepper_y" "position_max" --divisor 2 --integer)
@@ -2240,9 +2229,6 @@ fi
 
     if [ "$probe" = "loadcells" ]; then
         if [ "$mode" = "install" ] || [ "$mode" = "reinstall" ] || [ "$probe_switch" = "true" ]; then
-          # for load cells the mount is hard coded
-          mount=Default
-
           # for a install or reinstall just force kalico
           if [ "$mode" = "install" ] || [ "$mode" = "reinstall" ]; then
             klipper_fork=kalico
@@ -2316,48 +2302,51 @@ fi
           probe_model=btteddy
       fi
 
-      if [ -z "$mount" ] && [ -n "$install_mount" ] && [ "$probe_switch" != "true" ]; then
-        # for a partial install where we selected a mount, we can grab it from the pellcorp.done file
-        if [ "$mode" = "install" ]; then
-          mount=$install_mount
-        elif [ -f /usr/data/printer_data/config/${probe_model}-${model}.cfg ]; then
-          # if we are about to migrate an older installation we need to force the reapplication of the mount overrides
-          # mounts which might have had the same config as some default -k1 / -k1m config so there would have been
-          # no mount overrides generated
-          echo "WARNING: Enforcing mount overrides for mount $install_mount for migration"
-          mount=$install_mount
-        fi
-      elif [ -n "$mount" ] && [ -n "$install_mount" ]; then
-        if [ "$mount" = "%CURRENT%" ]; then
-          mount=$install_mount
+      # load cells do not have mount overrides
+      if [ "$probe" != "loadcells" ]; then
+        if [ -z "$mount" ] && [ -n "$install_mount" ] && [ "$probe_switch" != "true" ]; then
+          # for a partial install where we selected a mount, we can grab it from the pellcorp.done file
+          if [ "$mode" = "install" ]; then
+            mount=$install_mount
+          elif [ -f /usr/data/printer_data/config/${probe_model}-${model}.cfg ]; then
+            # if we are about to migrate an older installation we need to force the reapplication of the mount overrides
+            # mounts which might have had the same config as some default -k1 / -k1m config so there would have been
+            # no mount overrides generated
+            echo "WARNING: Enforcing mount overrides for mount $install_mount for migration"
+            mount=$install_mount
+          fi
+        elif [ -n "$mount" ] && [ -n "$install_mount" ]; then
+          if [ "$mount" = "%CURRENT%" ]; then
+            mount=$install_mount
+          fi
+
+          if [ "$mode" = "update" ] && [ "$mount" = "$install_mount" ] && [ "$probe_switch" != "true" ] && [ "$force" != "true" ]; then
+            echo "ERROR: You have specified --mount $mount for your existing mount!"
+            echo "INFO: If you know what you are doing you can force reapplying mount overrides with --force"
+            exit 1
+          fi
         fi
 
-        if [ "$mode" = "update" ] && [ "$mount" = "$install_mount" ] && [ "$probe_switch" != "true" ] && [ "$force" != "true" ]; then
-          echo "ERROR: You have specified --mount $mount for your existing mount!"
-          echo "INFO: If you know what you are doing you can force reapplying mount overrides with --force"
-          exit 1
+        if [ -n "$mount" ]; then
+            /usr/data/pellcorp/tools/apply-mount-overrides.sh --verify $probe $mount $model
+            if [ $? -eq 0 ]; then
+                echo "INFO: Mount is $mount"
+            else
+                exit 1
+            fi
+        elif [ "$skip_overrides" = "true" ] || [ "$mode" = "install" ] || [ "$mode" = "reinstall" ]; then
+            echo "ERROR: Mount option must be specified"
+            exit 1
+        elif [ -f /usr/data/pellcorp.done ]; then
+            if [ -z "$install_mount" ] || [ "$probe_switch" = "true" ]; then
+                echo "ERROR: Mount option must be specified"
+                exit 1
+            else
+                echo "INFO: Mount is $install_mount"
+            fi
         fi
-      fi
-
-      if [ -n "$mount" ]; then
-          /usr/data/pellcorp/tools/apply-mount-overrides.sh --verify $probe $mount $model
-          if [ $? -eq 0 ]; then
-              echo "INFO: Mount is $mount"
-          else
-              exit 1
-          fi
-      elif [ "$skip_overrides" = "true" ] || [ "$mode" = "install" ] || [ "$mode" = "reinstall" ]; then
-          echo "ERROR: Mount option must be specified"
-          exit 1
-      elif [ -f /usr/data/pellcorp.done ]; then
-          if [ -z "$install_mount" ] || [ "$probe_switch" = "true" ]; then
-              echo "ERROR: Mount option must be specified"
-              exit 1
-          else
-              echo "INFO: Mount is $install_mount"
-          fi
-      fi
-      echo
+        echo
+      fi # load cells no mount overrides required
     fi
 
     if [ "$mode" = "fix-serial" ]; then
