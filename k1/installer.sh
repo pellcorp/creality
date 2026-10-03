@@ -2220,8 +2220,10 @@ fi
     fi
 
     if [ "$probe" = "loadcells" ]; then
-        # for load cells the mount is hard coded
-        mount=Default
+        if [ "$mode" = "install" ] || [ "$mode" = "reinstall" ]; then
+          # for load cells the mount is hard coded
+          mount=Default
+        fi
 
         current_fork=$klipper_fork
         if [ -d /usr/data/klipper/.git ]; then
