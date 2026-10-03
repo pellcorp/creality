@@ -1430,6 +1430,25 @@ function setup_loadcells() {
         cp /usr/data/pellcorp/config/loadcells.cfg /usr/data/printer_data/config/ || exit $?
         $CONFIG_HELPER --add-include "loadcells.cfg" || exit $?
 
+        if [ "$model" = "k1" ] || [ "$model" = "k1m" ]; then
+          $CONFIG_HELPER --file loadcells.cfg --replace-section-entry "load_cell_probe" "dout_pins" "leveling_mcu:PA4, leveling_mcu:PA3, leveling_mcu:PA0, leveling_mcu:PA1" || exit $?
+          $CONFIG_HELPER --file loadcells.cfg --replace-section-entry "load_cell_probe" "sclk_pins" "leveling_mcu:PA7, leveling_mcu:PA6, leveling_mcu:PA2, leveling_mcu:PA5" || exit $?
+          $CONFIG_HELPER --file loadcells.cfg --replace-section-entry "load_cell_probe" "trigger_force" "160" || exit $?
+        elif [ "$model" = "f001" ]; then
+          $CONFIG_HELPER --file loadcells.cfg --replace-section-entry "load_cell_probe" "dout_pins" "leveling_mcu:PB12, leveling_mcu:PB14, leveling_mcu:PA8, leveling_mcu:PA10" || exit $?
+          $CONFIG_HELPER --file loadcells.cfg --replace-section-entry "load_cell_probe" "sclk_pins" "leveling_mcu:PB13, leveling_mcu:PB15, leveling_mcu:PA9, leveling_mcu:PA11" || exit $?
+          $CONFIG_HELPER --file loadcells.cfg --replace-section-entry "load_cell_probe" "trigger_force" "75" || exit $?
+        elif [ "$model" = "f004" ]; then
+          $CONFIG_HELPER --file loadcells.cfg --replace-section-entry "load_cell_probe" "dout_pins" "leveling_mcu:PA0, leveling_mcu:PA1, leveling_mcu:PA3, leveling_mcu:PA4" || exit $?
+          $CONFIG_HELPER --file loadcells.cfg --replace-section-entry "load_cell_probe" "sclk_pins" "leveling_mcu:PA2, leveling_mcu:PA5, leveling_mcu:PA6, leveling_mcu:PA7" || exit $?
+          $CONFIG_HELPER --file loadcells.cfg --replace-section-entry "load_cell_probe" "trigger_force" "75" || exit $?
+          $CONFIG_HELPER --file loadcells.cfg --replace-section-entry "load_cell_probe" "speed" "2.0" || exit $?
+        fi
+
+        y_position_mid=$($CONFIG_HELPER --get-section-entry "stepper_y" "position_max" --divisor 2 --integer)
+        x_position_mid=$($CONFIG_HELPER --get-section-entry "stepper_x" "position_max" --divisor 2 --integer)
+        $CONFIG_HELPER --file loadcells.cfg --replace-section-entry "bed_mesh" "zero_reference_position" "$x_position_mid,$y_position_mid" || exit $?
+
         cp /usr/data/pellcorp/config/loadcells_macro.cfg /usr/data/printer_data/config/ || exit $?
         $CONFIG_HELPER --add-include "loadcells_macro.cfg" || exit $?
 
