@@ -26,10 +26,11 @@ if [ -f /usr/bin/get_sn_mac.sh ]; then
     echo
     model=f001
   elif [ "$MODEL" = "F002" ]; then
-    echo
-    echo "WARNING: Ender 3 V3 Plus printer support is VERY experimental!!!"
-    echo
-    model=f001
+    echo "FATAL: Ender 3 V3 Plus (F002) is not currently supported!"
+    echo "If you own an Ender 3 V3 Plus and can help verify support, please open an issue or join us on Discord:"
+    echo "  https://github.com/pellcorp/creality/issues"
+    echo "  https://discord.gg/M5rmBQqRSG"
+    exit 1
   elif [ "$MODEL" = "F004" ]; then
     model=f004
   elif [ "$MODEL" = "F003" ]; then
@@ -2210,11 +2211,6 @@ fi
     fi
 
     if [ "$probe" = "loadcells" ]; then
-        if [ "$MODEL" = "F002" ]; then
-            echo "ERROR: loadcells is not currently supported on Ender 3 V3 Plus (F002)"
-            exit 1
-        fi
-
         current_fork=$klipper_fork
         if [ -d /usr/data/klipper/.git ]; then
             cd /usr/data/klipper/
