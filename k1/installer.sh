@@ -891,8 +891,8 @@ function install_klipper() {
           $CONFIG_HELPER --replace-section-entry "mcu rpi" "serial" "/tmp/klipper_host_mcu" || exit $?
         fi
 
-        # we need the levelling mcu for Ender 3 V3 for ADXL
-        if [ "$MODEL" != "F001" ] && [ "$MODEL" != "F002" ]; then
+        # leveling mcu is needed for ADXL on Ender 3 V3 and for loadcells
+        if [ "$MODEL" = "F003" ] || [ "$MODEL" = "F005" ] || [ "$MODEL" = "NEBULA" ]; then
           $CONFIG_HELPER --remove-section "mcu leveling_mcu" || exit $?
         fi
 
@@ -2083,6 +2083,8 @@ fi
         probe=eddyng
     elif [ -f /usr/data/printer_data/config/btteddy.cfg ]; then
         probe=btteddy
+    elif [ -f /usr/data/printer_data/config/loadcells.cfg ]; then
+        probe=loadcells
     elif grep -q "\[scanner\]" /usr/data/printer_data/config/printer.cfg 2> /dev/null; then
         probe=cartotouch
     elif [ -f /usr/data/printer_data/config/bltouch-${model}.cfg ]; then
@@ -2205,6 +2207,25 @@ fi
         echo "ERROR: You must specify a probe you want to configure"
         echo "One of: [microprobe, bltouch, cartotouch, cartographer, btteddy, eddyng, beacon, klicky, loadcells]"
         exit 1
+    fi
+
+    if [ "$probe" = "loadcells" ]; then
+        if [ "$MODEL" = "F002" ]; then
+            echo "ERROR: loadcells is not currently supported on Ender 3 V3 Plus (F002)"
+            exit 1
+        fi
+
+        current_fork=$klipper_fork
+        if [ -d /usr/data/klipper/.git ]; then
+            cd /usr/data/klipper/
+            remote_repo=$(git remote get-url origin | awk -F '/' '{print $NF}' | sed 's/.git//g')
+            cd - > /dev/null
+            [ "$remote_repo" = "kalico" ] && current_fork=kalico
+        fi
+        if [ "$current_fork" != "kalico" ]; then
+            echo "ERROR: loadcells requires kalico, use --kalico"
+            exit 1
+        fi
     fi
 
     echo "INFO: Mode is $mode"
@@ -2567,10 +2588,6 @@ fi
         setup_klicky
         setup_probe_specific=$?
     elif [ "$probe" = "loadcells" ]; then
-        if [ "$klipper_fork" != "kalico" ]; then
-            echo "ERROR: loadcells requires --kalico, stock Klipper does not have the load_cell support this needs"
-            exit 1
-        fi
         echo "***************************************************************"
         echo "* WARNING: loadcells is EXTREMELY EXPERIMENTAL.               *"
         echo "***************************************************************"
