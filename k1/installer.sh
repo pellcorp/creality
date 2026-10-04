@@ -1119,6 +1119,8 @@ function install_grumpyscreen() {
 }
 
 function setup_probe() {
+    local probe=$1
+
     grep -q "probe" /usr/data/pellcorp.done
     if [ $? -ne 0 ]; then
         echo
@@ -1127,6 +1129,14 @@ function setup_probe() {
         $CONFIG_HELPER --remove-section "bed_mesh" || exit $?
         $CONFIG_HELPER --remove-section-entry "stepper_z" "position_endstop" || exit $?
         $CONFIG_HELPER --replace-section-entry "stepper_z" "endstop_pin" "probe:z_virtual_endstop" || exit $?
+
+        # an optional loadcells_zoffset.cfg file for now you have to manually include
+        if [ "$probe" != "loadcells" ]; then
+          if [ -f /usr/data/pellcorp/k1/patches/loadcells_zoffset.cfg.${model} ]; then
+            cp /usr/data/pellcorp/config/loadcells_zoffset.cfg /usr/data/printer_data/config/ || exit $?
+            $CONFIG_HELPER --file loadcells_zoffset.cfg --patches /usr/data/pellcorp/k1/patches/loadcells_zoffset.cfg.${model} --quiet || exit $?
+          fi
+        fi
 
         cp /usr/data/pellcorp/config/quickstart.cfg /usr/data/printer_data/config/ || exit $?
         $CONFIG_HELPER --add-include "quickstart.cfg" || exit $?
@@ -1701,6 +1711,9 @@ function setup_btteddy() {
 
         cp /usr/data/pellcorp/config/btteddy_macro.cfg /usr/data/printer_data/config/ || exit $?
         $CONFIG_HELPER --add-include "btteddy_macro.cfg" || exit $?
+
+        cp /usr/data/pellcorp/config/btteddy_zoffset.cfg /usr/data/printer_data/config/ || exit $?
+        $CONFIG_HELPER --add-include "btteddy_zoffset.cfg" || exit $?
 
         $CONFIG_HELPER --remove-section "probe_eddy_current btt_eddy" || exit $?
         $CONFIG_HELPER --add-section "probe_eddy_current btt_eddy" || exit $?
@@ -2589,7 +2602,7 @@ fi
     setup_probe=0
     # for ender 3 v3 stupid fucking thing need to leave z as endstop
     if [ "$MODEL" != "F001" ] && [ "$MODEL" != "F002" ]; then
-      setup_probe
+      setup_probe "$probe"
       setup_probe=$?
     fi
 
@@ -2628,7 +2641,7 @@ fi
     if [ -f /usr/data/pellcorp-backups/printer.factory.cfg ]; then
         # we want a copy of the file before config overrides are re-applied so we can correctly generate diffs
         # against different generations of the original file
-        for file in printer.cfg start_end.cfg ${probe}.conf spoolman.conf internal_macros.cfg useful_macros.cfg timelapse.conf moonraker.conf webcam.conf webcam.ini homing.cfg ${probe}_macro.cfg ${probe}.cfg; do
+        for file in printer.cfg start_end.cfg ${probe}.conf spoolman.conf internal_macros.cfg useful_macros.cfg timelapse.conf moonraker.conf webcam.conf webcam.ini homing.cfg loadcells_zoffset.cfg ${probe}_macro.cfg ${probe}.cfg; do
             if [ -f /usr/data/printer_data/config/$file ]; then
                 cp /usr/data/printer_data/config/$file /usr/data/pellcorp-backups/$file
             fi

@@ -748,6 +748,9 @@ function setup_btteddy() {
         cp $BASEDIR/pellcorp/config/btteddy_macro.cfg $BASEDIR/printer_data/config/ || exit $?
         $CONFIG_HELPER --add-include "btteddy_macro.cfg" || exit $?
 
+        cp $BASEDIR/pellcorp/config/btteddy_zoffset.cfg $BASEDIR/printer_data/config/ || exit $?
+        $CONFIG_HELPER --add-include "btteddy_zoffset.cfg" || exit $?
+
         $CONFIG_HELPER --remove-section "probe_eddy_current btt_eddy" || exit $?
         $CONFIG_HELPER --add-section "probe_eddy_current btt_eddy" || exit $?
 
