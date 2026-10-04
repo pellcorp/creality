@@ -74,7 +74,7 @@ body::after {
 }
 
 .theme--dark.v-data-table thead th {
-  background: rgba(79, 80, 82, 0.5) !important;
+  background: rgba(90, 125, 242, 0.2) !important;
   backdrop-filter: blur(40px);
 }
 
@@ -91,6 +91,21 @@ body::after {
 .v-menu__content {
   background-color: rgba(23, 23, 23, 0.3) !important;
   border-radius: 0.5em;
+}
+
+.macros-panel .v-btn,
+[class*="macrogroup_"] .v-btn,
+.v-btn.btnGroup:not(.primary):not(.warning),
+.v-btn._btn-qs {
+  background-color: rgba(90, 125, 242, 0.7) !important;
+}
+
+.v-toolbar .v-btn,
+.theme--dark.v-tabs > .v-tabs-bar,
+.v-tabs .v-tab,
+.v-tabs-items .v-card,
+.v-tabs-items .v-sheet {
+  background-color: transparent !important;
 }
 
 .v-application--wrap ::-webkit-scrollbar-thumb,

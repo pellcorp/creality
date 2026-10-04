@@ -114,7 +114,7 @@ body::after {
 }
 
 .theme--dark.v-data-table thead th {
-  background: rgba(79, 80, 82, 0.5) !important;
+  background: rgba(90, 125, 242, 0.2) !important;
   backdrop-filter: blur(40px);
 }
 
@@ -132,6 +132,10 @@ body::after {
 .v-snack__wrapper.theme--dark {
   background-color: rgba(23, 23, 23, 0.3) !important;
   border-radius: 0.5em;
+}
+
+.v-btn.btncolor {
+  background-color: rgba(90, 125, 242, 0.2) !important;
 }
 
 .v-application--wrap ::-webkit-scrollbar-thumb,
