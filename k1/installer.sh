@@ -2241,6 +2241,12 @@ fi
     fi
 
     if [ "$probe" = "loadcells" ]; then
+        # only k1, k1m, e5m, e3v3 are supported
+        if [ ! -f /usr/data/pellcorp/k1/patches/loadcells.cfg.${model} ]; then
+          echo "FATAL: Loadcells are not supported for your printer ($MODEL)"
+          exit 1
+        fi
+
         if [ "$mode" = "install" ] || [ "$mode" = "reinstall" ] || [ "$probe_switch" = "true" ]; then
           # for a install or reinstall just force kalico
           if [ "$mode" = "install" ] || [ "$mode" = "reinstall" ]; then
