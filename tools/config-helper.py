@@ -181,6 +181,14 @@ def add_section(updater, section_name):
     return True
 
 
+def has_deleted_value(section):
+    for entry in section:
+        value = section.get(entry, None)
+        if value and value.value == '__DELETED__':
+            return True
+    return False
+
+
 def override_cfg(updater,
                  override_cfg_file,
                  allow_delete_section=True,
@@ -198,8 +206,8 @@ def override_cfg(updater,
 
             section = overrides.get_section(section_name, None)
             section_action = section.get('__action__', None)
-            if allow_delete_section and section_action and section_action.value == 'DELETED':
-                if updater.has_section(section_name):
+            if section_action and section_action.value == 'DELETED':
+                if allow_delete_section and updater.has_section(section_name):
                     if remove_section(updater, section_name):
                         updated = True
             elif updater.has_section(section_name):
@@ -220,7 +228,7 @@ def override_cfg(updater,
                     updated = True
             elif 'gcode_macro' not in section_name and 'gcode_shell_command' not in section_name and allow_new_section:
                 new_section = overrides.get_section(section_name, None)
-                if new_section:
+                if new_section and not has_deleted_value(new_section):
                     last_section = _last_section(updater)
                     if last_section:
                         new_section = new_section.detach()
