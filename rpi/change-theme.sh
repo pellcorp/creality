@@ -15,7 +15,6 @@ if [ "$1" = "simpleaf" ]; then
   echo "Applying Simple AF Fluidd theme ..."
   mkdir -p $BASEDIR/printer_data/config/.fluidd-theme || exit $?
   cp $BASEDIR/pellcorp/config/fluidd-theme/custom.css $BASEDIR/printer_data/config/.fluidd-theme/ || exit $?
-  cp $BASEDIR/pellcorp/config/fluidd-theme/background.gif $BASEDIR/printer_data/config/.fluidd-theme/ || exit $?
   cp $BASEDIR/pellcorp/config/fluidd-theme/logo_SimpleAF.svg $BASEDIR/printer_data/config/.fluidd-theme/ || exit $?
   cp $BASEDIR/pellcorp/config/fluidd-theme/background-logo.svg $BASEDIR/printer_data/config/.fluidd-theme/ || exit $?
   curl -s -X POST "http://localhost:7125/server/database/item" -H "Content-Type: application/json" \
@@ -24,7 +23,6 @@ if [ "$1" = "simpleaf" ]; then
   echo "Applying Simple AF Mainsail theme ..."
   mkdir -p $BASEDIR/printer_data/config/.theme || exit $?
   cp $BASEDIR/pellcorp/config/mainsail-theme/custom.css $BASEDIR/printer_data/config/.theme/ || exit $?
-  cp $BASEDIR/pellcorp/config/mainsail-theme/background.gif $BASEDIR/printer_data/config/.theme/ || exit $?
   cp $BASEDIR/pellcorp/config/mainsail-theme/sidebar-logo.svg $BASEDIR/printer_data/config/.theme/ || exit $?
   cp $BASEDIR/pellcorp/config/mainsail-theme/background-logo.svg $BASEDIR/printer_data/config/.theme/ || exit $?
   curl -s -X POST "http://localhost:7125/server/database/item" -H "Content-Type: application/json" \

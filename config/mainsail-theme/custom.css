@@ -38,21 +38,6 @@ body {
   background-image: none !important;
 }
 
-body::after {
-  content: "";
-  background-image: url("/server/files/config/.theme/background.gif");
-  background-size: 100% 100%;
-  background-repeat: no-repeat;
-  position: fixed;
-  pointer-events: none;
-  z-index: 1;
-  width: 560px;
-  height: 606px;
-  right: 0;
-  bottom: 0;
-  opacity: 40%;
-}
-
 .theme--dark.v-card,
 .theme--dark.v-sheet,
 .theme--dark.v-navigation-drawer,

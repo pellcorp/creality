@@ -34,8 +34,7 @@ body {
 }
 
 /* Fluidd applies .fluidd-theme/background.* as a full cover background on v-main,
-   neutralize that and re-show it as a corner watermark instead, same recipe Fluidd
-   itself uses for its own logo (position: fixed, oversized, pushed off-canvas, faint) */
+   we don't ship a background file so this is just a defensive reset */
 .v-main {
   background-image: none !important;
 }
@@ -58,37 +57,6 @@ body {
   background-size: contain;
   background-repeat: no-repeat;
   background-position: center;
-}
-
-body::after {
-  content: "";
-  background-image: url("/server/files/config/.fluidd-theme/background.gif");
-  background-size: 100% 100%;
-  background-repeat: no-repeat;
-  position: fixed;
-  pointer-events: none;
-  z-index: 1;
-  width: 560px;
-  height: 606px;
-  right: 0;
-  bottom: 0;
-  opacity: 40%;
-}
-
-#printer-bg-video {
-  position: fixed !important;
-  bottom: 1rem;
-  right: 1rem;
-  width: 320px;
-  max-width: 30vw;
-  height: auto;
-  max-height: 20vh;
-  border-radius: 8px;
-  pointer-events: none;
-  z-index: 5;
-  background: transparent;
-  opacity: 0.8;
-  object-fit: contain;
 }
 
 .theme--dark.v-card,
