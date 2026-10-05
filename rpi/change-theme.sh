@@ -7,18 +7,11 @@ if [ "$1" != "simpleaf" ] && [ "$1" != "stock" ]; then
   exit 1
 fi
 
-if [ "$1" = "simpleaf" ]; then
-  if [ -d $BASEDIR/printer_data/config/.fluidd-theme ]; then
-    echo "Backing up existing Fluidd theme ..."
-    rm -rf $BASEDIR/printer_data/config/.fluidd-theme-backup
-    mv $BASEDIR/printer_data/config/.fluidd-theme $BASEDIR/printer_data/config/.fluidd-theme-backup || exit $?
-  fi
-  if [ -d $BASEDIR/printer_data/config/.theme ]; then
-    echo "Backing up existing Mainsail theme ..."
-    rm -rf $BASEDIR/printer_data/config/.theme-backup
-    mv $BASEDIR/printer_data/config/.theme $BASEDIR/printer_data/config/.theme-backup || exit $?
-  fi
+# any existing custom theme is always wiped, there is no backup
+rm -rf $BASEDIR/printer_data/config/.fluidd-theme
+rm -rf $BASEDIR/printer_data/config/.theme
 
+if [ "$1" = "simpleaf" ]; then
   echo "Applying Simple AF Fluidd theme ..."
   mkdir -p $BASEDIR/printer_data/config/.fluidd-theme || exit $?
   cp $BASEDIR/pellcorp/config/fluidd-theme/custom.css $BASEDIR/printer_data/config/.fluidd-theme/ || exit $?
@@ -39,24 +32,8 @@ if [ "$1" = "simpleaf" ]; then
   curl -s -X POST "http://localhost:7125/server/database/item" -H "Content-Type: application/json" \
     -d '{"namespace":"mainsail","key":"uiSettings.primary","value":"#5a7df2"}' > /dev/null
 else # stock
-  if [ -d $BASEDIR/printer_data/config/.fluidd-theme-backup ]; then
-    echo "Restoring previous Fluidd theme ..."
-    rm -rf $BASEDIR/printer_data/config/.fluidd-theme
-    mv $BASEDIR/printer_data/config/.fluidd-theme-backup $BASEDIR/printer_data/config/.fluidd-theme
-  else
-    echo "Removing Simple AF Fluidd theme ..."
-    rm -rf $BASEDIR/printer_data/config/.fluidd-theme
-    curl -s -X DELETE "http://localhost:7125/server/database/item?namespace=fluidd&key=uiSettings.theme" > /dev/null
-  fi
-
-  if [ -d $BASEDIR/printer_data/config/.theme-backup ]; then
-    echo "Restoring previous Mainsail theme ..."
-    rm -rf $BASEDIR/printer_data/config/.theme
-    mv $BASEDIR/printer_data/config/.theme-backup $BASEDIR/printer_data/config/.theme
-  else
-    echo "Removing Simple AF Mainsail theme ..."
-    rm -rf $BASEDIR/printer_data/config/.theme
-    curl -s -X DELETE "http://localhost:7125/server/database/item?namespace=mainsail&key=uiSettings.mode" > /dev/null
-    curl -s -X DELETE "http://localhost:7125/server/database/item?namespace=mainsail&key=uiSettings.primary" > /dev/null
-  fi
+  echo "Removing Simple AF Fluidd and Mainsail themes ..."
+  curl -s -X DELETE "http://localhost:7125/server/database/item?namespace=fluidd&key=uiSettings.theme" > /dev/null
+  curl -s -X DELETE "http://localhost:7125/server/database/item?namespace=mainsail&key=uiSettings.mode" > /dev/null
+  curl -s -X DELETE "http://localhost:7125/server/database/item?namespace=mainsail&key=uiSettings.primary" > /dev/null
 fi
