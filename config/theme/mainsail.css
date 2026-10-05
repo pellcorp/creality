@@ -1,0 +1,224 @@
+html {
+  background-color: #1a1a2e;
+  background-image:
+    linear-gradient(135deg, #20395e, #536d93),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.025) 1px, transparent 1px),
+    linear-gradient(rgba(255, 255, 255, 0.025) 1px, transparent 1px);
+  background-size: cover, 20px 20px, 20px 20px;
+  background-repeat: no-repeat, repeat, repeat;
+  background-position: center center, top left, top left;
+  background-attachment: fixed, fixed, fixed;
+}
+
+html, body {
+  margin: 0;
+  padding: 0;
+  color: #eee;
+}
+
+body {
+  background-color: transparent !important;
+}
+
+#app,
+#app > *,
+.v-application,
+.v-application--wrap {
+  background-color: transparent !important;
+}
+
+#app {
+  position: relative;
+  z-index: 10;
+}
+
+/* Mainsail applies .theme/main-background.* as a full cover background on #content,
+   we don't ship a main-background file so this is just a defensive reset */
+#content {
+  background-image: none !important;
+}
+
+.theme--dark.v-card,
+.theme--dark.v-sheet,
+.theme--dark.v-navigation-drawer,
+.theme--dark.v-toolbar.v-sheet,
+.v-menu__content,
+.v-dialog.v-dialog--active {
+  background-color: rgba(23, 23, 23, 0.3) !important;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+.topbar.theme--dark.v-toolbar.v-sheet {
+  background-color: rgba(90, 125, 242, 0.2) !important;
+  backdrop-filter: blur(40px);
+}
+
+.panel-toolbar.theme--dark.v-toolbar.v-sheet {
+  background-color: rgba(90, 125, 242, 0.2) !important;
+}
+
+.theme--dark.v-data-table thead th {
+  background: rgba(90, 125, 242, 0.2) !important;
+  backdrop-filter: blur(40px);
+}
+
+.v-navigation-drawer__content {
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+.v-btn,
+.v-tab,
+.v-card,
+.v-chip,
+.v-text-field,
+.v-menu__content {
+  background-color: rgba(23, 23, 23, 0.3) !important;
+  border-radius: 0.5em;
+}
+
+.macros-panel .v-btn,
+[class*="macrogroup_"] .v-btn,
+.v-btn.btnGroup:not(.primary):not(.warning),
+.v-btn._btn-qs {
+  background-color: rgba(90, 125, 242, 0.7) !important;
+}
+
+.v-toolbar .v-btn,
+.theme--dark.v-tabs > .v-tabs-bar,
+.v-tabs .v-tab,
+.v-tabs-items .v-card,
+.v-tabs-items .v-sheet {
+  background-color: transparent !important;
+}
+
+.v-application--wrap ::-webkit-scrollbar-thumb,
+.v-dialog__content ::-webkit-scrollbar-thumb {
+  background: #ffffff78 !important;
+}
+
+.theme--dark.v-data-table tbody tr.v-data-table__selected,
+.theme--dark.v-data-table tbody tr:hover:not(.v-data-table__expanded__content):not(.v-data-table__empty-wrapper) {
+  background: rgba(23, 23, 23, 0.4) !important;
+}
+
+.theme--dark.v-data-table,
+.theme--dark.v-tabs-items,
+.theme--dark.v-expansion-panels .v-expansion-panel {
+  background-color: transparent !important;
+}
+
+.cm-editor,
+.cm-editor .cm-gutters {
+  background-color: #0f172a !important;
+}
+
+/* light mode is rendered the same as dark mode */
+.theme--light.v-card,
+.theme--light.v-sheet,
+.theme--light.v-navigation-drawer,
+.theme--light.v-toolbar.v-sheet,
+.theme--light.v-menu__content {
+  background-color: rgba(23, 23, 23, 0.3) !important;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+.topbar.theme--light.v-toolbar.v-sheet {
+  background-color: rgba(90, 125, 242, 0.2) !important;
+  backdrop-filter: blur(40px);
+}
+
+.panel-toolbar.theme--light.v-toolbar.v-sheet {
+  background-color: rgba(90, 125, 242, 0.2) !important;
+}
+
+.theme--light.v-data-table thead th {
+  background: rgba(90, 125, 242, 0.2) !important;
+  backdrop-filter: blur(40px);
+}
+
+.theme--light.v-data-table tbody tr.v-data-table__selected,
+.theme--light.v-data-table tbody tr:hover:not(.v-data-table__expanded__content):not(.v-data-table__empty-wrapper) {
+  background: rgba(23, 23, 23, 0.4) !important;
+}
+
+.theme--light.v-data-table,
+.theme--light.v-tabs-items,
+.theme--light.v-tabs > .v-tabs-bar,
+.theme--light.v-expansion-panels .v-expansion-panel {
+  background-color: transparent !important;
+}
+
+.theme--light.v-btn-toggle:not(.v-btn-toggle--group) {
+  background-color: #1e1e1e !important;
+}
+
+.theme--light.v-application,
+.theme--light.v-application .theme--light:not([class*="--text"]),
+.theme--light.v-input input,
+.theme--light.v-input textarea,
+.theme--light .v-select__selection,
+.theme--light.v-card .v-card__text,
+.theme--light.v-card .v-card__subtitle,
+.theme--light.v-data-table thead th,
+.theme--light.v-data-table tbody td,
+.theme--light.v-list-item:not(.v-list-item--active):not(.v-list-item--disabled) {
+  color: rgba(255, 255, 255, 0.87) !important;
+}
+
+.theme--light.v-tabs .v-tab:not(.v-tab--active) {
+  color: rgba(255, 255, 255, 0.6) !important;
+}
+
+.theme--light.v-divider,
+.theme--light.v-text-field--outlined fieldset,
+.theme--light.v-text-field > .v-input__control > .v-input__slot:before {
+  border-color: rgba(255, 255, 255, 0.24) !important;
+}
+
+.theme--light.v-application,
+.theme--light .v-main,
+.theme--light .v-main__wrap,
+.theme--light #content {
+  background-color: transparent !important;
+}
+
+html.theme--light:root body {
+  background: transparent !important;
+}
+
+html.theme--light:root ::-webkit-scrollbar {
+  background-color: #272727 !important;
+}
+
+html.theme--light:root ::-webkit-scrollbar-thumb {
+  background-color: #6b6b6b !important;
+  border-color: #272727 !important;
+}
+
+.theme--light.v-navigation-drawer .v-navigation-drawer__image {
+  display: none !important;
+}
+
+.theme--light.v-text-field--solo > .v-input__control > .v-input__slot {
+  background: #1e1e1e !important;
+}
+
+body::before {
+  content: "";
+  background-image: url("/server/files/config/.theme/background-logo.svg");
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
+  position: fixed;
+  pointer-events: none;
+  z-index: 1;
+  top: 50%;
+  left: 50%;
+  width: 85vmin;
+  height: 85vmin;
+  transform: translate(-50%, -50%);
+  opacity: 0.14;
+}
