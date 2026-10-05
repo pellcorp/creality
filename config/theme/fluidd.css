@@ -53,7 +53,7 @@ body {
 .logo-wrapper {
   width: 56px;
   height: 56px;
-  background-image: url("/server/files/config/.fluidd-theme/logo_SimpleAF.svg");
+  background-image: url("/server/files/config/.fluidd-theme/sidebar-logo.svg");
   background-size: contain;
   background-repeat: no-repeat;
   background-position: center;

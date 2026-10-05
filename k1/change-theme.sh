@@ -13,7 +13,7 @@ if [ "$1" = "simpleaf" ]; then
     echo "Applying Simple AF Fluidd theme ..."
     mkdir -p /usr/data/printer_data/config/.fluidd-theme || exit $?
     cp /usr/data/pellcorp/config/theme/fluidd.css /usr/data/printer_data/config/.fluidd-theme/custom.css || exit $?
-    cp /usr/data/pellcorp/config/theme/sidebar.svg /usr/data/printer_data/config/.fluidd-theme/logo_SimpleAF.svg || exit $?
+    cp /usr/data/pellcorp/config/theme/sidebar.svg /usr/data/printer_data/config/.fluidd-theme/sidebar-logo.svg || exit $?
     cp /usr/data/pellcorp/config/theme/background.svg /usr/data/printer_data/config/.fluidd-theme/background-logo.svg || exit $?
     curl -s -X POST "http://localhost:7125/server/database/item" -H "Content-Type: application/json" \
         -d '{"namespace":"fluidd","key":"uiSettings.theme","value":{"isDark":true,"logo":{"src":"logo_fluidd.svg"},"color":"#5a7df2","backgroundLogo":true}}' > /dev/null
