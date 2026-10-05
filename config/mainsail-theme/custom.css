@@ -220,3 +220,20 @@ html.theme--light:root ::-webkit-scrollbar-thumb {
 .theme--light.v-text-field--solo > .v-input__control > .v-input__slot {
   background: #1e1e1e !important;
 }
+
+body::before {
+  content: "";
+  background-image: url("/server/files/config/.theme/background-logo.svg");
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
+  position: fixed;
+  pointer-events: none;
+  z-index: 1;
+  top: 50%;
+  left: 50%;
+  width: 85vmin;
+  height: 85vmin;
+  transform: translate(-50%, -50%);
+  opacity: 0.14;
+}

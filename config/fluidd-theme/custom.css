@@ -265,3 +265,20 @@ body::after {
 .theme--light :has(> .monaco-editor) {
   background-color: #0f172a !important;
 }
+
+body::before {
+  content: "";
+  background-image: url("/server/files/config/.fluidd-theme/background-logo.svg");
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
+  position: fixed;
+  pointer-events: none;
+  z-index: 1;
+  top: 50%;
+  left: 50%;
+  width: 85vmin;
+  height: 85vmin;
+  transform: translate(-50%, -50%);
+  opacity: 0.14;
+}
