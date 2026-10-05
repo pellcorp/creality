@@ -266,7 +266,7 @@ body::after {
   background-color: #0f172a !important;
 }
 
-body::before {
+body:has(.background-logo)::before {
   content: "";
   background-image: url("/server/files/config/.fluidd-theme/background-logo.svg");
   background-size: contain;
