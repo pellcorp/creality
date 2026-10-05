@@ -155,3 +155,22 @@ body::after {
 .theme--dark.v-expansion-panels .v-expansion-panel {
   background-color: transparent !important;
 }
+
+.theme--dark.v-sheet.v-alert--text {
+  background-color: transparent !important;
+}
+
+.theme--dark.v-sheet.v-alert--text::before {
+  opacity: 0.08 !important;
+}
+
+.v-btn.v-btn--block.primary.mb-2 {
+  background-color: #d84044 !important;
+  color: #000 !important;
+}
+
+.monaco-editor,
+.monaco-editor .monaco-editor-background,
+.monaco-editor .margin {
+  background-color: #0f172a !important;
+}

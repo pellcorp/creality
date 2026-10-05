@@ -123,3 +123,8 @@ body::after {
 .theme--dark.v-expansion-panels .v-expansion-panel {
   background-color: transparent !important;
 }
+
+.cm-editor,
+.cm-editor .cm-gutters {
+  background-color: #0f172a !important;
+}
