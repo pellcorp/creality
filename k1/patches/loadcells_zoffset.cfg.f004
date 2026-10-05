@@ -1,3 +1,6 @@
+[mcu leveling_mcu]
+serial: /dev/ttyS6
+
 [load_cell_probe]
 dout_pins: leveling_mcu:PA0, leveling_mcu:PA1, leveling_mcu:PA3, leveling_mcu:PA4
 sclk_pins: leveling_mcu:PA2, leveling_mcu:PA5, leveling_mcu:PA6, leveling_mcu:PA7
