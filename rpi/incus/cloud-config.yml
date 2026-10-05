@@ -1,0 +1,12 @@
+#cloud-config
+users:
+  - name: me
+    uid: 1000
+    gid: 1000
+    groups: [sudo, netdev]
+    shell: /bin/bash
+    plain_text_passwd: 'raspberry'
+    lock_passwd: false
+    setup_ds: true
+
+ssh_pwauth: true
