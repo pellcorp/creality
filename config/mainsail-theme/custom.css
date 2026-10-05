@@ -128,3 +128,95 @@ body::after {
 .cm-editor .cm-gutters {
   background-color: #0f172a !important;
 }
+
+/* light mode is rendered the same as dark mode */
+.theme--light.v-card,
+.theme--light.v-sheet,
+.theme--light.v-navigation-drawer,
+.theme--light.v-toolbar.v-sheet,
+.theme--light.v-menu__content {
+  background-color: rgba(23, 23, 23, 0.3) !important;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+.topbar.theme--light.v-toolbar.v-sheet {
+  background-color: rgba(90, 125, 242, 0.2) !important;
+  backdrop-filter: blur(40px);
+}
+
+.panel-toolbar.theme--light.v-toolbar.v-sheet {
+  background-color: rgba(90, 125, 242, 0.2) !important;
+}
+
+.theme--light.v-data-table thead th {
+  background: rgba(90, 125, 242, 0.2) !important;
+  backdrop-filter: blur(40px);
+}
+
+.theme--light.v-data-table tbody tr.v-data-table__selected,
+.theme--light.v-data-table tbody tr:hover:not(.v-data-table__expanded__content):not(.v-data-table__empty-wrapper) {
+  background: rgba(23, 23, 23, 0.4) !important;
+}
+
+.theme--light.v-data-table,
+.theme--light.v-tabs-items,
+.theme--light.v-tabs > .v-tabs-bar,
+.theme--light.v-expansion-panels .v-expansion-panel {
+  background-color: transparent !important;
+}
+
+.theme--light.v-btn-toggle:not(.v-btn-toggle--group) {
+  background-color: #1e1e1e !important;
+}
+
+.theme--light.v-application,
+.theme--light.v-application .theme--light:not([class*="--text"]),
+.theme--light.v-input input,
+.theme--light.v-input textarea,
+.theme--light .v-select__selection,
+.theme--light.v-card .v-card__text,
+.theme--light.v-card .v-card__subtitle,
+.theme--light.v-data-table thead th,
+.theme--light.v-data-table tbody td,
+.theme--light.v-list-item:not(.v-list-item--active):not(.v-list-item--disabled) {
+  color: rgba(255, 255, 255, 0.87) !important;
+}
+
+.theme--light.v-tabs .v-tab:not(.v-tab--active) {
+  color: rgba(255, 255, 255, 0.6) !important;
+}
+
+.theme--light.v-divider,
+.theme--light.v-text-field--outlined fieldset,
+.theme--light.v-text-field > .v-input__control > .v-input__slot:before {
+  border-color: rgba(255, 255, 255, 0.24) !important;
+}
+
+.theme--light.v-application,
+.theme--light .v-main,
+.theme--light .v-main__wrap,
+.theme--light #content {
+  background-color: transparent !important;
+}
+
+html.theme--light:root body {
+  background: transparent !important;
+}
+
+html.theme--light:root ::-webkit-scrollbar {
+  background-color: #272727 !important;
+}
+
+html.theme--light:root ::-webkit-scrollbar-thumb {
+  background-color: #6b6b6b !important;
+  border-color: #272727 !important;
+}
+
+.theme--light.v-navigation-drawer .v-navigation-drawer__image {
+  display: none !important;
+}
+
+.theme--light.v-text-field--solo > .v-input__control > .v-input__slot {
+  background: #1e1e1e !important;
+}
