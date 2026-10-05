@@ -892,8 +892,8 @@ function install_klipper() {
           $CONFIG_HELPER --replace-section-entry "mcu rpi" "serial" "/tmp/klipper_host_mcu" || exit $?
         fi
 
-        # leveling mcu is needed for ADXL on Ender 3 V3 and for loadcells
-        if [ "$MODEL" = "F003" ] || [ "$MODEL" = "F005" ] || [ "$MODEL" = "NEBULA" ]; then
+        # we need the leveling mcu for Ender 3 V3 for ADXL
+        if [ "$MODEL" != "F001" ] && [ "$MODEL" != "F002" ]; then
           $CONFIG_HELPER --remove-section "mcu leveling_mcu" || exit $?
         fi
 

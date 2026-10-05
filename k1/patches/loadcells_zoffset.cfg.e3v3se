@@ -1,3 +1,6 @@
+[mcu leveling_mcu]
+__action__: DELETED
+
 [load_cell_probe]
 sensor_type: hx711
 sclk_pin: PA4
