@@ -562,8 +562,6 @@ function install_webcam() {
         sed -i -e 's/^service:.*/service: mjpegstreamer/' -e 's/^target_fps:.*/target_fps: 15/' /usr/data/printer_data/config/webcam.conf
         sed -i 's/^frames_per_second=.*/frames_per_second=20/' /usr/data/printer_data/config/webcam.ini
       fi
-      cp /usr/data/pellcorp/config/camera.cfg /usr/data/printer_data/config/ || exit $?
-      $CONFIG_HELPER --add-include "camera.cfg" || exit $?
 
       /etc/init.d/S50webcam start
 

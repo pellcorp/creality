@@ -44,9 +44,6 @@ if [ $? -ne 0 ]; then
   cp $BASEDIR/pellcorp/rpi/webcam.conf $BASEDIR/printer_data/config/ || exit $?
   $CONFIG_HELPER --file moonraker.conf --add-include "webcam.conf" || exit $?
 
-  cp $BASEDIR/pellcorp/config/camera.cfg $BASEDIR/printer_data/config/ || exit $?
-  $CONFIG_HELPER --add-include "camera.cfg" || exit $?
-
   sudo systemctl restart crowsnest
   echo "crowsnest" >> $BASEDIR/pellcorp.done
 fi
