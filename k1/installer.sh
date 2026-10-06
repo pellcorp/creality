@@ -560,7 +560,7 @@ function install_webcam() {
       cp /usr/data/pellcorp/k1/webcam.conf /usr/data/printer_data/config/ || exit $?
       if [ "$probe" = "bltouch" ] || [ "$probe" = "microprobe" ] || [ "$probe" = "klicky" ] || [ "$probe" = "loadcells" ]; then
         sed -i -e 's/^service:.*/service: mjpegstreamer/' -e 's/^target_fps:.*/target_fps: 15/' /usr/data/printer_data/config/webcam.conf
-        sed -i 's/^frames_per_second=.*/frames_per_second=15/' /usr/data/printer_data/config/webcam.ini
+        sed -i 's/^frames_per_second=.*/frames_per_second=20/' /usr/data/printer_data/config/webcam.ini
       fi
       cp /usr/data/pellcorp/config/camera.cfg /usr/data/printer_data/config/ || exit $?
       $CONFIG_HELPER --add-include "camera.cfg" || exit $?
