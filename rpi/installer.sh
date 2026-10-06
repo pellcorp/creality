@@ -1095,6 +1095,7 @@ set -o pipefail # preserve installer failures through tee
   klipper_fork=kalico
   printer=
   mount=
+  reinstall_component=
 
   existing_printer=$(cat $BASEDIR/pellcorp-overrides/config.info 2> /dev/null | grep printer= | awk -F '=' '{print $2}')
   # figure out what existing probe if any is being used
@@ -1132,6 +1133,13 @@ set -o pipefail # preserve installer failures through tee
       if [ "$mode" = "clean-install" ] || [ "$mode" = "clean-reinstall" ] || [ "$mode" = "clean-update" ]; then
         skip_overrides=true
         mode=$(echo $mode | sed 's/clean-//g')
+      fi
+      if [ "$mode" = "reinstall" ]; then
+        case "$1" in
+          klipper|moonraker|nginx|fluidd|mainsail|crowsnest) reinstall_component=$1; shift ;;
+          none|microprobe|bltouch|beacon|klicky|cartographer|cartotouch|btteddy|eddyng|--*|"") ;;
+          *) echo "ERROR: Invalid reinstall component $1, must be one of: klipper, moonraker, nginx, fluidd, mainsail, crowsnest"; exit 1 ;;
+        esac
       fi
     elif [ "$1" = "--kalico" ]; then
       klipper_fork=kalico
@@ -1314,7 +1322,7 @@ set -o pipefail # preserve installer failures through tee
       if [ $? -ne 0 ]; then
         exit 1
       fi
-    elif [ "$skip_overrides" = "true" ] || [ "$mode" = "install" ] || [ "$mode" = "reinstall" ]; then
+    elif [ "$skip_overrides" = "true" ] || [ "$mode" = "install" ] || ([ "$mode" = "reinstall" ] && [ -z "$reinstall_component" ]); then
       echo "ERROR: Mount option must be specified"
       exit 1
     elif [ -f $BASEDIR/pellcorp.done ]; then
@@ -1364,7 +1372,10 @@ set -o pipefail # preserve installer failures through tee
     fi
 
     # we are not generating overrides for a partial installation
-    if [ "$mode" = "reinstall" ] || [ "$mode" = "update" ]; then
+    if [ -n "$reinstall_component" ]; then
+      echo "INFO: Reinstalling $reinstall_component only"
+      [ -f $BASEDIR/pellcorp.done ] && sed -i "/^${reinstall_component}\$/d;/^installed_sha=/d" $BASEDIR/pellcorp.done
+    elif [ "$mode" = "reinstall" ] || [ "$mode" = "update" ]; then
       if [ "$skip_overrides" != "true" ]; then
         $BASEDIR/pellcorp/tools/config-overrides.sh
       fi
@@ -1372,7 +1383,7 @@ set -o pipefail # preserve installer failures through tee
     fi
   fi
 
-  if [ "$mode" = "reinstall" ]; then
+  if [ "$mode" = "reinstall" ] && [ -z "$reinstall_component" ]; then
     # where the base printer was changed we need to clear out any overrides as they are unsafe to try and reapply
     # also we only reapply if the base printer is built in, because we have NO idea if an existing adhoc (either file or url)
     # is sufficiently alike for it to be safe to reapply config overrides
@@ -1383,7 +1394,7 @@ set -o pipefail # preserve installer failures through tee
   fi
 
   mkdir -p $BASEDIR/printer_data/config/
-  if [ -f $BASEDIR/pellcorp-backups/printer.factory.cfg ]; then
+  if [ -z "$reinstall_component" ] && [ -f $BASEDIR/pellcorp-backups/printer.factory.cfg ]; then
     cp $BASEDIR/pellcorp-backups/printer.factory.cfg $BASEDIR/printer_data/config/printer.cfg
   fi
 
@@ -1437,7 +1448,7 @@ set -o pipefail # preserve installer failures through tee
     exit 1
   fi
 
-  cleanup_probes
+  [ -z "$reinstall_component" ] && cleanup_probes
 
   install_cartographer_klipper=0
   install_cartographer_plugin=0
@@ -1539,12 +1550,12 @@ set -o pipefail # preserve installer failures through tee
   # we want a copy of the file before config overrides are re-applied so we can correctly generate diffs
   # against different generations of the original file
   for file in printer.cfg start_end.cfg ${probe}.conf spoolman.conf timelapse.conf moonraker.conf crowsnest.conf webcam.conf useful_macros.cfg homing.cfg ${probe}_macro.cfg ${probe}.cfg; do
-    if [ -f $BASEDIR/printer_data/config/$file ]; then
+    if [ -z "$reinstall_component" ] && [ -f $BASEDIR/printer_data/config/$file ]; then
       cp $BASEDIR/printer_data/config/$file $BASEDIR/pellcorp-backups/$file
     fi
   done
 
-  if [ -f $BASEDIR/printer_data/moonraker.asvc ]; then
+  if [ -z "$reinstall_component" ] && [ -f $BASEDIR/printer_data/moonraker.asvc ]; then
     cp $BASEDIR/printer_data/moonraker.asvc $BASEDIR/pellcorp-backups/moonraker.asvc
   fi
 
