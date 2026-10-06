@@ -515,6 +515,7 @@ function install_boot_display() {
 
 function install_webcam() {
     local mode=$1
+    local probe=$2
 
     grep -q "webcam" /usr/data/pellcorp.done
     if [ $? -ne 0 ]; then
@@ -557,6 +558,10 @@ function install_webcam() {
       cp /usr/data/pellcorp/k1/services/S50webcam /etc/init.d/ || exit $?
       cp /usr/data/pellcorp/k1/webcam.ini /usr/data/printer_data/config/ || exit $?
       cp /usr/data/pellcorp/k1/webcam.conf /usr/data/printer_data/config/ || exit $?
+      if [ "$probe" = "bltouch" ] || [ "$probe" = "microprobe" ] || [ "$probe" = "klicky" ]; then
+        sed -i -e 's/^service:.*/service: mjpegstreamer/' -e 's/^target_fps:.*/target_fps: 15/' /usr/data/printer_data/config/webcam.conf
+        sed -i 's/^frames_per_second=.*/frames_per_second=15/' /usr/data/printer_data/config/webcam.ini
+      fi
       cp /usr/data/pellcorp/config/camera.cfg /usr/data/printer_data/config/ || exit $?
       cp /usr/data/pellcorp/config/camera_control.cfg /usr/data/printer_data/config/ || exit $?
       $CONFIG_HELPER --add-include "camera.cfg" || exit $?
@@ -566,34 +571,6 @@ function install_webcam() {
       echo "webcam" >> /usr/data/pellcorp.done
       sync
       return 1
-    fi
-    return 0
-}
-
-function configure_webcam_for_probe() {
-    local webcam_conf=/usr/data/printer_data/config/webcam.conf
-    local webcam_ini=/usr/data/printer_data/config/webcam.ini
-    local from_service=mjpegstreamer-adaptive
-    local to_service=mjpegstreamer
-    local from_fps=10
-    local to_fps=15
-
-    if [ "$1" = "cartographer" ] || [ "$1" = "cartotouch" ] || [ "$1" = "beacon" ] || [ "$1" = "btteddy" ] || [ "$1" = "eddyng" ]; then
-        from_service=mjpegstreamer
-        to_service=mjpegstreamer-adaptive
-        from_fps=15
-        to_fps=10
-    fi
-
-    if [ ! -f $webcam_conf ] || [ ! -f $webcam_ini ]; then
-        return 0
-    fi
-
-    if grep -q "^service: $from_service$\|^target_fps: $from_fps$" $webcam_conf || grep -q "^frames_per_second=$from_fps$" $webcam_ini; then
-        sed -i -e "s/^service: $from_service$/service: $to_service/" -e "s/^target_fps: $from_fps$/target_fps: $to_fps/" $webcam_conf
-        sed -i "s/^frames_per_second=$from_fps$/frames_per_second=$to_fps/" $webcam_ini
-        echo "INFO: Configured webcam settings for $1 probe"
-        return 1
     fi
     return 0
 }
@@ -2586,7 +2563,7 @@ fi
     sync
 
     install_packages $mode
-    install_webcam $mode
+    install_webcam $mode $probe
     install_webcam=$?
 
     # boot-display already setup on firmware with the /etc/pellcorp flag
@@ -2675,9 +2652,6 @@ fi
         exit 1
     fi
 
-    configure_webcam_for_probe $probe
-    configure_webcam=$?
-
     if [ -f /usr/data/pellcorp-backups/printer.factory.cfg ]; then
         # we want a copy of the file before config overrides are re-applied so we can correctly generate diffs
         # against different generations of the original file
@@ -2747,7 +2721,7 @@ fi
         sudo systemctl restart grumpyscreen
     fi
 
-    if [ $apply_overrides -ne 0 ] || [ $install_webcam -ne 0 ] || [ $configure_webcam -ne 0 ]; then
+    if [ $apply_overrides -ne 0 ] || [ $install_webcam -ne 0 ]; then
         echo "INFO: Restarting Webcam ..."
         sudo systemctl restart webcam
     fi
