@@ -557,6 +557,9 @@ function install_webcam() {
       cp /usr/data/pellcorp/k1/services/S50webcam /etc/init.d/ || exit $?
       cp /usr/data/pellcorp/k1/webcam.ini /usr/data/printer_data/config/ || exit $?
       cp /usr/data/pellcorp/k1/webcam.conf /usr/data/printer_data/config/ || exit $?
+      cp /usr/data/pellcorp/config/camera.cfg /usr/data/printer_data/config/ || exit $?
+      cp /usr/data/pellcorp/config/camera_control.cfg /usr/data/printer_data/config/ || exit $?
+      $CONFIG_HELPER --add-include "camera.cfg" || exit $?
 
       /etc/init.d/S50webcam start
 
