@@ -558,7 +558,7 @@ function install_webcam() {
       cp /usr/data/pellcorp/k1/services/S50webcam /etc/init.d/ || exit $?
       cp /usr/data/pellcorp/k1/webcam.ini /usr/data/printer_data/config/ || exit $?
       cp /usr/data/pellcorp/k1/webcam.conf /usr/data/printer_data/config/ || exit $?
-      if [ "$probe" = "bltouch" ] || [ "$probe" = "microprobe" ] || [ "$probe" = "klicky" ]; then
+      if [ "$probe" = "bltouch" ] || [ "$probe" = "microprobe" ] || [ "$probe" = "klicky" ] || [ "$probe" = "loadcells" ]; then
         sed -i -e 's/^service:.*/service: mjpegstreamer/' -e 's/^target_fps:.*/target_fps: 15/' /usr/data/printer_data/config/webcam.conf
         sed -i 's/^frames_per_second=.*/frames_per_second=15/' /usr/data/printer_data/config/webcam.ini
       fi
