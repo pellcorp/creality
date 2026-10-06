@@ -238,8 +238,8 @@ auto_update() {
             else
                 startup_app $bed_serial
             fi
+            echo "bed_version=$bed_version" >> $VERSION_FILE
         fi
-        echo "bed_version=$bed_version" >> $VERSION_FILE
     fi
 
     if [ $noz_ready = "true" ]; then
