@@ -32,6 +32,7 @@ if [ -z "$info" ]; then
   exit 1
 fi
 
+requested=$value
 if [ "$value" = "default" ]; then
   value=$(echo "$info" | sed -n 's/.*default=\([-0-9]*\).*/\1/p')
 fi
@@ -61,3 +62,23 @@ fi
 
 v4l2-ctl -d $device --set-ctrl $control=$value || exit 1
 echo "INFO: Set $control to $value"
+
+BASEDIR=$HOME
+if grep -Fqs "ID=buildroot" /etc/os-release; then
+    BASEDIR=/usr/data
+fi
+CONFIG_HELPER="$BASEDIR/pellcorp/tools/config-helper.py"
+WEBCAM_INI=$BASEDIR/printer_data/config/webcam.ini
+
+# save to the webcam.ini [controls] section so the webcam service re-applies it on startup, a default
+# value removes it, the section is created at the end of the file the first time a control is saved
+if [ -f $WEBCAM_INI ]; then
+  if [ "$requested" = "default" ]; then
+    $CONFIG_HELPER --file $WEBCAM_INI --remove-section-entry controls $control || exit $?
+  elif $CONFIG_HELPER --file $WEBCAM_INI --section-exists controls; then
+    $CONFIG_HELPER --file $WEBCAM_INI --replace-section-entry controls $control $value || exit $?
+  else
+    [ -n "$(tail -c 1 $WEBCAM_INI)" ] && echo >> $WEBCAM_INI
+    printf '\n[controls]\n%s: %s\n' "$control" "$value" >> $WEBCAM_INI
+  fi
+fi

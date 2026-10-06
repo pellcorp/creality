@@ -3,6 +3,7 @@
 PID_FILE="/var/run/webcam.pid"
 
 CONFIG_FILE=/usr/data/printer_data/config/webcam.ini
+CONFIG_HELPER=/usr/data/pellcorp/tools/config-helper.py
 
 # max fps for the camera
 FRAMES_PER_SECOND=10
@@ -29,6 +30,23 @@ start() {
 
   if [ "$DISABLE_NEBULA_IRLIGHT" = "true" ]; then
     /usr/data/pellcorp/k1/tools/cam_util.py off $V4L_DEVICE > /dev/null
+  fi
+
+  # re-apply camera controls from the webcam.ini [controls] section, one at a time so a rejected
+  # control does not stop the rest, auto controls first so manual values that depend on them are accepted
+  if [ -f $CONFIG_FILE ]; then
+    controls=$($CONFIG_HELPER --file $CONFIG_FILE --section-entries controls 2> /dev/null | tr -d ' \t' | tr '\n' ' ')
+    for pass in auto manual; do
+      for control in $controls; do
+        case "${control%%=*}" in
+          *auto*) [ "$pass" = "auto" ] || continue ;;
+          *) [ "$pass" = "manual" ] || continue ;;
+        esac
+        if [ -n "${control#*=}" ]; then
+          v4l2-ctl -d $V4L_DEVICE --set-ctrl "$control" > /dev/null 2>&1
+        fi
+      done
+    done
   fi
 
   flip_vertical_arg=""
