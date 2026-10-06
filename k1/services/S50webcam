@@ -31,15 +31,6 @@ start() {
     /usr/data/pellcorp/k1/tools/cam_util.py off $V4L_DEVICE > /dev/null
   fi
 
-  # re-apply any camera controls saved via the CAMERA_CONTROL macro
-  CAMERA_CONTROLS=$(/usr/data/pellcorp/tools/config-helper.py --ignore-missing --file camera.cfg --get-section-entry "gcode_macro _CAMERA_CONTROL_SAVED" "variable_controls" 2> /dev/null | tr -d "'")
-  if [ -n "$CAMERA_CONTROLS" ] && [ "$CAMERA_CONTROLS" != "none" ]; then
-    # one at a time so a single rejected control does not stop the rest being applied
-    for camera_control in $(echo "$CAMERA_CONTROLS" | tr ',' ' '); do
-      v4l2-ctl -d $V4L_DEVICE --set-ctrl "$camera_control" > /dev/null 2>&1
-    done
-  fi
-
   flip_vertical_arg=""
   if [ "$FLIP_VERTICAL" = "true" ]; then
     flip_vertical_arg="--flip-vertical=1"
