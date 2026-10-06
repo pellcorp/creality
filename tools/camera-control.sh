@@ -17,7 +17,72 @@ fi
 
 # no control just list the available controls and their current values
 if [ -z "$control" ]; then
-  v4l2-ctl -d $device -l
+  controls=$(v4l2-ctl -d "$device" -L) || exit $?
+  printf '%s\n' "$controls" | awk '
+    /^[[:space:]]*[[:alnum:]_]+[[:space:]]+0x[[:xdigit:]]+[[:space:]]+\([^)]*\)[[:space:]]*:/ {
+      if (menu_name != "") {
+        if (options != "")
+          print menu_name " (menu): options=[" options "] " menu_details
+        else
+          print menu_name " (menu): " menu_details
+      }
+
+      line = $0
+      sub(/^[[:space:]]*/, "", line)
+      name = line
+      sub(/[[:space:]].*$/, "", name)
+      type = line
+      sub(/^[^(]*\(/, "", type)
+      sub(/\).*/, "", type)
+      details = line
+      sub(/^[^:]*:[[:space:]]*/, "", details)
+
+      min_value = ""
+      max_value = ""
+      if (match(details, /min=-?[0-9]+/))
+        min_value = substr(details, RSTART + 4, RLENGTH - 4)
+      if (match(details, /max=-?[0-9]+/))
+        max_value = substr(details, RSTART + 4, RLENGTH - 4)
+      if (match(details, /default=-?[0-9]+/)) {
+        default_value = substr(details, RSTART + 8, RLENGTH - 8)
+        if (min_value != "" && default_value + 0 < min_value + 0)
+          details = substr(details, 1, RSTART + 7) min_value substr(details, RSTART + RLENGTH)
+        else if (max_value != "" && default_value + 0 > max_value + 0)
+          details = substr(details, 1, RSTART + 7) max_value substr(details, RSTART + RLENGTH)
+      }
+
+      options = ""
+      menu_name = ""
+      menu_details = ""
+      if (type == "menu") {
+        sub(/min=-?[0-9]+[[:space:]]+max=-?[0-9]+[[:space:]]*/, "", details)
+        menu_name = name
+        menu_details = details
+      } else {
+        print name " (" type "): " details
+      }
+      next
+    }
+
+    menu_name != "" && /^[[:space:]]*[0-9]+:/ {
+      option = $0
+      sub(/^[[:space:]]*/, "", option)
+      if (options == "")
+        options = option
+      else
+        options = options ", " option
+      next
+    }
+
+    END {
+      if (menu_name != "") {
+        if (options != "")
+          print menu_name " (menu): options=[" options "] " menu_details
+        else
+          print menu_name " (menu): " menu_details
+      }
+    }
+  '
   exit $?
 fi
 
@@ -51,6 +116,13 @@ fi
 
 min=$(echo "$info" | sed -n 's/.*min=\([-0-9]*\).*/\1/p')
 max=$(echo "$info" | sed -n 's/.*max=\([-0-9]*\).*/\1/p')
+if [ "$requested" = "default" ]; then
+  if [ -n "$min" ] && [ "$value" -lt "$min" ]; then
+    value=$min
+  elif [ -n "$max" ] && [ "$value" -gt "$max" ]; then
+    value=$max
+  fi
+fi
 if [ -n "$min" ] && [ "$value" -lt "$min" ]; then
   echo "ERROR: Value $value for $control is below the minimum of $min"
   exit 1
