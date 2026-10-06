@@ -26,6 +26,7 @@ if [ -z "$value" ]; then
   exit 1
 fi
 
+save_value=$value
 if [ "$value" = "default" ]; then
   value=$(v4l2-ctl -d $device -l | grep "^[[:space:]]*$control " | sed -n 's/.*default=\([-0-9]*\).*/\1/p')
   if [ -z "$value" ]; then
@@ -36,3 +37,16 @@ fi
 
 v4l2-ctl -d $device --set-ctrl $control=$value || exit 1
 echo "INFO: Set $control to $value"
+
+# remember the control so S50webcam can re-apply it on startup, a default value is forgotten
+CONFIG_HELPER="/usr/data/pellcorp/tools/config-helper.py"
+if [ -f /usr/data/printer_data/config/camera.cfg ]; then
+  saved=$($CONFIG_HELPER --file camera.cfg --get-section-entry "gcode_macro _CAMERA_CONTROL_SAVED" "variable_controls" | tr -d "'")
+  [ "$saved" = "none" ] && saved=
+  saved=$(echo "$saved" | tr ',' '\n' | grep -v "^${control}=" | grep -v '^$' | tr '\n' ',' | sed 's/,$//')
+  if [ "$save_value" != "default" ]; then
+    saved=$(echo "${saved:+$saved,}$control=$value")
+  fi
+  [ -z "$saved" ] && saved=none
+  $CONFIG_HELPER --file camera.cfg --replace-section-entry "gcode_macro _CAMERA_CONTROL_SAVED" "variable_controls" "'$saved'" || exit $?
+fi
