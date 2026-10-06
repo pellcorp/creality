@@ -1,5 +1,10 @@
 #!/usr/bin/env python3
 
+#
+# This is specific to the Nebula Camera with at least V18 firmware, all it does is allow
+# us to configure the ir camera mode.
+#
+
 import argparse
 import ctypes
 import fcntl

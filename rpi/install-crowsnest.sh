@@ -43,15 +43,19 @@ if [ $? -ne 0 ]; then
 
   cp $BASEDIR/pellcorp/rpi/webcam.conf $BASEDIR/printer_data/config/ || exit $?
   $CONFIG_HELPER --file moonraker.conf --add-include "webcam.conf" || exit $?
+
+  cp $BASEDIR/pellcorp/config/camera.cfg $BASEDIR/printer_data/config/ || exit $?
+  cp $BASEDIR/pellcorp/config/camera_control.cfg $BASEDIR/printer_data/config/ || exit $?
+  $CONFIG_HELPER --add-include "camera.cfg" || exit $?
+
   sudo systemctl restart crowsnest
   echo "crowsnest" >> $BASEDIR/pellcorp.done
 fi
 
-
- [ -d $BASEDIR/crowsnest ]; then
-        crowsnest_major=$(git -C $BASEDIR/crowsnest describe --tags 2> /dev/null | sed -n 's/^v\([0-9]*\)\..*/\1/p')
-        if [ -n "$crowsnest_major" ] && [ "$crowsnest_major" -lt 5 ]; then
-                echo
-                echo "INFO: Crowsnest v4 is no longer being updated. To upgrade to v5 yourself, run: $BASEDIR/pellcorp/rpi/update-crowsnest.sh"
-        fi
+if [ -d $BASEDIR/crowsnest ]; then
+  crowsnest_major=$(git -C $BASEDIR/crowsnest describe --tags 2> /dev/null | sed -n 's/^v\([0-9]*\)\..*/\1/p')
+  if [ -n "$crowsnest_major" ] && [ "$crowsnest_major" -lt 5 ]; then
+    echo
+    echo "INFO: Crowsnest v4 is no longer being updated. To upgrade to v5 yourself, run: $BASEDIR/pellcorp/rpi/update-crowsnest.sh"
   fi
+fi
