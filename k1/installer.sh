@@ -563,7 +563,6 @@ function install_webcam() {
         sed -i 's/^frames_per_second=.*/frames_per_second=15/' /usr/data/printer_data/config/webcam.ini
       fi
       cp /usr/data/pellcorp/config/camera.cfg /usr/data/printer_data/config/ || exit $?
-      cp /usr/data/pellcorp/config/camera_control.cfg /usr/data/printer_data/config/ || exit $?
       $CONFIG_HELPER --add-include "camera.cfg" || exit $?
 
       /etc/init.d/S50webcam start
