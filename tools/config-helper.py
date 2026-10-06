@@ -249,6 +249,7 @@ def main():
     opts.add_option("", "--remove-section", dest="remove_section", nargs=1, type="string")
     opts.add_option("", "--remove-section-entry", dest="remove_section_entry", nargs=2, type="string")
     opts.add_option("", "--get-section-entry", dest="get_section_entry", nargs=2, type="string")
+    opts.add_option("", "--section-entries", dest="section_entries", nargs=1, type="string")
     # all these are for --get-section-entry only, saves me doing bash arithmetic
     opts.add_option("", "--integer", dest="integer", default=False, action='store_true')
     opts.add_option("", "--default-value", dest="default_value")
@@ -340,6 +341,15 @@ def main():
             print(value)
         elif options.default_value:
             print(options.default_value)
+        else:
+            exit_code = 1
+    elif options.section_entries:
+        # print every entry as key=value regardless of the delimiter used in the file
+        section = updater.get_section(options.section_entries, None)
+        if section:
+            for key in section:
+                value = section.get(key, None)
+                print(f"{key}={value.value.strip() if value and value.value else ''}")
         else:
             exit_code = 1
     elif options.include_exists:
