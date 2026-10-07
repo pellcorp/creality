@@ -27,6 +27,11 @@ if [ $? -ne 0 ]; then
     curl -L "https://github.com/mainsail-crew/mainsail/releases/latest/download/mainsail.zip" -o $BASEDIR/mainsail.zip || exit $?
     unzip -qd $BASEDIR/mainsail $BASEDIR/mainsail.zip || exit $?
     rm $BASEDIR/mainsail.zip
+
+    if [ ! -d $BASEDIR/printer_data/config/.theme ]; then
+      mkdir -p $BASEDIR/printer_data/config/.theme || exit $?
+      cp $BASEDIR/pellcorp/config/theme/logo_simpleaf.svg $BASEDIR/printer_data/config/.theme/sidebar-logo.svg || exit $?
+    fi
   fi
 
   echo "mainsail" >> $BASEDIR/pellcorp.done
