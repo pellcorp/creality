@@ -7,12 +7,12 @@ fi
 
 BASEDIR=$HOME
 
+source $BASEDIR/pellcorp/rpi/functions.sh
+
 command -v lsb_release > /dev/null
 if [ $? -ne 0 ]; then
   retry sudo apt-get install -y lsb-release; error
 fi
-
-source $BASEDIR/pellcorp/rpi/functions.sh
 
 CONFIG_HELPER="$BASEDIR/pellcorp/tools/config-helper.py"
 
