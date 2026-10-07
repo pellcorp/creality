@@ -1510,6 +1510,51 @@ function setup_loadcells() {
     return 0
 }
 
+function setup_loadcells_zoffset() {
+    local probe=$1
+
+    grep -q "loadcells-zoffset" /usr/data/pellcorp.done
+    if [ $? -ne 0 ]; then
+        echo
+        echo "INFO: Setting up loadcells for z-offset ..."
+
+        cp /usr/data/pellcorp/config/loadcells_zoffset.cfg /usr/data/printer_data/config/ || exit $?
+        $CONFIG_HELPER --file loadcells_zoffset.cfg --patches /usr/data/pellcorp/k1/patches/loadcells_zoffset.cfg.${model} --quiet || exit $?
+        $CONFIG_HELPER --add-include "loadcells_zoffset.cfg" || exit $?
+
+        # btteddy_zoffset.cfg and loadcells_zoffset.cfg both set the z-offset
+        $CONFIG_HELPER --remove-include "btteddy_zoffset.cfg" || exit $?
+
+        $CONFIG_HELPER --remove-section "load_cell_probe" || exit $?
+        $CONFIG_HELPER --add-section "load_cell_probe" || exit $?
+        z_offset=$($CONFIG_HELPER --ignore-missing --file /usr/data/pellcorp-overrides/printer.cfg.save_config --get-section-entry load_cell_probe z_offset)
+        if [ -n "$z_offset" ]; then
+          $CONFIG_HELPER --replace-section-entry "load_cell_probe" "# z_offset" "0.0" || exit $?
+        else
+          $CONFIG_HELPER --replace-section-entry "load_cell_probe" "z_offset" "0.0" || exit $?
+        fi
+
+        # the load cell probe is done at the zero reference position, cartotouch, cartographer and beacon already define it
+        if [ "$probe" = "bltouch" ] || [ "$probe" = "microprobe" ] || [ "$probe" = "btteddy" ] || [ "$probe" = "eddyng" ] || [ "$probe" = "klicky" ]; then
+            if [ "$model" = "f005" ] || [ "$model" = "e3v3se" ]; then
+                zero_reference_position="20,25"
+            else
+                y_position_mid=$($CONFIG_HELPER --get-section-entry "stepper_y" "position_max" --divisor 2 --integer)
+                x_position_mid=$($CONFIG_HELPER --get-section-entry "stepper_x" "position_max" --divisor 2 --integer)
+                zero_reference_position="$x_position_mid,$y_position_mid"
+            fi
+            $CONFIG_HELPER --file ${probe}.cfg --replace-section-entry "bed_mesh" "zero_reference_position" "$zero_reference_position" || exit $?
+        fi
+
+        echo "loadcells-zoffset" >> /usr/data/pellcorp.done
+        sync
+
+        # means klipper needs to be restarted
+        return 1
+    fi
+    return 0
+}
+
 function set_serial_cartotouch() {
     local SERIAL_ID=$(ls /dev/serial/by-id/usb-* | grep "IDM\|Cartographer" | head -1)
     if [ -n "$SERIAL_ID" ]; then
@@ -2180,11 +2225,17 @@ fi
     fi
 
     mode=install
+    mode_specified=false
     force=false
     skip_overrides=false
     probe_switch=false
     old_probe=
     mount=
+    loadcells_zoffset=false
+    loadcells_zoffset_specified=false
+    if grep -q "^\[include loadcells_zoffset.cfg\]" /usr/data/printer_data/config/printer.cfg 2> /dev/null; then
+        loadcells_zoffset=true
+    fi
 
     if [ -f /usr/data/pellcorp.done ]; then
         install_mount=$(cat /usr/data/pellcorp.done | grep "mount=" | awk -F '=' '{print $2}')
@@ -2193,6 +2244,7 @@ fi
     while true; do
         if [ "$1" = "--fix-client-variables" ] || [ "$1" = "--fix-serial" ] || [ "$1" = "--install" ] || [ "$1" = "--update" ] || [ "$1" = "--reinstall" ] || [ "$1" = "--clean-install" ] || [ "$1" = "--clean-update" ] || [ "$1" = "--clean-reinstall" ]; then
             mode=$(echo $1 | sed 's/--//g')
+            mode_specified=true
             shift
             if [ "$mode" = "clean-install" ] || [ "$mode" = "clean-reinstall" ] || [ "$mode" = "clean-update" ]; then
                 skip_overrides=true
@@ -2201,6 +2253,16 @@ fi
         elif [ "$1" = "--kalico" ]; then
             klipper_fork=kalico
             shift
+<<<<<<< HEAD
+=======
+        elif [ "$1" = "--klipper" ]; then
+            klipper_fork=klipper
+            shift
+        elif [ "$1" = "--loadcells-zoffset" ]; then
+            loadcells_zoffset=true
+            loadcells_zoffset_specified=true
+            shift
+>>>>>>> 4bcfe45 (Update installer.sh)
         elif [ "$1" = "--probe" ]; then # allow the installer to specify a `--probe` argument for clarity
             shift
         elif [ "$1" = "--printer" ]; then
@@ -2312,8 +2374,48 @@ fi
         fi
     fi
 
+    if [ "$loadcells_zoffset" = "true" ]; then
+        if [ "$probe" = "loadcells" ]; then
+            if [ "$loadcells_zoffset_specified" = "true" ]; then
+                echo "ERROR: --loadcells-zoffset is not needed for the loadcells probe"
+                exit 1
+            fi
+            loadcells_zoffset=false
+        elif [ ! -f /usr/data/pellcorp/k1/patches/loadcells_zoffset.cfg.${model} ]; then
+            echo "FATAL: Loadcells for z-offset is not supported for your printer ($MODEL)"
+            exit 1
+        fi
+    fi
+
+    if [ "$loadcells_zoffset" = "true" ]; then
+        # enabling load cells z-offset on an existing installation is an update
+        if [ "$loadcells_zoffset_specified" = "true" ] && [ "$mode_specified" != "true" ] && [ -f /usr/data/pellcorp.done ]; then
+            mode=update
+        fi
+
+        if [ "$mode" = "install" ] || [ "$mode" = "reinstall" ]; then
+            klipper_fork=kalico
+        fi
+
+        current_fork=$klipper_fork
+        if [ -d /usr/data/klipper/.git ]; then
+            cd /usr/data/klipper/
+            remote_repo=$(git remote get-url origin | awk -F '/' '{print $NF}' | sed 's/.git//g')
+            cd - > /dev/null
+            [ "$remote_repo" = "kalico" ] && current_fork=kalico
+        fi
+
+        if [ "$current_fork" != "kalico" ]; then
+            echo "ERROR: loadcells for z-offset requires kalico, use --kalico"
+            exit 1
+        fi
+    fi
+
     echo "INFO: Mode is $mode"
     echo "INFO: Probe is $probe"
+    if [ "$loadcells_zoffset" = "true" ]; then
+      echo "INFO: Loadcells for z-offset is enabled"
+    fi
     if [ "$MODEL" = "NEBULA" ]; then
       echo "INFO: Model is $model"
     fi
@@ -2333,7 +2435,7 @@ fi
             fi
             echo
             exit 1
-        elif [ "$mode" = "update" ] && [ "$PELLCORP_UPDATED_SHA" = "$PELLCORP_GIT_SHA" ] && [ "$probe_switch" != "true" ] && [ "$force" != "true" ] && [ -z "$mount" ]; then
+        elif [ "$mode" = "update" ] && [ "$PELLCORP_UPDATED_SHA" = "$PELLCORP_GIT_SHA" ] && [ "$probe_switch" != "true" ] && [ "$force" != "true" ] && [ -z "$mount" ] && [ "$loadcells_zoffset_specified" != "true" ]; then
             echo
             echo "ERROR: Installation is already up to date - NO CHANGES WERE MADE!"
             echo
@@ -2678,6 +2780,12 @@ fi
         exit 1
     fi
 
+    setup_loadcells_zoffset=0
+    if [ "$loadcells_zoffset" = "true" ]; then
+        setup_loadcells_zoffset "$probe"
+        setup_loadcells_zoffset=$?
+    fi
+
     if [ -f /usr/data/pellcorp-backups/printer.factory.cfg ]; then
         # we want a copy of the file before config overrides are re-applied so we can correctly generate diffs
         # against different generations of the original file
@@ -2735,7 +2843,7 @@ fi
         sudo systemctl restart nginx
     fi
 
-    if [ $set_serial -ne 0 ] || [ $fix_custom_config -ne 0 ] || [ $fixup_client_variables_config -ne 0 ] || [ $apply_overrides -ne 0 ] || [ $apply_mount_overrides -ne 0 ] || [ $install_cartographer_klipper -ne 0 ] || [ $install_beacon_klipper -ne 0 ] || [ $install_klipper -ne 0 ] || [ $setup_probe -ne 0 ] || [ $setup_probe_specific -ne 0 ]; then
+    if [ $set_serial -ne 0 ] || [ $fix_custom_config -ne 0 ] || [ $fixup_client_variables_config -ne 0 ] || [ $apply_overrides -ne 0 ] || [ $apply_mount_overrides -ne 0 ] || [ $install_cartographer_klipper -ne 0 ] || [ $install_beacon_klipper -ne 0 ] || [ $install_klipper -ne 0 ] || [ $setup_probe -ne 0 ] || [ $setup_probe_specific -ne 0 ] || [ $setup_loadcells_zoffset -ne 0 ]; then
         echo "INFO: Restarting Klipper ..."
         sudo systemctl stop klipper
         sudo systemctl restart klipper_mcu
