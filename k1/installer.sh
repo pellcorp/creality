@@ -2153,6 +2153,7 @@ fi
     probe_switch=false
     old_probe=
     mount=
+    reinstall_component=
 
     if [ -f /usr/data/pellcorp.done ]; then
         install_mount=$(cat /usr/data/pellcorp.done | grep "mount=" | awk -F '=' '{print $2}')
@@ -2165,6 +2166,13 @@ fi
             if [ "$mode" = "clean-install" ] || [ "$mode" = "clean-reinstall" ] || [ "$mode" = "clean-update" ]; then
                 skip_overrides=true
                 mode=$(echo $mode | sed 's/clean-//g')
+            fi
+            if [ "$mode" = "reinstall" ]; then
+                case "$1" in
+                    klipper|moonraker|nginx|fluidd|mainsail) reinstall_component=$1; shift ;;
+                    microprobe|bltouch|beacon|klicky|cartographer|cartotouch|btteddy|eddyng|loadcells|--*|"") ;;
+                    *) echo "ERROR: Invalid reinstall component $1, must be one of: klipper, moonraker, nginx, fluidd, mainsail"; exit 1 ;;
+                esac
             fi
         elif [ "$1" = "--kalico" ]; then
             klipper_fork=kalico
@@ -2373,7 +2381,7 @@ fi
             else
                 exit 1
             fi
-        elif [ "$skip_overrides" = "true" ] || [ "$mode" = "install" ] || [ "$mode" = "reinstall" ]; then
+        elif [ "$skip_overrides" = "true" ] || [ "$mode" = "install" ] || ([ "$mode" = "reinstall" ] && [ -z "$reinstall_component" ]); then
             echo "ERROR: Mount option must be specified"
             exit 1
         elif [ -f /usr/data/pellcorp.done ]; then
@@ -2522,7 +2530,10 @@ fi
         echo "INFO: Configuration overrides will not be saved or applied"
     fi
 
-    if [ "$mode" = "reinstall" ] || [ "$mode" = "update" ]; then
+    if [ -n "$reinstall_component" ]; then
+        echo "INFO: Reinstalling $reinstall_component only"
+        [ -f /usr/data/pellcorp.done ] && sed -i "/^${reinstall_component}\$/d;/^installed_sha=/d" /usr/data/pellcorp.done
+    elif [ "$mode" = "reinstall" ] || [ "$mode" = "update" ]; then
         if [ "$skip_overrides" != "true" ]; then
             if [ -f /usr/data/pellcorp-backups/printer.cfg ]; then
                 /usr/data/pellcorp/tools/config-overrides.sh
@@ -2546,7 +2557,7 @@ fi
     [ -f /usr/data/printer_data/config/sensorless.cfg ] && rm /usr/data/printer_data/config/sensorless.cfg
 
     # we do this step for install, reinstall and update
-    if [ -f /usr/data/pellcorp-backups/printer.factory.cfg ]; then
+    if [ -z "$reinstall_component" ] && [ -f /usr/data/pellcorp-backups/printer.factory.cfg ]; then
         cp /usr/data/pellcorp-backups/printer.factory.cfg /usr/data/printer_data/config/printer.cfg
         sed -i "1s/^/# Modified by Simple AF ${TIMESTAMP}\n/" /usr/data/printer_data/config/printer.cfg
     elif [ "$mode" = "update" ]; then
@@ -2609,7 +2620,7 @@ fi
     fi
 
     echo
-    cleanup_probes
+    [ -z "$reinstall_component" ] && cleanup_probes
 
     install_cartographer_klipper=0
     install_cartographer_plugin=0
@@ -2664,7 +2675,7 @@ fi
         exit 1
     fi
 
-    if [ -f /usr/data/pellcorp-backups/printer.factory.cfg ]; then
+    if [ -z "$reinstall_component" ] && [ -f /usr/data/pellcorp-backups/printer.factory.cfg ]; then
         # we want a copy of the file before config overrides are re-applied so we can correctly generate diffs
         # against different generations of the original file
         for file in printer.cfg start_end.cfg ${probe}.conf spoolman.conf internal_macros.cfg useful_macros.cfg timelapse.conf moonraker.conf webcam.conf webcam.ini homing.cfg loadcells_zoffset.cfg ${probe}_macro.cfg ${probe}.cfg; do
