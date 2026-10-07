@@ -1,13 +1,15 @@
 #!/bin/sh
 
+TMPDIR=/tmp
 BASEDIR=$HOME
 if grep -Fqs "ID=buildroot" /etc/os-release; then
     BASEDIR=/usr/data
+    TMPDIR=/usr/data/tmp
 fi
 
 THEMES_API=https://api.github.com/repos/pellcorp/simple-af-themes/contents
 THEMES_URL=https://raw.githubusercontent.com/pellcorp/simple-af-themes/main
-THEMES_DIR=/tmp/simple-af-themes
+THEMES_DIR=$TMPDIR/simple-af-themes
 
 theme=$1
 if [ "$theme" = "list" ]; then
@@ -26,13 +28,14 @@ esac
 if [ "$theme" != "stock" ]; then
     echo "Downloading $theme theme ..."
     rm -rf $THEMES_DIR
-    mkdir -p $THEMES_DIR
     theme_dir=$THEMES_DIR/$theme
+    mkdir -p $theme_dir
     if ! curl -fsL $THEMES_URL/$theme.zip -o $THEMES_DIR/$theme.zip || ! unzip -qo $THEMES_DIR/$theme.zip -d $theme_dir; then
         echo "ERROR: Theme $theme not found"
         rm -rf $THEMES_DIR
         exit 1
     fi
+
     if [ ! -f $theme_dir/css/fluidd.css ] && [ ! -f $theme_dir/css/mainsail.css ]; then
         echo "ERROR: Theme $theme is invalid"
         rm -rf $THEMES_DIR
