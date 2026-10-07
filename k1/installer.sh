@@ -777,6 +777,16 @@ function install_fluidd() {
             rm /usr/data/fluidd.zip
         fi
 
+        if [ ! -d /usr/data/printer_data/config/.fluidd-theme ]; then
+          mkdir -p /usr/data/printer_data/config/.fluidd-theme || exit $?
+          cp /usr/data/pellcorp/config/theme/logo_simpleaf.svg /usr/data/printer_data/config/.fluidd-theme/logo.svg || exit $?
+          # fluidd docs are wrong you can't drop a logo.svg into the fluidd theme directory, I opened a bug maybe they
+          # actually change the code so it can actually work and I can remove this shit
+          curl -s -X POST "http://localhost:7125/server/database/item" \
+              -H "Content-Type: application/json" \
+              -d '{"namespace":"fluidd","key":"uiSettings.theme.logo.src","value":"server/files/config/.fluidd-theme/logo.svg"}'
+        fi
+
         echo "fluidd" >> /usr/data/pellcorp.done
         sync
 
@@ -803,6 +813,11 @@ function install_mainsail() {
             curl -L "https://github.com/mainsail-crew/mainsail/releases/latest/download/mainsail.zip" -o /usr/data/mainsail.zip || exit $?
             unzip -qd /usr/data/mainsail /usr/data/mainsail.zip || exit $?
             rm /usr/data/mainsail.zip
+        fi
+
+        if [ ! -d /usr/data/printer_data/config/.theme ]; then
+          mkdir -p /usr/data/printer_data/config/.theme || exit $?
+          cp /usr/data/pellcorp/config/theme/logo_simpleaf.svg /usr/data/printer_data/config/.theme/sidebar-logo.svg || exit $?
         fi
 
         # the mainsail and fluidd client.cfg are exactly the same
