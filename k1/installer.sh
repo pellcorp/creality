@@ -2285,7 +2285,7 @@ fi
     fi
 
     # for all but eddyng we are all in on kalico now
-    if [ "$mode" = "install" ] || [ "$mode" = "reinstall" ]; then
+    if [ "$mode" = "install" ] || [ "$mode" = "reinstall" ] || [ "$probe_switch" = "true" ]; then
         if [ "$probe" != "eddyng" ]; then
             klipper_fork=kalico
         fi
@@ -2307,15 +2307,7 @@ fi
           exit 1
         fi
 
-        if [ "$klipper_fork" != "kalico" ] && [ "$probe_switch" = "true" ]; then
-            echo "ERROR: loadcells requires kalico, use --kalico"
-            exit 1
-        fi
-
         if [ "$mode" = "install" ] || [ "$mode" = "reinstall" ] || [ "$probe_switch" = "true" ]; then
-          # this just makes sure we switch to kalico if switching to load cells via an update
-          klipper_fork=kalico
-
           echo
           echo "***************************************************************"
           echo "* WARNING: loadcells support is HIGHLY EXPERIMENTAL           *"
