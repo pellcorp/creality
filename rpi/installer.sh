@@ -993,8 +993,12 @@ elif [ "$1" = "--klipper-branch" ]; then # convenience for testing new features
         exit 1
     fi
 elif [ "$1" = "--klipper-repo" ] || [ "$1" = "--kalico" ] || [ "$1" = "--klipper" ]; then
-    cd ~ # make sure we are not currently in the klipper dir oops
+    if [ ! -f $BASEDIR/pellcorp.done ]; then
+      echo "ERROR: No installation found - try putting $1 last on the command line if this is a new install!"
+      exit 1
+    fi
 
+    cd ~ # make sure we are not currently in the klipper dir oops
     if [ "$1" = "--kalico" ]; then
       klipper_repo=kalico
     elif [ "$1" = "--klipper" ]; then
@@ -1100,9 +1104,15 @@ set -o pipefail # preserve installer failures through tee
   force=false
   skip_overrides=false
   probe_switch=false
-  klipper_fork=kalico
   printer=
   mount=
+
+  klipper_fork=kalico
+  if [ -d $BASEDIR/klipper/.git ]; then
+    if git -C $BASEDIR/klipper/ remote get-url origin | grep -q klipper; then
+      klipper_fork=klipper
+    fi
+  fi
 
   existing_printer=$(cat $BASEDIR/pellcorp-overrides/config.info 2> /dev/null | grep printer= | awk -F '=' '{print $2}')
   # figure out what existing probe if any is being used
@@ -1143,6 +1153,9 @@ set -o pipefail # preserve installer failures through tee
       fi
     elif [ "$1" = "--kalico" ]; then
       klipper_fork=kalico
+      shift
+    elif [ "$1" = "--klipper" ]; then
+      klipper_fork=klipper
       shift
     elif [ "$1" = "--mount" ]; then
       shift
@@ -1225,6 +1238,22 @@ set -o pipefail # preserve installer failures through tee
     else
       echo "ERROR: No installation found"
       exit 1
+    fi
+  fi
+
+  # for all but eddyng we are all in on kalico now
+  if [ "$mode" = "install" ] || [ "$mode" = "reinstall" ] || [ "$probe_switch" = "true" ]; then
+      if [ "$probe" != "eddyng" ]; then
+          klipper_fork=kalico
+      fi
+  fi
+
+  if [ "$klipper_fork" = "kalico" ] && [ "$probe" = "eddyng" ]; then
+    if [ "$probe_switch" = "true" ]; then
+      echo "ERROR: Eddyng requires klipper, use --klipper"
+      exit 1
+    else
+      klipper_fork=klipper
     fi
   fi
 
