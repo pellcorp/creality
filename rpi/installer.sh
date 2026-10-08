@@ -797,6 +797,8 @@ function set_serial_eddyng() {
 }
 
 function setup_eddyng() {
+    local klipper_fork=$1
+
     grep -q "eddyng-probe" $BASEDIR/pellcorp.done
     if [ $? -ne 0 ]; then
         echo
@@ -807,6 +809,10 @@ function setup_eddyng() {
 
         cp $BASEDIR/pellcorp/config/eddyng_macro.cfg $BASEDIR/printer_data/config/ || exit $?
         $CONFIG_HELPER --add-include "eddyng_macro.cfg" || exit $?
+
+        if [ "$klipper_fork" = "kalico" ]; then
+          $CONFIG_HELPER --file eddyng_macro.cfg --replace-section-entry "gcode_macro BED_MESH_CALIBRATE" "variable_scan_type" "'experimental'" || exit $?
+        fi
 
         $CONFIG_HELPER --remove-section "probe_eddy_ng btt_eddy" || exit $?
         $CONFIG_HELPER --add-section "probe_eddy_ng btt_eddy" || exit $?
@@ -1160,9 +1166,6 @@ set -o pipefail # preserve installer failures through tee
     elif [ "$1" = "--kalico" ]; then
       klipper_fork=kalico
       shift
-    elif [ "$1" = "--klipper" ]; then
-      klipper_fork=klipper
-      shift
     elif [ "$1" = "--mount" ]; then
       shift
       mount=$1
@@ -1247,20 +1250,8 @@ set -o pipefail # preserve installer failures through tee
     fi
   fi
 
-  # for all but eddyng we are all in on kalico now
   if [ "$mode" = "install" ] || [ "$mode" = "reinstall" ] || [ "$probe_switch" = "true" ]; then
-      if [ "$probe" != "eddyng" ]; then
-          klipper_fork=kalico
-      fi
-  fi
-
-  if [ "$klipper_fork" = "kalico" ] && [ "$probe" = "eddyng" ]; then
-    if [ "$probe_switch" = "true" ]; then
-      echo "ERROR: Eddyng requires klipper, use --klipper"
-      exit 1
-    else
-      klipper_fork=klipper
-    fi
+      klipper_fork=kalico
   fi
 
   # if using a standard base printer can continue to use it no need to respecify it
@@ -1558,7 +1549,7 @@ set -o pipefail # preserve installer failures through tee
       setup_btteddy
       setup_probe_specific=$?
     elif [ "$probe" = "eddyng" ]; then
-      setup_eddyng
+      setup_eddyng $klipper_fork
       setup_probe_specific=$?
     elif [ "$probe" = "microprobe" ]; then
       setup_microprobe
