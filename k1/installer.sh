@@ -2635,7 +2635,7 @@ fi
     if [ "$mode" = "reinstall" ] || [ "$mode" = "update" ]; then
         if [ "$skip_overrides" != "true" ]; then
             if [ -f /usr/data/pellcorp-backups/printer.cfg ]; then
-                /usr/data/pellcorp/tools/config-overrides.sh
+              /usr/data/pellcorp/tools/config-overrides.sh
             elif [ -f /usr/data/pellcorp.done ]; then # for a factory reset this warning is superfluous
               echo "WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING"
               echo "WARNING: No /usr/data/pellcorp-backups/printer.cfg - config overrides won't be generated!"
@@ -2645,6 +2645,12 @@ fi
 
         if [ -f /usr/data/pellcorp.done ]; then
           rm /usr/data/pellcorp.done
+        fi
+        
+        # cleanup loadcells z-offset config if it was enabled
+        if [ "$probe_switch" = "true" ] && [ -f /usr/data/pellcorp-overrides/printer.cfg ]; then
+          $CONFIG_HELPER --file /usr/data/pellcorp-overrides/printer.cfg --remove-include "loadcells_zoffset.cfg" || exit $?
+          $CONFIG_HELPER --file /usr/data/pellcorp-overrides/printer.cfg --remove-section "load_cell_probe" || exit $?
         fi
     fi
 
