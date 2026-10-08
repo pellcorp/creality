@@ -71,7 +71,7 @@ model=$3
 
 if [ "$mode" = "verify" ]; then
     if [ -d $BASEDIR/pellcorp/mounts/$probe ]; then
-        if [ -z "$(find $BASEDIR/pellcorp/mounts/$probe -maxdepth 1 -name "*-${model}.overrides")" ]; then
+        if [ -z "$(find $BASEDIR/pellcorp/mounts/$probe -name "*-${model}.overrides")" ]; then
             echo "ERROR: Probe (${probe}) is not supported for Model (${model})"
             echo
             echo "The following probes are supported:"
