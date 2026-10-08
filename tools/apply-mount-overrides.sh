@@ -71,21 +71,7 @@ model=$3
 
 if [ "$mode" = "verify" ]; then
     if [ -d $BASEDIR/pellcorp/mounts/$probe ]; then
-        if [ -z "$(find $BASEDIR/pellcorp/mounts/$probe -name "*-${model}.overrides")" ]; then
-            echo "ERROR: Probe (${probe}) is not supported for Model (${model})"
-            echo
-            echo "The following probes are supported:"
-            echo
-            for file in $(find $BASEDIR/pellcorp/mounts -mindepth 2 -maxdepth 2 -name "*-${model}.overrides"); do
-                basename $(dirname $file)
-            done | sort -u | sed 's/^/  * /'
-            echo
-            exit 1
-        elif [ -f $BASEDIR/pellcorp/mounts/$probe/${mount}-${model}.overrides ]; then
-            # 999 is a placeholder for a mount that has not been configured yet
-            if grep -q ":[[:space:]]*999" $BASEDIR/pellcorp/mounts/$probe/${mount}-${model}.overrides; then
-                echo "ERROR: Mount (${mount}) for Probe (${probe}) and Model (${model}) is not configured yet, make sure to do so in ${probe}.cfg first"
-            fi
+        if [ -f $BASEDIR/pellcorp/mounts/$probe/${mount}-${model}.overrides ]; then
             exit 0
         else
             if [ -n "$mount" ]; then
