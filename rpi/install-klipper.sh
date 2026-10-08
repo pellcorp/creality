@@ -95,6 +95,18 @@ if [ $? -ne 0 ]; then
     rm -rf $BASEDIR/klippy-env
   fi
 
+  current_fork=kalico
+  if [ -d $BASEDIR/klipper/.git ]; then
+    if git -C $BASEDIR/klipper/ remote get-url origin | grep -q klipper; then
+      current_fork=klipper
+    fi
+    if [ "$current_fork" != "$KLIPPER_FORK" ]; then
+      rm -rf $BASEDIR/klipper
+      # we need to rebuild klippy-env for a different fork
+      [ -d $BASEDIR/klippy-env ] && rm -rf $BASEDIR/klippy-env
+    fi
+  fi
+
   if [ ! -d $BASEDIR/klipper/ ]; then
     echo
     echo "INFO: Installing ${KLIPPER_FORK} ..."
@@ -140,7 +152,7 @@ if [ $? -ne 0 ]; then
   fi
 
   echo
-  echo "INFO: Updating klipper config ..."
+  echo "INFO: Updating ${KLIPPER_FORK} config ..."
 
   if [ -d $BASEDIR/fluidd-config ]; then
     rm -rf $BASEDIR/fluidd-config
