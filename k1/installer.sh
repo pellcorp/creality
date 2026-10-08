@@ -1479,6 +1479,7 @@ function setup_loadcells() {
 
         cp /usr/data/pellcorp/config/loadcells.cfg /usr/data/printer_data/config/ || exit $?
         $CONFIG_HELPER --add-include "loadcells.cfg" || exit $?
+        $CONFIG_HELPER --remove-include "loadcells_zoffset.cfg" || exit $?
 
         if [ -f /usr/data/pellcorp/k1/patches/loadcells.cfg.${model} ]; then
           $CONFIG_HELPER --file loadcells.cfg --patches /usr/data/pellcorp/k1/patches/loadcells.cfg.${model} --quiet || exit $?
@@ -2232,10 +2233,6 @@ fi
     old_probe=
     mount=
     loadcells_zoffset=false
-    loadcells_zoffset_specified=false
-    if grep -q "^\[include loadcells_zoffset.cfg\]" /usr/data/printer_data/config/printer.cfg 2> /dev/null; then
-        loadcells_zoffset=true
-    fi
 
     if [ -f /usr/data/pellcorp.done ]; then
         install_mount=$(cat /usr/data/pellcorp.done | grep "mount=" | awk -F '=' '{print $2}')
@@ -2260,7 +2257,6 @@ fi
             shift
         elif [ "$1" = "--loadcells-zoffset" ]; then
             loadcells_zoffset=true
-            loadcells_zoffset_specified=true
             shift
 >>>>>>> 4bcfe45 (Update installer.sh)
         elif [ "$1" = "--probe" ]; then # allow the installer to specify a `--probe` argument for clarity
@@ -2376,11 +2372,8 @@ fi
 
     if [ "$loadcells_zoffset" = "true" ]; then
         if [ "$probe" = "loadcells" ]; then
-            if [ "$loadcells_zoffset_specified" = "true" ]; then
-                echo "ERROR: --loadcells-zoffset is not needed for the loadcells probe"
-                exit 1
-            fi
-            loadcells_zoffset=false
+            echo "ERROR: --loadcells-zoffset is not needed for the loadcells probe"
+            exit 1
         elif [ ! -f /usr/data/pellcorp/k1/patches/loadcells_zoffset.cfg.${model} ]; then
             echo "FATAL: Loadcells for z-offset is not supported for your printer ($MODEL)"
             exit 1
@@ -2389,7 +2382,7 @@ fi
 
     if [ "$loadcells_zoffset" = "true" ]; then
         # enabling load cells z-offset on an existing installation is an update
-        if [ "$loadcells_zoffset_specified" = "true" ] && [ "$mode_specified" != "true" ] && [ -f /usr/data/pellcorp.done ]; then
+        if [ "$mode_specified" != "true" ] && [ -f /usr/data/pellcorp.done ]; then
             mode=update
         fi
 
@@ -2435,7 +2428,7 @@ fi
             fi
             echo
             exit 1
-        elif [ "$mode" = "update" ] && [ "$PELLCORP_UPDATED_SHA" = "$PELLCORP_GIT_SHA" ] && [ "$probe_switch" != "true" ] && [ "$force" != "true" ] && [ -z "$mount" ] && [ "$loadcells_zoffset_specified" != "true" ]; then
+        elif [ "$mode" = "update" ] && [ "$PELLCORP_UPDATED_SHA" = "$PELLCORP_GIT_SHA" ] && [ "$probe_switch" != "true" ] && [ "$force" != "true" ] && [ -z "$mount" ] && [ "$loadcells_zoffset" != "true" ]; then
             echo
             echo "ERROR: Installation is already up to date - NO CHANGES WERE MADE!"
             echo
