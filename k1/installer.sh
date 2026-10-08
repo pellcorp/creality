@@ -2272,15 +2272,9 @@ fi
         elif [ "$1" = "--kalico" ]; then
             klipper_fork=kalico
             shift
-<<<<<<< HEAD
-=======
-        elif [ "$1" = "--klipper" ]; then
-            klipper_fork=klipper
-            shift
         elif [ "$1" = "--loadcells-zoffset" ]; then
             loadcells_zoffset=true
             shift
->>>>>>> 4bcfe45 (Update installer.sh)
         elif [ "$1" = "--probe" ]; then # allow the installer to specify a `--probe` argument for clarity
             shift
         elif [ "$1" = "--printer" ]; then
