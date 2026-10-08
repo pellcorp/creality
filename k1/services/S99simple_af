@@ -1,0 +1,8 @@
+#!/bin/sh
+
+# moonraker restarts this service after it updates /usr/data/pellcorp
+if [ "$1" = "restart" ]; then
+    # does not wait
+    setsid /usr/data/pellcorp/k1/tools/saf-update.sh > /dev/null 2>&1 &
+fi
+exit 0

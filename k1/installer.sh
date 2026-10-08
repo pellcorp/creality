@@ -160,6 +160,7 @@ if [ ! -f /etc/pellcorp ]; then
 fi
 
 cp /usr/data/pellcorp/k1/services/S45cleanup /etc/init.d/ || exit $?
+cp /usr/data/pellcorp/k1/services/S99simple_af /etc/init.d/ || exit $?
 sync
 
 CONFIG_HELPER="/usr/data/pellcorp/tools/config-helper.py"
