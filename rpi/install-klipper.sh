@@ -208,6 +208,11 @@ if [ $? -ne 0 ]; then
     cp $BASEDIR/pellcorp/config/homing.cfg $BASEDIR/printer_data/config/ || exit $?
     $CONFIG_HELPER --add-include "homing.cfg" || exit $?
 
+    # mostly to support overriding homing current
+    if [ -f $BASEDIR/pellcorp-backups/homing.factory.cfg ]; then
+      $CONFIG_HELPER --file homing.cfg --patches $BASEDIR/pellcorp-backups/homing.factory.cfg --quiet || exit $?
+    fi
+
     x_position_mid=$($CONFIG_HELPER --get-section-entry "stepper_x" "position_max" --divisor 2 --integer)
     $CONFIG_HELPER --file homing.cfg --replace-section-entry "gcode_macro _HOMING_PARAMS" "variable_home_x" "$x_position_mid" || exit $?
 

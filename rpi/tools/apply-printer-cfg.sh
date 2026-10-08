@@ -42,8 +42,9 @@ function verify_printer_file() {
 
   # for now only support cartesian and corexy
   if [ "$kinematics" != "cartesian" ] && [ "$kinematics" != "corexy" ]; then
-    if [ "$kinematics" = "delta" ]; then
-      echo "WARN: Invalid printer configuration file - delta not supported"
+    # homing does not properly support delta and corexz
+    if [ "$kinematics" = "delta" ] || [ "$kinematics" = "corexz" ]; then
+      echo "WARN: Invalid printer configuration file - $kinematics not supported"
     else
       echo "ERROR: Invalid printer configuration file - kinematics not supported ($kinematics)"
       valid_printer=false

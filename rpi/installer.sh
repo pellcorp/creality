@@ -421,8 +421,11 @@ function setup_bltouch() {
         cp $BASEDIR/pellcorp/config/bltouch_macro.cfg $BASEDIR/printer_data/config/ || exit $?
         $CONFIG_HELPER --add-include "bltouch_macro.cfg" || exit $?
 
-        # for bltouch probe deploy issues occur with safe z at 3
-        $CONFIG_HELPER --file homing.cfg --replace-section-entry "gcode_macro _HOMING_PARAMS" "variable_safe_z" "5" || exit $?
+        # some printers dont even have homing.cfg
+        if [ $BASEDIR/printer_data/config/homing.cfg ]; then
+          # for bltouch probe deploy issues occur with safe z at 3
+          $CONFIG_HELPER --file homing.cfg --replace-section-entry "gcode_macro _HOMING_PARAMS" "variable_safe_z" "5" || exit $?
+        fi
 
         # need to add a empty bltouch section for baby stepping to work
         $CONFIG_HELPER --remove-section "bltouch" || exit $?
@@ -698,8 +701,11 @@ function setup_beacon() {
         cp $BASEDIR/pellcorp/config/beacon.cfg $BASEDIR/printer_data/config/ || exit $?
         $CONFIG_HELPER --add-include "beacon.cfg" || exit $?
 
-        # for beacon can't use homing override
-        $CONFIG_HELPER --file homing.cfg --remove-section "homing_override"
+        # some printers dont even have homing.cfg
+        if [ $BASEDIR/printer_data/config/homing.cfg ]; then
+          # for beacon can't use homing override
+          $CONFIG_HELPER --file homing.cfg --remove-section "homing_override"
+        fi
 
         y_position_mid=$($CONFIG_HELPER --get-section-entry "stepper_y" "position_max" --divisor 2 --integer)
         x_position_mid=$($CONFIG_HELPER --get-section-entry "stepper_x" "position_max" --divisor 2 --integer)
