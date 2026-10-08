@@ -13,13 +13,17 @@ console() {
     curl -s -m 5 -X POST http://localhost:7125/printer/gcode/script --data-urlencode "script=RESPOND MSG=\"$msg\"" > /dev/null 2>&1
 }
 
+# the output is sent again at the end, because restarting moonraker clears the console
+OUTPUT=/tmp/saf-update-output.txt
+rm -f $OUTPUT
+
 # give moonraker time to finish the update
 sleep 5
 console "Simple AF update started"
 /usr/data/pellcorp/k1/installer.sh --update 2>&1 | while IFS= read -r line; do
-    case "$line" in
-        INFO:*|WARNING:*|ERROR:*|FATAL:*) console "$line" ;;
-    esac
+    [ -n "$line" ] || continue
+    console "$line"
+    echo "$line" >> $OUTPUT
 done
 
 # wait for klipper to come back after the installer restarts it
@@ -30,9 +34,21 @@ while [ $i -lt 24 ]; do
     i=$((i+1))
 done
 
+if [ -f $OUTPUT ]; then
+    console "Simple AF update output:"
+    while IFS= read -r line; do
+        console "$line"
+    done < $OUTPUT
+    rm -f $OUTPUT
+fi
+
+LOG_FILE=$(ls -t /usr/data/printer_data/logs/installer-*.log 2> /dev/null | head -1)
 INSTALLED_SHA=$(grep "installed_sha" /usr/data/pellcorp.done 2> /dev/null | awk -F '=' '{print $2}')
 if [ "$INSTALLED_SHA" = "$GIT_SHA" ]; then
     console "Simple AF update complete"
 else
-    console "ERROR: Simple AF update failed, check the installer log"
+    console "ERROR: Simple AF update failed"
+fi
+if [ -n "$LOG_FILE" ]; then
+    console "Full log: logs/$(basename $LOG_FILE)"
 fi
