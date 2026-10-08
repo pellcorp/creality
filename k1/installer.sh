@@ -844,6 +844,20 @@ function install_klipper() {
     if [ $? -ne 0 ]; then
         echo
 
+        if [ "$mode" != "update" ] && [ -d /usr/data/klipper ]; then
+            rm -rf /usr/data/klipper
+        else
+          current_fork=klipper
+          if [ -d /usr/data/klipper/.git ]; then
+            if git -C /usr/data/klipper/ remote get-url origin | grep -q kalico; then
+              current_fork=kalico
+            fi
+          fi
+          if [ "$current_fork" != "$klipper_fork" ]; then
+            rm -rf /usr/data/klipper
+          fi
+        fi
+
         if [ -d /usr/data/klipper/.git ]; then
             cd /usr/data/klipper/
             remote_repo=$(git remote get-url origin | awk -F '/' '{print $NF}' | sed 's/.git//g')
@@ -860,6 +874,7 @@ function install_klipper() {
         if [ ! -d /usr/data/klipper/.git ]; then
             echo "INFO: Installing ${klipper_fork} ..."
             git clone https://github.com/pellcorp/${klipper_fork}.git /usr/data/klipper || exit $?
+            echo
 
             [ -d /usr/share/klipper ] && rm -rf /usr/share/klipper
         else
@@ -901,7 +916,7 @@ function install_klipper() {
         fi
         cd - > /dev/null
 
-        echo "INFO: Updating klipper config ..."
+        echo "INFO: Updating ${klipper_fork} config ..."
 
         ln -sf /usr/data/klipper /usr/share/ || exit $?
 
@@ -2147,6 +2162,12 @@ fi
     fi
 
     klipper_fork=klipper
+    if [ -d /usr/data/klipper/.git ]; then
+      if git -C /usr/data/klipper/ remote get-url origin | grep -q kalico; then
+        klipper_fork=kalico
+      fi
+    fi
+
     mode=install
     force=false
     skip_overrides=false
@@ -2168,6 +2189,9 @@ fi
             fi
         elif [ "$1" = "--kalico" ]; then
             klipper_fork=kalico
+            shift
+        elif [ "$1" = "--klipper" ]; then
+            klipper_fork=klipper
             shift
         elif [ "$1" = "--probe" ]; then # allow the installer to specify a `--probe` argument for clarity
             shift
@@ -2260,6 +2284,22 @@ fi
         exit 1
     fi
 
+    # for all but eddyng we are all in on kalico now
+    if [ "$mode" = "install" ] || [ "$mode" = "reinstall" ]; then
+        if [ "$probe" != "eddyng" ]; then
+            klipper_fork=kalico
+        fi
+    fi
+
+    if [ "$klipper_fork" = "kalico" ] && [ "$probe" = "eddyng" ]; then
+      if [ "$probe_switch" = "true" ]; then
+        echo "ERROR: Eddyng requires klipper, use --klipper"
+        exit 1
+      else
+        klipper_fork=klipper
+      fi
+    fi
+
     if [ "$probe" = "loadcells" ]; then
         # only k1, k1m, e5m, e3v3 are supported
         if [ ! -f /usr/data/pellcorp/k1/patches/loadcells.cfg.${model} ]; then
@@ -2267,30 +2307,20 @@ fi
           exit 1
         fi
 
+        if [ "$klipper_fork" != "kalico" ] && [ "$probe_switch" = "true" ]; then
+            echo "ERROR: loadcells requires kalico, use --kalico"
+            exit 1
+        fi
+
         if [ "$mode" = "install" ] || [ "$mode" = "reinstall" ] || [ "$probe_switch" = "true" ]; then
-          # for a install or reinstall just force kalico
-          if [ "$mode" = "install" ] || [ "$mode" = "reinstall" ]; then
-            klipper_fork=kalico
-          fi
+          # this just makes sure we switch to kalico if switching to load cells via an update
+          klipper_fork=kalico
 
           echo
           echo "***************************************************************"
           echo "* WARNING: loadcells support is HIGHLY EXPERIMENTAL           *"
           echo "***************************************************************"
           echo
-        fi
-
-        current_fork=$klipper_fork
-        if [ -d /usr/data/klipper/.git ]; then
-            cd /usr/data/klipper/
-            remote_repo=$(git remote get-url origin | awk -F '/' '{print $NF}' | sed 's/.git//g')
-            cd - > /dev/null
-            [ "$remote_repo" = "kalico" ] && current_fork=kalico
-        fi
-
-        if [ "$current_fork" != "kalico" ]; then
-            echo "ERROR: loadcells requires kalico, use --kalico"
-            exit 1
         fi
     fi
 
