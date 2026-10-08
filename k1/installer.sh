@@ -2287,13 +2287,16 @@ fi
     fi
 
     if [ -z "$probe" ]; then
-        echo "ERROR: You must specify a probe you want to configure"
-        echo "One of: [microprobe, bltouch, cartotouch, cartographer, btteddy, eddyng, beacon, klicky, loadcells]"
-        exit 1
+      echo "ERROR: You must specify a probe you want to configure"
+      echo "One of: [microprobe, bltouch, cartotouch, cartographer, btteddy, eddyng, beacon, klicky, loadcells]"
+      exit 1
     fi
 
     if [ "$mode" = "install" ] || [ "$mode" = "reinstall" ] || [ "$probe_switch" = "true" ]; then
+      # just for now don't force kalico for eddyng can still enable via --kalico
+      if [ "$probe" != "eddyng" ]; then
         klipper_fork=kalico
+      fi
     fi
 
     if [ "$probe" = "loadcells" ]; then
