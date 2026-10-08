@@ -2144,6 +2144,30 @@ elif [ "$1" = "--klipper-repo" ] || [ "$1" = "--kalico" ] || [ "$1" = "--klipper
         echo "Error invalid klipper repo specified"
         exit 1
     fi
+elif [ "$1" = "--loadcells-zoffset" ]; then
+    if [ ! -f /usr/data/pellcorp.done ]; then
+      echo "ERROR: No installation found - try putting $1 last on the command line if this is a new install!"
+      exit 1
+    fi
+
+    probe=$(cat /usr/data/pellcorp.done | grep "\-probe" | awk -F '-' '{print $1}')
+    if [ "$probe" = "loadcells" ]; then
+        echo "ERROR: --loadcells-zoffset is not needed for the loadcells probe"
+        exit 1
+    elif [ ! -f /usr/data/pellcorp/k1/patches/loadcells_zoffset.cfg.${model} ]; then
+        echo "FATAL: Loadcells for z-offset is not supported for your printer ($MODEL)"
+        exit 1
+    elif ! git -C /usr/data/klipper/ remote get-url origin 2> /dev/null | grep -q kalico; then
+        echo "ERROR: loadcells for z-offset requires kalico"
+        exit 1
+    fi
+
+    setup_loadcells_zoffset "$probe"
+    if [ $? -ne 0 ]; then
+        echo "INFO: Restarting Klipper ..."
+        sudo systemctl restart klipper
+    fi
+    exit 0
 fi
 
 # make sure some basic dirs are present
@@ -2226,7 +2250,6 @@ fi
     fi
 
     mode=install
-    mode_specified=false
     force=false
     skip_overrides=false
     probe_switch=false
@@ -2241,7 +2264,6 @@ fi
     while true; do
         if [ "$1" = "--fix-client-variables" ] || [ "$1" = "--fix-serial" ] || [ "$1" = "--install" ] || [ "$1" = "--update" ] || [ "$1" = "--reinstall" ] || [ "$1" = "--clean-install" ] || [ "$1" = "--clean-update" ] || [ "$1" = "--clean-reinstall" ]; then
             mode=$(echo $1 | sed 's/--//g')
-            mode_specified=true
             shift
             if [ "$mode" = "clean-install" ] || [ "$mode" = "clean-reinstall" ] || [ "$mode" = "clean-update" ]; then
                 skip_overrides=true
@@ -2378,37 +2400,15 @@ fi
             echo "FATAL: Loadcells for z-offset is not supported for your printer ($MODEL)"
             exit 1
         fi
-    fi
 
-    if [ "$loadcells_zoffset" = "true" ]; then
-        # enabling load cells z-offset on an existing installation is an update
-        if [ "$mode_specified" != "true" ] && [ -f /usr/data/pellcorp.done ]; then
-            mode=update
-        fi
-
-        if [ "$mode" = "install" ] || [ "$mode" = "reinstall" ]; then
-            klipper_fork=kalico
-        fi
-
-        current_fork=$klipper_fork
-        if [ -d /usr/data/klipper/.git ]; then
-            cd /usr/data/klipper/
-            remote_repo=$(git remote get-url origin | awk -F '/' '{print $NF}' | sed 's/.git//g')
-            cd - > /dev/null
-            [ "$remote_repo" = "kalico" ] && current_fork=kalico
-        fi
-
-        if [ "$current_fork" != "kalico" ]; then
-            echo "ERROR: loadcells for z-offset requires kalico, use --kalico"
+        if [ "$klipper_fork" != "kalico" ]; then
+            echo "ERROR: loadcells for z-offset requires kalico"
             exit 1
         fi
     fi
 
     echo "INFO: Mode is $mode"
     echo "INFO: Probe is $probe"
-    if [ "$loadcells_zoffset" = "true" ]; then
-      echo "INFO: Loadcells for z-offset is enabled"
-    fi
     if [ "$MODEL" = "NEBULA" ]; then
       echo "INFO: Model is $model"
     fi
