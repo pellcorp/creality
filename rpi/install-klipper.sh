@@ -204,7 +204,7 @@ if [ $? -ne 0 ]; then
   fi
 
   # most stuff only works with corexy and cartesian
-  if [ "$kinematics" = "corexy" ] || [ "$kinematics" = "cartesian" ]; then
+  if [ "$kinematics" = "corexz" ] || [ "$kinematics" = "corexy" ] || [ "$kinematics" = "cartesian" ]; then
     cp $BASEDIR/pellcorp/config/homing.cfg $BASEDIR/printer_data/config/ || exit $?
     $CONFIG_HELPER --add-include "homing.cfg" || exit $?
 
