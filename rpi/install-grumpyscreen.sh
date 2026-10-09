@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # this allows us to make changes to Simple AF and grumpyscreen in parallel
-GRUMPYSCREEN_TIMESTAMP=1789173200
+GRUMPYSCREEN_TIMESTAMP=1791510000
 
 BASEDIR=$HOME
 source $BASEDIR/pellcorp/rpi/functions.sh
@@ -56,11 +56,6 @@ if [ $? -ne 0 ]; then
   cp $BASEDIR/pellcorp/config/grumpyscreen.ini $BASEDIR/printer_data/config/
   [ -f $BASEDIR/printer_data/config/grumpyscreen.cfg ] && rm $BASEDIR/printer_data/config/grumpyscreen.cfg
 
-  kinematics=$($CONFIG_HELPER --get-section-entry "printer" "kinematics")
-  if [ "$kinematics" = "cartesian" ]; then
-    $CONFIG_HELPER --file $BASEDIR/grumpyscreen/grumpyscreen.cfg --replace-section-entry "ui" "invert_z_icon" "true" || exit $?
-  fi
-
   # si that you can print
   if [ ! -L $BASEDIR/printer_data/gcodes/usb ]; then
     ln -sf /media/usb $BASEDIR/printer_data/gcodes/usb
@@ -69,7 +64,14 @@ if [ $? -ne 0 ]; then
   sudo cp $BASEDIR/pellcorp/rpi/services/grumpyscreen.service /etc/systemd/system/ || exit $?
   sudo sed -i "s:\$HOME:$BASEDIR:g" /etc/systemd/system/grumpyscreen.service
   sudo sed -i "s:User=pi:User=$USER:g" /etc/systemd/system/grumpyscreen.service
+  # fixme - this one is tougher moonraker update will override this
   sed -i "s:\$HOME:$BASEDIR:g" $BASEDIR/grumpyscreen/grumpyscreen.cfg
+
+  kinematics=$($CONFIG_HELPER --get-section-entry "printer" "kinematics")
+  if [ "$kinematics" = "cartesian" ]; then
+    sudo sed -i "s:INVERT_Z_ICON=false:INVERT_Z_ICON=true:g" /etc/systemd/system/grumpyscreen.service
+  fi
+
   sudo systemctl daemon-reload
   sudo systemctl enable grumpyscreen
 
