@@ -1330,6 +1330,13 @@ function cleanup_probe() {
         $CONFIG_HELPER --remove-section-entry "stepper_z" "homing_retract_dist" || exit $?
     fi
 
+    if [ "$probe" = "loadcells" ]; then
+        if [ -f /usr/data/printer_data/config/loadcells_wipe.cfg ]; then
+            rm /usr/data/printer_data/config/loadcells_wipe.cfg
+        fi
+        $CONFIG_HELPER --remove-include "loadcells_wipe.cfg" || exit $?
+    fi
+
     if [ -f /usr/data/printer_data/config/$probe.cfg ]; then
         rm /usr/data/printer_data/config/$probe.cfg
     fi
@@ -1491,6 +1498,9 @@ function setup_loadcells() {
 
         cp /usr/data/pellcorp/config/loadcells_macro.cfg /usr/data/printer_data/config/ || exit $?
         $CONFIG_HELPER --add-include "loadcells_macro.cfg" || exit $?
+
+        cp /usr/data/pellcorp/config/loadcells_wipe.cfg /usr/data/printer_data/config/ || exit $?
+        $CONFIG_HELPER --add-include "loadcells_wipe.cfg" || exit $?
 
         # need to add a empty load_cell_probe section for baby stepping to work
         $CONFIG_HELPER --remove-section "load_cell_probe" || exit $?
