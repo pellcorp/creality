@@ -14,6 +14,8 @@ StandardError=tty
 TTYPath=/dev/tty1
 # This prints the modern equivalent of 'tput civis' securely inside the tty thread
 ExecStartPre=/bin/sh -c 'echo -ne "\033[?25l"'
+# the rpi grumpyscreen.cfg uses $HOME in commands, a moonraker update restores it so fix it on every start
+ExecStartPre=/bin/sed -i "s:[$$]HOME:$HOME:g" $HOME/grumpyscreen/grumpyscreen.cfg
 WorkingDirectory=$HOME/grumpyscreen
 # this is the DSI default path on RPI far as I can see
 Environment="LVGL_EVDEV_DEV=/dev/input/by-path/platform-soc:firmware:touchscreen-event"
