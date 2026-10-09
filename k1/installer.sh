@@ -1,8 +1,5 @@
 #!/bin/sh
 
-# this allows us to make changes to Simple AF and grumpyscreen in parallel
-GRUMPYSCREEN_TIMESTAMP=1791510000
-
 # this is the minimum pellcorp/klipper commit
 KLIPPER_MINIMUM_COMMIT=cbda3771337a62cf6f2eae1d5f96c3aa9609af76
 
@@ -1053,26 +1050,17 @@ function install_grumpyscreen() {
     if [ $? -ne 0 ]; then
         echo
 
-        asset_name=grumpyscreen.tar.gz
+        asset_name=grumpyscreen.zip
         # Ender 5 Max, Ender 3 V3 KE and CR10SE have a Nebula Pad which is small resolution
         if [ "$MODEL" = "F003" ] || [ "$MODEL" = "F004" ] || [ "$MODEL" = "F005" ] || [ "$MODEL" = "NEBULA" ]; then
-            asset_name=grumpyscreen-smallscreen.tar.gz
+            asset_name=grumpyscreen-smallscreen.zip
         fi
 
-        if [ -d /usr/data/grumpyscreen ]; then
-          TIMESTAMP=0
-          if [ -f /usr/data/grumpyscreen/release.info ]; then
-            TIMESTAMP=$(cat /usr/data/grumpyscreen/release.info | grep TIMESTAMP | awk -F '=' '{print $2}')
-            if [ -z "$TIMESTAMP" ]; then
-              TIMESTAMP=0
-            fi
-          fi
-
-          if [ $TIMESTAMP -lt $GRUMPYSCREEN_TIMESTAMP ]; then
-            echo
-            echo "INFO: Forcing reinstallation of grumpyscreen"
-            rm -rf /usr/data/grumpyscreen
-          fi
+        # older installs came from the tar release which has no release_info.json for moonraker
+        if [ -d /usr/data/grumpyscreen ] && [ ! -f /usr/data/grumpyscreen/release_info.json ]; then
+          echo
+          echo "INFO: Forcing reinstallation of grumpyscreen"
+          rm -rf /usr/data/grumpyscreen
         fi
 
         if [ ! -d /usr/data/grumpyscreen ]; then
@@ -1088,9 +1076,12 @@ function install_grumpyscreen() {
             killall -q guppyscreen > /dev/null 2>&1
           fi
 
-          retry curl -L "https://github.com/pellcorp/grumpyscreen/releases/download/main/${asset_name}" -o /usr/data/grumpyscreen.tar.gz || exit $?
-          tar xf /usr/data/grumpyscreen.tar.gz -C /usr/data/ 2> /dev/null || exit $?
-          rm /usr/data/grumpyscreen.tar.gz
+          # the versioned zip releases include the release_info.json moonraker needs to update grumpyscreen
+          retry curl -L "https://github.com/pellcorp/grumpyscreen/releases/latest/download/${asset_name}" -o /usr/data/grumpyscreen.zip || exit $?
+          mkdir -p /usr/data/grumpyscreen
+          unzip -qd /usr/data/grumpyscreen /usr/data/grumpyscreen.zip || exit $?
+          rm /usr/data/grumpyscreen.zip
+          chmod +x /usr/data/grumpyscreen/grumpyscreen
 
           echo
         fi
