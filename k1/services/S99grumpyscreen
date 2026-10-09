@@ -7,6 +7,13 @@ GUPPYSCREEN_LOG=/usr/data/printer_data/logs/grumpyscreen.log
 PID_FILE="/var/run/guppyscreen.pid"
 SVC_NAME=guppyscreen
 
+# FIXME - ideally maybe we should change grumpyscreen to nicely handle error code from switch to stock so we dont need to disable the button
+# for now for the few people using retail Nebula Pad this will do
+MODEL=$(/usr/bin/get_sn_mac.sh model)
+if [ "$MODEL" = "Nebula Pad" ] && grep -q '^switch_to_stock_cmd:[[:space:]]*[^[:space:]]' /usr/data/grumpyscreen/grumpyscreen.cfg; then
+  sed -i "s/switch_to_stock_cmd:.*/switch_to_stock_cmd:/g" /usr/data/grumpyscreen/grumpyscreen.cfg
+fi
+
 start_server() {
     # kill the boot display so it does not keep showing over top of grumpyscreen
     killall boot_display 2> /dev/null
@@ -16,7 +23,7 @@ start_server() {
     export HOME=/root
     sync && echo 3 > /proc/sys/vm/drop_caches
     mkdir -p $RC_DIR
-    RC_SVCNAME=guppyscreen $SUPERVISE_DAEMON guppyscreen -e "CONFIG_OVERRIDE_FILE=/usr/data/printer_data/config/grumpyscreen.ini" -e "CONFIG_FILE=/usr/data/grumpyscreen/grumpyscreen.cfg" -e "WPA_SUPPLICANT_SOCKET=/var/run/wpa_supplicant" --start --stdout $GUPPYSCREEN_LOG --stderr $GUPPYSCREEN_LOG --pidfile $PID_FILE $GUPPYSCREEN
+    RC_SVCNAME=guppyscreen $SUPERVISE_DAEMON guppyscreen -e "INVERT_Z_ICON=false" -e "DISPLAY_ROTATE=0" -e "CONFIG_OVERRIDE_FILE=/usr/data/printer_data/config/grumpyscreen.ini" -e "CONFIG_FILE=/usr/data/grumpyscreen/grumpyscreen.cfg" -e "WPA_SUPPLICANT_SOCKET=/var/run/wpa_supplicant" --start --stdout $GUPPYSCREEN_LOG --stderr $GUPPYSCREEN_LOG --pidfile $PID_FILE $GUPPYSCREEN
 }
 
 stop_server() {

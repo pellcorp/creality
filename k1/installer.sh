@@ -1,7 +1,7 @@
 #!/bin/sh
 
 # this allows us to make changes to Simple AF and grumpyscreen in parallel
-GRUMPYSCREEN_TIMESTAMP=1789173200
+GRUMPYSCREEN_TIMESTAMP=1791510000
 
 # this is the minimum pellcorp/klipper commit
 KLIPPER_MINIMUM_COMMIT=cbda3771337a62cf6f2eae1d5f96c3aa9609af76
@@ -1097,24 +1097,24 @@ function install_grumpyscreen() {
 
         echo "INFO: Updating grumpyscreen config ..."
 
-        # for Ender 5 Max we want display_rotate: 2 and that gets set by grumpyscreen package
-        # so we need to switch it to 0 for KE and Nebula
-        if [ "$MODEL" = "F003" ] || [ "$MODEL" = "F005" ] || [ "$MODEL" = "NEBULA" ]; then
-          sed -i "s/display_rotate:.*/display_rotate: 0/g" /usr/data/grumpyscreen/grumpyscreen.cfg
+        cp /usr/data/pellcorp/config/grumpyscreen.ini /usr/data/printer_data/config/
+        cp /usr/data/pellcorp/k1/services/S99grumpyscreen /etc/init.d/ || exit $?
+
+        # for K1, etc rotate=3
+        DISPLAY_ROTATE=3
+        # nebula pads except for Ender 5 Max are 0
+        if [ "$MODEL" = "NEBULA" ] || [ "$MODEL" = "F005" ] || [ "$MODEL" = "F003" ]; then
+          DISPLAY_ROTATE=0
+        elif [ "$MODEL" = "F004" ]; then
+          DISPLAY_ROTATE=2
         fi
 
-        # switch to stock makes no sense for nebula because we are starting with base firmware with no stock mode
-        if [ "$MODEL" = "NEBULA" ]; then
-          sed -i "s/switch_to_stock_cmd:.*/switch_to_stock_cmd:/g" /usr/data/grumpyscreen/grumpyscreen.cfg
-        fi
+        sed -i "s:DISPLAY_ROTATE=0:DISPLAY_ROTATE=$DISPLAY_ROTATE:g" /etc/init.d/S99grumpyscreen
 
         kinematics=$($CONFIG_HELPER --get-section-entry "printer" "kinematics")
         if [ "$kinematics" = "cartesian" ]; then
-          $CONFIG_HELPER --file /usr/data/grumpyscreen/grumpyscreen.cfg --replace-section-entry "ui" "invert_z_icon" "true" || exit $?
+          sed -i "s:INVERT_Z_ICON=false:INVERT_Z_ICON=true:g" /etc/init.d/S99grumpyscreen
         fi
-
-        cp /usr/data/pellcorp/config/grumpyscreen.ini /usr/data/printer_data/config/
-        cp /usr/data/pellcorp/k1/services/S99grumpyscreen /etc/init.d/ || exit $?
 
         ln -sf /usr/data/pellcorp/k1/files/respawn/libeinfo.so.1 /lib/libeinfo.so.1
         ln -sf /usr/data/pellcorp/k1/files/respawn/librc.so.1 /lib/librc.so.1
