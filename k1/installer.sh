@@ -781,7 +781,7 @@ function install_fluidd() {
           # actually change the code so it can actually work and I can remove this shit
           curl -s -X POST "http://localhost:7125/server/database/item" \
               -H "Content-Type: application/json" \
-              -d '{"namespace":"fluidd","key":"uiSettings.theme.logo.src","value":"server/files/config/.fluidd-theme/logo.svg"}'
+              -d '{"namespace":"fluidd","key":"uiSettings.theme.logo.src","value":"server/files/config/.fluidd-theme/logo.svg"}' > /dev/null
         fi
 
         echo "fluidd" >> /usr/data/pellcorp.done
