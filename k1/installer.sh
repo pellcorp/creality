@@ -2263,6 +2263,9 @@ fi
         elif [ "$1" = "--kalico" ]; then
             klipper_fork=kalico
             shift
+        elif [ "$1" = "--klipper" ]; then
+            klipper_fork=klipper
+            shift
         elif [ "$1" = "--loadcells-zoffset" ]; then
             loadcells_zoffset=true
             shift
@@ -2358,8 +2361,8 @@ fi
     fi
 
     if [ "$mode" = "install" ] || [ "$mode" = "reinstall" ] || [ "$probe_switch" = "true" ]; then
-      # just for now don't force kalico for eddyng can still enable via --kalico
-      if [ "$probe" != "eddyng" ]; then
+      # just for now don't force kalico for eddyng or btteddy can still enable via --kalico
+      if [ "$probe" != "eddyng" ] && [ "$probe" != "btteddy" ]; then
         klipper_fork=kalico
       fi
     fi
