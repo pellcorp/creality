@@ -20,19 +20,19 @@ if [ "$2" = "--mount" ]; then
 fi
 
 if [ "$probe" = "cartotouch" ]; then
-  $SAVE_CONFIG_HELPER --remove-section 'scanner*' 'axis_twist_compensation' 'bed_mesh*', 'load_cell_probe'
+  $SAVE_CONFIG_HELPER --remove-section 'scanner*' 'axis_twist_compensation' 'bed_mesh*'
 elif [ "$probe" = "btteddy" ]; then
-  $SAVE_CONFIG_HELPER --remove-section 'probe_eddy_current*' 'temperature_probe btt_eddy' 'axis_twist_compensation' 'bed_mesh*', 'load_cell_probe'
+  $SAVE_CONFIG_HELPER --remove-section 'probe_eddy_current*' 'temperature_probe btt_eddy' 'axis_twist_compensation' 'bed_mesh*'
 elif [ "$probe" = "eddyng" ]; then
-  $SAVE_CONFIG_HELPER --remove-section 'probe_eddy_ng*' 'axis_twist_compensation' 'bed_mesh*', 'load_cell_probe'
+  $SAVE_CONFIG_HELPER --remove-section 'probe_eddy_ng*' 'axis_twist_compensation' 'bed_mesh*'
 elif [ "$probe" = "beacon" ]; then
-  $SAVE_CONFIG_HELPER --remove-section 'beacon*' 'axis_twist_compensation' 'bed_mesh*', 'load_cell_probe'
+  $SAVE_CONFIG_HELPER --remove-section 'beacon*' 'axis_twist_compensation' 'bed_mesh*'
 elif [ "$probe" = "cartographer" ]; then
-  $SAVE_CONFIG_HELPER --remove-section 'cartographer*' 'axis_twist_compensation' 'bed_mesh*', 'load_cell_probe'
+  $SAVE_CONFIG_HELPER --remove-section 'cartographer*' 'axis_twist_compensation' 'bed_mesh*'
 elif [ "$probe" = "loadcells" ]; then
-  $SAVE_CONFIG_HELPER --remove-section 'load_cell_probeobe' 'axis_twist_compensation' 'bed_mesh*'
+  $SAVE_CONFIG_HELPER --remove-section 'axis_twist_compensation' 'bed_mesh*'
 elif [ "$probe" = "microprobe" ] || [ "$probe" = "klicky" ]; then
-  $SAVE_CONFIG_HELPER --remove-section 'probe' 'axis_twist_compensation' 'bed_mesh*', 'load_cell_probe'
+  $SAVE_CONFIG_HELPER --remove-section 'probe' 'axis_twist_compensation' 'bed_mesh*'
 
   # for switching a mount we want a default z_offset restored
   if [ "$switch" = "mount" ]; then
@@ -41,7 +41,7 @@ elif [ "$probe" = "microprobe" ] || [ "$probe" = "klicky" ]; then
     $CONFIG_HELPER --replace-section-entry "probe" "z_offset" "0.0" || exit $?
   fi
 elif [ "$probe" = "bltouch" ]; then
-  $SAVE_CONFIG_HELPER --remove-section 'bltouch' 'axis_twist_compensation' 'bed_mesh*', 'load_cell_probe'
+  $SAVE_CONFIG_HELPER --remove-section 'bltouch' 'axis_twist_compensation' 'bed_mesh*'
 
   # for switching a mount we want a default z_offset restored
   if [ "$switch" = "mount" ]; then
