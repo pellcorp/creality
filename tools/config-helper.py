@@ -69,7 +69,7 @@ def replace_section_multiline_value(updater, section_name, key, lines):
 def replace_section_value(updater, section_name, key, value):
     if updater.has_section(section_name):
         section = updater.get_section(section_name, None)
-        if section:
+        if section is not None:
             current_value = section.get(key, None)
             if current_value:
                 if key in section and current_value.value != value:
@@ -84,7 +84,7 @@ def replace_section_value(updater, section_name, key, value):
                     rotation_distance = section.get('rotation_distance', None)
                     rotation_distance.add_before.option(key, f' {value.strip()}')
                 else:
-                    section.last_block.add_before.option(key, f' {value.strip()}')
+                    section[key] = f' {value.strip()}'
                 return True
     return False
 
