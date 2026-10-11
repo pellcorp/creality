@@ -1772,6 +1772,8 @@ function set_serial_btteddy() {
 }
 
 function setup_btteddy() {
+    local klipper_fork=$1
+
     grep -q "btteddy-probe" /usr/data/pellcorp.done
     if [ $? -ne 0 ]; then
         echo
@@ -1789,6 +1791,12 @@ function setup_btteddy() {
         cp /usr/data/pellcorp/config/btteddy_macro.cfg /usr/data/printer_data/config/ || exit $?
         $CONFIG_HELPER --add-include "btteddy_macro.cfg" || exit $?
 
+        # kalico does not ship the thermal drift calibration for btteddy
+        if [ "$klipper_fork" = "kalico" ]; then
+          $CONFIG_HELPER --file btteddy.cfg --remove-section "temperature_probe btt_eddy" || exit $?
+          $CONFIG_HELPER --file btteddy_macro.cfg --remove-section "gcode_macro BTTEDDY_TEMPERATURE_PROBE_CALIBRATE" || exit $?
+        fi
+
         cp /usr/data/pellcorp/config/btteddy_zoffset.cfg /usr/data/printer_data/config/ || exit $?
         $CONFIG_HELPER --add-include "btteddy_zoffset.cfg" || exit $?
 
@@ -1797,7 +1805,9 @@ function setup_btteddy() {
 
         # for rpi we don't need to turn the camera off
         $CONFIG_HELPER --file btteddy_macro.cfg --replace-section-entry "gcode_macro BTTEDDY_CURRENT_CALIBRATE" "variable_stop_start_camera" "True" || exit $?
-        $CONFIG_HELPER --file btteddy_macro.cfg --replace-section-entry "gcode_macro BTTEDDY_TEMPERATURE_PROBE_CALIBRATE" "variable_stop_start_camera" "True" || exit $?
+        if [ "$klipper_fork" != "kalico" ]; then
+          $CONFIG_HELPER --file btteddy_macro.cfg --replace-section-entry "gcode_macro BTTEDDY_TEMPERATURE_PROBE_CALIBRATE" "variable_stop_start_camera" "True" || exit $?
+        fi
 
         echo "btteddy-probe" >> /usr/data/pellcorp.done
         sync
@@ -2748,7 +2758,7 @@ fi
         setup_bltouch
         setup_probe_specific=$?
     elif [ "$probe" = "btteddy" ]; then
-        setup_btteddy
+        setup_btteddy $klipper_fork
         setup_probe_specific=$?
     elif [ "$probe" = "eddyng" ]; then
         setup_eddyng $klipper_fork
