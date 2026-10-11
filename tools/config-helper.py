@@ -84,7 +84,12 @@ def replace_section_value(updater, section_name, key, value):
                     rotation_distance = section.get('rotation_distance', None)
                     rotation_distance.add_before.option(key, f' {value.strip()}')
                 else:
+                    trailing_block = section.last_block
                     section[key] = f' {value.strip()}'
+                    if isinstance(trailing_block, (Comment, Space)):
+                        option = section[key].detach()
+                        option.attach(section)
+                        section.structure.insert(len(section.structure) - 1, option)
                 return True
     return False
 
