@@ -2278,6 +2278,9 @@ fi
             shift
         elif [ "$1" = "--loadcells-zoffset" ]; then
             loadcells_zoffset=true
+
+            # for eddyng and btteddy if they ask for it give it to them
+            klipper_fork=kalico
             shift
         elif [ "$1" = "--probe" ]; then # allow the installer to specify a `--probe` argument for clarity
             shift
