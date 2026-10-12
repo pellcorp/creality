@@ -2384,8 +2384,8 @@ fi
     fi
 
     if [ "$mode" = "install" ] || [ "$mode" = "reinstall" ] || [ "$probe_switch" = "true" ]; then
-      # just for now don't force kalico for eddyng or btteddy can still enable via --kalico
-      if [ "$probe" != "eddyng" ] && [ "$probe" != "btteddy" ]; then
+      # just for now don't force kalico for btteddy can still enable via --kalico
+      if [ "$probe" != "btteddy" ]; then
         klipper_fork=kalico
       fi
     fi
