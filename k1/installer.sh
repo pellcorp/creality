@@ -1853,7 +1853,7 @@ function setup_eddyng() {
     grep -q "eddyng-probe" /usr/data/pellcorp.done
     if [ $? -ne 0 ]; then
         echo
-        echo "INFO: Setting up btt eddy-ng ..."
+        echo "INFO: Setting up EddyNG ..."
 
         # the old calibration macros are no longer supported
         if [ -f /usr/data/printer_data/config/btteddy_calibrate.cfg ]; then

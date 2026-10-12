@@ -802,7 +802,7 @@ function setup_eddyng() {
     grep -q "eddyng-probe" $BASEDIR/pellcorp.done
     if [ $? -ne 0 ]; then
         echo
-        echo "INFO: Setting up btt eddy-ng ..."
+        echo "INFO: Setting up EddyNG ..."
 
         cp $BASEDIR/pellcorp/config/eddyng.cfg $BASEDIR/printer_data/config/ || exit $?
         $CONFIG_HELPER --add-include "eddyng.cfg" || exit $?
