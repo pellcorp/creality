@@ -2300,11 +2300,16 @@ fi
             klipper_fork=klipper
             shift
         elif [ "$1" = "--loadcells-zoffset" ]; then
-            loadcells_zoffset=true
+            if [ "$probe" != "loadcells" ]; then
+              loadcells_zoffset=true
 
-            # for eddyng and btteddy if they ask for it give it to them
-            klipper_fork=kalico
-            shift
+              # for eddyng and btteddy if they ask for it give it to them
+              klipper_fork=kalico
+              shift
+            else
+              echo "ERROR: --loadcells-zoffset is not needed for the loadcells probe"
+              exit 1
+            fi
         elif [ "$1" = "--probe" ]; then # allow the installer to specify a `--probe` argument for clarity
             shift
         elif [ "$1" = "--printer" ]; then
@@ -2404,6 +2409,9 @@ fi
     fi
 
     if [ "$probe" = "loadcells" ]; then
+        # if switching to loadcells from a probe where we used loadcells-zoffset just ignore
+        loadcells_zoffset=false
+
         # only k1, k1m, e5m, e3v3 are supported
         if [ ! -f /usr/data/pellcorp/k1/patches/loadcells.cfg.${model} ]; then
           echo "FATAL: Loadcells are not supported for your printer ($MODEL)"
@@ -2420,10 +2428,7 @@ fi
     fi
 
     if [ "$loadcells_zoffset" = "true" ]; then
-        if [ "$probe" = "loadcells" ]; then
-            echo "ERROR: --loadcells-zoffset is not needed for the loadcells probe"
-            exit 1
-        elif [ ! -f /usr/data/pellcorp/k1/patches/loadcells_zoffset.cfg.${model} ]; then
+        if [ ! -f /usr/data/pellcorp/k1/patches/loadcells_zoffset.cfg.${model} ]; then
             echo "FATAL: Loadcells for z-offset is not supported for your printer ($MODEL)"
             exit 1
         fi
