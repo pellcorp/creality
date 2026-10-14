@@ -2273,7 +2273,13 @@ fi
     probe_switch=false
     old_probe=
     mount=
+
     loadcells_zoffset=false
+    # so if this include exists its like they specified --loadcell-zoffset to the installer
+    # because we should be rerunning the setup loadcells every time so that any updates get applied
+    if $CONFIG_HELPER --include-exists "loadcells_zoffset.cfg"; then
+      loadcells_zoffset=true
+    fi
 
     if [ -f /usr/data/pellcorp.done ]; then
         install_mount=$(cat /usr/data/pellcorp.done | grep "mount=" | awk -F '=' '{print $2}')
