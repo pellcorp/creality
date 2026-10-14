@@ -1334,7 +1334,7 @@ function cleanup_probe() {
     $CONFIG_HELPER --remove-include "$probe.cfg" || exit $?
 
     # if switching from btt eddy remove these files
-    if [ "$probe" = "btteddy" ] && ; then
+    if [ "$probe" = "btteddy" ]; then
         [ -f /usr/data/printer_data/config/variables.cfg ] && rm /usr/data/printer_data/config/variables.cfg
         [ -f /usr/data/printer_data/config/btteddy_zoffset.cfg ] && rm /usr/data/printer_data/config/btteddy_zoffset.cfg
     fi
