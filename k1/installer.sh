@@ -1333,9 +1333,10 @@ function cleanup_probe() {
     fi
     $CONFIG_HELPER --remove-include "$probe.cfg" || exit $?
 
-    # if switching from btt eddy remove this file
-    if [ "$probe" = "btteddy" ] && [ -f /usr/data/printer_data/config/variables.cfg ]; then
-        rm /usr/data/printer_data/config/variables.cfg
+    # if switching from btt eddy remove these files
+    if [ "$probe" = "btteddy" ] && ; then
+        [ -f /usr/data/printer_data/config/variables.cfg ] && rm /usr/data/printer_data/config/variables.cfg
+        [ -f /usr/data/printer_data/config/btteddy_zoffset.cfg ] && rm /usr/data/printer_data/config/btteddy_zoffset.cfg
     fi
 
     if [ "$probe" = "eddyng" ]; then
@@ -2274,6 +2275,7 @@ fi
     old_probe=
     mount=
 
+    loadcells_zoffset_specified=false
     loadcells_zoffset=false
     # so if this include exists its like they specified --loadcell-zoffset to the installer
     # because we should be rerunning the setup loadcells every time so that any updates get applied
@@ -2301,6 +2303,7 @@ fi
             shift
         elif [ "$1" = "--loadcells-zoffset" ]; then
             if [ "$probe" != "loadcells" ]; then
+              loadcells_zoffset_specified=true
               loadcells_zoffset=true
 
               # for eddyng and btteddy if they ask for it give it to them
@@ -2372,6 +2375,12 @@ fi
             break
         fi
     done
+
+    # so if switching probes and the --loadcells-zoffset is not explicity set, we need to ignore the
+    # existence of the loadcells-zoffset.cfg from the current installation
+    if [ "$probe_switch" = "true" ] && [ "$loadcells_zoffset_specified" != "true" ]; then
+      loadcells_zoffset=false
+    fi
 
     if [ "$MODEL" = "NEBULA" ]; then
       if [ -f /usr/data/pellcorp-backups/printer.factory.cfg ]; then
