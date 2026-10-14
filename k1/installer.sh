@@ -1805,6 +1805,13 @@ function setup_btteddy() {
         if [ "$klipper_fork" = "kalico" ]; then
           $CONFIG_HELPER --file btteddy.cfg --remove-section "temperature_probe btt_eddy" || exit $?
           $CONFIG_HELPER --file btteddy_macro.cfg --remove-section "gcode_macro BTTEDDY_TEMPERATURE_PROBE_CALIBRATE" || exit $?
+        else # klipper
+          $CONFIG_HELPER --file btteddy.cfg --remove-section "temperature_sensor btt_eddy" || exit $?
+
+          # we need to update homing.cfg, btteddy.cfg and btteddy_macro.cfg to use temperature_probe btt_eddy for sensors
+          # just with sed cos its easier
+          sed -i 's/temperature_sensor btt_eddy/temperature_probe btt_eddy/g' /usr/data/printer_data/config/homing.cfg
+          sed -i 's/temperature_sensor btt_eddy/temperature_probe btt_eddy/g' /usr/data/printer_data/config/btteddy_macro.cfg
         fi
 
         cp /usr/data/pellcorp/config/btteddy_zoffset.cfg /usr/data/printer_data/config/ || exit $?
