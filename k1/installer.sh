@@ -1525,6 +1525,9 @@ function setup_loadcells_zoffset() {
         $CONFIG_HELPER --file loadcells_zoffset.cfg --patches /usr/data/pellcorp/k1/patches/loadcells_zoffset.cfg.${model} --quiet || exit $?
         $CONFIG_HELPER --add-include "loadcells_zoffset.cfg" || exit $?
 
+        cp /usr/data/pellcorp/config/loadcells_wipe.cfg /usr/data/printer_data/config/ || exit $?
+        $CONFIG_HELPER --add-include "loadcells_wipe.cfg" || exit $?
+
         # btteddy_zoffset.cfg and loadcells_zoffset.cfg both set the z-offset
         $CONFIG_HELPER --remove-include "btteddy_zoffset.cfg" || exit $?
 
@@ -2698,6 +2701,7 @@ fi
         # cleanup loadcells z-offset config if it was enabled
         if [ "$probe_switch" = "true" ] && [ -f /usr/data/pellcorp-overrides/printer.cfg ]; then
           $CONFIG_HELPER --file /usr/data/pellcorp-overrides/printer.cfg --remove-include "loadcells_zoffset.cfg" || exit $?
+          $CONFIG_HELPER --file /usr/data/pellcorp-overrides/printer.cfg --remove-include "loadcells_wipe.cfg" || exit $?
           $CONFIG_HELPER --file /usr/data/pellcorp-overrides/printer.cfg --remove-section "load_cell_probe" || exit $?
         fi
     fi
