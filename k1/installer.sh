@@ -2449,7 +2449,11 @@ fi
     fi
 
     echo "INFO: Mode is $mode"
-    echo "INFO: Probe is $probe"
+    if [ "$loadcells_zoffset" = "true" ]; then
+      echo "INFO: Probe is $probe with loadcells for z-offset"
+    else
+      echo "INFO: Probe is $probe"
+    fi
     if [ "$MODEL" = "NEBULA" ]; then
       echo "INFO: Model is $model"
     fi
