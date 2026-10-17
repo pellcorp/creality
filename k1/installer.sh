@@ -1500,6 +1500,10 @@ function setup_loadcells() {
 
         cp /usr/data/pellcorp/config/loadcells_wipe.cfg /usr/data/printer_data/config/ || exit $?
         $CONFIG_HELPER --add-include "loadcells_wipe.cfg" || exit $?
+        # the K1C and K1 SE have a brush at the back of the bed
+        if [ "$MODEL" = "K1C" ] || [ "$MODEL" = "K1 SE" ]; then
+          $CONFIG_HELPER --file loadcells_wipe.cfg --replace-section-entry "gcode_macro _LOAD_CELL_WIPE_VARIABLES" "variable_k1c_brush" "True" || exit $?
+        fi
 
         # need to add a empty load_cell_probe section for baby stepping to work
         $CONFIG_HELPER --remove-section "load_cell_probe" || exit $?
@@ -1534,6 +1538,10 @@ function setup_loadcells_zoffset() {
 
         cp /usr/data/pellcorp/config/loadcells_wipe.cfg /usr/data/printer_data/config/ || exit $?
         $CONFIG_HELPER --add-include "loadcells_wipe.cfg" || exit $?
+        # the K1C and K1 SE have a brush at the back of the bed
+        if [ "$MODEL" = "K1C" ] || [ "$MODEL" = "K1 SE" ]; then
+          $CONFIG_HELPER --file loadcells_wipe.cfg --replace-section-entry "gcode_macro _LOAD_CELL_WIPE_VARIABLES" "variable_k1c_brush" "True" || exit $?
+        fi
 
         # btteddy_zoffset.cfg and loadcells_zoffset.cfg both set the z-offset
         $CONFIG_HELPER --remove-include "btteddy_zoffset.cfg" || exit $?
