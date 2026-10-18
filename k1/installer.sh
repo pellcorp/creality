@@ -2927,7 +2927,8 @@ fi
     fi
 
     apply_mount_overrides=0
-    if [ -n "$mount" ]; then
+    # loadcells dont have mounts
+    if [ -n "$mount" ] && [ "$probe" != "loadcells" ]; then
         /usr/data/pellcorp/tools/apply-mount-overrides.sh $probe $mount $model
         apply_mount_overrides=$?
 
