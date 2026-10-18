@@ -23,7 +23,7 @@ start_server() {
     export HOME=/root
     sync && echo 3 > /proc/sys/vm/drop_caches
     mkdir -p $RC_DIR
-    RC_SVCNAME=guppyscreen $SUPERVISE_DAEMON guppyscreen -e "INVERT_Z_ICON=false" -e "DISPLAY_ROTATE=0" -e "CONFIG_OVERRIDE_FILE=/usr/data/printer_data/config/grumpyscreen.ini" -e "CONFIG_FILE=/usr/data/grumpyscreen/grumpyscreen.cfg" -e "WPA_SUPPLICANT_SOCKET=/var/run/wpa_supplicant" --start --stdout $GUPPYSCREEN_LOG --stderr $GUPPYSCREEN_LOG --pidfile $PID_FILE $GUPPYSCREEN
+    RC_SVCNAME=guppyscreen $SUPERVISE_DAEMON guppyscreen -e "INVERT_Z_ICON=false" -e "DISPLAY_ROTATE=0" -e "CONFIG_OVERRIDE_FILE=/usr/data/printer_data/config/grumpyscreen.ini" -e "CONFIG_VENDOR_FILE=/usr/data/grumpyscreen/macros.cfg" -e "CONFIG_FILE=/usr/data/grumpyscreen/grumpyscreen.cfg" -e "WPA_SUPPLICANT_SOCKET=/var/run/wpa_supplicant" --start --stdout $GUPPYSCREEN_LOG --stderr $GUPPYSCREEN_LOG --pidfile $PID_FILE $GUPPYSCREEN
 }
 
 stop_server() {
