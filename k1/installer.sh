@@ -1376,37 +1376,44 @@ function cleanup_probes() {
   cleanup_probe loadcells
 }
 
-# the probe's calibration macros for the grumpyscreen macros screen as
-# macro|display_name|icon, the calibrations open klipper's manual probe dialog
-function grumpyscreen_probe_macros() {
-    case "$1" in
-        bltouch|microprobe|klicky) echo "PROBE_CALIBRATE|Probe Calibrate|home_z" ;;
-        beacon) echo "BEACON_CALIBRATE|Beacon Calibrate|home_z" ;;
-        eddyng) echo "PROBE_EDDY_NG_SETUP|Eddy NG Setup|home_z" ;;
-        btteddy) echo "BTTEDDY_CURRENT_CALIBRATE|BTT Eddy Calibrate|home_z" ;;
-        cartographer) echo "CARTOGRAPHER_SCAN_CALIBRATE|Cartographer Calibrate|home_z" ;;
-        cartotouch) echo "CARTOGRAPHER_CALIBRATE METHOD=manual|Cartographer Calibrate|home_z" ;;
-        loadcells)
-            echo "LOAD_CELL_CALIBRATE|Load Cell Calibrate|home_z"
-            echo "LOAD_CELL_DIAGNOSTIC|Load Cell Diagnostic|info"
-            echo "LOAD_CELL_TEST_TAP|Load Cell Test Tap|home_z"
-            ;;
-    esac
+function add_grumpyscreen_probe_macro() {
+  local macro="$1"
+  local display_name="$2"
+  local icon=$3
+
+  touch /usr/data/grumpyscreen/macros.cfg
+
+  $CONFIG_HELPER --file /usr/data/grumpyscreen/macros.cfg --add-section "macro \"$macro\"" || exit $?
+  $CONFIG_HELPER --file /usr/data/grumpyscreen/macros.cfg --replace-section-entry "macro \"$macro\"" "display_name" "$display_name" || exit $?
+  $CONFIG_HELPER --file /usr/data/grumpyscreen/macros.cfg --replace-section-entry "macro \"$macro\"" "icon" "$icon" || exit $?
 }
 
 function add_grumpyscreen_probe_macros() {
-    touch /usr/data/grumpyscreen/macros.cfg
+  local probe=$1
+  local loadcells_zoffset=$2
 
-    while IFS='|' read -r macro display_name icon; do
-        [ -n "$macro" ] || continue
-        $CONFIG_HELPER --file /usr/data/grumpyscreen/macros.cfg --add-section "macro \"$macro\"" || exit $?
-        $CONFIG_HELPER --file /usr/data/grumpyscreen/macros.cfg --replace-section-entry "macro \"$macro\"" "display_name" "$display_name" || exit $?
-        $CONFIG_HELPER --file /usr/data/grumpyscreen/macros.cfg --replace-section-entry "macro \"$macro\"" "icon" "$icon" || exit $?
-    done << EOF
-$(grumpyscreen_probe_macros $1)
-EOF
-    # means grumpyscreen needs to be restarted
-    return 1
+  if [ "$1" = "bltouch" ] || [ "$1" = "bltouch" ] [ "$1" = "bltouch" ]; then
+    add_grumpyscreen_probe_macro "PROBE_CALIBRATE" "Probe Calibrate" "home_z"
+  elif [ "$1" = "cartographer" ]; then
+    add_grumpyscreen_probe_macro "CARTOGRAPHER_SCAN_CALIBRATE" "Cartographer Calibrate" "home_z"
+  elif [ "$1" = "cartotouch" ]; then
+    add_grumpyscreen_probe_macro "CARTOGRAPHER_CALIBRATE METHOD=manual" "Cartographer Calibrate" "home_z"
+  elif [ "$1" = "beacon" ]; then
+    add_grumpyscreen_probe_macro "BEACON_CALIBRATE" "Beacon Calibrate" "home_z"
+  elif [ "$1" = "eddyng" ]; then
+    add_grumpyscreen_probe_macro "PROBE_EDDY_NG_SETUP" "Eddy NG Setup" "home_z"
+  elif [ "$1" = "btteddy" ]; then
+    add_grumpyscreen_probe_macro "BTTEDDY_CURRENT_CALIBRATE" "BTT Eddy Calibrate" "home_z"
+  fi
+
+  if [ "$probe" = "loadcells" ] || [ "$loadcells_zoffset" = "true" ]; then
+    add_grumpyscreen_probe_macro "LOAD_CELL_CALIBRATE" "Load Cell Calibrate" "home_z"
+    add_grumpyscreen_probe_macro "LOAD_CELL_DIAGNOSTIC" "Load Cell Diagnostic" "info"
+    add_grumpyscreen_probe_macro "LOAD_CELL_TEST_TAP" "Load Cell Test Tap" "home_z"
+  fi
+
+  # means grumpyscreen needs to be restarted
+  return 1
 }
 
 function setup_bltouch() {
@@ -2886,7 +2893,7 @@ fi
 
     setup_grumpyscreen_macros=0
     if [ $setup_probe_specific -ne 0 ]; then
-        add_grumpyscreen_probe_macros "$probe"
+        add_grumpyscreen_probe_macros "$probe" "$loadcells_zoffset"
         setup_grumpyscreen_macros=$?
     fi
 
