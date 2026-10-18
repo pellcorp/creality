@@ -1483,6 +1483,12 @@ function setup_loadcells() {
         echo
         echo "INFO: Setting up loadcells ..."
 
+        # don't change homing for ender 3 v3
+        if [ "$model" != "f001" ]; then
+          $CONFIG_HELPER --replace-section-entry "stepper_z" "homing_retract_dist" "0" || exit $?
+          $CONFIG_HELPER --replace-section-entry "stepper_z" "homing_speed" "2.0" || exit $?
+        fi
+
         cp /usr/data/pellcorp/config/loadcells.cfg /usr/data/printer_data/config/ || exit $?
         $CONFIG_HELPER --add-include "loadcells.cfg" || exit $?
         $CONFIG_HELPER --remove-include "loadcells_zoffset.cfg" || exit $?
