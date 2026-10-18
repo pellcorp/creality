@@ -63,6 +63,10 @@ override_file() {
     local file=$1
 
     if [ -L $BASEDIR/printer_data/config/$file ]; then
+        if [ "$file" = "grumpyscreen.ini" ]; then
+          echo "INFO: Cleaning up obsolete $BASEDIR/printer_data/config/$file ..."
+          rm /usr/data/printer_data/config/grumpyscreen.ini
+        fi
         return 0
     fi
 
