@@ -1387,6 +1387,7 @@ function grumpyscreen_probe_macros() {
         cartographer) echo "CARTOGRAPHER_SCAN_CALIBRATE|Cartographer Calibrate|home_z" ;;
         cartotouch) echo "CARTOGRAPHER_CALIBRATE METHOD=manual|Cartographer Calibrate|home_z" ;;
         loadcells)
+            echo "LOAD_CELL_CALIBRATE|Load Cell Calibrate|home_z"
             echo "LOAD_CELL_DIAGNOSTIC|Load Cell Diagnostic|info"
             echo "LOAD_CELL_TEST_TAP|Load Cell Test Tap|home_z"
             ;;
