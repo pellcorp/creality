@@ -1324,7 +1324,7 @@ function cleanup_probe() {
     fi
     $CONFIG_HELPER --remove-include "${probe}_macro.cfg" || exit $?
 
-    remove_grumpyscreen_probe_macros $probe
+    [ -f /usr/data/grumpyscreen/macros.cfg ] && rm /usr/data/grumpyscreen/macros.cfg
 
     if [ "$probe" = "cartotouch" ] || [ "$probe" = "beacon" ]; then
         $CONFIG_HELPER --remove-section-entry "stepper_z" "homing_retract_dist" || exit $?
@@ -1395,29 +1395,18 @@ function grumpyscreen_probe_macros() {
 }
 
 function add_grumpyscreen_probe_macros() {
-    [ -f /usr/data/printer_data/config/grumpyscreen.ini ] || return 0
+    touch /usr/data/grumpyscreen/macros.cfg
 
     while IFS='|' read -r macro display_name icon; do
         [ -n "$macro" ] || continue
-        $CONFIG_HELPER --file grumpyscreen.ini --add-section "macro \"$macro\"" || exit $?
-        $CONFIG_HELPER --file grumpyscreen.ini --replace-section-entry "macro \"$macro\"" "display_name" "$display_name" || exit $?
-        $CONFIG_HELPER --file grumpyscreen.ini --replace-section-entry "macro \"$macro\"" "icon" "$icon" || exit $?
+        $CONFIG_HELPER --file /usr/data/grumpyscreen/macros.cfg --add-section "macro \"$macro\"" || exit $?
+        $CONFIG_HELPER --file /usr/data/grumpyscreen/macros.cfg --replace-section-entry "macro \"$macro\"" "display_name" "$display_name" || exit $?
+        $CONFIG_HELPER --file /usr/data/grumpyscreen/macros.cfg --replace-section-entry "macro \"$macro\"" "icon" "$icon" || exit $?
     done << EOF
 $(grumpyscreen_probe_macros $1)
 EOF
     # means grumpyscreen needs to be restarted
     return 1
-}
-
-function remove_grumpyscreen_probe_macros() {
-    [ -f /usr/data/printer_data/config/grumpyscreen.ini ] || return 0
-
-    while IFS='|' read -r macro display_name icon; do
-        [ -n "$macro" ] || continue
-        $CONFIG_HELPER --file grumpyscreen.ini --remove-section "macro \"$macro\"" || exit $?
-    done << EOF
-$(grumpyscreen_probe_macros $1)
-EOF
 }
 
 function setup_bltouch() {
