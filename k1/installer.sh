@@ -1381,8 +1381,6 @@ function add_grumpyscreen_probe_macro() {
   local display_name="$2"
   local icon=$3
 
-  touch /usr/data/grumpyscreen/macros.cfg
-
   $CONFIG_HELPER --file /usr/data/grumpyscreen/macros.cfg --add-section "macro \"$macro\"" || exit $?
   $CONFIG_HELPER --file /usr/data/grumpyscreen/macros.cfg --replace-section-entry "macro \"$macro\"" "display_name" "$display_name" || exit $?
   $CONFIG_HELPER --file /usr/data/grumpyscreen/macros.cfg --replace-section-entry "macro \"$macro\"" "icon" "$icon" || exit $?
@@ -1391,6 +1389,9 @@ function add_grumpyscreen_probe_macro() {
 function add_grumpyscreen_probe_macros() {
   local probe=$1
   local loadcells_zoffset=$2
+
+  [ -f /usr/data/grumpyscreen/macros.cfg ] && rm /usr/data/grumpyscreen/macros.cfg
+  touch /usr/data/grumpyscreen/macros.cfg
 
   if [ "$1" = "bltouch" ] || [ "$1" = "microprobe" ] [ "$1" = "klicky" ]; then
     add_grumpyscreen_probe_macro "PROBE_CALIBRATE" "Probe Calibrate" "home_z"
@@ -2251,6 +2252,10 @@ elif [ "$1" = "--loadcells-zoffset" ]; then
     if [ $? -ne 0 ]; then
         echo "INFO: Restarting Klipper ..."
         sudo systemctl restart klipper
+
+        add_grumpyscreen_probe_macros "$probe" "true"
+        echo "INFO: Restarting Grumpyscreen ..."
+        sudo systemctl restart grumpyscreen
     fi
     exit 0
 fi
