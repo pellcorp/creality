@@ -1324,6 +1324,8 @@ function cleanup_probe() {
     fi
     $CONFIG_HELPER --remove-include "${probe}_macro.cfg" || exit $?
 
+    remove_grumpyscreen_probe_macros $probe
+
     if [ "$probe" = "cartotouch" ] || [ "$probe" = "beacon" ]; then
         $CONFIG_HELPER --remove-section-entry "stepper_z" "homing_retract_dist" || exit $?
     fi
@@ -1372,6 +1374,50 @@ function cleanup_probes() {
   cleanup_probe klicky
   cleanup_probe bltouch
   cleanup_probe loadcells
+}
+
+# the probe's calibration macros for the grumpyscreen macros screen as
+# macro|display_name|icon, the calibrations open klipper's manual probe dialog
+function grumpyscreen_probe_macros() {
+    case "$1" in
+        bltouch|microprobe|klicky) echo "PROBE_CALIBRATE|Probe Calibrate|home_z" ;;
+        beacon) echo "BEACON_CALIBRATE|Beacon Calibrate|home_z" ;;
+        eddyng) echo "PROBE_EDDY_NG_SETUP|Eddy NG Setup|home_z" ;;
+        btteddy) echo "BTTEDDY_CURRENT_CALIBRATE|BTT Eddy Calibrate|home_z" ;;
+        cartographer) echo "CARTOGRAPHER_SCAN_CALIBRATE|Cartographer Calibrate|home_z" ;;
+        cartotouch) echo "CARTOGRAPHER_CALIBRATE METHOD=manual|Cartographer Calibrate|home_z" ;;
+        loadcells)
+            echo "LOAD_CELL_CALIBRATE|Load Cell Calibrate|home_z"
+            echo "LOAD_CELL_DIAGNOSTIC|Load Cell Diagnostic|info"
+            echo "LOAD_CELL_TEST_TAP|Load Cell Test Tap|home_z"
+            ;;
+    esac
+}
+
+function add_grumpyscreen_probe_macros() {
+    [ -f /usr/data/printer_data/config/grumpyscreen.ini ] || return 0
+
+    while IFS='|' read -r macro display_name icon; do
+        [ -n "$macro" ] || continue
+        $CONFIG_HELPER --file grumpyscreen.ini --add-section "macro \"$macro\"" || exit $?
+        $CONFIG_HELPER --file grumpyscreen.ini --replace-section-entry "macro \"$macro\"" "display_name" "$display_name" || exit $?
+        $CONFIG_HELPER --file grumpyscreen.ini --replace-section-entry "macro \"$macro\"" "icon" "$icon" || exit $?
+    done << EOF
+$(grumpyscreen_probe_macros $1)
+EOF
+    # means grumpyscreen needs to be restarted
+    return 1
+}
+
+function remove_grumpyscreen_probe_macros() {
+    [ -f /usr/data/printer_data/config/grumpyscreen.ini ] || return 0
+
+    while IFS='|' read -r macro display_name icon; do
+        [ -n "$macro" ] || continue
+        $CONFIG_HELPER --file grumpyscreen.ini --remove-section "macro \"$macro\"" || exit $?
+    done << EOF
+$(grumpyscreen_probe_macros $1)
+EOF
 }
 
 function setup_bltouch() {
@@ -2849,6 +2895,12 @@ fi
         exit 1
     fi
 
+    setup_grumpyscreen_macros=0
+    if [ $setup_probe_specific -ne 0 ]; then
+        add_grumpyscreen_probe_macros "$probe"
+        setup_grumpyscreen_macros=$?
+    fi
+
     setup_loadcells_zoffset=0
     if [ "$loadcells_zoffset" = "true" ]; then
         setup_loadcells_zoffset "$probe"
@@ -2919,7 +2971,7 @@ fi
         sudo systemctl start klipper
     fi
 
-    if [ $apply_overrides -ne 0 ] || [ $install_grumpyscreen -ne 0 ]; then
+    if [ $apply_overrides -ne 0 ] || [ $install_grumpyscreen -ne 0 ] || [ $setup_grumpyscreen_macros -ne 0 ]; then
         echo "INFO: Restarting Grumpyscreen ..."
         sudo systemctl restart grumpyscreen
     fi
