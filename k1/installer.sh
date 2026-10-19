@@ -2508,7 +2508,8 @@ fi
 
     if [ "$mode" = "install" ] || [ "$mode" = "reinstall" ] || [ "$probe_switch" = "true" ]; then
       if [ "$probe" = "btteddy" ] && [ "$loadcells_zoffset" != "true" ]; then
-        echo "FATAL: BTT Eddy is not supported without using loadcells for z-offset, use eddyng instead!"
+        echo "FATAL: The btteddy is not supported without using loadcells for z-offset, use eddyng instead!"
+        echo "Refer to https://pellcorp.github.io/creality-wiki/btteddy/#loadcells-for-z-offset-required"
         exit 1
       fi
       klipper_fork=kalico
