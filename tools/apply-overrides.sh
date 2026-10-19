@@ -5,6 +5,7 @@ if grep -Fqs "ID=buildroot" /etc/os-release; then
     BASEDIR=/usr/data
 fi
 CONFIG_HELPER="$BASEDIR/pellcorp/tools/config-helper.py"
+SAVE_CONFIG_HELPER="$BASEDIR/pellcorp/tools/save-config-helper.py"
 
 apply_overrides() {
     local old_probe=$1
@@ -128,6 +129,11 @@ apply_overrides() {
                   echo "INFO: Removing $old_probe save config ..."
                   $BASEDIR/pellcorp/tools/cleanup-save-config.sh $old_probe
                 fi
+
+                if grep -q "temperature_probe btt_eddy" $BASEDIR/printer_data/config/printer.cfg; then
+                  $SAVE_CONFIG_HELPER --remove-section 'temperature_probe btt_eddy'
+                fi
+
                 return_status=1
             else
                 echo "WARN: Skipped applying save config state to $BASEDIR/printer_data/config/printer.cfg"

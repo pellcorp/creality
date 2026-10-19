@@ -762,9 +762,6 @@ function setup_btteddy() {
         cp $BASEDIR/pellcorp/config/btteddy_macro.cfg $BASEDIR/printer_data/config/ || exit $?
         $CONFIG_HELPER --add-include "btteddy_macro.cfg" || exit $?
 
-        cp $BASEDIR/pellcorp/config/btteddy_zoffset.cfg $BASEDIR/printer_data/config/ || exit $?
-        $CONFIG_HELPER --add-include "btteddy_zoffset.cfg" || exit $?
-
         $CONFIG_HELPER --remove-section "probe_eddy_current btt_eddy" || exit $?
         $CONFIG_HELPER --add-section "probe_eddy_current btt_eddy" || exit $?
 
@@ -1006,40 +1003,34 @@ elif [ "$1" = "--kalico-branch" ]; then # convenience for testing new features
     fi
 elif [ "$1" = "--kalico" ] && [ "$#" -eq 1 ]; then
     if [ ! -f $BASEDIR/pellcorp.done ]; then
-      echo "ERROR: No installation found - try putting $1 last on the command line if this is a new install!"
+      echo "ERROR: No installation found!"
       exit 1
     fi
 
-    klipper_repo=kalico
-    owner="${klipper_repo%%/*}"
-    repo="${klipper_repo#*/}"
-    if [ "$owner" = "$repo" ]; then
-      owner=pellcorp
+    klipper_fork=klipper
+    if [ -d $BASEDIR/klipper/.git ]; then
+      if git -C $BASEDIR/klipper/ remote get-url origin | grep -q kalico; then
+        klipper_fork=kalico
+      fi
     fi
 
-    if [ "$owner" = "pellcorp" ]; then
-      repo=$(echo ${repo//-rpi/})
-      repo="${repo}-rpi"
+    if [ "$klipper_fork" = "kalico" ]; then
+      echo "INFO: Already switched to kalico"
+      exit 0
     fi
+
+    sudo systemctl stop klipper
+    klipper_repo=kalico
 
     if [ -d $BASEDIR/klipper/.git ]; then
-        cd $BASEDIR/klipper/
-        remote_repo=$(git remote get-url origin)
-        remote_repo="${remote_repo#*github.com/}"   # remove everything up to github.com/
-        remote_repo="${remote_repo%.git}"     # remove trailing .git
-        cd - > /dev/null
-
-        if [ "$remote_repo" != "${owner}/${repo}" ]; then
-            echo "INFO: Switching klipper from $remote_repo to ${owner}/${repo} ..."
-            rm -rf $BASEDIR/klipper
-        fi
+      if [ "$klipper_fork" != "$klipper_repo" ]; then
+        echo "INFO: Switching klipper from $klipper_fork to $klipper_repo ..."
+        rm -rf $BASEDIR/klipper
+      fi
     fi
 
     if [ ! -d $BASEDIR/klipper ]; then
-        git clone https://github.com/${owner}/${repo}.git $BASEDIR/klipper || exit $?
-        if [ -n "$3" ]; then
-          cd $BASEDIR/klipper && git switch $3 && cd - > /dev/null
-        fi
+        git clone https://github.com/pellcorp/${klipper_repo}-rpi.git $BASEDIR/klipper || exit $?
 
         # for switching a klipper repo we need to recreate the klippy-env
         if [ -d $BASEDIR/klippy-env ]; then
