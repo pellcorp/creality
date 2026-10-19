@@ -283,7 +283,7 @@ function update_klipper() {
 
   /usr/data/pellcorp/k1/tools/check-firmware.sh --status
   if [ $? -eq 0 ]; then
-      echo "INFO: Restarting Klipper ..."
+      echo "INFO: Restarting Kalico ..."
       sudo systemctl restart klipper
   fi
   return $?
@@ -1862,19 +1862,6 @@ function setup_btteddy() {
         cp /usr/data/pellcorp/config/btteddy_macro.cfg /usr/data/printer_data/config/ || exit $?
         $CONFIG_HELPER --add-include "btteddy_macro.cfg" || exit $?
 
-        # kalico does not ship the thermal drift calibration for btteddy
-        if [ "$klipper_fork" = "kalico" ]; then
-          $CONFIG_HELPER --file btteddy.cfg --remove-section "temperature_probe btt_eddy" || exit $?
-          $CONFIG_HELPER --file btteddy_macro.cfg --remove-section "gcode_macro BTTEDDY_TEMPERATURE_PROBE_CALIBRATE" || exit $?
-        else # klipper
-          $CONFIG_HELPER --file btteddy.cfg --remove-section "temperature_sensor btt_eddy" || exit $?
-
-          # we need to update homing.cfg, btteddy.cfg and btteddy_macro.cfg to use temperature_probe btt_eddy for sensors
-          # just with sed cos its easier
-          sed -i 's/temperature_sensor btt_eddy/temperature_probe btt_eddy/g' /usr/data/printer_data/config/homing.cfg
-          sed -i 's/temperature_sensor btt_eddy/temperature_probe btt_eddy/g' /usr/data/printer_data/config/btteddy_macro.cfg
-        fi
-
         cp /usr/data/pellcorp/config/btteddy_zoffset.cfg /usr/data/printer_data/config/ || exit $?
         $CONFIG_HELPER --add-include "btteddy_zoffset.cfg" || exit $?
 
@@ -1883,9 +1870,6 @@ function setup_btteddy() {
 
         # for rpi we don't need to turn the camera off
         $CONFIG_HELPER --file btteddy_macro.cfg --replace-section-entry "gcode_macro BTTEDDY_CURRENT_CALIBRATE" "variable_stop_start_camera" "True" || exit $?
-        if [ "$klipper_fork" != "kalico" ]; then
-          $CONFIG_HELPER --file btteddy_macro.cfg --replace-section-entry "gcode_macro BTTEDDY_TEMPERATURE_PROBE_CALIBRATE" "variable_stop_start_camera" "True" || exit $?
-        fi
 
         echo "btteddy-probe" >> /usr/data/pellcorp.done
         sync
@@ -2189,7 +2173,7 @@ if [ "$1" = "--update-branch" ]; then
 elif [ "$1" = "--branch" ] && [ -n "$2" ]; then # convenience for testing new features
     update_repo /usr/data/pellcorp $2 || exit $?
     exit $?
-elif [ "$1" = "--klipper-branch" ]; then # convenience for testing new features
+elif [ "$1" = "--kalico-branch" ]; then # convenience for testing new features
     if [ ! -f /usr/data/pellcorp.done ]; then
       echo "ERROR: No installation found"
       exit 1
@@ -2203,20 +2187,14 @@ elif [ "$1" = "--klipper-branch" ]; then # convenience for testing new features
         echo "Error invalid branch specified"
         exit 1
     fi
-elif [ "$1" = "--klipper-repo" ] || [ "$1" = "--kalico" ] || [ "$1" = "--klipper" ]; then
+elif [ "$1" = "--kalico" ] && [ "$#" -eq 1 ]; then
     if [ ! -f /usr/data/pellcorp.done ]; then
       echo "ERROR: No installation found - try putting $1 last on the command line if this is a new install!"
       exit 1
     fi
     /etc/init.d/S55klipper_service stop
 
-    if [ "$1" = "--kalico" ]; then
-      klipper_repo=kalico
-    elif [ "$1" = "--klipper" ]; then
-      klipper_repo=klipper
-    elif [ -n "$2" ]; then
-        klipper_repo=$2
-    fi
+    klipper_repo=kalico
 
     if [ -n "$klipper_repo" ]; then
         owner="${klipper_repo%%/*}"
@@ -2275,7 +2253,7 @@ elif [ "$1" = "--loadcells-zoffset" ]; then
     if [ $? -ne 0 ]; then
         fix_custom_nozzle_wipe_config "$probe" "true"
 
-        echo "INFO: Restarting Klipper ..."
+        echo "INFO: Restarting Kalico ..."
         sudo systemctl restart klipper
 
         add_grumpyscreen_probe_macros "$probe" "true"
@@ -2393,9 +2371,6 @@ fi
             fi
         elif [ "$1" = "--kalico" ]; then
             klipper_fork=kalico
-            shift
-        elif [ "$1" = "--klipper" ]; then
-            klipper_fork=klipper
             shift
         elif [ "$1" = "--loadcells-zoffset" ]; then
             if [ "$probe" != "loadcells" ]; then
@@ -2515,6 +2490,20 @@ fi
       klipper_fork=kalico
     fi
 
+    if [ "$mode" = "update" ] && [ "$klipper_fork" = "klipper" ]; then
+      echo "FATAL: Klipper is no longer supported, you can either switch to kalico or you can switch to the legacy branch of Simple AF"
+      echo
+      echo "To switch to kalico as part of your update:"
+      echo "  /usr/data/pellcorp/installer.sh --update --kalico"
+      echo
+      echo "To switch to legacy branch run: "
+      echo "  /usr/data/pellcorp/installer.sh --branch legacy"
+      echo "  /usr/data/pellcorp/installer.sh --update"
+      echo
+      echo "Refer to https://pellcorp.github.io/creality-wiki/legacy/"
+      exit 1
+    fi
+
     if [ "$probe" = "loadcells" ]; then
         # if switching to loadcells from a probe where we used loadcells-zoffset just ignore
         loadcells_zoffset=false
@@ -2537,11 +2526,6 @@ fi
     if [ "$loadcells_zoffset" = "true" ]; then
         if [ ! -f /usr/data/pellcorp/k1/patches/loadcells_zoffset.cfg.${model} ]; then
             echo "FATAL: Loadcells for z-offset is not supported for your printer ($MODEL)"
-            exit 1
-        fi
-
-        if [ "$klipper_fork" != "kalico" ]; then
-            echo "ERROR: loadcells for z-offset requires kalico"
             exit 1
         fi
     fi
@@ -2653,7 +2637,7 @@ fi
             exit 1
         fi
         if [ $set_serial -ne 0 ]; then
-            echo "INFO: Restarting Klipper ..."
+            echo "INFO: Restarting Kalico ..."
             /etc/init.d/S55klipper_service restart
         fi
         exit 0
@@ -2662,7 +2646,7 @@ fi
             fixup_client_variables_config
             fixup_client_variables_config=$?
             if [ $fixup_client_variables_config -ne 0 ]; then
-                echo "INFO: Restarting Klipper ..."
+                echo "INFO: Restarting Kalico ..."
                 /etc/init.d/S55klipper_service restart
             else
                 echo "INFO: No changes made"
@@ -2994,7 +2978,7 @@ fi
     fi
 
     if [ $set_serial -ne 0 ] || [ $fix_custom_config -ne 0 ] || [ $fixup_client_variables_config -ne 0 ] || [ $apply_overrides -ne 0 ] || [ $apply_mount_overrides -ne 0 ] || [ $install_cartographer_klipper -ne 0 ] || [ $install_beacon_klipper -ne 0 ] || [ $install_klipper -ne 0 ] || [ $setup_probe -ne 0 ] || [ $setup_probe_specific -ne 0 ] || [ $setup_loadcells_zoffset -ne 0 ]; then
-        echo "INFO: Restarting Klipper ..."
+        echo "INFO: Restarting Kalico ..."
         sudo systemctl stop klipper
         sudo systemctl restart klipper_mcu
         sudo systemctl start klipper

@@ -148,7 +148,7 @@ function update_repo() {
 function update_klipper_mcu() {
   echo
   if [ -f $BASEDIR/klipper/.config.linux ]; then
-    echo "INFO: Rebuilding Klipper MCU ..."
+    echo "INFO: Rebuilding Kalico MCU ..."
     cd $BASEDIR/klipper
     cp .config.linux .config
     make clean
@@ -159,13 +159,13 @@ function update_klipper_mcu() {
     sudo systemctl restart klipper-mcu || exit $?
     cd - > /dev/null
   else
-    echo "INFO: Skipped rebuilding Klipper MCU ..."
+    echo "INFO: Skipped rebuilding Kalico MCU ..."
   fi
 }
 
 function update_klipper() {
   echo
-  echo "INFO: Stopping Klipper ..."
+  echo "INFO: Stopping Kalico ..."
   sudo systemctl stop klipper
 
   probe=$(cat $BASEDIR/pellcorp.done 2> /dev/null | grep "\-probe" | awk -F '-' '{print $1}')
@@ -184,7 +184,7 @@ function update_klipper() {
   fi
 
   if [ -d $BASEDIR/klippain_shaketune ] && [ ! -d $BASEDIR/klipper/klippy/extras/shaketune ]; then
-      echo "Linking Shake&Tune module to Klipper extras"
+      echo "Linking Shake&Tune module to Kalico extras"
       ln -frsn $BASEDIR/klippain_shaketune/shaketune $BASEDIR/klipper/klippy/extras/shaketune
   fi
 
@@ -192,7 +192,7 @@ function update_klipper() {
   $BASEDIR/klippy-env/bin/python3 -m compileall $BASEDIR/klipper/klippy || return $?
   update_klipper_mcu
 
-  echo "INFO: Starting Klipper ..."
+  echo "INFO: Starting Kalico ..."
   sudo systemctl start klipper
 }
 
@@ -995,7 +995,7 @@ elif [ "$1" = "--cleanup" ]; then # mostly to make testing easier
 elif [ "$1" = "--branch" ] && [ -n "$2" ]; then # convenience for testing new features
     update_repo $BASEDIR/pellcorp $2 || exit $?
     exit $?
-elif [ "$1" = "--klipper-branch" ]; then # convenience for testing new features
+elif [ "$1" = "--kalico-branch" ]; then # convenience for testing new features
     if [ -n "$2" ]; then
         update_repo $BASEDIR/klipper $2 || exit $?
         update_klipper || exit $?
@@ -1004,80 +1004,67 @@ elif [ "$1" = "--klipper-branch" ]; then # convenience for testing new features
         echo "Error invalid branch specified"
         exit 1
     fi
-elif [ "$1" = "--klipper-repo" ] || [ "$1" = "--kalico" ] || [ "$1" = "--klipper" ]; then
+elif [ "$1" = "--kalico" ] && [ "$#" -eq 1 ]; then
     if [ ! -f $BASEDIR/pellcorp.done ]; then
       echo "ERROR: No installation found - try putting $1 last on the command line if this is a new install!"
       exit 1
     fi
 
-    cd ~ # make sure we are not currently in the klipper dir oops
-    if [ "$1" = "--kalico" ]; then
-      klipper_repo=kalico
-    elif [ "$1" = "--klipper" ]; then
-      klipper_repo=klipper
-    elif [ -n "$2" ]; then
-      klipper_repo=$2
+    klipper_repo=kalico
+    owner="${klipper_repo%%/*}"
+    repo="${klipper_repo#*/}"
+    if [ "$owner" = "$repo" ]; then
+      owner=pellcorp
     fi
 
-    if [ -n "$klipper_repo" ]; then
-        owner="${klipper_repo%%/*}"
-        repo="${klipper_repo#*/}"
-        if [ "$owner" = "$repo" ]; then
-          owner=pellcorp
+    if [ "$owner" = "pellcorp" ]; then
+      repo=$(echo ${repo//-rpi/})
+      repo="${repo}-rpi"
+    fi
+
+    if [ -d $BASEDIR/klipper/.git ]; then
+        cd $BASEDIR/klipper/
+        remote_repo=$(git remote get-url origin)
+        remote_repo="${remote_repo#*github.com/}"   # remove everything up to github.com/
+        remote_repo="${remote_repo%.git}"     # remove trailing .git
+        cd - > /dev/null
+
+        if [ "$remote_repo" != "${owner}/${repo}" ]; then
+            echo "INFO: Switching klipper from $remote_repo to ${owner}/${repo} ..."
+            rm -rf $BASEDIR/klipper
+        fi
+    fi
+
+    if [ ! -d $BASEDIR/klipper ]; then
+        git clone https://github.com/${owner}/${repo}.git $BASEDIR/klipper || exit $?
+        if [ -n "$3" ]; then
+          cd $BASEDIR/klipper && git switch $3 && cd - > /dev/null
         fi
 
-        if [ "$owner" = "pellcorp" ]; then
-          repo=$(echo ${repo//-rpi/})
-          repo="${repo}-rpi"
+        # for switching a klipper repo we need to recreate the klippy-env
+        if [ -d $BASEDIR/klippy-env ]; then
+          rm -rf $BASEDIR/klippy-env
         fi
 
-        if [ -d $BASEDIR/klipper/.git ]; then
-            cd $BASEDIR/klipper/
-            remote_repo=$(git remote get-url origin)
-            remote_repo="${remote_repo#*github.com/}"   # remove everything up to github.com/
-            remote_repo="${remote_repo%.git}"     # remove trailing .git
-            cd - > /dev/null
-
-            if [ "$remote_repo" != "${owner}/${repo}" ]; then
-                echo "INFO: Switching klipper from $remote_repo to ${owner}/${repo} ..."
-                rm -rf $BASEDIR/klipper
-            fi
+        if [ -d $BASEDIR/klippain_shaketune ]; then
+          rm -rf $BASEDIR/klippain_shaketune
         fi
 
-        if [ ! -d $BASEDIR/klipper ]; then
-            git clone https://github.com/${owner}/${repo}.git $BASEDIR/klipper || exit $?
-            if [ -n "$3" ]; then
-              cd $BASEDIR/klipper && git switch $3 && cd - > /dev/null
-            fi
+        virtualenv -p python3 $BASEDIR/klippy-env
+        $BASEDIR/klippy-env/bin/pip install -r $BASEDIR/klipper/scripts/klippy-requirements.txt
+        $BASEDIR/klippy-env/bin/pip install -r $BASEDIR/pellcorp/rpi/klippy-requirements.txt
 
-            # for switching a klipper repo we need to recreate the klippy-env
-            if [ -d $BASEDIR/klippy-env ]; then
-              rm -rf $BASEDIR/klippy-env
-            fi
-            
-            if [ -d $BASEDIR/klippain_shaketune ]; then
-              rm -rf $BASEDIR/klippain_shaketune
-            fi
-
-            virtualenv -p python3 $BASEDIR/klippy-env
-            $BASEDIR/klippy-env/bin/pip install -r $BASEDIR/klipper/scripts/klippy-requirements.txt
-            $BASEDIR/klippy-env/bin/pip install -r $BASEDIR/pellcorp/rpi/klippy-requirements.txt
-
-            kinematics=$($CONFIG_HELPER --get-section-entry "printer" "kinematics")
-            if [ "$kinematics" = "corexy" ]; then
-              echo "INFO: Installing Klippain ShakeTune ..."
-              wget -O - https://raw.githubusercontent.com/Frix-x/klippain-shaketune/main/install.sh | bash
-            fi
-        else
-            update_repo $BASEDIR/klipper $3 || exit $?
+        kinematics=$($CONFIG_HELPER --get-section-entry "printer" "kinematics")
+        if [ "$kinematics" = "corexy" ]; then
+          echo "INFO: Installing Klippain ShakeTune ..."
+          wget -O - https://raw.githubusercontent.com/Frix-x/klippain-shaketune/main/install.sh | bash
         fi
+    else
+        update_repo $BASEDIR/klipper $3 || exit $?
+    fi
 
-        update_klipper || exit $?
-        exit 0
-  else
-      echo "Error invalid klipper repo specified"
-      exit 1
-  fi
+    update_klipper || exit $?
+    exit 0
 fi
 
 export TIMESTAMP=$(date +"%Y-%m-%d_%H-%M-%S")
@@ -1228,7 +1215,7 @@ set -o pipefail # preserve installer failures through tee
       exit 1
     fi
     if [ $set_serial -ne 0 ]; then
-      echo "INFO: Restarting Klipper ..."
+      echo "INFO: Restarting Kalico ..."
       sudo systemctl restart klipper
     fi
     exit 0
@@ -1238,7 +1225,7 @@ set -o pipefail # preserve installer failures through tee
       fixup_client_variables_config=$?
       if [ $fixup_client_variables_config -ne 0 ]; then
         echo
-        echo "INFO: Restarting Klipper ..."
+        echo "INFO: Restarting Kalico ..."
         sudo systemctl restart klipper
       else
         echo "INFO: No changes made"
@@ -1252,6 +1239,20 @@ set -o pipefail # preserve installer failures through tee
 
   if [ "$mode" = "install" ] || [ "$mode" = "reinstall" ] || [ "$probe_switch" = "true" ]; then
       klipper_fork=kalico
+  fi
+
+  if [ "$mode" = "update" ] && [ "$klipper_fork" = "klipper" ]; then
+    echo "FATAL: Klipper is no longer supported, you can either switch to kalico or you can switch to the legacy branch of Simple AF"
+    echo
+    echo "To switch to kalico as part of your update:"
+    echo "  ~/pellcorp/installer.sh --update --kalico"
+    echo
+    echo "To switch to legacy branch run: "
+    echo "  ~/pellcorp/installer.sh --branch legacy"
+    echo "  ~/pellcorp/installer.sh --update"
+    echo
+    echo "Refer to https://pellcorp.github.io/creality-wiki/legacy/"
+    exit 1
   fi
 
   # if using a standard base printer can continue to use it no need to respecify it
@@ -1383,7 +1384,7 @@ set -o pipefail # preserve installer failures through tee
     fi
 
     if [ "$(sudo systemctl is-enabled klipper 2> /dev/null)" = "enabled" ]; then
-      echo "INFO: Stopping Klipper ..."
+      echo "INFO: Stopping Kalico ..."
       sudo systemctl stop klipper
     fi
 
@@ -1616,7 +1617,7 @@ set -o pipefail # preserve installer failures through tee
   echo "INFO: Restarting Moonraker ..."
   sudo systemctl restart moonraker
 
-  echo "INFO: Restarting Klipper ..."
+  echo "INFO: Restarting Kalico ..."
   sudo systemctl restart klipper
 
   if [ "$(sudo systemctl is-enabled grumpyscreen 2> /dev/null)" = "enabled" ]; then

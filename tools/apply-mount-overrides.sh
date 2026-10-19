@@ -107,7 +107,7 @@ else
     apply_mount_overrides "$probe" "$mount" "$model"
     status=$?
     if [ $status -ne 0 ] && [ "$restart_klipper" = "true" ]; then
-      echo "INFO: Restarting Klipper ..."
+      echo "INFO: Restarting Kalico ..."
       sudo systemctl restart klipper
     fi
     exit $status
