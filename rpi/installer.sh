@@ -422,7 +422,7 @@ function setup_bltouch() {
         $CONFIG_HELPER --add-include "bltouch_macro.cfg" || exit $?
 
         # some printers dont even have homing.cfg
-        if [ $BASEDIR/printer_data/config/homing.cfg ]; then
+        if [ -f $BASEDIR/printer_data/config/homing.cfg ]; then
           # for bltouch probe deploy issues occur with safe z at 3
           $CONFIG_HELPER --file homing.cfg --replace-section-entry "gcode_macro _HOMING_PARAMS" "variable_safe_z" "5" || exit $?
         fi

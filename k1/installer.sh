@@ -1166,7 +1166,6 @@ function setup_probe() {
             $CONFIG_HELPER --replace-section-entry "stepper_z" "endstop_pin" "probe:z_virtual_endstop" || exit $?
         fi
 
-        # an optional loadcells_zoffset.cfg file for now you have to manually include
         if [ "$probe" != "loadcells" ]; then
           if [ -f /usr/data/pellcorp/k1/patches/loadcells_zoffset.cfg.${model} ]; then
             cp /usr/data/pellcorp/config/loadcells_zoffset.cfg /usr/data/printer_data/config/ || exit $?
@@ -1576,53 +1575,47 @@ function setup_loadcells() {
 function setup_loadcells_zoffset() {
     local probe=$1
 
-    grep -q "loadcells-zoffset" /usr/data/pellcorp.done
-    if [ $? -ne 0 ]; then
-        echo
-        echo "INFO: Setting up loadcells for z-offset ..."
+    echo
+    echo "INFO: Setting up loadcells for z-offset ..."
 
-        cp /usr/data/pellcorp/config/loadcells_zoffset.cfg /usr/data/printer_data/config/ || exit $?
-        $CONFIG_HELPER --file loadcells_zoffset.cfg --patches /usr/data/pellcorp/k1/patches/loadcells_zoffset.cfg.${model} --quiet || exit $?
-        $CONFIG_HELPER --add-include "loadcells_zoffset.cfg" || exit $?
+    cp /usr/data/pellcorp/config/loadcells_zoffset.cfg /usr/data/printer_data/config/ || exit $?
+    $CONFIG_HELPER --file loadcells_zoffset.cfg --patches /usr/data/pellcorp/k1/patches/loadcells_zoffset.cfg.${model} --quiet || exit $?
+    $CONFIG_HELPER --add-include "loadcells_zoffset.cfg" || exit $?
 
-        cp /usr/data/pellcorp/config/loadcells_wipe.cfg /usr/data/printer_data/config/ || exit $?
-        $CONFIG_HELPER --add-include "loadcells_wipe.cfg" || exit $?
-        # the K1C and K1 SE have a brush at the back of the bed
-        if [ "$MODEL" = "K1C" ] || [ "$MODEL" = "K1 SE" ]; then
-          $CONFIG_HELPER --file loadcells_wipe.cfg --replace-section-entry "gcode_macro _LOAD_CELL_WIPE_VARIABLES" "variable_k1c_brush" "True" || exit $?
-        fi
-
-        # btteddy_zoffset.cfg and loadcells_zoffset.cfg both set the z-offset
-        $CONFIG_HELPER --remove-include "btteddy_zoffset.cfg" || exit $?
-
-        $CONFIG_HELPER --remove-section "load_cell_probe" || exit $?
-        $CONFIG_HELPER --add-section "load_cell_probe" || exit $?
-        z_offset=$($CONFIG_HELPER --ignore-missing --file /usr/data/pellcorp-overrides/printer.cfg.save_config --get-section-entry load_cell_probe z_offset)
-        if [ -n "$z_offset" ]; then
-          $CONFIG_HELPER --replace-section-entry "load_cell_probe" "# z_offset" "0.0" || exit $?
-        else
-          $CONFIG_HELPER --replace-section-entry "load_cell_probe" "z_offset" "0.0" || exit $?
-        fi
-
-        # the load cell probe is done at the zero reference position, cartotouch, cartographer and beacon already define it
-        if [ "$probe" = "bltouch" ] || [ "$probe" = "microprobe" ] || [ "$probe" = "btteddy" ] || [ "$probe" = "eddyng" ] || [ "$probe" = "klicky" ]; then
-            if [ "$model" = "f005" ] || [ "$model" = "e3v3se" ]; then
-                zero_reference_position="20,25"
-            else
-                y_position_mid=$($CONFIG_HELPER --get-section-entry "stepper_y" "position_max" --divisor 2 --integer)
-                x_position_mid=$($CONFIG_HELPER --get-section-entry "stepper_x" "position_max" --divisor 2 --integer)
-                zero_reference_position="$x_position_mid,$y_position_mid"
-            fi
-            $CONFIG_HELPER --file ${probe}.cfg --replace-section-entry "bed_mesh" "zero_reference_position" "$zero_reference_position" || exit $?
-        fi
-
-        echo "loadcells-zoffset" >> /usr/data/pellcorp.done
-        sync
-
-        # means klipper needs to be restarted
-        return 1
+    cp /usr/data/pellcorp/config/loadcells_wipe.cfg /usr/data/printer_data/config/ || exit $?
+    $CONFIG_HELPER --add-include "loadcells_wipe.cfg" || exit $?
+    # the K1C and K1 SE have a brush at the back of the bed
+    if [ "$MODEL" = "K1C" ] || [ "$MODEL" = "K1 SE" ]; then
+      $CONFIG_HELPER --file loadcells_wipe.cfg --replace-section-entry "gcode_macro _LOAD_CELL_WIPE_VARIABLES" "variable_k1c_brush" "True" || exit $?
     fi
-    return 0
+
+    # btteddy_zoffset.cfg and loadcells_zoffset.cfg both set the z-offset
+    $CONFIG_HELPER --remove-include "btteddy_zoffset.cfg" || exit $?
+
+    $CONFIG_HELPER --remove-section "load_cell_probe" || exit $?
+    $CONFIG_HELPER --add-section "load_cell_probe" || exit $?
+    z_offset=$($CONFIG_HELPER --ignore-missing --file /usr/data/pellcorp-overrides/printer.cfg.save_config --get-section-entry load_cell_probe z_offset)
+    if [ -n "$z_offset" ]; then
+      $CONFIG_HELPER --replace-section-entry "load_cell_probe" "# z_offset" "0.0" || exit $?
+    else
+      $CONFIG_HELPER --replace-section-entry "load_cell_probe" "z_offset" "0.0" || exit $?
+    fi
+
+    # the load cell probe is done at the zero reference position, cartotouch, cartographer and beacon already define it
+    if [ "$probe" = "bltouch" ] || [ "$probe" = "microprobe" ] || [ "$probe" = "btteddy" ] || [ "$probe" = "eddyng" ] || [ "$probe" = "klicky" ]; then
+        if [ "$model" = "f005" ] || [ "$model" = "e3v3se" ]; then
+            zero_reference_position="20,25"
+        else
+            y_position_mid=$($CONFIG_HELPER --get-section-entry "stepper_y" "position_max" --divisor 2 --integer)
+            x_position_mid=$($CONFIG_HELPER --get-section-entry "stepper_x" "position_max" --divisor 2 --integer)
+            zero_reference_position="$x_position_mid,$y_position_mid"
+        fi
+        $CONFIG_HELPER --file ${probe}.cfg --replace-section-entry "bed_mesh" "zero_reference_position" "$zero_reference_position" || exit $?
+    fi
+    sync
+
+    # means klipper needs to be restarted
+    return 1
 }
 
 function set_serial_cartotouch() {
@@ -2097,7 +2090,37 @@ function fixup_client_variables_config() {
     return $changed
 }
 
+function fix_custom_nozzle_wipe_config() {
+  local probe=$1
+  local loadcells_zoffset=$2
+
+  # where someone has a custom nozzle wipe we want to remove the default one we added
+  if [ "$probe" = "loadcells" ] || [ "$loadcells_zoffset" = "true" ]; then
+    if $CONFIG_HELPER --include-exists "loadcells_wipe.cfg"; then
+      custom_configs=$(find /usr/data/printer_data/config/ -type f -maxdepth 1 -name "*.cfg" -exec grep -l "\[gcode_macro _SAF_NOZZLE_WIPE\]" {} \;)
+      if [ -n "$custom_configs" ]; then
+        for custom_config in $custom_configs; do
+          filename=$(basename $custom_config)
+          if [ "$filename" != "loadcells_wipe.cfg" ]; then
+            if $CONFIG_HELPER --include-exists "$filename"; then
+              echo
+              echo "WARNING: Detected third-party nozzle wipe - removing default nozzle wipe"
+              echo
+              $CONFIG_HELPER --remove-include "loadcells_wipe.cfg"
+              return 1
+            fi
+          fi
+        done
+      fi
+    fi
+  fi
+  return 0
+}
+
 function fix_custom_config() {
+    local probe=$1
+    local loadcells_zoffset=$2
+
     changed=0
     custom_configs=$(find /usr/data/printer_data/config/ -type f -maxdepth 1 -exec grep -l "\[gcode_macro M109\]" {} \;)
     if [ -n "$custom_configs" ]; then
@@ -2121,6 +2144,12 @@ function fix_custom_config() {
             fi
         done
     fi
+
+    fix_custom_nozzle_wipe_config "$probe" "$loadcells_zoffset"
+    if [ $? -ne 0 ]; then
+      changed=1
+    fi
+
     sync
     return $changed
 }
@@ -2250,6 +2279,8 @@ elif [ "$1" = "--loadcells-zoffset" ]; then
 
     setup_loadcells_zoffset "$probe"
     if [ $? -ne 0 ]; then
+        fix_custom_nozzle_wipe_config "$probe" "true"
+
         echo "INFO: Restarting Klipper ..."
         sudo systemctl restart klipper
 
@@ -2941,8 +2972,8 @@ fi
         fi
     fi
 
-    # cleanup any M109 or M190 redefined
-    fix_custom_config
+    # cleanup any M109 or M190 redefined, and remove default nozzle wipe if custom is detected
+    fix_custom_config "$probe" "$loadcells_zoffset"
     fix_custom_config=$?
 
     fixup_client_variables_config
