@@ -1408,7 +1408,7 @@ function add_grumpyscreen_probe_macros() {
   fi
 
   if [ "$probe" = "loadcells" ] || [ "$loadcells_zoffset" = "true" ]; then
-    add_grumpyscreen_probe_macro "LOAD_CELL_CALIBRATE" "Load Cell Calibrate" "home_z"
+    add_grumpyscreen_probe_macro "_GRUMPY_LOAD_CELL_CALIBRATE" "Load Cell Calibrate" "home_z"
     add_grumpyscreen_probe_macro "LOAD_CELL_DIAGNOSTIC" "Load Cell Diagnostic" "info"
     add_grumpyscreen_probe_macro "LOAD_CELL_TEST_TAP" "Load Cell Test Tap" "home_z"
   fi
