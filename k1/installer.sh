@@ -1916,8 +1916,6 @@ function set_serial_eddyng() {
 }
 
 function setup_eddyng() {
-    local klipper_fork=$1
-
     grep -q "eddyng-probe" /usr/data/pellcorp.done
     if [ $? -ne 0 ]; then
         echo
@@ -1936,10 +1934,6 @@ function setup_eddyng() {
         $CONFIG_HELPER --add-include "eddyng_macro.cfg" || exit $?
 
         $CONFIG_HELPER --file eddyng_macro.cfg --replace-section-entry "gcode_macro _PROBE_EDDY_NG_TAP_HOME" "variable_stop_start_camera" "True" || exit $?
-
-        if [ "$klipper_fork" = "kalico" ]; then
-          $CONFIG_HELPER --file eddyng_macro.cfg --replace-section-entry "gcode_macro BED_MESH_CALIBRATE" "variable_scan_type" "'experimental'" || exit $?
-        fi
 
         $CONFIG_HELPER --remove-section "probe_eddy_ng btt_eddy" || exit $?
         $CONFIG_HELPER --add-section "probe_eddy_ng btt_eddy" || exit $?
@@ -2513,10 +2507,11 @@ fi
     fi
 
     if [ "$mode" = "install" ] || [ "$mode" = "reinstall" ] || [ "$probe_switch" = "true" ]; then
-      # just for now don't force kalico for btteddy can still enable via --kalico
-      if [ "$probe" != "btteddy" ]; then
-        klipper_fork=kalico
+      if [ "$probe" = "btteddy" ] && [ "$loadcells_zoffset" != "true" ]; then
+        echo "FATAL: BTT Eddy is not supported without using loadcells for z-offset, use eddyng instead!"
+        exit 1
       fi
+      klipper_fork=kalico
     fi
 
     if [ "$probe" = "loadcells" ]; then
@@ -2908,7 +2903,7 @@ fi
         setup_btteddy $klipper_fork
         setup_probe_specific=$?
     elif [ "$probe" = "eddyng" ]; then
-        setup_eddyng $klipper_fork
+        setup_eddyng
         setup_probe_specific=$?
     elif [ "$probe" = "microprobe" ]; then
         setup_microprobe
