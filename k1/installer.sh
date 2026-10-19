@@ -2491,7 +2491,7 @@ fi
     fi
 
     if [ "$mode" = "update" ] && [ "$klipper_fork" = "klipper" ]; then
-      echo "FATAL: Klipper is no longer supported, you can either switch to kalico or you can switch to the legacy branch of Simple AF"
+      echo "FATAL: Klipper is no longer supported, you can either switch to Kalico or you can switch to the legacy branch of Simple AF"
       echo
       echo "To switch to kalico as part of your update:"
       echo "  /usr/data/pellcorp/installer.sh --update --kalico"
