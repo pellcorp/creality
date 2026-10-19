@@ -1393,7 +1393,7 @@ function add_grumpyscreen_probe_macros() {
   [ -f /usr/data/grumpyscreen/macros.cfg ] && rm /usr/data/grumpyscreen/macros.cfg
   touch /usr/data/grumpyscreen/macros.cfg
 
-  if [ "$1" = "bltouch" ] || [ "$1" = "microprobe" ] [ "$1" = "klicky" ]; then
+  if [ "$1" = "bltouch" ] || [ "$1" = "microprobe" ] || [ "$1" = "klicky" ]; then
     add_grumpyscreen_probe_macro "PROBE_CALIBRATE" "Probe Calibrate" "home_z"
   elif [ "$1" = "cartographer" ]; then
     add_grumpyscreen_probe_macro "CARTOGRAPHER_SCAN_CALIBRATE" "Cartographer Calibrate" "home_z"
