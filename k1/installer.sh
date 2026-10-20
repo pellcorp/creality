@@ -1399,10 +1399,15 @@ function add_grumpyscreen_probe_macros() {
   elif [ "$1" = "cartotouch" ]; then
     add_grumpyscreen_probe_macro "CARTOGRAPHER_CALIBRATE METHOD=manual" "Cartographer Calibrate" "home_z"
   elif [ "$1" = "beacon" ]; then
+    add_grumpyscreen_probe_macro "_SET_KIN_MAX_Z" "Fake Home" "emergency"
+    add_grumpyscreen_probe_macro "_CALIBRATE_HEAT_SOAK" "Heat Soak" "bed"
     add_grumpyscreen_probe_macro "BEACON_CALIBRATE" "Beacon Calibrate" "home_z"
   elif [ "$1" = "eddyng" ]; then
+    add_grumpyscreen_probe_macro "_SET_KIN_MAX_Z" "Fake Home" "emergency"
     add_grumpyscreen_probe_macro "PROBE_EDDY_NG_SETUP" "Eddy NG Setup" "home_z"
   elif [ "$1" = "btteddy" ]; then
+    add_grumpyscreen_probe_macro "_SET_KIN_MAX_Z" "Fake Home" "emergency"
+    add_grumpyscreen_probe_macro "BTTEDDY_CALIBRATE_DRIVE_CURRENT " "BTT Calibrate Drive" "home_z"
     add_grumpyscreen_probe_macro "BTTEDDY_CURRENT_CALIBRATE" "BTT Eddy Calibrate" "home_z"
   fi
 
