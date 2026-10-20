@@ -1862,9 +1862,6 @@ function setup_btteddy() {
         cp /usr/data/pellcorp/config/btteddy_macro.cfg /usr/data/printer_data/config/ || exit $?
         $CONFIG_HELPER --add-include "btteddy_macro.cfg" || exit $?
 
-        cp /usr/data/pellcorp/config/btteddy_zoffset.cfg /usr/data/printer_data/config/ || exit $?
-        $CONFIG_HELPER --add-include "btteddy_zoffset.cfg" || exit $?
-
         $CONFIG_HELPER --remove-section "probe_eddy_current btt_eddy" || exit $?
         $CONFIG_HELPER --add-section "probe_eddy_current btt_eddy" || exit $?
 
@@ -2189,48 +2186,49 @@ elif [ "$1" = "--kalico-branch" ]; then # convenience for testing new features
     fi
 elif [ "$1" = "--kalico" ] && [ "$#" -eq 1 ]; then
     if [ ! -f /usr/data/pellcorp.done ]; then
-      echo "ERROR: No installation found - try putting $1 last on the command line if this is a new install!"
+      echo "ERROR: No installation found!"
       exit 1
     fi
-    /etc/init.d/S55klipper_service stop
 
+    klipper_fork=klipper
+    if [ -d /usr/data/klipper/.git ]; then
+      if git -C /usr/data/klipper/ remote get-url origin | grep -q kalico; then
+        klipper_fork=kalico
+      fi
+    fi
+
+    if [ "$klipper_fork" = "kalico" ]; then
+      echo "INFO: Already switched to kalico"
+      exit 0
+    fi
+
+    if $CONFIG_HELPER --include-exists "btteddy.cfg"; then
+      echo "FATAL: Probe is btteddy - aborting switch"
+      echo "Switch to Kalico with:"
+      echo "  /usr/data/pellcorp/installer.sh --update --kalico --loadcells-zoffset"
+      echo
+      echo "Refer to https://pellcorp.github.io/creality-wiki/btteddy/#loadcells-for-z-offset-required"
+      exit 1
+    fi
+
+    /etc/init.d/S55klipper_service stop
     klipper_repo=kalico
 
-    if [ -n "$klipper_repo" ]; then
-        owner="${klipper_repo%%/*}"
-        repo="${klipper_repo#*/}"
-        if [ "$owner" = "$repo" ]; then
-          owner=pellcorp
+    if [ -d /usr/data/klipper/.git ]; then
+        if [ "$klipper_fork" != "$klipper_repo" ]; then
+            echo "INFO: Switching klipper from $klipper_fork to $klipper_repo ..."
+            rm -rf /usr/data/klipper
         fi
-
-        if [ -d /usr/data/klipper/.git ]; then
-            cd /usr/data/klipper/
-            remote_repo=$(git remote get-url origin)
-            remote_repo="${remote_repo#*github.com/}"   # remove everything up to github.com/
-            remote_repo="${remote_repo%.git}"     # remove trailing .git
-            cd - > /dev/null
-
-            if [ "$remote_repo" != "${owner}/${repo}" ]; then
-                echo "INFO: Switching klipper from $remote_repo to ${owner}/${repo} ..."
-                rm -rf /usr/data/klipper
-            fi
-        fi
-
-        if [ ! -d /usr/data/klipper ]; then
-            git clone https://github.com/${owner}/${repo}.git /usr/data/klipper || exit $?
-            if [ -n "$3" ]; then
-              cd /usr/data/klipper && git switch $3 && cd - > /dev/null
-            fi
-        else
-            update_repo /usr/data/klipper $3 || exit $?
-        fi
-
-        update_klipper || exit $?
-        exit 0
-    else
-        echo "Error invalid klipper repo specified"
-        exit 1
     fi
+
+    if [ ! -d /usr/data/klipper ]; then
+        git clone https://github.com/pellcorp/${klipper_repo}.git /usr/data/klipper || exit $?
+    else
+        update_repo /usr/data/klipper $3 || exit $?
+    fi
+
+    update_klipper || exit $?
+    exit 0
 elif [ "$1" = "--loadcells-zoffset" ]; then
     if [ ! -f /usr/data/pellcorp.done ]; then
       echo "ERROR: No installation found - try putting $1 last on the command line if this is a new install!"
@@ -2482,11 +2480,6 @@ fi
     fi
 
     if [ "$mode" = "install" ] || [ "$mode" = "reinstall" ] || [ "$probe_switch" = "true" ]; then
-      if [ "$probe" = "btteddy" ] && [ "$loadcells_zoffset" != "true" ]; then
-        echo "FATAL: The btteddy is not supported without using loadcells for z-offset, use eddyng instead!"
-        echo "Refer to https://pellcorp.github.io/creality-wiki/btteddy/#loadcells-for-z-offset-required"
-        exit 1
-      fi
       klipper_fork=kalico
     fi
 
@@ -2501,6 +2494,23 @@ fi
       echo "  /usr/data/pellcorp/installer.sh --update"
       echo
       echo "Refer to https://pellcorp.github.io/creality-wiki/legacy/"
+      exit 1
+    fi
+
+    if [ "$probe" = "btteddy" ] && [ "$loadcells_zoffset" != "true" ]; then
+      if [ "$mode" = "update" ]; then
+        echo "FATAL: The btteddy software is no longer supported without using loadcells for z-offset, enable loadcells for z-offset, switch to eddyng or switch to legacy branch!"
+        echo "Refer to https://pellcorp.github.io/creality-wiki/btteddy/#loadcells-for-z-offset-required"
+        echo
+        echo "To switch to legacy branch run: "
+        echo "  /usr/data/pellcorp/installer.sh --branch legacy"
+        echo "  /usr/data/pellcorp/installer.sh --update"
+        echo
+        echo "Refer to https://pellcorp.github.io/creality-wiki/legacy/"
+      else
+        echo "FATAL: The btteddy software is no longer supported without using loadcells for z-offset, enable loadcells for z-offset or switch to eddyng"
+        echo "Refer to https://pellcorp.github.io/creality-wiki/btteddy/#loadcells-for-z-offset-required"
+      fi
       exit 1
     fi
 
