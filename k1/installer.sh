@@ -1166,13 +1166,6 @@ function setup_probe() {
             $CONFIG_HELPER --replace-section-entry "stepper_z" "endstop_pin" "probe:z_virtual_endstop" || exit $?
         fi
 
-        if [ "$probe" != "loadcells" ]; then
-          if [ -f /usr/data/pellcorp/k1/patches/loadcells_zoffset.cfg.${model} ]; then
-            cp /usr/data/pellcorp/config/loadcells_zoffset.cfg /usr/data/printer_data/config/ || exit $?
-            $CONFIG_HELPER --file loadcells_zoffset.cfg --patches /usr/data/pellcorp/k1/patches/loadcells_zoffset.cfg.${model} --quiet || exit $?
-          fi
-        fi
-
         cp /usr/data/pellcorp/config/quickstart.cfg /usr/data/printer_data/config/ || exit $?
         $CONFIG_HELPER --add-include "quickstart.cfg" || exit $?
 
@@ -1329,12 +1322,11 @@ function cleanup_probe() {
         $CONFIG_HELPER --remove-section-entry "stepper_z" "homing_retract_dist" || exit $?
     fi
 
-    if [ "$probe" = "loadcells" ]; then
-        if [ -f /usr/data/printer_data/config/loadcells_wipe.cfg ]; then
-            rm /usr/data/printer_data/config/loadcells_wipe.cfg
-        fi
-        $CONFIG_HELPER --remove-include "loadcells_wipe.cfg" || exit $?
-    fi
+    [ -f /usr/data/printer_data/config/loadcells_wipe.cfg ] && rm /usr/data/printer_data/config/loadcells_wipe.cfg
+    $CONFIG_HELPER --remove-include "loadcells_wipe.cfg" || exit $?
+    
+    [ -f /usr/data/printer_data/config/loadcells_zoffset.cfg ] && rm /usr/data/printer_data/config/loadcells_zoffset.cfg
+    $CONFIG_HELPER --remove-include "loadcells_zoffset.cfg" || exit $?
 
     if [ -f /usr/data/printer_data/config/$probe.cfg ]; then
         rm /usr/data/printer_data/config/$probe.cfg
