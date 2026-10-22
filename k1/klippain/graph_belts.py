@@ -488,6 +488,16 @@ def parse_log(logname):
                      "graph_accelerometer.py script to process it instead." % (logname,))
 
 
+def resolve_logname(pattern):
+    matches = glob.glob(pattern)
+    if len(matches) != 1:
+        if not matches:
+            raise ValueError("No accelerometer data file matches pattern %s" % (pattern,))
+        raise ValueError("Multiple accelerometer data files match pattern %s: %s" %
+                         (pattern, ", ".join(sorted(matches))))
+    return matches[0]
+
+
 def belts_calibration(lognames, klipperdir="~/klipper", max_freq=200., graph_spectogram=True, width=8.3, height=11.6):
     for filename in lognames[:2]:
         # Wait for the file handler to be released by Klipper
@@ -562,6 +572,7 @@ def main():
     if options.output is None:
         opts.error("You must specify an output file.png to use the script (option -o)")
 
+    args = [resolve_logname(pattern) for pattern in args]
     fig = belts_calibration(args, options.klipperdir, options.max_freq, options.no_spectogram,
                             options.width, options.height)
     pathlib.Path(options.output).unlink(missing_ok=True)
