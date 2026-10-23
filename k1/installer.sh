@@ -1812,6 +1812,7 @@ function setup_beacon() {
         $CONFIG_HELPER --file beacon_macro.cfg --replace-section-entry "gcode_macro _BEACON_CONTACT_HOME" "variable_stop_start_camera" "True" || exit $?
         $CONFIG_HELPER --file beacon_macro.cfg --replace-section-entry "gcode_macro BED_MESH_CALIBRATE" "variable_stop_start_camera" "True" || exit $?
         $CONFIG_HELPER --file beacon_macro.cfg --replace-section-entry "gcode_macro AXIS_TWIST_COMPENSATION_CALIBRATE" "variable_stop_start_camera" "True" || exit $?
+        $CONFIG_HELPER --file beacon_macro.cfg --replace-section-entry "gcode_macro BEACON_CALIBRATE" "variable_stop_start_camera" "True" || exit $?
 
         echo "beacon-probe" >> /usr/data/pellcorp.done
         sync
