@@ -10,6 +10,7 @@ else
   echo "FATAL: This script is not supported on non Creality OS!"
   exit 1
 fi
+board=$(/usr/bin/get_sn_mac.sh board)
 
 mode=stock
 if [ "$1" = "--revert" ]; then
@@ -141,6 +142,7 @@ if [ -f /usr/data/backups/creality-backup.tar.gz ]; then
       if [ -f /etc/init.d/S55klipper_service ]; then
           /etc/init.d/S55klipper_service stop 2> /dev/null
       fi
+
       if [ -f /etc/init.d/S99start_app ]; then
           /etc/init.d/S99start_app stop 2> /dev/null
           rm /etc/init.d/S99start_app
@@ -153,6 +155,13 @@ if [ -f /usr/data/backups/creality-backup.tar.gz ]; then
 
       /usr/data/pellcorp/tools/backups.sh --restore backup-latest.tar.gz
       [ -f /root/.profile.stock ] && rm /root/.profile.stock
+
+      # display the power cycle your printer image so people know what they need to do
+      if [ "$board" = "NEBULA V1.0.0.1" ]; then
+        cmd_jpeg_display /usr/data/pellcorp/k1/restart.jpg &
+      else
+        cmd_jpeg_display /usr/data/pellcorp/k1/restart-nebula.jpg &
+      fi
       sync
     else
         echo "WARN: Stock is not active"
