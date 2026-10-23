@@ -179,6 +179,8 @@ if [ $? -ne 0 ]; then
     fi
   fi
 
+  $CONFIG_HELPER --patches $BASEDIR/pellcorp/config/danger_options.cfg --quiet || exit $?
+
   # customised lcd menu
   display_lcd_type=$($CONFIG_HELPER --get-section-entry "display" "lcd_type" --default-value "none")
   # just the ender 3 v1 specific screen supported for now, I dont have a V2 to be able to

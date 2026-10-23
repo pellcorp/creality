@@ -928,6 +928,8 @@ function install_klipper() {
         if [ "$MODEL" != "F001" ] && [ "$MODEL" != "F002" ]; then
           $CONFIG_HELPER --remove-section "mcu leveling_mcu" || exit $?
         fi
+        
+        $CONFIG_HELPER --patches /usr/data/pellcorp/config/danger_options.cfg --quiet || exit $?
 
         # for scripts like ~/klipper/scripts, a soft link makes things a little bit easier
         ln -sf /usr/data/klipper/ /root
