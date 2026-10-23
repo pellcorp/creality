@@ -10,7 +10,6 @@ else
   echo "FATAL: This script is not supported on non Creality OS!"
   exit 1
 fi
-board=$(/usr/bin/get_sn_mac.sh board)
 
 mode=stock
 if [ "$1" = "--revert" ]; then
@@ -128,17 +127,6 @@ if [ -f /usr/data/backups/creality-backup.tar.gz ]; then
       cp /usr/data/pellcorp/k1/services/S55klipper_service /etc/init.d/
       ln -sf /usr/data/klipper/fw/K1/klipper_host_mcu /usr/bin/klipper_mcu
 
-      # the backed up /etc/init.d/S99helixscreen from switching to stock
-      if [ -f /usr/data/S99helixscreen ]; then
-        echo
-        echo "INFO: Restoring HelixScreen"
-        mv /usr/data/S99helixscreen /etc/init.d/
-      else
-        echo
-        echo "INFO: Restoring GrumpyScreen"
-        cp /usr/data/pellcorp/k1/services/S99grumpyscreen /etc/init.d/
-      fi
-
       if [ -f /etc/init.d/S55klipper_service ]; then
           /etc/init.d/S55klipper_service stop 2> /dev/null
       fi
@@ -156,11 +144,39 @@ if [ -f /usr/data/backups/creality-backup.tar.gz ]; then
       /usr/data/pellcorp/tools/backups.sh --restore backup-latest.tar.gz
       [ -f /root/.profile.stock ] && rm /root/.profile.stock
 
-      # display the power cycle your printer image so people know what they need to do
-      if [ "$board" = "NEBULA V1.0.0.1" ]; then
-        cmd_jpeg_display /usr/data/pellcorp/k1/restart.jpg &
+      # the backed up /etc/init.d/S99helixscreen from switching to stock
+      if [ -f /usr/data/S99helixscreen ]; then
+        echo
+        echo "INFO: Restoring HelixScreen"
+        mv /usr/data/S99helixscreen /etc/init.d/
       else
+        echo
+        echo "INFO: Restoring GrumpyScreen"
+        cp /usr/data/pellcorp/k1/services/S99grumpyscreen /etc/init.d/
+
+        # for K1, etc rotate=3
+        DISPLAY_ROTATE=3
+        # nebula pads except for Ender 5 Max are 0
+        if [ "$MODEL" = "F005" ] || [ "$MODEL" = "F003" ]; then
+          DISPLAY_ROTATE=0
+        elif [ "$MODEL" = "F004" ]; then
+          DISPLAY_ROTATE=2
+        fi
+
+        sed -i "s:DISPLAY_ROTATE=0:DISPLAY_ROTATE=$DISPLAY_ROTATE:g" /etc/init.d/S99grumpyscreen
+
+        kinematics=$($CONFIG_HELPER --get-section-entry "printer" "kinematics")
+        if [ "$kinematics" = "cartesian" ]; then
+          sed -i "s:INVERT_Z_ICON=false:INVERT_Z_ICON=true:g" /etc/init.d/S99grumpyscreen
+        fi
+      fi
+
+      # display the power cycle your printer image so people know what they need to do
+      board=$(/usr/bin/get_sn_mac.sh board)
+      if [ "$board" = "NEBULA V1.0.0.1" ]; then
         cmd_jpeg_display /usr/data/pellcorp/k1/restart-nebula.jpg &
+      else
+        cmd_jpeg_display /usr/data/pellcorp/k1/restart.jpg &
       fi
       sync
     else
