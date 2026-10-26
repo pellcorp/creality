@@ -1393,14 +1393,12 @@ function add_grumpyscreen_probe_macros() {
   elif [ "$1" = "cartotouch" ]; then
     add_grumpyscreen_probe_macro "CARTOGRAPHER_CALIBRATE METHOD=manual" "Cartographer Calibrate" "home_z"
   elif [ "$1" = "beacon" ]; then
-    add_grumpyscreen_probe_macro "_SET_KIN_MAX_Z" "Fake Home" "emergency"
+    [ "$loadcells_zoffset" != "true" ] && add_grumpyscreen_probe_macro "_SET_KIN_MAX_Z" "Fake Home" "emergency"
     add_grumpyscreen_probe_macro "_CALIBRATE_HEAT_SOAK" "Heat Soak" "bed"
     add_grumpyscreen_probe_macro "BEACON_CALIBRATE" "Beacon Calibrate" "home_z"
   elif [ "$1" = "eddyng" ]; then
-    add_grumpyscreen_probe_macro "_SET_KIN_MAX_Z" "Fake Home" "emergency"
     add_grumpyscreen_probe_macro "PROBE_EDDY_NG_SETUP" "Eddy NG Setup" "home_z"
   elif [ "$1" = "btteddy" ]; then
-    add_grumpyscreen_probe_macro "_SET_KIN_MAX_Z" "Fake Home" "emergency"
     add_grumpyscreen_probe_macro "BTTEDDY_CALIBRATE_DRIVE_CURRENT " "BTT Calibrate Drive" "home_z"
     add_grumpyscreen_probe_macro "BTTEDDY_CURRENT_CALIBRATE" "BTT Eddy Calibrate" "home_z"
   fi
@@ -1574,6 +1572,11 @@ function setup_loadcells() {
 function setup_loadcells_zoffset() {
     local probe=$1
 
+    if [ "$probe" = "btteddy" ] || [ "$probe" = "eddyng" ] || [ "$probe" = "beacon" ] || [ "$probe" = "cartographer" ]; then
+        setup_loadcells_scanner "$probe"
+        return $?
+    fi
+
     echo
     echo "INFO: Setting up loadcells for z-offset ..."
 
@@ -1611,6 +1614,82 @@ function setup_loadcells_zoffset() {
         fi
         $CONFIG_HELPER --file ${probe}.cfg --replace-section-entry "bed_mesh" "zero_reference_position" "$zero_reference_position" || exit $?
     fi
+    sync
+
+    # means klipper needs to be restarted
+    return 1
+}
+
+function setup_loadcells_scanner() {
+    local probe=$1
+
+    local scanner_section="probe_eddy_current btt_eddy"
+    if [ "$probe" = "eddyng" ]; then
+      scanner_section="probe_eddy_ng btt_eddy"
+    fi
+
+    echo
+    echo "INFO: Setting up loadcells as the main probe with $probe for bed mesh ..."
+
+    if [ "$model" != "f001" ]; then
+      $CONFIG_HELPER --replace-section-entry "stepper_z" "homing_retract_dist" "0" || exit $?
+      $CONFIG_HELPER --replace-section-entry "stepper_z" "homing_speed" "2.0" || exit $?
+    fi
+
+    cp /usr/data/pellcorp/config/loadcells.cfg /usr/data/printer_data/config/ || exit $?
+    if [ -f /usr/data/pellcorp/k1/patches/loadcells.cfg.${model} ]; then
+      $CONFIG_HELPER --file loadcells.cfg --patches /usr/data/pellcorp/k1/patches/loadcells.cfg.${model} --quiet || exit $?
+    fi
+    $CONFIG_HELPER --add-include "loadcells.cfg" || exit $?
+    $CONFIG_HELPER --file loadcells.cfg --remove-section "bed_mesh" || exit $?
+    $CONFIG_HELPER --file ${probe}.cfg --remove-section "screws_tilt_adjust" || exit $?
+
+    cp /usr/data/pellcorp/config/loadcells_macro.cfg /usr/data/printer_data/config/ || exit $?
+    $CONFIG_HELPER --file loadcells_macro.cfg --remove-section "gcode_macro BED_MESH_CALIBRATE" || exit $?
+    $CONFIG_HELPER --add-include "loadcells_macro.cfg" || exit $?
+
+    cp /usr/data/pellcorp/config/loadcells_wipe.cfg /usr/data/printer_data/config/ || exit $?
+    $CONFIG_HELPER --add-include "loadcells_wipe.cfg" || exit $?
+    # the K1C and K1 SE have a brush at the back of the bed
+    if [ "$MODEL" = "K1C" ] || [ "$MODEL" = "K1 SE" ]; then
+      $CONFIG_HELPER --file loadcells_wipe.cfg --replace-section-entry "gcode_macro _LOAD_CELL_WIPE_VARIABLES" "variable_k1c_brush" "True" || exit $?
+    fi
+
+    $CONFIG_HELPER --remove-include "loadcells_zoffset.cfg" || exit $?
+    $CONFIG_HELPER --remove-include "${probe}_zoffset.cfg" || exit $?
+    if [ -f /usr/data/pellcorp-overrides/printer.cfg ]; then
+      $CONFIG_HELPER --file /usr/data/pellcorp-overrides/printer.cfg --remove-include "loadcells_zoffset.cfg" || exit $?
+    fi
+
+    $CONFIG_HELPER --remove-section "load_cell_probe" || exit $?
+    $CONFIG_HELPER --add-section "load_cell_probe" || exit $?
+    z_offset=$($CONFIG_HELPER --ignore-missing --file /usr/data/pellcorp-overrides/printer.cfg.save_config --get-section-entry load_cell_probe z_offset)
+    if [ -n "$z_offset" ]; then
+      $CONFIG_HELPER --replace-section-entry "load_cell_probe" "# z_offset" "0.0" || exit $?
+    else
+      $CONFIG_HELPER --replace-section-entry "load_cell_probe" "z_offset" "0.0" || exit $?
+    fi
+
+    # the scanner must not take the probe name so the load cell is the main probe
+    if [ "$probe" = "beacon" ] || [ "$probe" = "cartographer" ]; then
+      $CONFIG_HELPER --file ${probe}.cfg --replace-section-entry "$probe" "register_as_probe" "False" || exit $?
+      if [ "$probe" = "cartographer" ]; then
+        $CONFIG_HELPER --file ${probe}.cfg --remove-section "cartographer touch" || exit $?
+      fi
+    else
+      $CONFIG_HELPER --file ${probe}.cfg --replace-section-entry "$scanner_section" "probe_name" "scanner" || exit $?
+      $CONFIG_HELPER --file ${probe}.cfg --replace-section-entry "bed_mesh" "probe_name" "scanner" || exit $?
+    fi
+
+    y_position_mid=$($CONFIG_HELPER --get-section-entry "stepper_y" "position_max" --divisor 2 --integer)
+    x_position_mid=$($CONFIG_HELPER --get-section-entry "stepper_x" "position_max" --divisor 2 --integer)
+    $CONFIG_HELPER --file ${probe}.cfg --replace-section-entry "bed_mesh" "zero_reference_position" "$x_position_mid,$y_position_mid" || exit $?
+
+    # axis twist uses the loadcells, which have no offset, so the whole bed width is reachable
+    x_position_end=$($CONFIG_HELPER --get-section-entry "stepper_x" "position_max" --minus 15 --integer)
+    $CONFIG_HELPER --file ${probe}.cfg --replace-section-entry "axis_twist_compensation" "calibrate_start_x" "15" || exit $?
+    $CONFIG_HELPER --file ${probe}.cfg --replace-section-entry "axis_twist_compensation" "calibrate_end_x" "$x_position_end" || exit $?
+    $CONFIG_HELPER --file ${probe}.cfg --replace-section-entry "axis_twist_compensation" "calibrate_y" "$y_position_mid" || exit $?
     sync
 
     # means klipper needs to be restarted
@@ -2352,6 +2431,9 @@ fi
     # so if this include exists its like they specified --loadcell-zoffset to the installer
     # because we should be rerunning the setup loadcells every time so that any updates get applied
     if $CONFIG_HELPER --include-exists "loadcells_zoffset.cfg"; then
+      loadcells_zoffset=true
+    elif [ -n "$probe" ] && [ "$probe" != "loadcells" ] && $CONFIG_HELPER --include-exists "loadcells.cfg"; then
+      # a scanner with the loadcells as the main probe
       loadcells_zoffset=true
     fi
 
