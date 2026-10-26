@@ -1572,9 +1572,17 @@ function setup_loadcells() {
 function setup_loadcells_zoffset() {
     local probe=$1
 
-    if [ "$probe" = "btteddy" ] || [ "$probe" = "eddyng" ] || [ "$probe" = "beacon" ] || [ "$probe" = "cartographer" ]; then
+    if [ "$probe" = "btteddy" ] || [ "$probe" = "eddyng" ] || [ "$probe" = "beacon" ] || [ "$probe" = "cartographer" ] || [ "$probe" = "bltouch" ]; then
         setup_loadcells_scanner "$probe"
         return $?
+    fi
+
+    # the probe section is renamed so only a new install or one already converted is safe
+    if [ "$probe" = "microprobe" ] || [ "$probe" = "klicky" ]; then
+        if [ "$mode" = "install" ] || $CONFIG_HELPER --include-exists "loadcells.cfg"; then
+            setup_loadcells_scanner "$probe"
+            return $?
+        fi
     fi
 
     echo
@@ -1626,6 +1634,8 @@ function setup_loadcells_scanner() {
     local scanner_section="probe_eddy_current btt_eddy"
     if [ "$probe" = "eddyng" ]; then
       scanner_section="probe_eddy_ng btt_eddy"
+    elif [ "$probe" = "bltouch" ]; then
+      scanner_section="bltouch"
     fi
 
     echo
@@ -1675,6 +1685,21 @@ function setup_loadcells_scanner() {
       $CONFIG_HELPER --file ${probe}.cfg --replace-section-entry "$probe" "register_as_probe" "False" || exit $?
       if [ "$probe" = "cartographer" ]; then
         $CONFIG_HELPER --file ${probe}.cfg --remove-section "cartographer touch" || exit $?
+      fi
+    elif [ "$probe" = "microprobe" ] || [ "$probe" = "klicky" ]; then
+      sed -i "s/^\[probe\]/[mesh_probe]/" /usr/data/printer_data/config/${probe}.cfg
+      $CONFIG_HELPER --file ${probe}.cfg --replace-section-entry "bed_mesh" "probe_name" "mesh_probe" || exit $?
+
+      mesh_probe_z_offset="0.0"
+      if [ "$probe" = "klicky" ]; then
+        mesh_probe_z_offset="2.0"
+        $CONFIG_HELPER --file klicky_macro.cfg --remove-section "gcode_macro PROBE_CALIBRATE" || exit $?
+      fi
+      $CONFIG_HELPER --remove-section "probe" || exit $?
+      $CONFIG_HELPER --add-section "mesh_probe" || exit $?
+      $CONFIG_HELPER --replace-section-entry "mesh_probe" "z_offset" "$mesh_probe_z_offset" || exit $?
+      if [ -f /usr/data/pellcorp-overrides/printer.cfg ]; then
+        $CONFIG_HELPER --file /usr/data/pellcorp-overrides/printer.cfg --remove-section "probe" || exit $?
       fi
     else
       $CONFIG_HELPER --file ${probe}.cfg --replace-section-entry "$scanner_section" "probe_name" "scanner" || exit $?
