@@ -1695,9 +1695,9 @@ function setup_loadcells_scanner() {
         mesh_probe_z_offset="2.0"
         $CONFIG_HELPER --file klicky_macro.cfg --remove-section "gcode_macro PROBE_CALIBRATE" || exit $?
       fi
+      # the mesh_probe section lives in the included ${probe}.cfg, so z_offset goes there too
+      $CONFIG_HELPER --file ${probe}.cfg --replace-section-entry "mesh_probe" "z_offset" "$mesh_probe_z_offset" || exit $?
       $CONFIG_HELPER --remove-section "probe" || exit $?
-      $CONFIG_HELPER --add-section "mesh_probe" || exit $?
-      $CONFIG_HELPER --replace-section-entry "mesh_probe" "z_offset" "$mesh_probe_z_offset" || exit $?
       if [ -f /usr/data/pellcorp-overrides/printer.cfg ]; then
         $CONFIG_HELPER --file /usr/data/pellcorp-overrides/printer.cfg --remove-section "probe" || exit $?
       fi
