@@ -1397,8 +1397,10 @@ function add_grumpyscreen_probe_macros() {
     add_grumpyscreen_probe_macro "_CALIBRATE_HEAT_SOAK" "Heat Soak" "bed"
     add_grumpyscreen_probe_macro "BEACON_CALIBRATE" "Beacon Calibrate" "home_z"
   elif [ "$1" = "eddyng" ]; then
+    [ "$loadcells_zoffset" != "true" ] && add_grumpyscreen_probe_macro "_SET_KIN_MAX_Z" "Fake Home" "emergency"
     add_grumpyscreen_probe_macro "PROBE_EDDY_NG_SETUP" "Eddy NG Setup" "home_z"
   elif [ "$1" = "btteddy" ]; then
+    [ "$loadcells_zoffset" != "true" ] && add_grumpyscreen_probe_macro "_SET_KIN_MAX_Z" "Fake Home" "emergency"
     add_grumpyscreen_probe_macro "BTTEDDY_CALIBRATE_DRIVE_CURRENT " "BTT Calibrate Drive" "home_z"
     add_grumpyscreen_probe_macro "BTTEDDY_CURRENT_CALIBRATE" "BTT Eddy Calibrate" "home_z"
   fi
@@ -1696,6 +1698,8 @@ function setup_loadcells_scanner() {
         $CONFIG_HELPER --file klicky_macro.cfg --remove-section "gcode_macro PROBE_CALIBRATE" || exit $?
       fi
       # the mesh_probe section lives in the included ${probe}.cfg, so z_offset goes there too
+      # add-section is a no-op when the section exists; replace-section-entry silently does nothing when it does not
+      $CONFIG_HELPER --file ${probe}.cfg --add-section "mesh_probe" || exit $?
       $CONFIG_HELPER --file ${probe}.cfg --replace-section-entry "mesh_probe" "z_offset" "$mesh_probe_z_offset" || exit $?
       $CONFIG_HELPER --remove-section "probe" || exit $?
       if [ -f /usr/data/pellcorp-overrides/printer.cfg ]; then
