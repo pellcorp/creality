@@ -28,13 +28,10 @@ Run the tests with:
 
 ## Related Projects
 
-The following projects also owned and developed by me (usually from an upstream fork) that are also used by this project:
+The following projects are also used by this project:
 
 - https://github.com/pellcorp/creality-wiki
 - https://github.com/pellcorp/grumpyscreen
-- https://github.com/pellcorp/klipper
-- https://github.com/pellcorp/klipper-rpi
-- https://github.com/pellcorp/k1-klipper-firmware
 - https://github.com/pellcorp/kalico
 - https://github.com/pellcorp/kalico-rpi
 - https://github.com/pellcorp/k1-kalico-firmware
