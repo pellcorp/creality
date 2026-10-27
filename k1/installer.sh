@@ -1393,14 +1393,14 @@ function add_grumpyscreen_probe_macros() {
   elif [ "$1" = "cartotouch" ]; then
     add_grumpyscreen_probe_macro "CARTOGRAPHER_CALIBRATE METHOD=manual" "Cartographer Calibrate" "home_z"
   elif [ "$1" = "beacon" ]; then
-    add_grumpyscreen_probe_macro "_SET_KIN_MAX_Z" "Fake Home" "emergency"
+    [ "$loadcells_scanner" != "true" ] && add_grumpyscreen_probe_macro "_SET_KIN_MAX_Z" "Fake Home" "emergency"
     add_grumpyscreen_probe_macro "_CALIBRATE_HEAT_SOAK" "Heat Soak" "bed"
     add_grumpyscreen_probe_macro "BEACON_CALIBRATE" "Beacon Calibrate" "home_z"
   elif [ "$1" = "eddyng" ]; then
-    add_grumpyscreen_probe_macro "_SET_KIN_MAX_Z" "Fake Home" "emergency"
+    [ "$loadcells_scanner" != "true" ] && add_grumpyscreen_probe_macro "_SET_KIN_MAX_Z" "Fake Home" "emergency"
     add_grumpyscreen_probe_macro "PROBE_EDDY_NG_SETUP" "Eddy NG Setup" "home_z"
   elif [ "$1" = "btteddy" ]; then
-    add_grumpyscreen_probe_macro "_SET_KIN_MAX_Z" "Fake Home" "emergency"
+    [ "$loadcells_scanner" != "true" ] && add_grumpyscreen_probe_macro "_SET_KIN_MAX_Z" "Fake Home" "emergency"
     add_grumpyscreen_probe_macro "BTTEDDY_CALIBRATE_DRIVE_CURRENT " "BTT Calibrate Drive" "home_z"
     add_grumpyscreen_probe_macro "BTTEDDY_CURRENT_CALIBRATE" "BTT Eddy Calibrate" "home_z"
   fi
@@ -1574,6 +1574,12 @@ function setup_loadcells() {
 function setup_loadcells_zoffset() {
     local probe=$1
 
+    # --scanner: load cells are the main probe, the scanner is bed mesh only
+    if [ "$loadcells_scanner" = "true" ] && { [ "$probe" = "eddyng" ] || [ "$probe" = "beacon" ] || [ "$probe" = "cartographer" ]; }; then
+        setup_loadcells_scanner "$probe"
+        return $?
+    fi
+
     echo
     echo "INFO: Setting up loadcells for z-offset ..."
 
@@ -1611,6 +1617,82 @@ function setup_loadcells_zoffset() {
         fi
         $CONFIG_HELPER --file ${probe}.cfg --replace-section-entry "bed_mesh" "zero_reference_position" "$zero_reference_position" || exit $?
     fi
+    sync
+
+    # means klipper needs to be restarted
+    return 1
+}
+
+function setup_loadcells_scanner() {
+    local probe=$1
+
+    local scanner_section="probe_eddy_current btt_eddy"
+    if [ "$probe" = "eddyng" ]; then
+      scanner_section="probe_eddy_ng btt_eddy"
+    fi
+
+    echo
+    echo "INFO: Setting up loadcells as the main probe with $probe for bed mesh ..."
+
+    if [ "$model" != "f001" ]; then
+      $CONFIG_HELPER --replace-section-entry "stepper_z" "homing_retract_dist" "0" || exit $?
+      $CONFIG_HELPER --replace-section-entry "stepper_z" "homing_speed" "2.0" || exit $?
+    fi
+
+    cp /usr/data/pellcorp/config/loadcells.cfg /usr/data/printer_data/config/ || exit $?
+    if [ -f /usr/data/pellcorp/k1/patches/loadcells.cfg.${model} ]; then
+      $CONFIG_HELPER --file loadcells.cfg --patches /usr/data/pellcorp/k1/patches/loadcells.cfg.${model} --quiet || exit $?
+    fi
+    $CONFIG_HELPER --add-include "loadcells.cfg" || exit $?
+    $CONFIG_HELPER --file loadcells.cfg --remove-section "bed_mesh" || exit $?
+    $CONFIG_HELPER --file ${probe}.cfg --remove-section "screws_tilt_adjust" || exit $?
+
+    cp /usr/data/pellcorp/config/loadcells_macro.cfg /usr/data/printer_data/config/ || exit $?
+    $CONFIG_HELPER --file loadcells_macro.cfg --remove-section "gcode_macro BED_MESH_CALIBRATE" || exit $?
+    $CONFIG_HELPER --add-include "loadcells_macro.cfg" || exit $?
+
+    cp /usr/data/pellcorp/config/loadcells_wipe.cfg /usr/data/printer_data/config/ || exit $?
+    $CONFIG_HELPER --add-include "loadcells_wipe.cfg" || exit $?
+    # the K1C and K1 SE have a brush at the back of the bed
+    if [ "$MODEL" = "K1C" ] || [ "$MODEL" = "K1 SE" ]; then
+      $CONFIG_HELPER --file loadcells_wipe.cfg --replace-section-entry "gcode_macro _LOAD_CELL_WIPE_VARIABLES" "variable_k1c_brush" "True" || exit $?
+    fi
+
+    $CONFIG_HELPER --remove-include "loadcells_zoffset.cfg" || exit $?
+    $CONFIG_HELPER --remove-include "${probe}_zoffset.cfg" || exit $?
+    if [ -f /usr/data/pellcorp-overrides/printer.cfg ]; then
+      $CONFIG_HELPER --file /usr/data/pellcorp-overrides/printer.cfg --remove-include "loadcells_zoffset.cfg" || exit $?
+    fi
+
+    $CONFIG_HELPER --remove-section "load_cell_probe" || exit $?
+    $CONFIG_HELPER --add-section "load_cell_probe" || exit $?
+    z_offset=$($CONFIG_HELPER --ignore-missing --file /usr/data/pellcorp-overrides/printer.cfg.save_config --get-section-entry load_cell_probe z_offset)
+    if [ -n "$z_offset" ]; then
+      $CONFIG_HELPER --replace-section-entry "load_cell_probe" "# z_offset" "0.0" || exit $?
+    else
+      $CONFIG_HELPER --replace-section-entry "load_cell_probe" "z_offset" "0.0" || exit $?
+    fi
+
+    # the scanner must not take the probe name so the load cell is the main probe
+    if [ "$probe" = "beacon" ] || [ "$probe" = "cartographer" ]; then
+      $CONFIG_HELPER --file ${probe}.cfg --replace-section-entry "$probe" "register_as_probe" "False" || exit $?
+      if [ "$probe" = "cartographer" ]; then
+        $CONFIG_HELPER --file ${probe}.cfg --remove-section "cartographer touch" || exit $?
+      fi
+    else
+      # the scanner is not the default probe; the load cell stays "probe"
+      $CONFIG_HELPER --file ${probe}.cfg --replace-section-entry "$scanner_section" "register_as_probe" "False" || exit $?
+    fi
+
+    y_position_mid=$($CONFIG_HELPER --get-section-entry "stepper_y" "position_max" --divisor 2 --integer)
+    x_position_mid=$($CONFIG_HELPER --get-section-entry "stepper_x" "position_max" --divisor 2 --integer)
+    $CONFIG_HELPER --file ${probe}.cfg --replace-section-entry "bed_mesh" "zero_reference_position" "$x_position_mid,$y_position_mid" || exit $?
+
+    # axis twist uses the loadcells, which have no offset, so the whole bed width is reachable
+    x_position_end=$($CONFIG_HELPER --get-section-entry "stepper_x" "position_max" --minus 15 --integer)
+    $CONFIG_HELPER --file ${probe}.cfg --replace-section-entry "axis_twist_compensation" "calibrate_start_x" "15" || exit $?
+    $CONFIG_HELPER --file ${probe}.cfg --replace-section-entry "axis_twist_compensation" "calibrate_end_x" "$x_position_end" || exit $?
+    $CONFIG_HELPER --file ${probe}.cfg --replace-section-entry "axis_twist_compensation" "calibrate_y" "$y_position_mid" || exit $?
     sync
 
     # means klipper needs to be restarted
@@ -2229,13 +2311,28 @@ elif [ "$1" = "--kalico" ] && [ "$#" -eq 1 ]; then
 
     update_klipper || exit $?
     exit 0
-elif [ "$1" = "--loadcells-zoffset" ]; then
+elif [ "$1" = "--loadcells-zoffset" ] || [ "$1" = "--scanner" ]; then
     if [ ! -f /usr/data/pellcorp.done ]; then
       echo "ERROR: No installation found - try putting $1 last on the command line if this is a new install!"
       exit 1
     fi
 
     probe=$(cat /usr/data/pellcorp.done | grep "\-probe" | awk -F '-' '{print $1}')
+    loadcells_scanner=false
+    if [ "$1" = "--scanner" ]; then
+        if [ "$probe" != "eddyng" ] && [ "$probe" != "beacon" ] && [ "$probe" != "cartographer" ]; then
+            echo "ERROR: --scanner is only for eddyng, beacon or cartographer"
+            exit 1
+        elif [ "$model" != "k1" ] && [ "$model" != "k1m" ] && [ "$model" != "f001" ] && [ "$model" != "f004" ]; then
+            echo "ERROR: --scanner is not supported for your printer ($MODEL)"
+            exit 1
+        fi
+        if [ ! -f /usr/data/klipper/klippy/extras/probe.py ] || ! grep -q "class ProbeList" /usr/data/klipper/klippy/extras/probe.py; then
+            echo "ERROR: --scanner needs the rebased kalico with the probe list (class ProbeList in klippy/extras/probe.py)"
+            exit 1
+        fi
+        loadcells_scanner=true
+    fi
     if [ "$probe" = "loadcells" ]; then
         echo "ERROR: --loadcells-zoffset is not needed for the loadcells probe"
         exit 1
@@ -2349,10 +2446,17 @@ fi
 
     loadcells_zoffset_specified=false
     loadcells_zoffset=false
+    loadcells_scanner=false
     # so if this include exists its like they specified --loadcell-zoffset to the installer
     # because we should be rerunning the setup loadcells every time so that any updates get applied
     if $CONFIG_HELPER --include-exists "loadcells_zoffset.cfg"; then
       loadcells_zoffset=true
+    elif [ -n "$probe" ] && [ "$probe" != "loadcells" ] && $CONFIG_HELPER --include-exists "loadcells.cfg"; then
+      # a scanner with the loadcells as the main probe
+      loadcells_zoffset=true
+      if [ "$probe" = "eddyng" ] || [ "$probe" = "beacon" ] || [ "$probe" = "cartographer" ]; then
+        loadcells_scanner=true
+      fi
     fi
 
     if [ -f /usr/data/pellcorp.done ]; then
@@ -2370,10 +2474,24 @@ fi
         elif [ "$1" = "--kalico" ]; then
             klipper_fork=kalico
             shift
-        elif [ "$1" = "--loadcells-zoffset" ]; then
+        elif [ "$1" = "--loadcells-zoffset" ] || [ "$1" = "--scanner" ]; then
             if [ "$probe" != "loadcells" ]; then
               loadcells_zoffset_specified=true
               loadcells_zoffset=true
+              if [ "$1" = "--scanner" ]; then
+                if [ "$probe" != "eddyng" ] && [ "$probe" != "beacon" ] && [ "$probe" != "cartographer" ]; then
+                  echo "ERROR: --scanner is only for eddyng, beacon or cartographer"
+                  exit 1
+                elif [ "$model" != "k1" ] && [ "$model" != "k1m" ] && [ "$model" != "f001" ] && [ "$model" != "f004" ]; then
+                  echo "ERROR: --scanner is not supported for your printer ($MODEL)"
+                  exit 1
+                fi
+                if [ ! -f /usr/data/klipper/klippy/extras/probe.py ] || ! grep -q "class ProbeList" /usr/data/klipper/klippy/extras/probe.py; then
+                  echo "ERROR: --scanner needs the rebased kalico with the probe list (class ProbeList in klippy/extras/probe.py)"
+                  exit 1
+                fi
+                loadcells_scanner=true
+              fi
 
               # for eddyng and btteddy if they ask for it give it to them
               klipper_fork=kalico
@@ -2449,6 +2567,7 @@ fi
     # existence of the loadcells-zoffset.cfg from the current installation
     if [ "$probe_switch" = "true" ] && [ "$loadcells_zoffset_specified" != "true" ]; then
       loadcells_zoffset=false
+      loadcells_scanner=false
     fi
 
     if [ "$MODEL" = "NEBULA" ]; then
