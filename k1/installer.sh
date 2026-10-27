@@ -1393,14 +1393,14 @@ function add_grumpyscreen_probe_macros() {
   elif [ "$1" = "cartotouch" ]; then
     add_grumpyscreen_probe_macro "CARTOGRAPHER_CALIBRATE METHOD=manual" "Cartographer Calibrate" "home_z"
   elif [ "$1" = "beacon" ]; then
-    [ "$loadcells_zoffset" != "true" ] && add_grumpyscreen_probe_macro "_SET_KIN_MAX_Z" "Fake Home" "emergency"
+    [ "$loadcells_scanner" != "true" ] && add_grumpyscreen_probe_macro "_SET_KIN_MAX_Z" "Fake Home" "emergency"
     add_grumpyscreen_probe_macro "_CALIBRATE_HEAT_SOAK" "Heat Soak" "bed"
     add_grumpyscreen_probe_macro "BEACON_CALIBRATE" "Beacon Calibrate" "home_z"
   elif [ "$1" = "eddyng" ]; then
-    [ "$loadcells_zoffset" != "true" ] && add_grumpyscreen_probe_macro "_SET_KIN_MAX_Z" "Fake Home" "emergency"
+    [ "$loadcells_scanner" != "true" ] && add_grumpyscreen_probe_macro "_SET_KIN_MAX_Z" "Fake Home" "emergency"
     add_grumpyscreen_probe_macro "PROBE_EDDY_NG_SETUP" "Eddy NG Setup" "home_z"
   elif [ "$1" = "btteddy" ]; then
-    [ "$loadcells_zoffset" != "true" ] && add_grumpyscreen_probe_macro "_SET_KIN_MAX_Z" "Fake Home" "emergency"
+    [ "$loadcells_scanner" != "true" ] && add_grumpyscreen_probe_macro "_SET_KIN_MAX_Z" "Fake Home" "emergency"
     add_grumpyscreen_probe_macro "BTTEDDY_CALIBRATE_DRIVE_CURRENT " "BTT Calibrate Drive" "home_z"
     add_grumpyscreen_probe_macro "BTTEDDY_CURRENT_CALIBRATE" "BTT Eddy Calibrate" "home_z"
   fi
@@ -1574,17 +1574,10 @@ function setup_loadcells() {
 function setup_loadcells_zoffset() {
     local probe=$1
 
-    if [ "$probe" = "btteddy" ] || [ "$probe" = "eddyng" ] || [ "$probe" = "beacon" ] || [ "$probe" = "cartographer" ] || [ "$probe" = "bltouch" ]; then
+    # --scanner: load cells are the main probe, the scanner is bed mesh only
+    if [ "$loadcells_scanner" = "true" ] && { [ "$probe" = "eddyng" ] || [ "$probe" = "beacon" ] || [ "$probe" = "cartographer" ]; }; then
         setup_loadcells_scanner "$probe"
         return $?
-    fi
-
-    # the probe section is renamed so only a new install or one already converted is safe
-    if [ "$probe" = "microprobe" ] || [ "$probe" = "klicky" ]; then
-        if [ "$mode" = "install" ] || $CONFIG_HELPER --include-exists "loadcells.cfg"; then
-            setup_loadcells_scanner "$probe"
-            return $?
-        fi
     fi
 
     echo
@@ -1636,8 +1629,6 @@ function setup_loadcells_scanner() {
     local scanner_section="probe_eddy_current btt_eddy"
     if [ "$probe" = "eddyng" ]; then
       scanner_section="probe_eddy_ng btt_eddy"
-    elif [ "$probe" = "bltouch" ]; then
-      scanner_section="bltouch"
     fi
 
     echo
@@ -1687,23 +1678,6 @@ function setup_loadcells_scanner() {
       $CONFIG_HELPER --file ${probe}.cfg --replace-section-entry "$probe" "register_as_probe" "False" || exit $?
       if [ "$probe" = "cartographer" ]; then
         $CONFIG_HELPER --file ${probe}.cfg --remove-section "cartographer touch" || exit $?
-      fi
-    elif [ "$probe" = "microprobe" ] || [ "$probe" = "klicky" ]; then
-      sed -i "s/^\[probe\]/[mesh_probe]/" /usr/data/printer_data/config/${probe}.cfg
-      $CONFIG_HELPER --file ${probe}.cfg --replace-section-entry "bed_mesh" "probe_name" "mesh_probe" || exit $?
-
-      mesh_probe_z_offset="0.0"
-      if [ "$probe" = "klicky" ]; then
-        mesh_probe_z_offset="2.0"
-        $CONFIG_HELPER --file klicky_macro.cfg --remove-section "gcode_macro PROBE_CALIBRATE" || exit $?
-      fi
-      # the mesh_probe section lives in the included ${probe}.cfg, so z_offset goes there too
-      # add-section is a no-op when the section exists; replace-section-entry silently does nothing when it does not
-      $CONFIG_HELPER --file ${probe}.cfg --add-section "mesh_probe" || exit $?
-      $CONFIG_HELPER --file ${probe}.cfg --replace-section-entry "mesh_probe" "z_offset" "$mesh_probe_z_offset" || exit $?
-      $CONFIG_HELPER --remove-section "probe" || exit $?
-      if [ -f /usr/data/pellcorp-overrides/printer.cfg ]; then
-        $CONFIG_HELPER --file /usr/data/pellcorp-overrides/printer.cfg --remove-section "probe" || exit $?
       fi
     else
       $CONFIG_HELPER --file ${probe}.cfg --replace-section-entry "$scanner_section" "probe_name" "scanner" || exit $?
@@ -2337,13 +2311,24 @@ elif [ "$1" = "--kalico" ] && [ "$#" -eq 1 ]; then
 
     update_klipper || exit $?
     exit 0
-elif [ "$1" = "--loadcells-zoffset" ]; then
+elif [ "$1" = "--loadcells-zoffset" ] || [ "$1" = "--scanner" ]; then
     if [ ! -f /usr/data/pellcorp.done ]; then
       echo "ERROR: No installation found - try putting $1 last on the command line if this is a new install!"
       exit 1
     fi
 
     probe=$(cat /usr/data/pellcorp.done | grep "\-probe" | awk -F '-' '{print $1}')
+    loadcells_scanner=false
+    if [ "$1" = "--scanner" ]; then
+        if [ "$probe" != "eddyng" ] && [ "$probe" != "beacon" ] && [ "$probe" != "cartographer" ]; then
+            echo "ERROR: --scanner is only for eddyng, beacon or cartographer"
+            exit 1
+        elif [ "$model" != "k1" ] && [ "$model" != "k1m" ] && [ "$model" != "f001" ] && [ "$model" != "f004" ]; then
+            echo "ERROR: --scanner is not supported for your printer ($MODEL)"
+            exit 1
+        fi
+        loadcells_scanner=true
+    fi
     if [ "$probe" = "loadcells" ]; then
         echo "ERROR: --loadcells-zoffset is not needed for the loadcells probe"
         exit 1
@@ -2457,6 +2442,7 @@ fi
 
     loadcells_zoffset_specified=false
     loadcells_zoffset=false
+    loadcells_scanner=false
     # so if this include exists its like they specified --loadcell-zoffset to the installer
     # because we should be rerunning the setup loadcells every time so that any updates get applied
     if $CONFIG_HELPER --include-exists "loadcells_zoffset.cfg"; then
@@ -2464,6 +2450,9 @@ fi
     elif [ -n "$probe" ] && [ "$probe" != "loadcells" ] && $CONFIG_HELPER --include-exists "loadcells.cfg"; then
       # a scanner with the loadcells as the main probe
       loadcells_zoffset=true
+      if [ "$probe" = "eddyng" ] || [ "$probe" = "beacon" ] || [ "$probe" = "cartographer" ]; then
+        loadcells_scanner=true
+      fi
     fi
 
     if [ -f /usr/data/pellcorp.done ]; then
@@ -2481,10 +2470,20 @@ fi
         elif [ "$1" = "--kalico" ]; then
             klipper_fork=kalico
             shift
-        elif [ "$1" = "--loadcells-zoffset" ]; then
+        elif [ "$1" = "--loadcells-zoffset" ] || [ "$1" = "--scanner" ]; then
             if [ "$probe" != "loadcells" ]; then
               loadcells_zoffset_specified=true
               loadcells_zoffset=true
+              if [ "$1" = "--scanner" ]; then
+                if [ "$probe" != "eddyng" ] && [ "$probe" != "beacon" ] && [ "$probe" != "cartographer" ]; then
+                  echo "ERROR: --scanner is only for eddyng, beacon or cartographer"
+                  exit 1
+                elif [ "$model" != "k1" ] && [ "$model" != "k1m" ] && [ "$model" != "f001" ] && [ "$model" != "f004" ]; then
+                  echo "ERROR: --scanner is not supported for your printer ($MODEL)"
+                  exit 1
+                fi
+                loadcells_scanner=true
+              fi
 
               # for eddyng and btteddy if they ask for it give it to them
               klipper_fork=kalico
@@ -2560,6 +2559,7 @@ fi
     # existence of the loadcells-zoffset.cfg from the current installation
     if [ "$probe_switch" = "true" ] && [ "$loadcells_zoffset_specified" != "true" ]; then
       loadcells_zoffset=false
+      loadcells_scanner=false
     fi
 
     if [ "$MODEL" = "NEBULA" ]; then

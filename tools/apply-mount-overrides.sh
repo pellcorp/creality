@@ -31,10 +31,6 @@ apply_mount_overrides() {
         elif echo "$line" | grep -q "^#"; then
             continue # skip comments
         elif [ -n "$file" ] && [ -f $overrides_dir/$file ]; then
-            # microprobe and klicky use the mesh_probe section when loadcells are the main probe
-            if [ "$line" = "[probe]" ] && grep -q "^\[mesh_probe\]" $BASEDIR/printer_data/config/$file 2> /dev/null; then
-                line="[mesh_probe]"
-            fi
             echo "$line" >> $overrides_dir/$file
         fi
     done < "$BASEDIR/pellcorp/mounts/$probe/${mount}-${model}.overrides"
