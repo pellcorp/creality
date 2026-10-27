@@ -1680,9 +1680,8 @@ function setup_loadcells_scanner() {
         $CONFIG_HELPER --file ${probe}.cfg --remove-section "cartographer touch" || exit $?
       fi
     else
-      $CONFIG_HELPER --file ${probe}.cfg --replace-section-entry "$scanner_section" "probe_name" "scanner" || exit $?
-      # the scanner is for scanning only (METHOD=rapid_scan); normal probing stays on the load cell
-      $CONFIG_HELPER --file ${probe}.cfg --replace-section-entry "bed_mesh" "scan_probe_name" "scanner" || exit $?
+      # the scanner is not the default probe; the load cell stays "probe"
+      $CONFIG_HELPER --file ${probe}.cfg --replace-section-entry "$scanner_section" "register_as_probe" "False" || exit $?
     fi
 
     y_position_mid=$($CONFIG_HELPER --get-section-entry "stepper_y" "position_max" --divisor 2 --integer)
