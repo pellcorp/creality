@@ -483,6 +483,19 @@ function disable_creality_services() {
     echo
 }
 
+# creality probes every new ttyACM device for its ai lidar, and the bytes cx_ai_crypto writes lock up the katapult
+# bootloader so usb probes cannot be flashed on the printer (https://github.com/Arksine/katapult/issues/137),
+# so skip the lidar probe for klipper and katapult devices (usb vendor 1d50)
+function fix_lidar_udev_rule() {
+    local rules=/etc/udev/rules.d/60-serial.rules
+    if grep -q '^KERNEL=="ttyACM\[0-9\]\*", IMPORT{program}="/usr/bin/cx_ai_crypto' $rules 2> /dev/null; then
+        echo "INFO: Excluding klipper devices from the creality lidar probe ..."
+        sed -i 's|^KERNEL=="ttyACM\[0-9\]\*", IMPORT{program}="/usr/bin/cx_ai_crypto|KERNEL=="ttyACM[0-9]*", ENV{ID_VENDOR_ID}!="1d50", IMPORT{program}="/usr/bin/cx_ai_crypto|' $rules || exit $?
+        udevadm control --reload
+        sync
+    fi
+}
+
 function install_boot_display() {
   grep -q "boot-display" /usr/data/pellcorp.done
   if [ $? -ne 0 ]; then
@@ -2704,6 +2717,9 @@ fi
       rm /etc/init.d/S99start_app
       sync
     fi
+
+    # creality firmware updates restore the stock rule, so check it on every install and update
+    fix_lidar_udev_rule
 
     if [ "$MODEL" != "NEBULA" ]; then
       # so if the installer has never been run we should grab a backup of the printer.cfg
