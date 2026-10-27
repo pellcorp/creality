@@ -1676,14 +1676,13 @@ function setup_loadcells_scanner() {
     # the scanner must not take the probe name so the load cell is the main probe
     if [ "$probe" = "beacon" ] || [ "$probe" = "cartographer" ]; then
       $CONFIG_HELPER --file ${probe}.cfg --replace-section-entry "$probe" "register_as_probe" "False" || exit $?
-      # bed mesh runs on the scanner, named after its config section
-      $CONFIG_HELPER --file ${probe}.cfg --replace-section-entry "bed_mesh" "probe_name" "$probe" || exit $?
       if [ "$probe" = "cartographer" ]; then
         $CONFIG_HELPER --file ${probe}.cfg --remove-section "cartographer touch" || exit $?
       fi
     else
       $CONFIG_HELPER --file ${probe}.cfg --replace-section-entry "$scanner_section" "probe_name" "scanner" || exit $?
-      $CONFIG_HELPER --file ${probe}.cfg --replace-section-entry "bed_mesh" "probe_name" "scanner" || exit $?
+      # the scanner is for scanning only (METHOD=rapid_scan); normal probing stays on the load cell
+      $CONFIG_HELPER --file ${probe}.cfg --replace-section-entry "bed_mesh" "scan_probe_name" "scanner" || exit $?
     fi
 
     y_position_mid=$($CONFIG_HELPER --get-section-entry "stepper_y" "position_max" --divisor 2 --integer)
