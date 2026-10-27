@@ -2327,6 +2327,10 @@ elif [ "$1" = "--loadcells-zoffset" ] || [ "$1" = "--scanner" ]; then
             echo "ERROR: --scanner is not supported for your printer ($MODEL)"
             exit 1
         fi
+        if [ ! -f /usr/data/klipper/klippy/extras/probe.py ] || ! grep -q "class ProbeList" /usr/data/klipper/klippy/extras/probe.py; then
+            echo "ERROR: --scanner needs the rebased kalico with the probe list (class ProbeList in klippy/extras/probe.py)"
+            exit 1
+        fi
         loadcells_scanner=true
     fi
     if [ "$probe" = "loadcells" ]; then
@@ -2480,6 +2484,10 @@ fi
                   exit 1
                 elif [ "$model" != "k1" ] && [ "$model" != "k1m" ] && [ "$model" != "f001" ] && [ "$model" != "f004" ]; then
                   echo "ERROR: --scanner is not supported for your printer ($MODEL)"
+                  exit 1
+                fi
+                if [ ! -f /usr/data/klipper/klippy/extras/probe.py ] || ! grep -q "class ProbeList" /usr/data/klipper/klippy/extras/probe.py; then
+                  echo "ERROR: --scanner needs the rebased kalico with the probe list (class ProbeList in klippy/extras/probe.py)"
                   exit 1
                 fi
                 loadcells_scanner=true
