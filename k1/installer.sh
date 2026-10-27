@@ -1676,6 +1676,8 @@ function setup_loadcells_scanner() {
     # the scanner must not take the probe name so the load cell is the main probe
     if [ "$probe" = "beacon" ] || [ "$probe" = "cartographer" ]; then
       $CONFIG_HELPER --file ${probe}.cfg --replace-section-entry "$probe" "register_as_probe" "False" || exit $?
+      # bed mesh runs on the scanner, named after its config section
+      $CONFIG_HELPER --file ${probe}.cfg --replace-section-entry "bed_mesh" "probe_name" "$probe" || exit $?
       if [ "$probe" = "cartographer" ]; then
         $CONFIG_HELPER --file ${probe}.cfg --remove-section "cartographer touch" || exit $?
       fi
