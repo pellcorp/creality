@@ -483,6 +483,19 @@ function disable_creality_services() {
     echo
 }
 
+# creality probes every new ttyACM device for its ai lidar, and the bytes cx_ai_crypto writes lock up the katapult
+# bootloader so usb probes cannot be flashed on the printer (https://github.com/Arksine/katapult/issues/137),
+# the creality lidar is not supported so remove its udev rule completely
+function remove_lidar_udev_rule() {
+    local rules=/etc/udev/rules.d/60-serial.rules
+    if grep -q "cx_ai_crypto" $rules 2> /dev/null; then
+        echo "INFO: Removing the creality lidar udev rule ..."
+        sed -i '/^# for ai laser$/d; /cx_ai_crypto/d' $rules || exit $?
+        udevadm control --reload
+        sync
+    fi
+}
+
 function install_boot_display() {
   grep -q "boot-display" /usr/data/pellcorp.done
   if [ $? -ne 0 ]; then
@@ -2704,6 +2717,9 @@ fi
       rm /etc/init.d/S99start_app
       sync
     fi
+
+    # creality firmware updates restore the stock rule, so check it on every install and update
+    remove_lidar_udev_rule
 
     if [ "$MODEL" != "NEBULA" ]; then
       # so if the installer has never been run we should grab a backup of the printer.cfg
