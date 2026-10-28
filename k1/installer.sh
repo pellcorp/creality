@@ -2605,7 +2605,7 @@ fi
             fi
             echo
             exit 1
-        elif [ "$mode" = "update" ] && [ "$PELLCORP_UPDATED_SHA" = "$PELLCORP_GIT_SHA" ] && [ "$probe_switch" != "true" ] && [ "$force" != "true" ] && [ -z "$mount" ] && [ "$loadcells_zoffset" != "true" ]; then
+        elif [ "$mode" = "update" ] && [ "$PELLCORP_UPDATED_SHA" = "$PELLCORP_GIT_SHA" ] && [ "$probe_switch" != "true" ] && [ "$force" != "true" ] && [ -z "$mount" ] && [ "$loadcells_zoffset_specified" != "true" ]; then
             echo
             echo "ERROR: Installation is already up to date - NO CHANGES WERE MADE!"
             echo
