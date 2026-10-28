@@ -1200,6 +1200,29 @@ function setup_probe() {
     return 0
 }
 
+function setup_cartographer_firmware() {
+  # make sure its not an old repo it needs to be our clone for now, if the PR gets merged
+  # we use this same check to flick back
+  if [ -d /usr/data/cartographer_firmware/.git ]; then
+    remote_url=$(git -C /usr/data/cartographer_firmware/ remote get-url origin)
+    if [ "$remote_url" != "https://github.com/pellcorp/cartographer_firmware.git" ]; then
+      rm -rf /usr/data/cartographer_firmware/
+    fi
+  fi
+
+  if [ ! -d /usr/data/cartographer_firmware ]; then
+    echo
+    echo "Cloning cartographer_firmware ..."
+    git clone https://github.com/pellcorp/cartographer_firmware.git /usr/data/cartographer_firmware
+  fi
+
+  if [ ! -d /usr/data/katapult ]; then
+    echo
+    echo "Cloning katapult ..."
+    git clone https://github.com/Arksine/katapult.git /usr/data/katapult
+  fi
+}
+
 # /usr/share/klippy-env/bin/python -m pip install --upgrade cartographer3d-plugin
 function install_cartographer_plugin() {
     local mode=$1
@@ -1225,6 +1248,8 @@ function install_cartographer_plugin() {
         echo
         /usr/share/klippy-env/bin/python3 -m compileall /usr/data/klipper/klippy || exit $?
 
+        setup_cartographer_firmware
+
         echo "cartographer-plugin" >> /usr/data/pellcorp.done
         sync
         return 1
@@ -1232,6 +1257,7 @@ function install_cartographer_plugin() {
     return 0
 }
 
+# this is for setting up cartotouch
 function install_cartographer_klipper() {
     local mode=$1
 
@@ -1272,13 +1298,14 @@ function install_cartographer_klipper() {
             cd - > /dev/null
         fi
 
-        echo
         echo "INFO: Running cartographer-klipper installer ..."
         bash /usr/data/cartographer-klipper/install.sh || exit $?
         ln -sf /usr/data/cartographer-klipper/ /root
 
         echo
         /usr/share/klippy-env/bin/python3 -m compileall /usr/data/klipper/klippy || exit $?
+
+        setup_cartographer_firmware
 
         echo "cartographer-klipper" >> /usr/data/pellcorp.done
         sync
