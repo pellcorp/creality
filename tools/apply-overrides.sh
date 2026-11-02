@@ -69,7 +69,7 @@ apply_overrides() {
                 # no longer support configuring the invert z icon
                 sed -i '/invert_z_icon/d' $BASEDIR/pellcorp-overrides/grumpyscreen.ini
 
-                cp $overrides_dir/$file $BASEDIR/printer_data/
+                cp $overrides_dir/$file $BASEDIR/printer_data/config/
             elif [ "$file" = "calibration.json" ]; then
                 echo "INFO: Restoring $BASEDIR/grumpyscreen/$file ..."
                 cp $overrides_dir/$file $BASEDIR/grumpyscreen/$file
