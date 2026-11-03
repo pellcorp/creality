@@ -1,0 +1,6 @@
+[load_cell_probe]
+dout_pins: leveling_mcu:PB12, leveling_mcu:PB14, leveling_mcu:PA8, leveling_mcu:PA10
+sclk_pins: leveling_mcu:PB13, leveling_mcu:PB15, leveling_mcu:PA9, leveling_mcu:PA11
+trigger_force: 75
+sclk_pin: __DELETED__
+dout_pin: __DELETED__

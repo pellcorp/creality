@@ -17,17 +17,15 @@ if [ -f /usr/bin/get_sn_mac.sh ]; then
     model=k1
   elif [ "$MODEL" = "CR-K1 Max" ]; then
     model=k1m
-  elif [ "$MODEL" = "F001" ]; then
+  elif [ "$MODEL" = "F001" ] || [ "$MODEL" = "F002" ]; then
     echo
     echo "WARNING: Ender 3 V3 printer support is VERY experimental!!!"
     echo
-    model=f001
-  elif [ "$MODEL" = "F002" ]; then
-    echo "FATAL: Ender 3 V3 Plus (F002) is not currently supported!"
-    echo "If you own an Ender 3 V3 Plus and can help verify support, please open an issue or join us on Discord:"
-    echo "  https://github.com/pellcorp/creality/issues"
-    echo "  https://discord.gg/M5rmBQqRSG"
-    exit 1
+    if [ "$MODEL" = "F001" ]; then
+      model=f001
+    else
+      model=f002
+    fi
   elif [ "$MODEL" = "F004" ]; then
     model=f004
   elif [ "$MODEL" = "F003" ]; then
@@ -984,7 +982,7 @@ function install_klipper() {
         fi
 
         # Ender 3 V3 X endstop is only reachable once Z is homed, both are wired NC
-        if [ "$MODEL" = "F001" ]; then
+        if [ "$MODEL" = "F001" ] || [ "$MODEL" = "F002" ]; then
           $CONFIG_HELPER --file homing.cfg --replace-section-entry "gcode_macro _HOMING_PARAMS" "variable_homing_current" "0.5" || exit $?
           $CONFIG_HELPER --file homing.cfg --replace-section-entry "gcode_macro _HOMING_PARAMS" "variable_home_z_before_x" "True" || exit $?
           $CONFIG_HELPER --file homing.cfg --replace-section-entry "gcode_macro _HOMING_PARAMS" "variable_check_xz_endstops_clear" "True" || exit $?
@@ -1177,7 +1175,7 @@ function setup_probe() {
         echo "INFO: Setting up generic probe config ..."
 
         # ender 3 v3 keeps its physical z endstop
-        if [ "$MODEL" != "F001" ]; then
+        if [ "$MODEL" != "F001" ] && [ "$MODEL" != "F002" ]; then
             $CONFIG_HELPER --remove-section "bed_mesh" || exit $?
             $CONFIG_HELPER --remove-section-entry "stepper_z" "position_endstop" || exit $?
             $CONFIG_HELPER --replace-section-entry "stepper_z" "endstop_pin" "probe:z_virtual_endstop" || exit $?
@@ -1188,7 +1186,7 @@ function setup_probe() {
 
         # because we are using force move with 3mm, as a safety feature we will lower the position max
         # by 3mm ootb to avoid damaging the printer if you do a really big print
-        if [ "$MODEL" != "F001" ]; then
+        if [ "$MODEL" != "F001" ] && [ "$MODEL" != "F002" ]; then
             position_max=$($CONFIG_HELPER --get-section-entry "stepper_z" "position_max" --minus 3 --integer)
             $CONFIG_HELPER --replace-section-entry "stepper_z" "position_max" "$position_max" || exit $?
         fi
@@ -1567,7 +1565,7 @@ function setup_loadcells() {
         echo "INFO: Setting up loadcells ..."
 
         # don't change homing for ender 3 v3
-        if [ "$model" != "f001" ]; then
+        if [ "$model" != "f001" ] && [ "$model" != "f002" ]; then
           $CONFIG_HELPER --replace-section-entry "stepper_z" "homing_retract_dist" "0" || exit $?
           $CONFIG_HELPER --replace-section-entry "stepper_z" "homing_speed" "2.0" || exit $?
         fi
