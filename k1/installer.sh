@@ -676,6 +676,11 @@ function install_moonraker() {
 
         ln -sf /usr/data/pellcorp/k1/tools/supervisorctl /usr/bin/ || exit $?
         ln -sf /usr/data/pellcorp/k1/tools/systemctl /usr/bin/ || exit $?
+        command -v column > /dev/null
+        if [ $? -ne 0 ]; then
+          ln -sf /usr/data/pellcorp/k1/tools/column /usr/bin/ || exit $?
+        fi
+
         ln -sf /usr/data/pellcorp/k1/tools/sudo /usr/bin/ || exit $?
         cp /usr/data/pellcorp/k1/services/S56moonraker_service /etc/init.d/ || exit $?
         ln -sf /usr/data/pellcorp/k1/moonraker.asvc /usr/data/printer_data/ || exit $?

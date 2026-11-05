@@ -1,0 +1,54 @@
+#!/bin/sh
+
+# Default input separator is whitespace
+SEP=" "
+
+# Parse basic arguments (-s for separator, ignores -t since table mode is default)
+while [ $# -gt 0 ]; do
+    case "$1" in
+        -s)
+            SEP="$2"
+            shift 2
+            ;;
+        -t)
+            # Default behavior anyway
+            shift
+            ;;
+        *)
+            # Ignore unknown flags to avoid crashing printer scripts
+            shift
+            ;;
+    esac
+done
+
+# Use AWK to dynamically measure column sizes and print perfectly aligned columns
+awk -v sep="$SEP" '
+BEGIN {
+    FS = sep;
+}
+{
+    for (i = 1; i <= NF; i++) {
+        # Strip trailing carriage returns if processing Windows-style gcode logs
+        gsub(/\r/, "", $i);
+
+        # Track the maximum character width found for each column position
+        if (length($i) > max_w[i]) {
+            max_w[i] = length($i);
+        }
+        # Store the data matrix in memory
+        matrix[NR, i] = $i;
+    }
+    if (NF > max_cols) {
+        max_cols = NF;
+    }
+}
+END {
+    for (row = 1; row <= NR; row++) {
+        for (col = 1; col <= max_cols; col++) {
+            # Construct a dynamic printf pad width (adds 2 spaces padding between columns)
+            fmt = "%-" (max_w[col] + 2) "s";
+            printf(fmt, matrix[row, col]);
+        }
+        print "";
+    }
+}'
