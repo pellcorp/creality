@@ -17,3 +17,6 @@ accel_chip: lis2dw
 
 [output_pin light_pin]
 pin: !PC0
+
+[output_pin Height_module2]
+__action__: DELETED

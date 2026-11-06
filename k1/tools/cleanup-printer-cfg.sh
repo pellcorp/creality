@@ -58,7 +58,6 @@ if [ "$MODEL" = "F004" ]; then
   $CONFIG_HELPER --file $PRINTER_CFG --replace-section-entry "resonance_tester" "accel_chip" "adxl345" || exit $?
 fi
 
-$CONFIG_HELPER --file $PRINTER_CFG --remove-section "Height_module2" || exit $?
 $CONFIG_HELPER --file $PRINTER_CFG --remove-section "output_pin aobi" || exit $?
 $CONFIG_HELPER --file $PRINTER_CFG --remove-section "output_pin USB_EN" || exit $?
 $CONFIG_HELPER --file $PRINTER_CFG --remove-section "hx711s" || exit $?
