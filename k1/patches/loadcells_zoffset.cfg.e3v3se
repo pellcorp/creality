@@ -8,4 +8,3 @@ dout_pin: PC6
 dout_pins: __DELETED__
 sclk_pins: __DELETED__
 trigger_force: 75
-sensor_orientation: __DELETED__
