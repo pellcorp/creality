@@ -6,6 +6,7 @@ GUPPYSCREEN=/usr/data/grumpyscreen/grumpyscreen
 GUPPYSCREEN_LOG=/usr/data/printer_data/logs/grumpyscreen.log
 PID_FILE="/var/run/guppyscreen.pid"
 SVC_NAME=guppyscreen
+CONFIG_HELPER=/usr/data/pellcorp/tools/config-helper.py
 
 # FIXME - ideally maybe we should change grumpyscreen to nicely handle error code from switch to stock so we dont need to disable the button
 # for now for the few people using retail Nebula Pad this will do
@@ -20,10 +21,16 @@ start_server() {
     # display black transition image to stop the corrupt image being shown
     cmd_jpeg_display /usr/data/pellcorp/k1/black.jpg &
 
+    # if spoolman is configured we should show the left nav otherwise don't
+    HIDE_SPOOLMAN=true
+    if $CONFIG_HELPER --file moonraker.conf --include-exists "spoolman.conf"; then
+      HIDE_SPOOLMAN=false
+    fi
+
     export HOME=/root
     sync && echo 3 > /proc/sys/vm/drop_caches
     mkdir -p $RC_DIR
-    RC_SVCNAME=guppyscreen $SUPERVISE_DAEMON guppyscreen -e "INVERT_Z_ICON=false" -e "DISPLAY_ROTATE=0" -e "CONFIG_OVERRIDE_FILE=/usr/data/printer_data/config/grumpyscreen.ini" -e "CONFIG_VENDOR_FILE=/usr/data/grumpyscreen/macros.cfg" -e "CONFIG_FILE=/usr/data/grumpyscreen/grumpyscreen.cfg" -e "WPA_SUPPLICANT_SOCKET=/var/run/wpa_supplicant" --start --stdout $GUPPYSCREEN_LOG --stderr $GUPPYSCREEN_LOG --pidfile $PID_FILE $GUPPYSCREEN
+    RC_SVCNAME=guppyscreen $SUPERVISE_DAEMON guppyscreen -e "HIDE_SPOOLMAN=$HIDE_SPOOLMAN" -e "INVERT_Z_ICON=false" -e "DISPLAY_ROTATE=0" -e "CONFIG_OVERRIDE_FILE=/usr/data/printer_data/config/grumpyscreen.ini" -e "CONFIG_VENDOR_FILE=/usr/data/grumpyscreen/macros.cfg" -e "CONFIG_FILE=/usr/data/grumpyscreen/grumpyscreen.cfg" -e "WPA_SUPPLICANT_SOCKET=/var/run/wpa_supplicant" --start --stdout $GUPPYSCREEN_LOG --stderr $GUPPYSCREEN_LOG --pidfile $PID_FILE $GUPPYSCREEN
 }
 
 stop_server() {
