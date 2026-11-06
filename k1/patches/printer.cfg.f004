@@ -14,3 +14,6 @@ spi_software_miso_pin: nozzle_mcu:PA6
 
 [resonance_tester]
 accel_chip: lis2dw
+
+[output_pin light_pin]
+pin: !PC0
