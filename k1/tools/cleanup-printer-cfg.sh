@@ -159,10 +159,10 @@ if [ "$MODEL" = "F002" ] || [ "$MODEL" = "F001" ]; then
 fi
 
 if [ "$MODEL" = "F004" ]; then
-  if [ "$ACCEL_CHIP" = "adxl345" ]; then
-    $CONFIG_HELPER --file $PRINTER_CFG --quiet --patches $BASEDIR/k1/patches/printer.cfg.f004.adxl345 || exit $?
-  else
+  if [ "$ACCEL_CHIP" = "lis2dw" ]; then
     $CONFIG_HELPER --file $PRINTER_CFG --quiet --patches $BASEDIR/k1/patches/printer.cfg.f004 || exit $?
+  else
+    $CONFIG_HELPER --file $PRINTER_CFG --quiet --patches $BASEDIR/k1/patches/printer.cfg.f004.adxl345 || exit $?
   fi
 fi
 
