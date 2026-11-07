@@ -347,9 +347,11 @@ function cleanup_base_factory_printer_cfg() {
   sed -i '/^#\s*pid_[Kk]i:/d' $FACTORY_CFG
   sed -i '/^#\s*pid_[Kk]d:/d' $FACTORY_CFG
 
+  accel_chip=$($CONFIG_HELPER --file /usr/data/printer.cfg.save_config --get-section-entry "accel_chip_proxy" "accel_use_chip")
+
   rm /usr/data/printer.cfg.save_config
 
-  /usr/data/pellcorp/k1/tools/cleanup-printer-cfg.sh $FACTORY_CFG || exit $?
+  ACCEL_CHIP=$accel_chip /usr/data/pellcorp/k1/tools/cleanup-printer-cfg.sh $FACTORY_CFG || exit $?
 
   sync
 }
