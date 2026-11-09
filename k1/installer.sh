@@ -333,8 +333,8 @@ function cleanup_base_factory_printer_cfg() {
   heater_pid=$($CONFIG_HELPER --file /usr/data/printer.cfg.save_config --get-section-entry "heater_bed" "control")
   if [ -n "$heater_pid" ]; then
     heater_pid_kp=$($CONFIG_HELPER --file /usr/data/printer.cfg.save_config --get-section-entry "heater_bed" "pid_kp" --default-value "0")
-    heater_pid_ki=$($CONFIG_HELPER --file /usr/data/printer.cfg.save_config --get-section-entry "extruder" "pid_ki" --default-value "0")
-    heater_pid_kd=$($CONFIG_HELPER --file /usr/data/printer.cfg.save_config --get-section-entry "extruder" "pid_kd" --default-value "0")
+    heater_pid_ki=$($CONFIG_HELPER --file /usr/data/printer.cfg.save_config --get-section-entry "heater_bed" "pid_ki" --default-value "0")
+    heater_pid_kd=$($CONFIG_HELPER --file /usr/data/printer.cfg.save_config --get-section-entry "heater_bed" "pid_kd" --default-value "0")
     $CONFIG_HELPER --file $FACTORY_CFG --replace-section-entry "heater_bed" "control" "pid"
     $CONFIG_HELPER --file $FACTORY_CFG --replace-section-entry "heater_bed" "pid_kp" "$heater_pid_kp"
     $CONFIG_HELPER --file $FACTORY_CFG --replace-section-entry "heater_bed" "pid_ki" "$heater_pid_ki"
