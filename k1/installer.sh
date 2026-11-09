@@ -2570,14 +2570,6 @@ fi
           echo "FATAL: Loadcells are not supported for your printer ($MODEL)"
           exit 1
         fi
-
-        if [ "$mode" = "install" ] || [ "$mode" = "reinstall" ] || [ "$probe_switch" = "true" ]; then
-          echo
-          echo "***************************************************************"
-          echo "* WARNING: loadcells support is HIGHLY EXPERIMENTAL           *"
-          echo "***************************************************************"
-          echo
-        fi
     fi
 
     if [ "$loadcells_zoffset" = "true" ]; then
