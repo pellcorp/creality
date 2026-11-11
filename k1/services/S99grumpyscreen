@@ -27,10 +27,18 @@ start_server() {
       HIDE_SPOOLMAN=false
     fi
 
+    HIDE_MMU=true
+    if $CONFIG_HELPER --file moonraker.conf --section-exists "update_manager afc-software"; then
+      HIDE_MMU=false
+    fi
+    if $CONFIG_HELPER --file moonraker.conf --section-exists "update_manager happy-hare"; then
+      HIDE_MMU=false
+    fi
+
     export HOME=/root
     sync && echo 3 > /proc/sys/vm/drop_caches
     mkdir -p $RC_DIR
-    RC_SVCNAME=guppyscreen $SUPERVISE_DAEMON guppyscreen -e "HIDE_SPOOLMAN=$HIDE_SPOOLMAN" -e "INVERT_Z_ICON=false" -e "DISPLAY_ROTATE=0" -e "CONFIG_OVERRIDE_FILE=/usr/data/printer_data/config/grumpyscreen.ini" -e "CONFIG_VENDOR_FILE=/usr/data/grumpyscreen/macros.cfg" -e "CONFIG_FILE=/usr/data/grumpyscreen/grumpyscreen.cfg" -e "WPA_SUPPLICANT_SOCKET=/var/run/wpa_supplicant" --start --stdout $GUPPYSCREEN_LOG --stderr $GUPPYSCREEN_LOG --pidfile $PID_FILE $GUPPYSCREEN
+    RC_SVCNAME=guppyscreen $SUPERVISE_DAEMON guppyscreen -e "HIDE_SPOOLMAN=$HIDE_SPOOLMAN" -e "HIDE_MMU=$HIDE_MMU" -e "INVERT_Z_ICON=false" -e "DISPLAY_ROTATE=0" -e "CONFIG_OVERRIDE_FILE=/usr/data/printer_data/config/grumpyscreen.ini" -e "CONFIG_VENDOR_FILE=/usr/data/grumpyscreen/macros.cfg" -e "CONFIG_FILE=/usr/data/grumpyscreen/grumpyscreen.cfg" -e "WPA_SUPPLICANT_SOCKET=/var/run/wpa_supplicant" --start --stdout $GUPPYSCREEN_LOG --stderr $GUPPYSCREEN_LOG --pidfile $PID_FILE $GUPPYSCREEN
 }
 
 stop_server() {
