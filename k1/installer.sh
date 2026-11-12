@@ -1365,8 +1365,6 @@ function cleanup_probe() {
     fi
     $CONFIG_HELPER --remove-include "${probe}_macro.cfg" || exit $?
 
-    [ -f /usr/data/grumpyscreen/macros.cfg ] && rm /usr/data/grumpyscreen/macros.cfg
-
     if [ "$probe" = "cartotouch" ] || [ "$probe" = "beacon" ]; then
         $CONFIG_HELPER --remove-section-entry "stepper_z" "homing_retract_dist" || exit $?
     fi
@@ -1421,9 +1419,7 @@ function add_grumpyscreen_probe_macro() {
   local display_name="$2"
   local icon=$3
 
-  $CONFIG_HELPER --file /usr/data/grumpyscreen/macros.cfg --add-section "macro \"$macro\"" || exit $?
-  $CONFIG_HELPER --file /usr/data/grumpyscreen/macros.cfg --replace-section-entry "macro \"$macro\"" "display_name" "$display_name" || exit $?
-  $CONFIG_HELPER --file /usr/data/grumpyscreen/macros.cfg --replace-section-entry "macro \"$macro\"" "icon" "$icon" || exit $?
+  $CONFIG_HELPER --file /usr/data/printer_data/config/grumpyscreen.ini --add-macro "$macro" "$display_name" "$icon" || exit $?
 }
 
 function add_grumpyscreen_probe_macros() {
@@ -1431,7 +1427,9 @@ function add_grumpyscreen_probe_macros() {
   local loadcells_zoffset=$2
 
   [ -f /usr/data/grumpyscreen/macros.cfg ] && rm /usr/data/grumpyscreen/macros.cfg
-  touch /usr/data/grumpyscreen/macros.cfg
+
+  # remove all calibration macros from grumpyscreen.ini, we will add them back in the specific probe
+  $CONFIG_HELPER --file /usr/data/printer_data/config/grumpyscreen.ini --remove-macros "PROBE_CALIBRATE,CARTOGRAPHER_SCAN_CALIBRATE,CARTOGRAPHER_CALIBRATE METHOD=manual,_SET_KIN_MAX_Z,_CALIBRATE_HEAT_SOAK,BEACON_CALIBRATE,PROBE_EDDY_NG_SETUP,BTTEDDY_CALIBRATE_DRIVE_CURRENT,BTTEDDY_CURRENT_CALIBRATE,_GRUMPY_LOAD_CELL_CALIBRATE,LOAD_CELL_DIAGNOSTIC,LOAD_CELL_TEST_TAP" || exit $?
 
   if [ "$1" = "bltouch" ] || [ "$1" = "microprobe" ] || [ "$1" = "klicky" ]; then
     add_grumpyscreen_probe_macro "PROBE_CALIBRATE" "Probe Calibrate" "home_z"
@@ -2959,12 +2957,6 @@ fi
         exit 1
     fi
 
-    setup_grumpyscreen_macros=0
-    if [ $setup_probe_specific -ne 0 ]; then
-        add_grumpyscreen_probe_macros "$probe" "$loadcells_zoffset"
-        setup_grumpyscreen_macros=$?
-    fi
-
     setup_loadcells_zoffset=0
     if [ "$loadcells_zoffset" = "true" ]; then
         setup_loadcells_zoffset "$probe"
@@ -2988,6 +2980,12 @@ fi
             apply_overrides "${old_probe}" "${probe}"
             apply_overrides=$?
         fi
+    fi
+
+    setup_grumpyscreen_macros=0
+    if [ $setup_probe_specific -ne 0 ]; then
+      add_grumpyscreen_probe_macros "$probe" "$loadcells_zoffset"
+      setup_grumpyscreen_macros=$?
     fi
 
     apply_mount_overrides=0
