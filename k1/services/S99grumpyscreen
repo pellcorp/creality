@@ -21,24 +21,30 @@ start_server() {
     # display black transition image to stop the corrupt image being shown
     cmd_jpeg_display /usr/data/pellcorp/k1/black.jpg &
 
-    # if spoolman is configured we should show the left nav otherwise don't
     HIDE_SPOOLMAN=true
-    if $CONFIG_HELPER --file moonraker.conf --include-exists "spoolman.conf"; then
+    if grep -q "^\[include spoolman.conf\]" /usr/data/printer_data/config/moonraker.conf; then
       HIDE_SPOOLMAN=false
     fi
 
+    if ! grep -q "hide_spoolman: $HIDE_SPOOLMAN" /usr/data/printer_data/config/grumpyscreen.ini; then
+      $CONFIG_HELPER --file grumpyscreen.ini --replace-section-entry "ui" "hide_spoolman" $HIDE_SPOOLMAN
+    fi
+
     HIDE_MMU=true
-    if $CONFIG_HELPER --file moonraker.conf --section-exists "update_manager afc-software"; then
+    if grep -q "^\[update_manager afc-software\]" /usr/data/printer_data/config/moonraker.conf; then
       HIDE_MMU=false
     fi
-    if $CONFIG_HELPER --file moonraker.conf --section-exists "update_manager happy-hare"; then
+    if grep -q "^\[update_manager happy-hare\]" /usr/data/printer_data/config/moonraker.conf; then
       HIDE_MMU=false
+    fi
+    if ! grep -q "hide_mmu: $HIDE_MMU" /usr/data/printer_data/config/grumpyscreen.ini; then
+      $CONFIG_HELPER --file grumpyscreen.ini --replace-section-entry "ui" "hide_mmu" $HIDE_MMU
     fi
 
     export HOME=/root
     sync && echo 3 > /proc/sys/vm/drop_caches
     mkdir -p $RC_DIR
-    RC_SVCNAME=guppyscreen $SUPERVISE_DAEMON guppyscreen -e "HIDE_SPOOLMAN=$HIDE_SPOOLMAN" -e "HIDE_MMU=$HIDE_MMU" -e "INVERT_Z_ICON=false" -e "DISPLAY_ROTATE=0" -e "CONFIG_OVERRIDE_FILE=/usr/data/printer_data/config/grumpyscreen.ini" -e "CONFIG_VENDOR_FILE=/usr/data/grumpyscreen/macros.cfg" -e "CONFIG_FILE=/usr/data/grumpyscreen/grumpyscreen.cfg" -e "WPA_SUPPLICANT_SOCKET=/var/run/wpa_supplicant" --start --stdout $GUPPYSCREEN_LOG --stderr $GUPPYSCREEN_LOG --pidfile $PID_FILE $GUPPYSCREEN
+    RC_SVCNAME=guppyscreen $SUPERVISE_DAEMON guppyscreen -e "INVERT_Z_ICON=false" -e "DISPLAY_ROTATE=0" -e "CONFIG_OVERRIDE_FILE=/usr/data/printer_data/config/grumpyscreen.ini" -e "CONFIG_VENDOR_FILE=/usr/data/grumpyscreen/macros.cfg" -e "CONFIG_FILE=/usr/data/grumpyscreen/grumpyscreen.cfg" -e "WPA_SUPPLICANT_SOCKET=/var/run/wpa_supplicant" --start --stdout $GUPPYSCREEN_LOG --stderr $GUPPYSCREEN_LOG --pidfile $PID_FILE $GUPPYSCREEN
 }
 
 stop_server() {
