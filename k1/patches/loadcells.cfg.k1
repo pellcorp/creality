@@ -4,7 +4,7 @@ sclk_pins: leveling_mcu:PA7, leveling_mcu:PA6, leveling_mcu:PA2, leveling_mcu:PA
 trigger_force: 160
 
 [bed_mesh]
-mesh_min: 5,5
+mesh_min: 9,9
 mesh_max: 215,215
 
 [screws_tilt_adjust]
