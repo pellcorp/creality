@@ -178,11 +178,22 @@ def add_include(updater, include, printer_cfg=False):
     return False
 
 
+def _add_section_after(updater, previous_section, new_section):
+    previous_section = updater[previous_section]
+    builder = previous_section.add_after
+    # Terminate the previous line before checking for a blank separator.
+    if not str(previous_section).endswith('\n'):
+        builder.space()
+    if not isinstance(previous_section.last_block, Space):
+        builder.space()
+    return builder.section(new_section)
+
+
 def add_section(updater, section_name):
     if not updater.has_section(section_name):
         last_section = _last_section(updater)
         if last_section:
-            updater[last_section].add_after.section(section_name).space()
+            _add_section_after(updater, last_section, section_name).space()
         else:  # file is basically empty
             updater.add_section(section_name)
     return True
@@ -239,7 +250,7 @@ def override_cfg(updater,
                     last_section = _last_section(updater)
                     if last_section:
                         new_section = new_section.detach()
-                        builder = updater[last_section].add_after.section(new_section)
+                        builder = _add_section_after(updater, last_section, new_section)
                         if not isinstance(new_section.last_block, (Comment, Space)):
                             builder.space()
                     else:  # file is basically empty
@@ -254,6 +265,8 @@ def main():
     opts.add_option("", "--file", dest="config_file", default=f'{PRINTER_CONFIG_DIR}/printer.cfg')
     opts.add_option("", "--output", dest="output")
     opts.add_option("", "--remove-section", dest="remove_section", nargs=1, type="string")
+    opts.add_option("", "--add-macro", dest="add_macro", nargs=3, type="string")
+    opts.add_option("", "--remove-macros", dest="remove_macros", type="string")
     opts.add_option("", "--remove-section-entry", dest="remove_section_entry", nargs=2, type="string")
     opts.add_option("", "--get-section-entry", dest="get_section_entry", nargs=2, type="string")
     opts.add_option("", "--section-entries", dest="section_entries", nargs=1, type="string")
@@ -323,7 +336,12 @@ def main():
     crowsnest_conf = 'crowsnest.conf' == basename
 
     updated = False
-    if options.remove_section:
+    if options.remove_macros:
+        for macro in options.remove_macros.split(","):
+            macro_removed = remove_section(updater, f"macro \"{macro}\"")
+            if macro_removed:
+                updated = True
+    elif options.remove_section:
         updated = remove_section(updater, options.remove_section)
     elif options.remove_section_entry:
         updated = remove_section_value(updater, options.remove_section_entry[0], options.remove_section_entry[1])
@@ -394,6 +412,12 @@ def main():
                 exit_code = 0
                 break
 
+    elif options.add_macro:
+        macro = f"macro \"{options.add_macro[0]}\""
+        added_macro = add_section(updater, macro)
+        update_display_name = replace_section_value(updater, macro, "display_name", options.add_macro[1])
+        updated_icon = replace_section_value(updater, macro, "icon", options.add_macro[2])
+        updated = added_macro or update_display_name or updated_icon
     elif options.replace_section_entry:
         updated = replace_section_value(updater, options.replace_section_entry[0], options.replace_section_entry[1], options.replace_section_entry[2])
     elif options.remove_include:
