@@ -937,7 +937,7 @@ function fix_custom_nozzle_wipe_config() {
   # where someone has a custom nozzle wipe we want to remove the default one we added
   if [ "$probe" = "loadcells" ] || [ "$loadcells_zoffset" = "true" ]; then
     if $CONFIG_HELPER --include-exists "loadcells_wipe.cfg"; then
-      custom_configs=$(find /usr/data/printer_data/config/ -type f -maxdepth 1 -name "*.cfg" -exec grep -l "\[gcode_macro _SAF_NOZZLE_WIPE\]" {} \;)
+      custom_configs=$(find $BASEDIR/printer_data/config/ -maxdepth 1 -type f -name "*.cfg" -exec grep -l "\[gcode_macro _SAF_NOZZLE_WIPE\]" {} \;)
       if [ -n "$custom_configs" ]; then
         for custom_config in $custom_configs; do
           filename=$(basename $custom_config)
@@ -1128,8 +1128,17 @@ elif [ "$1" = "--loadcells-zoffset" ]; then
       exit 1
     fi
 
+    model=unspecified
+    if [ -f $BASEDIR/pellcorp-backups/printer.factory.cfg ]; then
+      model=$(cat $BASEDIR/pellcorp-backups/printer.factory.cfg | grep MODEL: | awk -F ':' '{print $2}')
+      # if a printer.cfg is specified without a MODEL we skip mount overrides
+      if [ -z "$model" ]; then
+        model=unspecified
+      fi
+    fi
+
     if [ ! -f $BASEDIR/pellcorp/rpi/patches/loadcells_zoffset.cfg.${model} ]; then
-      echo "FATAL: Loadcells for z-offset is not supported for your printer ($MODEL)"
+      echo "FATAL: Loadcells for z-offset is not supported for your printer"
       exit 1
     fi
 
@@ -1141,6 +1150,7 @@ elif [ "$1" = "--loadcells-zoffset" ]; then
         echo "INFO: Restarting Kalico ..."
         sudo systemctl restart klipper
     fi
+    exit 0
 fi
 
 export TIMESTAMP=$(date +"%Y-%m-%d_%H-%M-%S")
@@ -1191,7 +1201,7 @@ set -o pipefail # preserve installer failures through tee
       loadcells_zoffset=true
     fi
   fi
-  
+
   klipper_fork=kalico
   if [ -d $BASEDIR/klipper/.git ]; then
     if git -C $BASEDIR/klipper/ remote get-url origin | grep -q klipper; then
