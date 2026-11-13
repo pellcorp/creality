@@ -1507,6 +1507,9 @@ set -o pipefail # preserve installer failures through tee
     if [ "$screen_found" = "true" ]; then
       $BASEDIR/pellcorp/rpi/install-klipperscreen.sh $mode || exit $?
     else
+      # for anyone wanting to use GrumpyScreen for Android we want a grumpyscreen.ini file
+      cp $BASEDIR/pellcorp/config/grumpyscreen.ini $BASEDIR/printer_data/config/
+
       echo "INFO: Skipping KlipperScreen installation as screen not found"
       echo
       echo "To manually install: "
@@ -1515,6 +1518,9 @@ set -o pipefail # preserve installer failures through tee
       echo
     fi
   else
+    # for anyone wanting to use GrumpyScreen for Android we want a grumpyscreen.ini file
+    cp $BASEDIR/pellcorp/config/grumpyscreen.ini $BASEDIR/printer_data/config/
+
     echo "INFO: Skipping Grumpyscreen and KlipperScreen installation"
     echo
     echo "To manually install: "
