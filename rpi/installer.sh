@@ -930,6 +930,67 @@ function fixup_client_variables_config() {
     return $changed
 }
 
+function fix_custom_nozzle_wipe_config() {
+  local probe=$1
+  local loadcells_zoffset=$2
+
+  # where someone has a custom nozzle wipe we want to remove the default one we added
+  if [ "$probe" = "loadcells" ] || [ "$loadcells_zoffset" = "true" ]; then
+    if $CONFIG_HELPER --include-exists "loadcells_wipe.cfg"; then
+      custom_configs=$(find /usr/data/printer_data/config/ -type f -maxdepth 1 -name "*.cfg" -exec grep -l "\[gcode_macro _SAF_NOZZLE_WIPE\]" {} \;)
+      if [ -n "$custom_configs" ]; then
+        for custom_config in $custom_configs; do
+          filename=$(basename $custom_config)
+          if [ "$filename" != "loadcells_wipe.cfg" ]; then
+            if $CONFIG_HELPER --include-exists "$filename"; then
+              echo
+              echo "WARNING: Detected third-party nozzle wipe - removing default nozzle wipe"
+              echo
+              $CONFIG_HELPER --remove-include "loadcells_wipe.cfg"
+              return 1
+            fi
+          fi
+        done
+      fi
+    fi
+  fi
+  return 0
+}
+
+function setup_loadcells_zoffset() {
+    local probe=$1
+
+    echo
+    echo "INFO: Setting up loadcells for z-offset ..."
+
+    cp $BASEDIR/pellcorp/config/loadcells_zoffset.cfg $BASEDIR/printer_data/config/ || exit $?
+    $CONFIG_HELPER --file loadcells_zoffset.cfg --patches $BASEDIR/pellcorp/rpi/patches/loadcells_zoffset.cfg.${model} --quiet || exit $?
+    $CONFIG_HELPER --add-include "loadcells_zoffset.cfg" || exit $?
+
+    cp $BASEDIR/pellcorp/config/loadcells_wipe.cfg $BASEDIR/printer_data/config/ || exit $?
+    $CONFIG_HELPER --add-include "loadcells_wipe.cfg" || exit $?
+
+    $CONFIG_HELPER --remove-section "load_cell_probe" || exit $?
+    $CONFIG_HELPER --add-section "load_cell_probe" || exit $?
+    z_offset=$($CONFIG_HELPER --ignore-missing --file $BASEDIR/pellcorp-overrides/printer.cfg.save_config --get-section-entry load_cell_probe z_offset)
+    if [ -n "$z_offset" ]; then
+      $CONFIG_HELPER --replace-section-entry "load_cell_probe" "# z_offset" "0.0" || exit $?
+    else
+      $CONFIG_HELPER --replace-section-entry "load_cell_probe" "z_offset" "0.0" || exit $?
+    fi
+
+    # the load cell probe is done at the zero reference position, cartotouch, cartographer and beacon already define it
+    if [ "$probe" = "bltouch" ] || [ "$probe" = "microprobe" ] || [ "$probe" = "btteddy" ] || [ "$probe" = "eddyng" ] || [ "$probe" = "klicky" ]; then
+        # we should never get here because its only supported for the ender 3 v3 se
+        if [ "$model" = "e3v3se" ]; then
+          $CONFIG_HELPER --file ${probe}.cfg --replace-section-entry "bed_mesh" "zero_reference_position" "20,25" || exit $?
+        fi
+    fi
+
+    # means klipper needs to be restarted
+    return 1
+}
+
 function fix_serial() {
   local probe=$1
 
@@ -1056,6 +1117,30 @@ elif [ "$1" = "--kalico" ] && [ "$#" -eq 1 ]; then
 
     update_klipper || exit $?
     exit 0
+elif [ "$1" = "--loadcells-zoffset" ]; then
+    if [ ! -f $BASEDIR/pellcorp.done ]; then
+      echo "ERROR: No installation found - try putting $1 last on the command line if this is a new install!"
+      exit 1
+    fi
+
+    if ! git -C $BASEDIR/klipper remote get-url origin 2> /dev/null | grep -q kalico; then
+      echo "ERROR: loadcells for z-offset requires kalico"
+      exit 1
+    fi
+
+    if [ ! -f $BASEDIR/pellcorp/rpi/patches/loadcells_zoffset.cfg.${model} ]; then
+      echo "FATAL: Loadcells for z-offset is not supported for your printer ($MODEL)"
+      exit 1
+    fi
+
+    probe=$(cat $BASEDIR/pellcorp.done | grep "\-probe" | awk -F '-' '{print $1}')
+    setup_loadcells_zoffset "$probe"
+    if [ $? -ne 0 ]; then
+        fix_custom_nozzle_wipe_config "$probe" "true"
+
+        echo "INFO: Restarting Kalico ..."
+        sudo systemctl restart klipper
+    fi
 fi
 
 export TIMESTAMP=$(date +"%Y-%m-%d_%H-%M-%S")
@@ -1097,6 +1182,16 @@ set -o pipefail # preserve installer failures through tee
   printer=
   mount=
 
+  loadcells_zoffset_specified=false
+  loadcells_zoffset=false
+  # so if this include exists its like they specified --loadcell-zoffset to the installer
+  # because we should be rerunning the setup loadcells every time so that any updates get applied
+  if [ -f $BASEDIR/pellcorp.done ]; then
+    if $CONFIG_HELPER --include-exists "loadcells_zoffset.cfg"; then
+      loadcells_zoffset=true
+    fi
+  fi
+  
   klipper_fork=kalico
   if [ -d $BASEDIR/klipper/.git ]; then
     if git -C $BASEDIR/klipper/ remote get-url origin | grep -q klipper; then
@@ -1143,6 +1238,10 @@ set -o pipefail # preserve installer failures through tee
       fi
     elif [ "$1" = "--kalico" ]; then
       klipper_fork=kalico
+      shift
+    elif [ "$1" = "--loadcells-zoffset" ]; then
+      loadcells_zoffset_specified=true
+      loadcells_zoffset=true
       shift
     elif [ "$1" = "--mount" ]; then
       shift
@@ -1196,6 +1295,12 @@ set -o pipefail # preserve installer failures through tee
 
   if [ -z "$probe" ] && [ -n "$existing_probe" ]; then
     probe=$existing_probe
+  fi
+
+  # so if switching probes and the --loadcells-zoffset is not explicity set, we need to ignore the
+  # existence of the loadcells-zoffset.cfg from the current installation
+  if [ "$probe_switch" = "true" ] && [ "$loadcells_zoffset_specified" != "true" ]; then
+    loadcells_zoffset=false
   fi
 
   if [ "$mode" = "fix-serial" ]; then
@@ -1311,6 +1416,13 @@ set -o pipefail # preserve installer failures through tee
     fi
   fi
 
+  if [ "$loadcells_zoffset" = "true" ]; then
+    if [ ! -f $BASEDIR/pellcorp/rpi/patches/loadcells_zoffset.cfg.${model} ]; then
+      echo "FATAL: Loadcells for z-offset is not supported for your printer ($MODEL)"
+      exit 1
+    fi
+  fi
+
   # we skip mount overrides for a special unspecified model
   if [ "$model" != "unspecified" ]; then
     if [ -f $BASEDIR/pellcorp.done ]; then
@@ -1355,7 +1467,11 @@ set -o pipefail # preserve installer failures through tee
   if [ -n "$printer" ]; then
     echo "INFO: Printer is $printer"
   fi
-  echo "INFO: Probe is $probe"
+  if [ "$loadcells_zoffset" = "true" ]; then
+    echo "INFO: Probe is $probe with loadcells for z-offset"
+  else
+    echo "INFO: Probe is $probe"
+  fi
   if [ -n "$mount" ]; then
     echo "INFO: Mount is $mount"
   elif [ -n "$install_mount" ]; then
@@ -1562,6 +1678,13 @@ set -o pipefail # preserve installer failures through tee
       echo "ERROR: Probe $probe not supported"
       exit 1
     fi
+  fi
+
+  if [ "$loadcells_zoffset" = "true" ]; then
+      setup_loadcells_zoffset "$probe"
+      if [ $? -ne 0 ]; then
+        fix_custom_nozzle_wipe_config "$probe" "true"
+      fi
   fi
 
   # we are no longer managing diffs with grumpyscreen just the override file
