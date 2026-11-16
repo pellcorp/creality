@@ -1,24 +1,28 @@
 # prtouch_v3: Z homing with the K1-MAX-L_V23 load cell board
 
-Staged as two upstream pull requests. Each directory mirrors its target repo:
+This directory is the shared hardware and installation documentation for the
+Creality/SimpleAF and Kalico contributions. The code lives in two repositories:
 
-| Directory | Target repo | Files |
+| Contribution | Source | Upstream target |
 |---|---|---|
-| `kalico/` | `pellcorp/kalico` | `klippy/extras/prtouch_v3.py`, `test/test_prtouch_v3.py` |
-| `creality/` | `pellcorp/creality` (SimpleAF) | `config/prtouch_v3.cfg`, `k1/patches/prtouch_v3.cfg.k1m`, `k1/v23_leveling.py` |
+| SimpleAF integration | [config and macros](../../config/prtouch_v3.cfg), [K1 Max defaults](../../k1/patches/prtouch_v3.cfg.k1m), [installer](../../k1/installer.sh), [print-start hook](../../config/start_end.cfg), [bench tool](../../k1/v23_leveling.py) | `pellcorp/creality:main` |
+| Kalico module | [prtouch_v3.py][kalico-module], [host tests][kalico-tests], [configuration reference][kalico-config], [commands][kalico-commands], [status][kalico-status] | `pellcorp/kalico:aug2026` |
 
-`creality/k1/v23_leveling.py` sits at the same level as pellcorp/creality's existing
-`k1/mcu_util.py` — a standalone pyserial tool, no Klipper tree needed. It's the bench/bring-up
-tool used throughout `INSTALL.md`.
+The feature branches are [gilrim/creality:add-prtouch-v3][creality-branch] and
+[gilrim/kalico:add-prtouch-v3][kalico-branch]. The Kalico source links below pin the
+revision checked during the 2026-11-16 rebase.
 
-**To install it on a printer** (wiring, firmware extraction, config, verification): `INSTALL.md`.
-Both directories are pushed as branches on the author's own forks (`gilrim/kalico`,
-`gilrim/creality`, both `add-prtouch-v3`); no PR is open against pellcorp yet.
+- [Installation guide](INSTALL.md): parts, USB-UART wiring, firmware recovery,
+  configuration, and verification.
+- [MAX3232 adapter guide](MAX3232_ADAPTER.md): wiring through the mainboard port,
+  circuit, build photos, and troubleshooting.
+- [Validation record](VALIDATION.md): dated hardware observations, test results,
+  limitations, and commands to reproduce the software checks.
 
-> `INSTALL.md` and `MAX3232_ADAPTER.md` cross-reference a few files (`systems/k1m.md`,
-> `systems/k1m_v23_leveling.md`, `systems/k1m_prtouch_v3_safety.todo`) from the author's private
-> dev-log repo; those paths won't resolve here. They're development history and day-to-day
-> operational notes, not required reading for this module.
+The [bench tool](../../k1/v23_leveling.py) needs only pyserial; it can identify and
+read the board without a Klipper checkout. All three build photos are in [img/](img/)
+and are embedded in the adapter guide. The validation record contains the relevant
+evidence from the development notes, so these guides require no private repository.
 
 ## What it does
 
@@ -60,37 +64,35 @@ Status: `printer.prtouch_v3.last_z_result`, `last_home_z_result` (only from `HOM
 any homing, motor off or shutdown; the touch gate uses this), `last_stiffness` (counts/µm),
 `last_accuracy`.
 
-Robustness (from testing on a K1 Max, 2026-11-03): the nozzle retracts before the serial session
-is closed, so a board fault can't leave it pressed into the bed. The board prints printf-style
-debug messages after a cold boot; they're decoded and logged as `board says`. Closing always
-stops the stream, because a board left streaming can't be identified by the next session.
+The module attempts to retract before closing the serial session and attempts to stop
+streaming even if the normal stop acknowledgement is lost. This does not provide an
+MCU endstop or guarantee motion after a printer shutdown. Cold-boot debug messages
+are decoded and logged as `board says`. See the [fault-handling evidence](VALIDATION.md#fault-handling-and-limitations).
 
-## Evidence (K1 Max, Kalico v2026.08.00, SimpleAF v0.0.1-1390)
+## Evidence
 
-```
-PRTOUCH_DIAGNOSTIC TIME=4     force noise -90 .. 382 counts (0.15 s averages, 4 cells summed)
-PRTOUCH_PROBE_ACCURACY x3     0.1399 / 0.1395 / 0.1394  (0.5 um span), 314-320 counts/um
-PRTOUCH_PROBE HOME=Z          0.1312 -> homed; re-probe -0.0001 / -0.0035
-_LOAD_CELL_HOME_Z (148C)      contact 0.2050 (hot end expansion vs cold ~0.13), homed, gate OK
-2026-11-03, after the safety changes:
-PRTOUCH_PROBE_ACCURACY S=5    range 2.7 um, stddev 1.0 um, 324-335 counts/um
-_LOAD_CELL_HOME_Z + gate      0.1867 cold bed; 0.2228 in a real ABS print (bed 100C, 252 counts/um)
-```
-`pytest test/test_prtouch_v3.py`: 30 passed, under the kalico fork's own pinned CI tooling
-(Python 3.13, pytest, ruff 0.15.22). `ruff check`/`ruff format` clean. `bash -n` and a dockerized
-`shellcheck` diff against the unmodified `k1/installer.sh` show zero new warnings.
+The [validation record](VALIDATION.md) distinguishes historical K1 Max hardware runs
+from software checks after the rebase. The 2026-11-16 checks passed all 70 Kalico host
+tests (including 30 PRTouch cases), all eight Creality tests, the bench tool's
+self-test, and the PRTouch Ruff checks using the pinned Ruff 0.9.3. The installer
+passes `bash -n` and adds no ShellCheck diagnostics over the upstream installer.
+
+Historical hardware results include a five-tap range of 2.7 µm on USB-UART and a
+ten-tap range of 1.68 µm through the MAX3232 adapter, plus real prints with both
+connections. These are observations on one printer, not a repeatability guarantee
+or a hardware retest of the rebased branches.
 
 ## SimpleAF side
 
-Both pieces sketched in earlier drafts of this doc are now implemented and pushed:
+The SimpleAF branch includes:
 
-1. **`config/start_end.cfg`**: skips the probe's own touch/tap when the load cells home Z, the
+1. **[config/start_end.cfg](../../config/start_end.cfg)**: skips the probe's own touch/tap when the load cells home Z, the
    same way `loadcells_zoffset.cfg` does:
    ```diff
    -    {% set loadcell_touch = ('load_cell_probe' in printer.configfile.settings) %}
    +    {% set loadcell_touch = ('load_cell_probe' in printer.configfile.settings or 'prtouch_v3' in printer.configfile.settings) %}
    ```
-2. **`k1/installer.sh`**: a `--prtouch-v3` switch mirroring `--loadcells-zoffset` end to end --
+2. **[k1/installer.sh](../../k1/installer.sh)**: a `--prtouch-v3` switch mirroring `--loadcells-zoffset` end to end --
    standalone switch command, install-flow CLI parsing, probe-switch detection, per-model support
    check, mutual exclusivity with `--loadcells-zoffset` (both define `_LOAD_CELL_HOME_Z`), BTT
    Eddy's z-offset prerequisite accepting either option, SAVE_CONFIG section cleanup in both
@@ -99,7 +101,7 @@ Both pieces sketched in earlier drafts of this doc are now implemented and pushe
    is written for it, matching `--loadcells-zoffset`'s own convention of using
    `--include-exists` for idempotency instead.
 3. **Detection** (still optional, not implemented): the installer could tell a V23 from a V11
-   without a probe, the same handshake `creality/k1/v23_leveling.py`'s `status`/`identify`
+   without a probe, the same handshake [k1/v23_leveling.py](../../k1/v23_leveling.py)'s `status`/`identify`
    commands already do. Left for a future PR; not needed for this one since the installer takes
    the board type as an explicit flag.
 
@@ -124,3 +126,11 @@ converter. That's untested here.
 - Thresholds are in raw counts. There's no grams calibration yet.
 - Developer note: klippy's soft `RESTART` doesn't re-import Python modules. Restart the Klipper
   service after replacing `prtouch_v3.py`.
+
+[creality-branch]: https://github.com/gilrim/creality/tree/add-prtouch-v3
+[kalico-branch]: https://github.com/gilrim/kalico/tree/add-prtouch-v3
+[kalico-module]: https://github.com/gilrim/kalico/blob/86d619459d5bbfac92c4f3bff1695ea2df062169/klippy/extras/prtouch_v3.py
+[kalico-tests]: https://github.com/gilrim/kalico/blob/86d619459d5bbfac92c4f3bff1695ea2df062169/test/test_prtouch_v3.py
+[kalico-config]: https://github.com/gilrim/kalico/blob/86d619459d5bbfac92c4f3bff1695ea2df062169/docs/Config_Reference.md#prtouch_v3
+[kalico-commands]: https://github.com/gilrim/kalico/blob/86d619459d5bbfac92c4f3bff1695ea2df062169/docs/G-Codes.md#prtouch_v3
+[kalico-status]: https://github.com/gilrim/kalico/blob/86d619459d5bbfac92c4f3bff1695ea2df062169/docs/Status_Reference.md#prtouch_v3

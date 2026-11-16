@@ -1,20 +1,20 @@
 # Inline MAX3232 adapter: the V23 on the mainboard leveling port
 
-One of two supported ways to wire the V23 up — the other, a CH341 USB-UART, is `INSTALL.md`
+One of two supported ways to wire the V23 up — the other, a CH341 USB-UART, is [INSTALL.md](INSTALL.md)
 section 3. A small adapter plugs into the K1 mainboard's leveling
 connector and takes the stock harness to the V23. It converts the mainboard's **RS-232** levels to
 the board's **3.3 V TTL**, so the V23 runs on `/dev/ttyS9`, the port Creality intended, and no USB
 device is needed.
 
-**Status (2026-11-10): fully proven, including a real print.** `prtouch_v3.cfg` is switched to
+**Status (2026-11-10): tested, including a real print.** `prtouch_v3.cfg` is switched to
 `/dev/ttyS9`. The build had one wiring fault (section 7, V23 TX/RX swapped at the harness socket,
 fixed) and one false alarm that turned out to be the bed, not the adapter (section 8: a mechanical
 anomaly after reassembly, resolved by remounting the board and then fully re-leveling the bed —
-`systems/k1m.md` Change Log 2026-11-10 "Bed re-leveled..."). After that: `PRTOUCH_PROBE_ACCURACY`
+[validation record](VALIDATION.md#hardware-validation-history)). After that: `PRTOUCH_PROBE_ACCURACY`
 gave a 1.68 µm range (10 samples, the tightest ever recorded on this board) and a second run
 5.06 µm; `_LOAD_CELL_HOME_Z` contact at z=0.1341, 248 counts/µm, homed successfully; and a real
 print came out looking good. This adapter is an **alternative** wiring method, not a replacement
-for the CH341 (section 6 step 5 is optional, not a cleanup step) — see `INSTALL.md` for why you
+for the CH341 (section 6 step 5 is optional, not a cleanup step) — see [INSTALL.md](INSTALL.md) for why you
 might pick one over the other. **A second build (2026-11-11, section 4's 2k7/5k6 divider note)
 checked out the same way**, no bench iteration on the divider needed this time.
 
@@ -26,8 +26,8 @@ checked out the same way**, no bench iteration on the divider needed this time.
 - On the x2000 mainboard (`CR4CU220812S11`), the leveling port is RS-232: TX idles at **−5.5 V**
   and RX is a receiver input pulled to GND. The old V11 board had its own MAX3232 (U3 `3232E`); the
   V23 talks plain 3.3 V TTL and has none. Wired directly, the board's frames arrive scrambled, it
-  answers nothing, and its RX gets pulled to −2.2 V, outside the CH32V203's rating. Details:
-  `systems/k1m_v23_leveling.md`, "Why the mainboard port (ttyS9) fails".
+  answers nothing, and its RX gets pulled to −2.2 V, outside the CH32V203's rating. See the
+  [hardware observations](VALIDATION.md#hardware-and-protocol-observations).
 - The CH341 works, but it's a USB device on the internal hub `1-1.2`, shared with the chamber
   heater's RP2040 (micro4). Replugging the CH341 there took micro4 down. The adapter frees the USB
   port and uses the serial port the mainboard already has.
@@ -170,7 +170,7 @@ than chasing an exact number.
    ```ini
    serial: /dev/ttyS9
    ```
-   Full service restart, not `RESTART`/`FIRMWARE_RESTART` (`INSTALL.md` section 6 step 5):
+    Full service restart, not `RESTART`/`FIRMWARE_RESTART` ([INSTALL.md](INSTALL.md), section 6 step 5):
    ```sh
    rm -f /usr/data/klipper/klippy/extras/prtouch_v3.pyc
    /etc/init.d/S55klipper_service restart
@@ -189,8 +189,8 @@ than chasing an exact number.
      (stiffness 83.7 counts/um, residual 0.0098mm, extrapolation 0.0205mm)` — residual over the
      0.005 mm limit. The module did what it's for: it raised before applying anything, and
      retracted to Z1.0 (confirmed via `toolhead.position` afterwards; `last_home_z_result` stayed
-     `None`). No Z was homed on bad data. See section 8 for what this points to and what's still
-     open — **it's not a wiring or serial-link problem.**
+     `None`). No Z was homed on bad data. Section 8 records the mechanical investigation
+     and its resolution on 2026-11-10.
 5. **Optional, your call:** nothing left needs the CH341 once `_LOAD_CELL_HOME_Z` works over
    `/dev/ttyS9`, so you can unplug it and free up that USB port if you'd like. Equally fine to
    leave the CH341 itself connected to USB and just unused — this doc doesn't treat removing it as
@@ -199,7 +199,7 @@ than chasing an exact number.
 
 **Switching back to the CH341:** set `serial:` back to
 `/dev/serial/by-id/usb-1a86_USB_Serial-if00-port0` and rewire the board's TX/RX to the CH341
-(printer off) as in `INSTALL.md` section 3. The V23 only has one TX/RX pair, so it's the adapter
+(printer off) as in [INSTALL.md](INSTALL.md), section 3. The V23 only has one TX/RX pair, so it's the adapter
 or the CH341, not both, whichever you pick.
 
 ## 7. Fault found: V23 TX/RX swapped at the harness socket
@@ -222,29 +222,35 @@ two data wires on the socket (V23-TX wire to blue, V23-RX wire to the divider no
 V23's TX only had to drive the divider's few mA, and blue's internal pull-up is weak.
 
 **Lesson for the next build:** pin position doesn't carry across the stock harness (true at the
-mainboard end too, `INSTALL.md` section 3) — identify TX and RX by continuity to the V23's own
+mainboard end too, [INSTALL.md](INSTALL.md), section 3) — identify TX and RX by continuity to the V23's own
 labelled connector, not by matching header position, and verify with the section 6 step 3
 `listen`/`status` check before trusting the link.
 
 ## 8. Resolved: contact height/stiffness shifted after reassembly — fixed by remount + re-leveling
 
-**Resolved 2026-11-10.** After a full bed re-level (`systems/k1m.md` Change Log 2026-11-10, "Bed
-re-leveled..."), `PRTOUCH_PROBE_ACCURACY` gave a 1.68 µm range over 10 samples (the tightest ever
-recorded on this board) and `_LOAD_CELL_HOME_Z` homed cleanly at z=0.1341, 248 counts/µm — both
+**Resolved 2026-11-10.** After a full bed re-level, `PRTOUCH_PROBE_ACCURACY` gave a 1.68 µm
+range over 10 samples (the tightest then recorded on this board) and `_LOAD_CELL_HOME_Z`
+homed cleanly at z=0.1341, 248 counts/µm — both
 squarely back in this board's normal range. The investigation below is kept as a record of the
 diagnosis, since the same reasoning (floor-constrained screws, highest-floor corner as reference)
-would apply again if this bed is ever fully bottomed out a second time.
+would apply again if this bed is ever fully bottomed out a second time. See the
+[validation record](VALIDATION.md#hardware-validation-history) for the dated results.
+
+On this test bed, tightening a screw lowered its corner and loosening raised it;
+the `screws_tilt_adjust` setting was corrected from `CW-M4` to `CCW-M4`. With all
+four screws at their lowest positions, the highest corner was kept as the reference
+and the other corners were raised to match it. The resulting corner spread was
+about 0.10 mm. These observations describe this printer's adjustment, not a reason
+to change another printer's screw direction without checking its actual movement.
 
 Found while verifying the adapter in the printer (section 6 step 4), after the printer had been
 tipped on its side to build and wire the adapter and set upright again.
 
-**Plan (in progress):** mount the V23 board and the adapter more permanently — rather than the
-temporary wiring used to get the adapter built and bench-verified — then re-run the section 6
-step 4 checks (`PRTOUCH_DIAGNOSTIC`, `PRTOUCH_PROBE_ACCURACY`, `_LOAD_CELL_HOME_Z`) and compare
-against the table below. If the numbers are back in range, update this section and the status
-line and move on to section 6 step 5. If not, work through the checklist further down.
+**Initial investigation (completed):** the V23 board, bed, and adapter were remounted,
+then the diagnostic, accuracy, and homing checks were repeated. The intermediate
+results below preceded the final leveling and successful print described above.
 
-**Update, after the board and bed were remounted (no print sheet on yet, bed leveling not done):**
+**Intermediate result, after the board and bed were remounted (no print sheet on yet, bed leveling not done):**
 the two numbers that matter for *this* mechanism — fitted stiffness **230.3 counts/µm** and fit
 residual **0.0016 mm** — are back in the historical range (250-335 counts/µm) and better than any
 prior run respectively. **The remount looks to have fixed the original anomaly.**
@@ -254,13 +260,13 @@ coarse step (0.05 mm from the Z1.0 approach) already overshot deep past `trigger
 start height — the module correctly refuses to trust contact above where it started probing. That
 points at the bed currently sitting closer to the nozzle, at the default `approach_z`, than it
 did before — expected, since the bed/leveling screws were just handled and there's no sheet on
-yet. **Not a fit-quality problem; pending bed leveling** (and the sheet going back on), not
-further investigation here. Raw data: coarse `z=0.95 force=17836` (first and only coarse step,
+yet. At this stage, bed leveling and replacing the sheet remained; the subsequent
+successful checks are recorded above. Raw data: coarse `z=0.95 force=17836` (first and only coarse step,
 already far over `trigger_force`); fine pass from the backed-off height,
 `1.09(1972) 1.08(4107) 1.07(6391) 1.06(8255) 1.05(11162)`.
 
-**What changed, against every prior reading on this board (`systems/k1m_v23_leveling.md`,
-`INSTALL.md` section 7):**
+**What changed against the [earlier readings](VALIDATION.md#hardware-validation-history)
+and [installation checks](INSTALL.md#7-verify):**
 
 | | Historical (CH341, cold or 148 °C) | 2026-11-10 (adapter, same `G28`→Z1.0 approach) |
 |---|---|---|
@@ -280,7 +286,7 @@ adapter and the electrical link are not implicated; something about the physical
   the very next tap in `_LOAD_CELL_HOME_Z` (83.7 counts/µm) — on the same nozzle, same bed spot,
   minutes apart.
 
-**Plausible causes, not yet checked:**
+**Hypotheses considered during the investigation:**
 - A bed-mounted load-cell spring or mounting screw loosened or re-seated while the printer was
   tipped over for the wiring work, changing how force reaches the cells (this would explain the
   stiffness drop more than the height jump on its own).
@@ -291,7 +297,7 @@ adapter and the electrical link are not implicated; something about the physical
   comments) — plausible for the softer stiffness, less so for a clean, repeatable 0.98 mm height
   across 5 taps.
 
-**If the numbers are still off after the permanent mount**, work through these in order:
+**If similar symptoms recur after mounting**, work through these in order:
 1. With the printer off or motors disabled, **visually/manually check the nozzle-to-bed gap at
    Z1.0 after a fresh `G28`** — last measured close enough that the Z1.0 approach found contact
    only ~0.02 mm below it.

@@ -5,7 +5,7 @@ to home Z by nozzle contact. Proven on k1m (x2000 mainboard `CR4CU220812S11`, Si
 Kalico `v2026.08.00-45`), including real ABS prints, over **both** wiring options below.
 
 The board keeps **Creality's own firmware**. Nothing has to be flashed: a V23 from the factory
-already runs it. The `[prtouch_v3]` Kalico module in this directory talks to that firmware
+already runs it. The [prtouch_v3 Kalico module][kalico-module] talks to that firmware
 directly.
 
 **Two ways to wire it up — pick whichever suits your printer and parts bin:**
@@ -13,17 +13,19 @@ directly.
   wires to a cheap off-the-shelf module, no soldering. Costs a USB port, and a cable has to run
   from the board out to it — on some printers that port is shared with another USB device (it was
   on k1m, see the troubleshooting table).
-- **An inline MAX3232 adapter on the mainboard's own leveling port** (`MAX3232_ADAPTER.md`). Uses
+- **An inline MAX3232 adapter on the mainboard's own leveling port** ([adapter guide](MAX3232_ADAPTER.md)). Uses
   no USB port and no extra cable run, at the cost of a bit of soldering (a MAX3232 breakout plus a
   resistor divider).
 
 Both are fully supported and kept up to date; this isn't a "start here, upgrade later" choice.
 Everything else in this guide (firmware, config, verification, first print) applies to either one
-— only the wiring (this guide's section 3, or `MAX3232_ADAPTER.md`) and the `serial:` line in
+— only the wiring (this guide's section 3, or the [adapter guide](MAX3232_ADAPTER.md)) and the `serial:` line in
 section 6 differ.
 
-Background and reverse engineering: `systems/k1m_v23_leveling.md`. Test runs:
-`systems/k1m_prtouch_v3_safety.todo`.
+See the [overview](README.md) for the two repository contributions and the
+[validation record](VALIDATION.md) for hardware observations, dated test runs, and
+the checks performed after rebasing. The guides describe the `add-prtouch-v3`
+branches; installing upstream alone does not yet provide this feature.
 
 ---
 
@@ -76,7 +78,7 @@ end of the harness.
 ```
 
 **Alternative without USB:** an inline MAX3232 adapter on the mainboard port (`/dev/ttyS9`), see
-`MAX3232_ADAPTER.md`.
+[MAX3232_ADAPTER.md](MAX3232_ADAPTER.md).
 
 Plug the CH341 into a K1 USB port. It appears as
 `/dev/serial/by-id/usb-1a86_USB_Serial-if00-port0` (use this path; `ttyUSB0` can move).
@@ -87,15 +89,17 @@ shut down, and only a power cycle recovered it. Plug it in with the printer off.
 
 ## 4. Bench check (optional, before touching Klipper)
 
-`creality/k1/v23_leveling.py` (also in this directory) needs only pyserial and speaks the
+[k1/v23_leveling.py](../../k1/v23_leveling.py) in the Creality repository needs only pyserial and speaks the
 Klipper wire protocol directly: no Klipper tree, no compiled chelper, no running Kalico. On the
 printer, use `/usr/share/klippy-env/bin/python3`. Nothing may have the port open, so stop Klipper
 if `[prtouch_v3]` is already configured.
 
 ```sh
 P=/dev/serial/by-id/usb-1a86_USB_Serial-if00-port0
-python3 v23_leveling.py status $P      # version CTF_V1.0.0.16.20250320, MCU ch32v203x8, 230400
-python3 v23_leveling.py loadcells $P -t 10   # 4 channels streaming; press each bed corner
+/usr/share/klippy-env/bin/python3 /usr/data/pellcorp/k1/v23_leveling.py status "$P"
+# Expected: version CTF_V1.0.0.16.20250320, MCU ch32v203x8, 230400 baud
+/usr/share/klippy-env/bin/python3 /usr/data/pellcorp/k1/v23_leveling.py loadcells "$P" -t 10
+# Four channels streaming; press each bed corner
 ```
 
 - An idle board sends a 13-byte `stats` frame every ~5 s. `listen $P --decode` shows it.
@@ -167,19 +171,38 @@ sha256sum lib/firmware/klipper_leveling_serial_app.bin usr/bin/cmd_iap
 
 ## 6. Install on the printer
 
-Files, all in this directory:
-- `kalico/klippy/extras/prtouch_v3.py`: the module.
-- `creality/config/prtouch_v3.cfg`: config and macros.
-- `kalico/test/test_prtouch_v3.py`: host tests (`pytest`, 20 pass).
+Files in the two repositories:
 
-The module is self-contained: no extra MCU, no Kalico patch.
+- [klippy/extras/prtouch_v3.py][kalico-module] in Kalico: the module.
+- [config/prtouch_v3.cfg](../../config/prtouch_v3.cfg) in Creality: config and macros.
+- [K1 Max defaults](../../k1/patches/prtouch_v3.cfg.k1m) in Creality: serial port and board pins.
+- [test/test_prtouch_v3.py][kalico-tests] in Kalico: 30 host test cases, included in
+  the [2026-11-16 software validation](VALIDATION.md#software-validation-2026-11-16).
+
+The module requires no additional `[mcu]` section and no board firmware change.
+
+For an existing SimpleAF/Kalico K1 Max installation with both feature branches
+already in place, the installer supports:
+
+```sh
+/usr/data/pellcorp/installer.sh --prtouch-v3
+```
+
+This installs the config, fills in the board pins, removes the old
+`loadcells-zoffset` integration, and restarts Kalico. The K1 Max patch selects
+`/dev/ttyS9`, so this command assumes the MAX3232 adapter is already wired. The
+standalone switch does not fetch the companion Kalico module. For the CH341 path,
+or a manual installation of the linked files, follow the steps below and select
+the serial port before restarting. Do not enable `--loadcells-zoffset` and
+`--prtouch-v3` together.
 
 1. **Module:**
    ```sh
    cp prtouch_v3.py /usr/data/klipper/klippy/extras/prtouch_v3.py
    ```
-   It isn't part of the Kalico tree, so a Kalico git update keeps it. A SimpleAF reinstall may not:
-   keep a copy and restore it after updates (k1m does this in its own `post-update.sh`).
+   This copy step is unnecessary when the companion Kalico branch is already installed:
+   the module is tracked there. A manually copied module may be lost during a reinstall;
+   verify that it is present after changing or updating Kalico checkouts.
 2. **Config:** copy `prtouch_v3.cfg` to `/usr/data/printer_data/config/` and add
    `[include prtouch_v3.cfg]` to `printer.cfg`. Fill in the three "installer will set" values:
    ```ini
@@ -189,6 +212,9 @@ The module is self-contained: no extra MCU, no Kalico patch.
    channel_pins: PB10:PB2, PB1:PB0, PA7:PA6, PA5:PA4
    ```
    - The pins are the board's own (`clk:sdo` per CS1237, from Creality's `k1max-x2600` config).
+   - For the MAX3232 adapter, use `serial: /dev/ttyS9`. The installer reapplies the
+     K1 Max defaults during updates; retain a CH341 port selection in your SimpleAF
+     overrides when using the full install/update flow.
    - `swap_pin` is the board's SYNC output, which the module configures but doesn't use.
    - Keep the defaults for the rest: `trigger_force: 10000`, `fit_min_force: 2000`,
      `force_safety_limit: 300000`, `max_travel: 3.0`.
@@ -199,8 +225,10 @@ The module is self-contained: no extra MCU, no Kalico patch.
 3. **Start of print:** SimpleAF's `START_PRINT` already calls `_LOAD_CELL_HOME_Z` when that macro
    exists. The cfg defines it: M109 to `start_preheat_nozzle_temp`, move to
    `bed_mesh.zero_reference_position`, Z1.0, `PRTOUCH_PROBE HOME=Z`, Z8.
-   - With a Cartographer, turn its own touch off so only one thing references Z:
-     `variable_touch_mode: False` in `cartographer.cfg`. Scan homing and the mesh stay.
+   - The updated [start_end.cfg](../../config/start_end.cfg) skips the primary probe's
+     touch/tap when `[prtouch_v3]` is configured. If manually installing with an older
+     `start_end.cfg`, disable Cartographer touch with `variable_touch_mode: False`
+     in `cartographer.cfg`. Scan homing and the mesh stay.
 4. **`Z_OFFSET_APPLY_PROBE`:** the cfg renames the existing command to `_Z_OFFSET_APPLY_PROBE`
    and routes it to the load cells. This needs some probe that registers `Z_OFFSET_APPLY_PROBE`
    (Cartographer, Beacon, `[probe]`). Without one, delete that macro, or klippy refuses to start.
@@ -213,9 +241,11 @@ The module is self-contained: no extra MCU, no Kalico patch.
    - A stale sibling `.pyc` may also be loaded. The symptom: `Option 'min_stiffness' is not valid in
      section 'prtouch_v3'`.
    - Restarting with a heater on can shut down an MCU (then run `FIRMWARE_RESTART`).
-6. **Optional print gate:** k1m's `touch_gate.cfg` refuses to print unless `last_home_z_result`
-   is set and plausible. Use `last_home_z_result`, not `last_z_result`: only `HOME=Z` sets it, and
-   any homing, motor-off or shutdown clears it.
+6. **Optional print gate:** the test printer used a local `touch_gate.cfg` macro to
+   refuse printing unless `last_home_z_result` was set and plausible. That macro is
+   not included in these contributions or required for installation. If implementing
+   a gate, use `last_home_z_result`: only `HOME=Z` sets it, and any homing, motor-off
+   or shutdown clears it. See the [recorded checks](VALIDATION.md#fault-handling-and-limitations).
 
 ## 7. Verify
 
@@ -224,7 +254,7 @@ Home first (`G28`). Use nozzle temperature 148 °C for numbers comparable to a p
 | Command | Expect (k1m) |
 |---|---|
 | `PRTOUCH_DIAGNOSTIC TIME=5` | tare per channel, ~16 readings, noise a few hundred counts (e.g. −47…665) |
-| `PRTOUCH_PROBE_ACCURACY SAMPLES=5` | range < 5 µm, ~250-335 counts/µm, no fit rejected |
+| `PRTOUCH_PROBE_ACCURACY SAMPLES=5` | compare with your own clean-nozzle baseline; historical runs were roughly 2-6 µm range and ~250-335 counts/µm, without rejected fits |
 | `_LOAD_CELL_HOME_Z` | `contact at z=0.18…0.22 (fit over 4 steps, ~300 counts/um)`, then `z homed` |
 | `G0 Z1 F900` + `PRTOUCH_PROBE` | contact ≈ 0.000 ± 0.01 |
 
@@ -251,23 +281,24 @@ lost when the print ends, so apply it before starting another print.
 | `no identify response from board` | the board is still streaming from an interrupted session; its identify reply gets lost among sample frames | power cycle the printer (fixed in the module: closing always stops the stream) |
 | `no samples from the board` | CH341 unplugged, wiring, or the worker died | check `dmesg`, wiring; look for `prtouch_v3: board worker died` in klippy.log |
 | `board cleanup failed; restart Klipper` | stop wasn't acknowledged; the worker shut itself down | `FIRMWARE_RESTART`; if it repeats, check the serial link |
-| `unreliable contact fit (stiffness …, residual …, extrapolation …)` | dirty nozzle (residue holds it off the bed), or limits too tight | clean the nozzle hot; widen the one limit that tripped |
+| `unreliable contact fit (stiffness …, residual …, extrapolation …)` | nozzle residue, changed mechanics or Z reference, or unsuitable fit limits | clean the nozzle and inspect the recorded fit, mounting, and reference before tuning limits; see the adapter guide's resolved example |
 | `no contact within 3.00mm` | started too high, or Z homed wrong | `approach_z` in `_LOAD_CELL_HOME_Z` (default 1.0) |
 | `too few points past contact to fit; lower fit_min_force or raise trigger_force`, once in a while | normal tap-to-tap variation: that tap's fine steps landed mostly on the flat, near-zero part of the curve, then jumped past `trigger_force` in 1-2 steps, leaving under 3 points above `fit_min_force` | just retry — if it keeps failing on most taps, then lower `fit_min_force` or raise `trigger_force` as the message says |
 | `board says …` lines in klippy.log | the board's printf debug output (alloc/timer messages after a cold boot) | informational |
-| Scrambled frames, no answers on `/dev/ttyS9` | wired straight to the RS-232 mainboard port, no level conversion | use the CH341 (section 3), or a MAX3232 adapter (`MAX3232_ADAPTER.md`) |
-| Silence on `/dev/ttyS9` with a MAX3232 adapter fitted | TX/RX swapped at the harness or the module; pin position doesn't carry across the stock harness | `MAX3232_ADAPTER.md` sections 4 and 7 |
-| `unreliable contact fit` with numbers far from this board's own history (e.g. stiffness well under 250 counts/µm, or a contact height that jumped) | likely mechanical, not wiring: a loose bed/load-cell mount or a Z-reference shift, especially after moving the printer | check the gap/mounts by hand before re-probing; see `MAX3232_ADAPTER.md` section 8 for a worked example |
-| Another USB MCU drops when the CH341 is plugged in or under heavy heater load | shared USB hub / ground noise | plug the CH341 in with the power off. For the load case see `systems/k1m.md` "Print failed mid-way" |
+| Scrambled frames, no answers on `/dev/ttyS9` | wired straight to the RS-232 mainboard port, no level conversion | use the CH341 (section 3), or a [MAX3232 adapter](MAX3232_ADAPTER.md) |
+| Silence on `/dev/ttyS9` with a MAX3232 adapter fitted | TX/RX swapped at the harness or the module; pin position doesn't carry across the stock harness | [MAX3232 adapter guide](MAX3232_ADAPTER.md), sections 4 and 7 |
+| `unreliable contact fit` with numbers far from this board's own history (e.g. stiffness well under 250 counts/µm, or a contact height that jumped) | likely mechanical, not wiring: a loose bed/load-cell mount or a Z-reference shift, especially after moving the printer | check the gap/mounts by hand before re-probing; see [the adapter guide](MAX3232_ADAPTER.md), section 8, for a worked example |
+| Another USB MCU drops when the CH341 is plugged in or under heavy heater load | shared USB hub / electrical interference observed on the test printer | plug the CH341 in with the power off; see the [fault-handling record](VALIDATION.md#fault-handling-and-limitations) |
 
 ## 11. References
 
-- `MAX3232_ADAPTER.md` (this directory): the no-USB alternative to section 3 — wiring, circuit,
+- [MAX3232_ADAPTER.md](MAX3232_ADAPTER.md): the no-USB alternative to section 3 — wiring, circuit,
   bring-up, current status.
-- `systems/k1m_v23_leveling.md`: hardware, firmware sources, reconstructed protocol, all
-  measurements.
-- `systems/k1m_prtouch_v3_safety.todo`: on-printer validation, steps 1-7.
-- `README.md` (this directory): module design and the SimpleAF PR plan.
-- `creality/k1/v23_leveling.py` (this directory): the standalone bench tool used in section 4.
+- [VALIDATION.md](VALIDATION.md): hardware/protocol observations, test history, and software checks.
+- [README.md](README.md): module design and the two contributions.
+- [k1/v23_leveling.py](../../k1/v23_leveling.py): the standalone bench tool used in section 4.
 - Creality GPL trees (`CrealityOfficial/K2_Series_Klipper`, `Hi_Klipper`): `prtouch_v3_compile.c`
   (command declarations).
+
+[kalico-module]: https://github.com/gilrim/kalico/blob/86d619459d5bbfac92c4f3bff1695ea2df062169/klippy/extras/prtouch_v3.py
+[kalico-tests]: https://github.com/gilrim/kalico/blob/86d619459d5bbfac92c4f3bff1695ea2df062169/test/test_prtouch_v3.py
