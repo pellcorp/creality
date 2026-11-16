@@ -1375,6 +1375,9 @@ function cleanup_probe() {
     [ -f /usr/data/printer_data/config/loadcells_zoffset.cfg ] && rm /usr/data/printer_data/config/loadcells_zoffset.cfg
     $CONFIG_HELPER --remove-include "loadcells_zoffset.cfg" || exit $?
 
+    [ -f /usr/data/printer_data/config/prtouch_v3.cfg ] && rm /usr/data/printer_data/config/prtouch_v3.cfg
+    $CONFIG_HELPER --remove-include "prtouch_v3.cfg" || exit $?
+
     if [ -f /usr/data/printer_data/config/$probe.cfg ]; then
         rm /usr/data/printer_data/config/$probe.cfg
     fi
@@ -1636,6 +1639,9 @@ function setup_loadcells_zoffset() {
     # btteddy_zoffset.cfg and loadcells_zoffset.cfg both set the z-offset
     $CONFIG_HELPER --remove-include "btteddy_zoffset.cfg" || exit $?
 
+    # prtouch_v3.cfg and loadcells_zoffset.cfg both define _LOAD_CELL_HOME_Z
+    $CONFIG_HELPER --remove-include "prtouch_v3.cfg" || exit $?
+
     $CONFIG_HELPER --remove-section "load_cell_probe" || exit $?
     $CONFIG_HELPER --add-section "load_cell_probe" || exit $?
     z_offset=$($CONFIG_HELPER --ignore-missing --file /usr/data/pellcorp-overrides/printer.cfg.save_config --get-section-entry load_cell_probe z_offset)
@@ -1646,6 +1652,36 @@ function setup_loadcells_zoffset() {
     fi
 
     # the load cell probe is done at the zero reference position, cartotouch, cartographer and beacon already define it
+    if [ "$probe" = "bltouch" ] || [ "$probe" = "microprobe" ] || [ "$probe" = "btteddy" ] || [ "$probe" = "eddyng" ] || [ "$probe" = "klicky" ]; then
+        if [ "$model" = "f005" ] || [ "$model" = "e3v3se" ]; then
+            zero_reference_position="20,25"
+        else
+            y_position_mid=$($CONFIG_HELPER --get-section-entry "stepper_y" "position_max" --divisor 2 --integer)
+            x_position_mid=$($CONFIG_HELPER --get-section-entry "stepper_x" "position_max" --divisor 2 --integer)
+            zero_reference_position="$x_position_mid,$y_position_mid"
+        fi
+        $CONFIG_HELPER --file ${probe}.cfg --replace-section-entry "bed_mesh" "zero_reference_position" "$zero_reference_position" || exit $?
+    fi
+    sync
+
+    # means klipper needs to be restarted
+    return 1
+}
+
+function setup_prtouch_v3() {
+    local probe=$1
+
+    echo
+    echo "INFO: Setting up prtouch_v3 for z-offset ..."
+
+    cp /usr/data/pellcorp/config/prtouch_v3.cfg /usr/data/printer_data/config/ || exit $?
+    $CONFIG_HELPER --file prtouch_v3.cfg --patches /usr/data/pellcorp/k1/patches/prtouch_v3.cfg.${model} --quiet || exit $?
+    $CONFIG_HELPER --add-include "prtouch_v3.cfg" || exit $?
+
+    # prtouch_v3.cfg and loadcells_zoffset.cfg both define _LOAD_CELL_HOME_Z
+    $CONFIG_HELPER --remove-include "loadcells_zoffset.cfg" || exit $?
+
+    # _LOAD_CELL_HOME_Z probes at the zero reference position, cartotouch, cartographer and beacon already define it
     if [ "$probe" = "bltouch" ] || [ "$probe" = "microprobe" ] || [ "$probe" = "btteddy" ] || [ "$probe" = "eddyng" ] || [ "$probe" = "klicky" ]; then
         if [ "$model" = "f005" ] || [ "$model" = "e3v3se" ]; then
             zero_reference_position="20,25"
@@ -2304,6 +2340,30 @@ elif [ "$1" = "--loadcells-zoffset" ]; then
         sudo systemctl restart grumpyscreen
     fi
     exit 0
+elif [ "$1" = "--prtouch-v3" ]; then
+    if [ ! -f /usr/data/pellcorp.done ]; then
+      echo "ERROR: No installation found - try putting $1 last on the command line if this is a new install!"
+      exit 1
+    fi
+
+    probe=$(cat /usr/data/pellcorp.done | grep "\-probe" | awk -F '-' '{print $1}')
+    if [ "$probe" = "loadcells" ]; then
+        echo "ERROR: --prtouch-v3 is not needed for the loadcells probe"
+        exit 1
+    elif [ ! -f /usr/data/pellcorp/k1/patches/prtouch_v3.cfg.${model} ]; then
+        echo "FATAL: prtouch_v3 is not supported for your printer ($MODEL)"
+        exit 1
+    elif ! git -C /usr/data/klipper/ remote get-url origin 2> /dev/null | grep -q kalico; then
+        echo "ERROR: prtouch_v3 requires kalico"
+        exit 1
+    fi
+
+    setup_prtouch_v3 "$probe"
+    if [ $? -ne 0 ]; then
+        echo "INFO: Restarting Kalico ..."
+        sudo systemctl restart klipper
+    fi
+    exit 0
 fi
 
 # make sure some basic dirs are present
@@ -2400,6 +2460,13 @@ fi
       loadcells_zoffset=true
     fi
 
+    prtouch_v3_specified=false
+    prtouch_v3=false
+    # same rerun-every-update rule as loadcells_zoffset above
+    if $CONFIG_HELPER --include-exists "prtouch_v3.cfg"; then
+      prtouch_v3=true
+    fi
+
     if [ -f /usr/data/pellcorp.done ]; then
         install_mount=$(cat /usr/data/pellcorp.done | grep "mount=" | awk -F '=' '{print $2}')
     fi
@@ -2425,6 +2492,17 @@ fi
               shift
             else
               echo "ERROR: --loadcells-zoffset is not needed for the loadcells probe"
+              exit 1
+            fi
+        elif [ "$1" = "--prtouch-v3" ]; then
+            if [ "$probe" != "loadcells" ]; then
+              prtouch_v3_specified=true
+              prtouch_v3=true
+
+              klipper_fork=kalico
+              shift
+            else
+              echo "ERROR: --prtouch-v3 is not needed for the loadcells probe"
               exit 1
             fi
         elif [ "$1" = "--probe" ]; then # allow the installer to specify a `--probe` argument for clarity
@@ -2496,6 +2574,11 @@ fi
       loadcells_zoffset=false
     fi
 
+    # same rerun-every-update rule as loadcells_zoffset above
+    if [ "$probe_switch" = "true" ] && [ "$prtouch_v3_specified" != "true" ]; then
+      prtouch_v3=false
+    fi
+
     if [ "$MODEL" = "NEBULA" ]; then
       if [ -f /usr/data/pellcorp-backups/printer.factory.cfg ]; then
         model=$(cat /usr/data/pellcorp-backups/printer.factory.cfg | grep MODEL: | awk -F ':' '{print $2}')
@@ -2560,14 +2643,20 @@ fi
     fi
 
     if [ "$probe" = "loadcells" ]; then
-        # if switching to loadcells from a probe where we used loadcells-zoffset just ignore
+        # if switching to loadcells from a probe where we used loadcells-zoffset or prtouch-v3 just ignore
         loadcells_zoffset=false
+        prtouch_v3=false
 
         # only k1, k1m, e5m, e3v3 are supported
         if [ ! -f /usr/data/pellcorp/k1/patches/loadcells.cfg.${model} ]; then
           echo "FATAL: Loadcells are not supported for your printer ($MODEL)"
           exit 1
         fi
+    fi
+
+    if [ "$loadcells_zoffset" = "true" ] && [ "$prtouch_v3" = "true" ]; then
+        echo "FATAL: --loadcells-zoffset and --prtouch-v3 are mutually exclusive"
+        exit 1
     fi
 
     if [ "$loadcells_zoffset" = "true" ]; then
@@ -2577,9 +2666,18 @@ fi
         fi
     fi
 
+    if [ "$prtouch_v3" = "true" ]; then
+        if [ ! -f /usr/data/pellcorp/k1/patches/prtouch_v3.cfg.${model} ]; then
+            echo "FATAL: prtouch_v3 is not supported for your printer ($MODEL)"
+            exit 1
+        fi
+    fi
+
     echo "INFO: Mode is $mode"
     if [ "$loadcells_zoffset" = "true" ]; then
       echo "INFO: Probe is $probe with loadcells for z-offset"
+    elif [ "$prtouch_v3" = "true" ]; then
+      echo "INFO: Probe is $probe with prtouch_v3 for z-offset"
     else
       echo "INFO: Probe is $probe"
     fi
@@ -2602,7 +2700,7 @@ fi
             fi
             echo
             exit 1
-        elif [ "$mode" = "update" ] && [ "$PELLCORP_UPDATED_SHA" = "$PELLCORP_GIT_SHA" ] && [ "$probe_switch" != "true" ] && [ "$force" != "true" ] && [ -z "$mount" ] && [ "$loadcells_zoffset_specified" != "true" ]; then
+        elif [ "$mode" = "update" ] && [ "$PELLCORP_UPDATED_SHA" = "$PELLCORP_GIT_SHA" ] && [ "$probe_switch" != "true" ] && [ "$force" != "true" ] && [ -z "$mount" ] && [ "$loadcells_zoffset_specified" != "true" ] && [ "$prtouch_v3_specified" != "true" ]; then
             echo
             echo "ERROR: Installation is already up to date - NO CHANGES WERE MADE!"
             echo
@@ -2832,6 +2930,7 @@ fi
           $CONFIG_HELPER --file /usr/data/pellcorp-overrides/printer.cfg --remove-include "loadcells_zoffset.cfg" || exit $?
           $CONFIG_HELPER --file /usr/data/pellcorp-overrides/printer.cfg --remove-include "loadcells_wipe.cfg" || exit $?
           $CONFIG_HELPER --file /usr/data/pellcorp-overrides/printer.cfg --remove-section "load_cell_probe" || exit $?
+          $CONFIG_HELPER --file /usr/data/pellcorp-overrides/printer.cfg --remove-include "prtouch_v3.cfg" || exit $?
         fi
     fi
 
@@ -2963,10 +3062,16 @@ fi
         setup_loadcells_zoffset=$?
     fi
 
+    setup_prtouch_v3=0
+    if [ "$prtouch_v3" = "true" ]; then
+        setup_prtouch_v3 "$probe"
+        setup_prtouch_v3=$?
+    fi
+
     if [ -f /usr/data/pellcorp-backups/printer.factory.cfg ]; then
         # we want a copy of the file before config overrides are re-applied so we can correctly generate diffs
         # against different generations of the original file
-        for file in printer.cfg start_end.cfg ${probe}.conf spoolman.conf internal_macros.cfg useful_macros.cfg timelapse.conf moonraker.conf webcam.conf webcam.ini homing.cfg loadcells_zoffset.cfg ${probe}_macro.cfg ${probe}.cfg; do
+        for file in printer.cfg start_end.cfg ${probe}.conf spoolman.conf internal_macros.cfg useful_macros.cfg timelapse.conf moonraker.conf webcam.conf webcam.ini homing.cfg loadcells_zoffset.cfg prtouch_v3.cfg ${probe}_macro.cfg ${probe}.cfg; do
             if [ -f /usr/data/printer_data/config/$file ]; then
                 cp /usr/data/printer_data/config/$file /usr/data/pellcorp-backups/$file
             fi
@@ -3027,7 +3132,7 @@ fi
         sudo systemctl restart nginx
     fi
 
-    if [ $set_serial -ne 0 ] || [ $fix_custom_config -ne 0 ] || [ $fixup_client_variables_config -ne 0 ] || [ $apply_overrides -ne 0 ] || [ $apply_mount_overrides -ne 0 ] || [ $install_cartographer_klipper -ne 0 ] || [ $install_beacon_klipper -ne 0 ] || [ $install_klipper -ne 0 ] || [ $setup_probe -ne 0 ] || [ $setup_probe_specific -ne 0 ] || [ $setup_loadcells_zoffset -ne 0 ]; then
+    if [ $set_serial -ne 0 ] || [ $fix_custom_config -ne 0 ] || [ $fixup_client_variables_config -ne 0 ] || [ $apply_overrides -ne 0 ] || [ $apply_mount_overrides -ne 0 ] || [ $install_cartographer_klipper -ne 0 ] || [ $install_beacon_klipper -ne 0 ] || [ $install_klipper -ne 0 ] || [ $setup_probe -ne 0 ] || [ $setup_probe_specific -ne 0 ] || [ $setup_loadcells_zoffset -ne 0 ] || [ $setup_prtouch_v3 -ne 0 ]; then
         echo "INFO: Restarting Kalico ..."
         sudo systemctl stop klipper
         sudo systemctl restart klipper_mcu

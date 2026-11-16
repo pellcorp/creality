@@ -1,0 +1,4 @@
+[prtouch_v3]
+serial: /dev/ttyS9
+swap_pin: PA8
+channel_pins: PB10:PB2, PB1:PB0, PA7:PA6, PA5:PA4
