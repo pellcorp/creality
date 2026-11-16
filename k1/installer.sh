@@ -158,6 +158,7 @@ cp /usr/data/pellcorp/k1/services/S45cleanup /etc/init.d/ || exit $?
 sync
 
 CONFIG_HELPER="/usr/data/pellcorp/tools/config-helper.py"
+SAVE_CONFIG_HELPER="/usr/data/pellcorp/tools/save-config-helper.py"
 
 # stolen from https://github.com/lavabit/robox/
 function retry() {
@@ -1378,6 +1379,10 @@ function cleanup_probe() {
     [ -f /usr/data/printer_data/config/prtouch_v3.cfg ] && rm /usr/data/printer_data/config/prtouch_v3.cfg
     $CONFIG_HELPER --remove-include "prtouch_v3.cfg" || exit $?
     $CONFIG_HELPER --remove-section "prtouch_v3" || exit $?
+    # config-helper only touches the ordinary body; a saved z_offset leaves a
+    # #*# [prtouch_v3] SAVE_CONFIG remnant that needs the other helper, whose
+    # exit code 1 just means "nothing to remove" (not an error)
+    $SAVE_CONFIG_HELPER --remove-section 'prtouch_v3'
 
     if [ -f /usr/data/printer_data/config/$probe.cfg ]; then
         rm /usr/data/printer_data/config/$probe.cfg
@@ -1643,6 +1648,8 @@ function setup_loadcells_zoffset() {
     # prtouch_v3.cfg and loadcells_zoffset.cfg both define _LOAD_CELL_HOME_Z
     $CONFIG_HELPER --remove-include "prtouch_v3.cfg" || exit $?
     $CONFIG_HELPER --remove-section "prtouch_v3" || exit $?
+    # leftover #*# [prtouch_v3] SAVE_CONFIG remnant, see cleanup_probe()
+    $SAVE_CONFIG_HELPER --remove-section 'prtouch_v3'
 
     $CONFIG_HELPER --remove-section "load_cell_probe" || exit $?
     $CONFIG_HELPER --add-section "load_cell_probe" || exit $?
@@ -1689,6 +1696,8 @@ function setup_prtouch_v3() {
     [ -f /usr/data/printer_data/config/loadcells_wipe.cfg ] && rm /usr/data/printer_data/config/loadcells_wipe.cfg
     $CONFIG_HELPER --remove-include "loadcells_wipe.cfg" || exit $?
     $CONFIG_HELPER --remove-section "load_cell_probe" || exit $?
+    # leftover #*# [load_cell_probe] SAVE_CONFIG remnant, see cleanup_probe()
+    $SAVE_CONFIG_HELPER --remove-section 'load_cell_probe'
 
     # _LOAD_CELL_HOME_Z probes at the zero reference position, cartotouch, cartographer and beacon already define it
     if [ "$probe" = "bltouch" ] || [ "$probe" = "microprobe" ] || [ "$probe" = "btteddy" ] || [ "$probe" = "eddyng" ] || [ "$probe" = "klicky" ]; then
@@ -2941,6 +2950,10 @@ fi
           $CONFIG_HELPER --file /usr/data/pellcorp-overrides/printer.cfg --remove-section "load_cell_probe" || exit $?
           $CONFIG_HELPER --file /usr/data/pellcorp-overrides/printer.cfg --remove-include "prtouch_v3.cfg" || exit $?
           $CONFIG_HELPER --file /usr/data/pellcorp-overrides/printer.cfg --remove-section "prtouch_v3" || exit $?
+          # the overrides snapshot can carry its own SAVE_CONFIG tail, which
+          # would otherwise restore the same stale section on a future
+          # reinstall/update that re-applies these overrides
+          $SAVE_CONFIG_HELPER --file /usr/data/pellcorp-overrides/printer.cfg --remove-section 'load_cell_probe' 'prtouch_v3'
         fi
     fi
 
