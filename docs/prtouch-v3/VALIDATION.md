@@ -5,8 +5,9 @@ This record accompanies the [installation guide](INSTALL.md) and
 observations from the author's K1 Max development notes and public commit messages.
 The software checks dated 2026-11-16 were rerun after rebasing. A subsequent
 [targeted printer deployment and verification](VERIFICATION_2026-11-16.md)
-completed software/diagnostic checks but **failed both five-tap contact runs**
-with missing fresh samples. Hardware acceptance remains open; see that summary
+completed software/diagnostic checks. The initial two contact runs aborted;
+a requested rerun then completed five taps (7.413 µm range) before the next run
+aborted on missing fresh samples. Hardware acceptance remains open; see that summary
 for the outcomes and checks that were deferred.
 
 ## Software validation (2026-11-16)

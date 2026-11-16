@@ -71,10 +71,11 @@ are decoded and logged as `board says`. See the [fault-handling evidence](VALIDA
 
 ## Evidence
 
-**Latest hardware run (2026-11-16):** the targeted deployment completed, but
-both five-tap contact runs aborted on missing fresh samples. See the
+**Latest hardware run (2026-11-16):** a requested rerun completed five taps
+with a 7.413 µm range, then the next run aborted on missing fresh samples. See the
 [verification summary](VERIFICATION_2026-11-16.md); hardware acceptance
-remains open.
+remains open. Stationary tracing found worker backlog and incomplete channel
+coverage within the fixed measurement window; the report summarizes both.
 
 The [validation record](VALIDATION.md) distinguishes historical K1 Max hardware runs
 from software checks after the rebase. The 2026-11-16 checks passed all 70 Kalico host
