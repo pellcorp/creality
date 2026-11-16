@@ -1684,7 +1684,7 @@ function setup_prtouch_v3() {
     echo "INFO: Setting up prtouch_v3 for z-offset ..."
 
     cp /usr/data/pellcorp/config/prtouch_v3.cfg /usr/data/printer_data/config/ || exit $?
-    $CONFIG_HELPER --file prtouch_v3.cfg --patches /usr/data/pellcorp/k1/patches/prtouch_v3.cfg.${model} --quiet || exit $?
+    $CONFIG_HELPER --file prtouch_v3.cfg --patches "/usr/data/pellcorp/k1/patches/prtouch_v3.cfg.${model}" --quiet || exit $?
     $CONFIG_HELPER --add-include "prtouch_v3.cfg" || exit $?
 
     # prtouch_v3.cfg and loadcells_zoffset.cfg both define _LOAD_CELL_HOME_Z
@@ -1708,7 +1708,7 @@ function setup_prtouch_v3() {
             x_position_mid=$($CONFIG_HELPER --get-section-entry "stepper_x" "position_max" --divisor 2 --integer)
             zero_reference_position="$x_position_mid,$y_position_mid"
         fi
-        $CONFIG_HELPER --file ${probe}.cfg --replace-section-entry "bed_mesh" "zero_reference_position" "$zero_reference_position" || exit $?
+        $CONFIG_HELPER --file "${probe}.cfg" --replace-section-entry "bed_mesh" "zero_reference_position" "$zero_reference_position" || exit $?
     fi
     sync
 
@@ -2368,7 +2368,7 @@ elif [ "$1" = "--prtouch-v3" ]; then
     if [ "$probe" = "loadcells" ]; then
         echo "ERROR: --prtouch-v3 is not needed for the loadcells probe"
         exit 1
-    elif [ ! -f /usr/data/pellcorp/k1/patches/prtouch_v3.cfg.${model} ]; then
+    elif [ ! -f "/usr/data/pellcorp/k1/patches/prtouch_v3.cfg.${model}" ]; then
         echo "FATAL: prtouch_v3 is not supported for your printer ($MODEL)"
         exit 1
     elif ! git -C /usr/data/klipper/ remote get-url origin 2> /dev/null | grep -q kalico; then
@@ -2376,8 +2376,7 @@ elif [ "$1" = "--prtouch-v3" ]; then
         exit 1
     fi
 
-    setup_prtouch_v3 "$probe"
-    if [ $? -ne 0 ]; then
+    if ! setup_prtouch_v3 "$probe"; then
         echo "INFO: Restarting Kalico ..."
         sudo systemctl restart klipper
     fi
@@ -2685,7 +2684,7 @@ fi
     fi
 
     if [ "$prtouch_v3" = "true" ]; then
-        if [ ! -f /usr/data/pellcorp/k1/patches/prtouch_v3.cfg.${model} ]; then
+        if [ ! -f "/usr/data/pellcorp/k1/patches/prtouch_v3.cfg.${model}" ]; then
             echo "FATAL: prtouch_v3 is not supported for your printer ($MODEL)"
             exit 1
         fi
