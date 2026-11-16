@@ -16,6 +16,5 @@ screw3: 195,173
 screw4: 25,173
 
 [axis_twist_compensation]
-calibrate_start_x: 30
-calibrate_end_x: 210
-calibrate_y: 105
+mesh_min: 20,25
+mesh_max: 200,200

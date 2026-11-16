@@ -16,9 +16,8 @@ screw3: 283,270
 screw4: 81,270
 
 [axis_twist_compensation]
-calibrate_start_x: 10
-calibrate_end_x: 273
-calibrate_y: 153
+mesh_min: 5,5
+mesh_max: 262,295
 
 -- printer.cfg
 [stepper_y]

@@ -16,6 +16,5 @@ mesh_min: 10,10
 mesh_max: 190,225
 
 [axis_twist_compensation]
-calibrate_start_x: 30
-calibrate_end_x: 192
-calibrate_y: 105
+mesh_min: 10,10
+mesh_max: 190,225

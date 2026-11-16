@@ -13,6 +13,5 @@ mesh_max: 215,215
 __action__: DELETED
 
 [axis_twist_compensation]
-calibrate_start_x: 23
-calibrate_end_x: 202
-calibrate_y: 105
+mesh_min: 5,10
+mesh_max: 215,215

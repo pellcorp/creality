@@ -13,9 +13,8 @@ mesh_max: 185, 215
 __action__: DELETED
 
 [axis_twist_compensation]
-calibrate_start_x: 30
-calibrate_end_x: 187
-calibrate_y: 105
+mesh_min: 5,30
+mesh_max: 185,215
 
 -- printer.cfg
 [stepper_y]

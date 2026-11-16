@@ -19,6 +19,5 @@ horizontal_move_z: 8
 __action__: DELETED
 
 [axis_twist_compensation]
-calibrate_start_x: 30
-calibrate_end_x: 192
-calibrate_y: 105
+mesh_min: 5,5
+mesh_max: 215,215
