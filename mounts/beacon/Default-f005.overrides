@@ -11,7 +11,3 @@ mesh_max: 210,210
 
 [screws_tilt_adjust]
 __action__: DELETED
-
-[axis_twist_compensation]
-mesh_min: 15,15
-mesh_max: 210,210

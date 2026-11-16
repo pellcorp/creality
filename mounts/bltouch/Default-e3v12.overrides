@@ -14,7 +14,3 @@ screw4: 30,200
 [bed_mesh]
 mesh_min: 10,10
 mesh_max: 190,225
-
-[axis_twist_compensation]
-mesh_min: 10,10
-mesh_max: 190,225

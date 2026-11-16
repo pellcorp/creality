@@ -15,10 +15,6 @@ screw2: 218,20
 screw3: 218,190
 screw4: 48,190
 
-[axis_twist_compensation]
-mesh_min: 10,10
-mesh_max: 205,210
-
 -- printer.cfg
 [stepper_y]
 position_max: 226
