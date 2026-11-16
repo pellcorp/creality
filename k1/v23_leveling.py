@@ -699,10 +699,17 @@ def cmd_zprobe(a):
             print("CONTACT at gcode Z=%.4f (first fine step over %d counts; too few ramp points to fit)"
                   % (contact, a.threshold))
     finally:
-        if moved:
-            move("G91\nG1 Z%.3f F600\nG90" % a.retract)
-        s.stop()
-        print("stop       ->", link.ask(d, "stop_prtouch_pres oid=0 sta_swap=1", want="ack_prtouch"))
+        # Nested, so a failure in one cleanup step (e.g. the retract request)
+        # can't skip the ones after it: s.stop() and the final board-side
+        # stop must still run even if the Moonraker retract raises.
+        try:
+            if moved:
+                move("G91\nG1 Z%.3f F600\nG90" % a.retract)
+        finally:
+            try:
+                s.stop()
+            finally:
+                print("stop       ->", link.ask(d, "stop_prtouch_pres oid=0 sta_swap=1", want="ack_prtouch"))
 
 
 def cmd_selftest(a):
