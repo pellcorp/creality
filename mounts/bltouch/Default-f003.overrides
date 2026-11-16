@@ -17,8 +17,3 @@ horizontal_move_z: 8
 
 [screws_tilt_adjust]
 __action__: DELETED
-
-[axis_twist_compensation]
-calibrate_start_x: 30
-calibrate_end_x: 192
-calibrate_y: 105

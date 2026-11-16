@@ -14,8 +14,3 @@ screw1: 50, 45.5
 screw2: 220, 45.5
 screw3: 220, 215.5
 screw4: 50, 215.5
-
-[axis_twist_compensation]
-calibrate_start_x: 23
-calibrate_end_x: 202
-calibrate_y: 105
