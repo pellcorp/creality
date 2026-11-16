@@ -71,6 +71,11 @@ are decoded and logged as `board says`. See the [fault-handling evidence](VALIDA
 
 ## Evidence
 
+**Latest hardware run (2026-11-16):** the targeted deployment completed, but
+both five-tap contact runs aborted on missing fresh samples. See the
+[verification summary](VERIFICATION_2026-11-16.md); hardware acceptance
+remains open.
+
 The [validation record](VALIDATION.md) distinguishes historical K1 Max hardware runs
 from software checks after the rebase. The 2026-11-16 checks passed all 70 Kalico host
 tests (including 30 PRTouch cases), all eight Creality tests, the bench tool's

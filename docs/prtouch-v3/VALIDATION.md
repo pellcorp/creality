@@ -3,8 +3,11 @@
 This record accompanies the [installation guide](INSTALL.md) and
 [MAX3232 adapter guide](MAX3232_ADAPTER.md). Hardware results below are historical
 observations from the author's K1 Max development notes and public commit messages.
-The software checks dated 2026-11-16 were rerun after rebasing; no printer was moved,
-flashed, or retested as part of that rebase.
+The software checks dated 2026-11-16 were rerun after rebasing. A subsequent
+[targeted printer deployment and verification](VERIFICATION_2026-11-16.md)
+completed software/diagnostic checks but **failed both five-tap contact runs**
+with missing fresh samples. Hardware acceptance remains open; see that summary
+for the outcomes and checks that were deferred.
 
 ## Software validation (2026-11-16)
 
