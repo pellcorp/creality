@@ -2950,10 +2950,15 @@ fi
           $CONFIG_HELPER --file /usr/data/pellcorp-overrides/printer.cfg --remove-section "load_cell_probe" || exit $?
           $CONFIG_HELPER --file /usr/data/pellcorp-overrides/printer.cfg --remove-include "prtouch_v3.cfg" || exit $?
           $CONFIG_HELPER --file /usr/data/pellcorp-overrides/printer.cfg --remove-section "prtouch_v3" || exit $?
-          # the overrides snapshot can carry its own SAVE_CONFIG tail, which
-          # would otherwise restore the same stale section on a future
-          # reinstall/update that re-applies these overrides
-          $SAVE_CONFIG_HELPER --file /usr/data/pellcorp-overrides/printer.cfg --remove-section 'load_cell_probe' 'prtouch_v3'
+        fi
+
+        # the saved calibration tail lives in its own snapshot file, not in
+        # the ordinary overrides printer.cfg above, and can exist whether or
+        # not that file does; apply-overrides.sh restores it verbatim onto a
+        # future reinstall/update, so an obsolete load_cell_probe/prtouch_v3
+        # section here would resurrect the same missing-field failure
+        if [ "$probe_switch" = "true" ] && [ -f /usr/data/pellcorp-overrides/printer.cfg.save_config ]; then
+          $SAVE_CONFIG_HELPER --file /usr/data/pellcorp-overrides/printer.cfg.save_config --remove-section 'load_cell_probe' 'prtouch_v3'
         fi
     fi
 
