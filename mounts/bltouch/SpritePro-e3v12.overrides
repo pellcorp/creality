@@ -27,8 +27,3 @@ screw4: 25, 35
 mesh_min: 10,10
 mesh_max: 190,188
 probe_count: 9,9
-
-[axis_twist_compensation]
-calibrate_start_x: 30
-calibrate_end_x: 190
-calibrate_y: 105
