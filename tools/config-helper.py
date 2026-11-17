@@ -269,6 +269,7 @@ def main():
     opts.add_option("", "--remove-macros", dest="remove_macros", type="string")
     opts.add_option("", "--remove-section-entry", dest="remove_section_entry", nargs=2, type="string")
     opts.add_option("", "--get-section-entry", dest="get_section_entry", nargs=2, type="string")
+    opts.add_option("", "--section-entry-exists", dest="section_entry_exists", nargs=2, type="string")
     opts.add_option("", "--section-entries", dest="section_entries", nargs=1, type="string")
     # all these are for --get-section-entry only, saves me doing bash arithmetic
     opts.add_option("", "--integer", dest="integer", default=False, action='store_true')
@@ -345,6 +346,12 @@ def main():
         updated = remove_section(updater, options.remove_section)
     elif options.remove_section_entry:
         updated = remove_section_value(updater, options.remove_section_entry[0], options.remove_section_entry[1])
+    elif options.section_entry_exists:
+        value = get_section_value(updater, options.section_entry_exists[0], options.section_entry_exists[1])
+        if value:
+            exit_code = 0
+        else:
+            exit_code = 1
     elif options.get_section_entry:
         value = get_section_value(updater, options.get_section_entry[0], options.get_section_entry[1])
         if value:

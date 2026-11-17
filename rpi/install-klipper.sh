@@ -210,11 +210,6 @@ if [ $? -ne 0 ]; then
     cp $BASEDIR/pellcorp/config/homing.cfg $BASEDIR/printer_data/config/ || exit $?
     $CONFIG_HELPER --add-include "homing.cfg" || exit $?
 
-    # mostly to support overriding homing current
-    if [ -f $BASEDIR/pellcorp-backups/homing.factory.cfg ]; then
-      $CONFIG_HELPER --file homing.cfg --patches $BASEDIR/pellcorp-backups/homing.factory.cfg --quiet || exit $?
-    fi
-
     x_position_mid=$($CONFIG_HELPER --get-section-entry "stepper_x" "position_max" --divisor 2 --integer)
     $CONFIG_HELPER --file homing.cfg --replace-section-entry "gcode_macro _HOMING_PARAMS" "variable_home_x" "$x_position_mid" || exit $?
 
@@ -226,6 +221,16 @@ if [ $? -ne 0 ]; then
     if [ -n "$tmc_driver" ] && [ "$tmc_driver" != "tmc2209" ]; then
       $CONFIG_HELPER --file homing.cfg --replace-section-entry "gcode_macro _HOMING_PARAMS" "variable_driver_type" "\"$tmc_driver\"" || exit $?
     fi
+
+    for stepper in stepper_x stepper_y; do
+      if $CONFIG_HELPER --section-exists "$tmc_driver $stepper"; then
+        $CONFIG_HELPER --replace-section-entry "$tmc_driver $stepper" "current_change_dwell_time" "1.0" || exit $?
+        # base printers will predefine the relevant home current so dont override it
+        if ! $CONFIG_HELPER --section-entry-exists "$tmc_driver $stepper" "home_current"; then
+          $CONFIG_HELPER --replace-section-entry "$tmc_driver $stepper" "home_current" "1.5" || exit $?
+        fi
+      fi
+    done
 
     cp $BASEDIR/pellcorp/config/start_end.cfg $BASEDIR/printer_data/config/ || exit $?
     $CONFIG_HELPER --add-include "start_end.cfg" || exit $?

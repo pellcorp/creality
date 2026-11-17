@@ -96,8 +96,24 @@ apply_overrides() {
                     if [ "$file" = "printer.cfg" ]; then
                         $CONFIG_HELPER --file $file --overrides $overrides_dir/$file --exclude-sections probe,bltouch || exit $?
                     else
-                        $CONFIG_HELPER --file $file --overrides $overrides_dir/$file || exit $?
+                      if [ "$file" = "homing.cfg" ]; then
+                        # we are moving the variable_homing_current to the printer.cfg
+                        override_home_current=$($CONFIG_HELPER --file $BASEDIR/pellcorp-overrides/homing.cfg --get-section-entry "gcode_macro _HOMING_PARAMS" "variable_homing_current")
+                        if [ -n "$override_home_current" ]; then
+                          tmc_driver=$($CONFIG_HELPER --list-sections tmc% | grep stepper_x | awk -F ' ' '{print $1}')
+                          if [ -n "$tmc_driver" ]; then
+                            echo "WARN: Migrating homing.cfg homing current to printer.cfg ..."
+                            for stepper in stepper_x stepper_y stepper_y1; do
+                              if $CONFIG_HELPER --section-exists "$tmc_driver $stepper"; then
+                                $CONFIG_HELPER --replace-section-entry "$tmc_driver $stepper" "home_current" "$override_home_current" || exit $?
+                              fi
+                            done
+                          fi
+                        fi
+                      fi
+                      $CONFIG_HELPER --file $file --overrides $overrides_dir/$file || exit $?
                     fi
+
                     if [ "$file" = "moonraker.conf" ]; then  # we moved cartographer to a separate cartographer.conf include
                         $CONFIG_HELPER --file moonraker.conf --remove-section "update_manager cartographer"
                     fi
