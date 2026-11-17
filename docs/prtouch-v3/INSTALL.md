@@ -176,7 +176,7 @@ Files in the two repositories:
 - [klippy/extras/prtouch_v3.py][kalico-module] in Kalico: the module.
 - [config/prtouch_v3.cfg](../../config/prtouch_v3.cfg) in Creality: config and macros.
 - [K1 Max defaults](../../k1/patches/prtouch_v3.cfg.k1m) in Creality: serial port and board pins.
-- [test/test_prtouch_v3.py][kalico-tests] in Kalico: 30 host test cases, included in
+- [test/test_prtouch_v3.py][kalico-tests] in Kalico: 42 host test cases, included in
   the [2026-11-16 software validation](VALIDATION.md#software-validation-2026-11-16).
 
 The module requires no additional `[mcu]` section and no board firmware change.
@@ -300,5 +300,5 @@ lost when the print ends, so apply it before starting another print.
 - Creality GPL trees (`CrealityOfficial/K2_Series_Klipper`, `Hi_Klipper`): `prtouch_v3_compile.c`
   (command declarations).
 
-[kalico-module]: https://github.com/gilrim/kalico/blob/86d619459d5bbfac92c4f3bff1695ea2df062169/klippy/extras/prtouch_v3.py
-[kalico-tests]: https://github.com/gilrim/kalico/blob/86d619459d5bbfac92c4f3bff1695ea2df062169/test/test_prtouch_v3.py
+[kalico-module]: https://github.com/gilrim/kalico/blob/27d3e7e90dec8a253392869c7ef03c4c4cd905ea/klippy/extras/prtouch_v3.py
+[kalico-tests]: https://github.com/gilrim/kalico/blob/27d3e7e90dec8a253392869c7ef03c4c4cd905ea/test/test_prtouch_v3.py

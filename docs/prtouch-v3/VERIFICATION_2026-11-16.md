@@ -1,9 +1,16 @@
 # V23 verification summary — 2026-11-16
 
-**Deployment completed; hardware acceptance remains open.** The initial two
-five-tap attempts aborted on missing fresh samples. A requested rerun later
-completed one five-tap measurement, then the following run aborted with the same
-error. The sampling fault is intermittent and remains unresolved.
+**Sampling fix deployed and retested.** Three one-minute diagnostics and all
+15 repeatability taps completed without sampling errors. Load-cell homing,
+re-probing (+2.611 µm), and touch-gate invalidation/refusal passed. Five-tap ranges
+were 21.575, 7.913 and 6.291 µm; the first run remains a repeatability limitation.
+See [sampling fix and retest](#sampling-fix-and-retest) for the current result.
+
+## Initial deployment
+
+The initial two five-tap attempts aborted on missing fresh samples. A requested
+rerun later completed one five-tap measurement, then the following run aborted
+with the same error. These failures motivated the sampling fix and retest below.
 
 The test printer was a K1 Max with an x2000 mainboard, K1-MAX-L_V23 board,
 MAX3232 adapter on `/dev/ttyS9`, and Cartographer scan homing. The installed
@@ -72,13 +79,82 @@ completed and one failed. This is a promising optimization, not a complete fix.
 The five-second packet capture contained 1,781 valid frames; skipped bytes were
 only incomplete frames at the capture boundaries.
 
-The next code change should reduce decoder overhead and use a bounded wait for
-fresh coverage from all channels, retaining the post-settle cutoff, stale-batch
-rejection, force limits and failure retraction. Merely disabling the freshness
-checks would conceal the problem. Moonraker's periodic stalls may contribute
+These findings motivated the sampling fix described below: reduce decoder
+overhead and use a bounded wait for fresh coverage from all channels, retaining
+the post-settle cutoff, stale-batch rejection, force limits and failure
+retraction. Merely disabling the freshness checks would conceal the problem. Moonraker's periodic stalls may contribute
 load, but their role was not proven by this investigation.
 
 All temporary instrumentation and the CRC variant were removed. The original
-module hash was restored and Klipper restarted with heaters off. No permanent
-code change, calibration change or heated contact test followed these diagnostic
-experiments. Detailed captures remain local; this public section is a summary.
+module hash was restored and Klipper restarted with heaters off. At the end of
+this investigation, no permanent code change, calibration change or heated
+contact test had followed these diagnostic experiments; the subsequent
+implementation and retest are recorded below. Detailed captures remain local; this public section is a summary.
+
+## Sampling fix and retest
+
+The deployed module now uses an equivalent native CRC and waits for fresh
+coverage from every configured channel. After settling, the first check follows
+one 150 ms sample window; missing coverage is retried every 20 ms, with a default
+500 ms deadline measured from the end of settling. Every accepted reading still
+needs at least five samples per channel, timestamped after settling and within
+the rolling 150 ms window. Waiting does not move the nozzle or widen that window.
+A timeout reports each channel's sample count and newest accepted sample age.
+
+History scans now stop after accounting for the maximum possible overlap between
+packet timestamp ranges, reducing time spent holding the sample lock. The 200 ms
+stale-batch rejection, force/fit/travel limits, and failure retraction are unchanged.
+`sample_timeout` defaults to `max(0.5, sample_time + 0.35)` and must exceed
+`sample_time`; this printer uses the defaults without a configuration change.
+
+Source: [Kalico 27d3e7e](https://github.com/gilrim/kalico/commit/27d3e7e90dec8a253392869c7ef03c4c4cd905ea).
+Installed module SHA-256:
+`1f0b8d04006e29258c0f1646783066243127ad9df21758449d6ec0be4e9ecc8d`.
+The original module/configuration were backed up before a full Klipper service
+restart. The base Kalico/SimpleAF installations and chamber configuration remain
+as described above.
+
+Software checks passed: 82 Kalico host cases (42 PRTouch), 66 workstation
+machine/upstream cases, 24 machine cases on the printer's Python 3.8, and Ruff
+lint/format checks. Added regressions cover independent CRC equivalence,
+corrupted-frame rejection, delayed-channel recovery, post-settle and rolling
+freshness cutoffs, deadline overrun, stopped streams, overlapping timestamps,
+and timeout configuration bounds.
+
+Three stationary `PRTOUCH_DIAGNOSTIC TIME=60` runs completed consecutively:
+192, 192 and 191 force readings, with ranges of -222 to +648, -398 to +704,
+and -456 to +385 counts. No sampling errors occurred. The first preflight after
+service restart stopped while Klipper was still starting; no diagnostic command
+was issued until it reported ready.
+
+After `G28`, the existing nozzle macro completed its 175 °C wipe and second wipe
+at 148 °C. Three consecutive five-tap runs then completed at 148 °C, with the bed
+and chamber heaters off. All 15 taps passed the existing fit checks, with no
+fresh-sample aborts:
+
+| Run | Range | Standard deviation | Mean contact height |
+|---|---|---|---|
+| 1 | 21.575 µm | 7.581 µm | 0.143960 mm |
+| 2 | 7.913 µm | 2.839 µm | 0.121740 mm |
+| 3 | 6.291 µm | 2.377 µm | 0.120863 mm |
+
+The first run was wider than the earlier 7.413 µm result, and its mean was about
+22 µm higher than the second run. The final two means differed by 0.878 µm.
+This is compatible with settling after cleaning/heating, but this test did not
+isolate the cause. The sampling fix passed this retest; it does not establish
+2 µm repeatability or guarantee that no future sampling fault can occur.
+
+`_LOAD_CELL_HOME_Z` accepted contact at 0.120389 mm with stiffness
+317.4 counts/µm. A subsequent independent probe measured +0.002611 mm from the
+new zero (301.6 counts/µm), within the 0.010 mm re-probe check. The local touch
+gate accepted the successful home, `G28 X` cleared `last_home_z_result`, and the
+gate then refused with `no successful load cell home available`. Moonraker's
+previously observed HTTP error-delivery failure remains: the client connection
+closed, while the G-code history confirmed the expected refusal.
+
+Final state: parked at Z10, standby, all heater targets zero, zero G-code Z
+offset, no pending configuration, and no accepted load-cell home after the
+invalidation test. No `SAVE_CONFIG`, full print, firmware flash, or cable-fault
+injection was performed. Offset staging had passed during the initial deployment
+above and was not repeated for this sampling-only change. Detailed journals
+remain in the local maintenance repositories; GitHub contains this summary only.

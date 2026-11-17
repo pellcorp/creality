@@ -10,7 +10,7 @@ Creality/SimpleAF and Kalico contributions. The code lives in two repositories:
 
 The feature branches are [gilrim/creality:add-prtouch-v3][creality-branch] and
 [gilrim/kalico:add-prtouch-v3][kalico-branch]. The Kalico source links below pin the
-revision checked during the 2026-11-16 rebase.
+revision with the sampling fix verified on 2026-11-16.
 
 - [Installation guide](INSTALL.md): parts, USB-UART wiring, firmware recovery,
   configuration, and verification.
@@ -49,6 +49,13 @@ under a step. `PRTOUCH_PROBE HOME=Z` then re-references Z, using the same `set_p
 The module therefore owns the board's serial port itself, from a worker thread, so the reactor never
 blocks. Gcode commands wait with `reactor.pause()`.
 
+After settling, each force reading requires at least five samples per channel
+within a rolling 150 ms window. If coverage is incomplete, it retries every
+20 ms for up to 500 ms after settling (`sample_timeout`), without moving the
+nozzle or widening the freshness window. A timeout reports each channel's sample
+count and newest sample age before the normal abort/retraction path. Native CRC
+calculation reduces decoder CPU overhead; the 200 ms stale-batch limit remains.
+
 Commands (no digits in the names; klippy's gcode parser splits `PRTOUCH_V3_PROBE`):
 - `PRTOUCH_PROBE [HOME=Z]`: probe from the current Z (which must be homed, e.g. by a scan probe)
   at the current XY. The fit must pass `min_stiffness`/`max_stiffness` (counts/µm, default
@@ -71,15 +78,15 @@ are decoded and logged as `board says`. See the [fault-handling evidence](VALIDA
 
 ## Evidence
 
-**Latest hardware run (2026-11-16):** a requested rerun completed five taps
-with a 7.413 µm range, then the next run aborted on missing fresh samples. See the
-[verification summary](VERIFICATION_2026-11-16.md); hardware acceptance
-remains open. Stationary tracing found worker backlog and incomplete channel
-coverage within the fixed measurement window; the report summarizes both.
+**Latest hardware run (2026-11-16):** the sampling fix completed three consecutive
+60-second stationary diagnostics and three five-tap runs without missing samples.
+Five-tap ranges were 21.6, 7.9 and 6.3 µm; the wider first run and changing contact
+height remain part of the result. See the [verification summary](VERIFICATION_2026-11-16.md)
+for the full outcome, homing checks and limits of this retest.
 
 The [validation record](VALIDATION.md) distinguishes historical K1 Max hardware runs
-from software checks after the rebase. The 2026-11-16 checks passed all 70 Kalico host
-tests (including 30 PRTouch cases), all eight Creality tests, the bench tool's
+from software checks after the rebase. The 2026-11-16 checks passed all 82 Kalico host
+tests (including 42 PRTouch cases), all eight Creality tests, the bench tool's
 self-test, and the PRTouch Ruff checks using the pinned Ruff 0.9.3. The installer
 passes `bash -n` and adds no ShellCheck diagnostics over the upstream installer.
 
@@ -135,8 +142,8 @@ converter. That's untested here.
 
 [creality-branch]: https://github.com/gilrim/creality/tree/add-prtouch-v3
 [kalico-branch]: https://github.com/gilrim/kalico/tree/add-prtouch-v3
-[kalico-module]: https://github.com/gilrim/kalico/blob/86d619459d5bbfac92c4f3bff1695ea2df062169/klippy/extras/prtouch_v3.py
-[kalico-tests]: https://github.com/gilrim/kalico/blob/86d619459d5bbfac92c4f3bff1695ea2df062169/test/test_prtouch_v3.py
-[kalico-config]: https://github.com/gilrim/kalico/blob/86d619459d5bbfac92c4f3bff1695ea2df062169/docs/Config_Reference.md#prtouch_v3
-[kalico-commands]: https://github.com/gilrim/kalico/blob/86d619459d5bbfac92c4f3bff1695ea2df062169/docs/G-Codes.md#prtouch_v3
-[kalico-status]: https://github.com/gilrim/kalico/blob/86d619459d5bbfac92c4f3bff1695ea2df062169/docs/Status_Reference.md#prtouch_v3
+[kalico-module]: https://github.com/gilrim/kalico/blob/27d3e7e90dec8a253392869c7ef03c4c4cd905ea/klippy/extras/prtouch_v3.py
+[kalico-tests]: https://github.com/gilrim/kalico/blob/27d3e7e90dec8a253392869c7ef03c4c4cd905ea/test/test_prtouch_v3.py
+[kalico-config]: https://github.com/gilrim/kalico/blob/27d3e7e90dec8a253392869c7ef03c4c4cd905ea/docs/Config_Reference.md#prtouch_v3
+[kalico-commands]: https://github.com/gilrim/kalico/blob/27d3e7e90dec8a253392869c7ef03c4c4cd905ea/docs/G-Codes.md#prtouch_v3
+[kalico-status]: https://github.com/gilrim/kalico/blob/27d3e7e90dec8a253392869c7ef03c4c4cd905ea/docs/Status_Reference.md#prtouch_v3

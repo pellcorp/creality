@@ -3,25 +3,31 @@
 This record accompanies the [installation guide](INSTALL.md) and
 [MAX3232 adapter guide](MAX3232_ADAPTER.md). Hardware results below are historical
 observations from the author's K1 Max development notes and public commit messages.
-The software checks dated 2026-11-16 were rerun after rebasing. A subsequent
-[targeted printer deployment and verification](VERIFICATION_2026-11-16.md)
-completed software/diagnostic checks. The initial two contact runs aborted;
-a requested rerun then completed five taps (7.413 µm range) before the next run
-aborted on missing fresh samples. Hardware acceptance remains open; see that summary
-for the outcomes and checks that were deferred.
+The software checks dated 2026-11-16 were rerun after rebasing. The
+[targeted printer verification](VERIFICATION_2026-11-16.md) initially exposed
+intermittent fresh-sample failures. After the native CRC and bounded-wait fix,
+three consecutive 60-second diagnostics and three five-tap runs completed without
+sampling errors. Ranges were 21.6, 7.9 and 6.3 µm; the report retains the wider
+first run, the homing checks, and the earlier failures.
 
 ## Software validation (2026-11-16)
 
 | Repository | Upstream base | Checked source revision |
 |---|---|---|
 | Creality | [pellcorp/creality:main at 0ad9fd2][creality-base] | [9effd4c][creality-source] |
-| Kalico | [pellcorp/kalico:aug2026 at 08abba83][kalico-base] | [86d61945][kalico-source] |
+| Kalico | [pellcorp/kalico:aug2026 at 08abba83][kalico-base] | [27d3e7e][kalico-source] |
 
 Both rebases completed without conflicts. `git range-diff` showed the five
 Creality and six Kalico feature commits retained their patches. A subsequent
 Creality commit quoted model/probe paths and replaced an indirect return-code
 check; it preserves the setup function's convention that return code 1 requests
 a Kalico restart. Documentation updates follow the checked source revision.
+
+The later Kalico sampling fix adds an equivalent native CRC, a bounded wait for fresh channel
+coverage, and 12 host cases covering CRC equivalence, rolling freshness,
+deadline expiry, stopped streams, and overlapping packet timestamps.
+The deployable reference also passed 66 machine/upstream cases on the workstation
+and 24 machine tests under the printer's Python 3.8.
 
 Environment: Python 3.13.5, pytest 8.4.2, Ruff 0.9.3, ConfigUpdater 3.2, and
 ShellCheck 0.11.0. Kalico dependencies came from its checked-in
@@ -30,7 +36,7 @@ came from Creality's bundled wheel.
 
 | Check | Result |
 |---|---|
-| Kalico `test/test_*.py` | 70 passed, including all 30 cases in `test_prtouch_v3.py` |
+| Kalico `test/test_*.py` | 82 passed, including all 42 cases in `test_prtouch_v3.py` |
 | Ruff lint and format checks on the PRTouch module and tests | Passed |
 | Creality `unittest` suite | 8 passed |
 | `k1/v23_leveling.py selftest` | Passed |
@@ -183,8 +189,8 @@ with the code revision actually installed.
 [creality-base]: https://github.com/pellcorp/creality/commit/0ad9fd2c6dee32d509049d2c08375ba94e848c60
 [creality-source]: https://github.com/gilrim/creality/commit/9effd4c2a087d1c924e912aa0ec114720d34917c
 [kalico-base]: https://github.com/pellcorp/kalico/commit/08abba8358b260c95b2ef9fe6220e937acf3dc95
-[kalico-source]: https://github.com/gilrim/kalico/commit/86d619459d5bbfac92c4f3bff1695ea2df062169
-[kalico-tests]: https://github.com/gilrim/kalico/blob/86d619459d5bbfac92c4f3bff1695ea2df062169/test/test_prtouch_v3.py
+[kalico-source]: https://github.com/gilrim/kalico/commit/27d3e7e90dec8a253392869c7ef03c4c4cd905ea
+[kalico-tests]: https://github.com/gilrim/kalico/blob/27d3e7e90dec8a253392869c7ef03c4c4cd905ea/test/test_prtouch_v3.py
 [clock-fix]: https://github.com/gilrim/kalico/commit/6fc04d29f7296787e307b7bd8cc4a5635084267b
 [batch-fix]: https://github.com/gilrim/kalico/commit/fed344bb54506875a66e008d19f66edc6f10aa37
 [stall-fix]: https://github.com/gilrim/kalico/commit/c4cf7f7e3af15a45e649016a881cb2ad71a64c8e
