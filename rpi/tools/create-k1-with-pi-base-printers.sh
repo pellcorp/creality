@@ -79,6 +79,11 @@ function cleanup_printer_cfg() {
   $CONFIG_HELPER --file $file --remove-section-entry "tmc2209 stepper_x" "hold_current" || exit $?
   $CONFIG_HELPER --file $file --remove-section-entry "tmc2209 stepper_y" "hold_current" || exit $?
 
+  $CONFIG_HELPER --file $file --replace-section-entry "tmc2209 stepper_x" "current_change_dwell_time" "1.0" || exit $?
+  $CONFIG_HELPER --file $file --replace-section-entry "tmc2209 stepper_y" "current_change_dwell_time" "1.0" || exit $?
+  $CONFIG_HELPER --file $file --replace-section-entry "tmc2209 stepper_x" "home_current" "1.5" || exit $?
+  $CONFIG_HELPER --file $file --replace-section-entry "tmc2209 stepper_y" "home_current" "1.5" || exit $?
+
   # the creality firmware includes
   $CONFIG_HELPER --file $file --remove-include "printer_params.cfg" || exit $?
   $CONFIG_HELPER --file $file --remove-include "gcode_macro.cfg" || exit $?

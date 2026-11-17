@@ -983,14 +983,20 @@ function install_klipper() {
         y_position_mid=$($CONFIG_HELPER --get-section-entry "stepper_y" "position_max" --divisor 2 --integer)
         $CONFIG_HELPER --file homing.cfg --replace-section-entry "gcode_macro _HOMING_PARAMS" "variable_home_y" "$y_position_mid" || exit $?
 
-        # For the CR10SE we need to lower the homing current
-        if [ "$MODEL" = "F003" ]; then
-          $CONFIG_HELPER --file homing.cfg --replace-section-entry "gcode_macro _HOMING_PARAMS" "variable_homing_current" "0.5" || exit $?
+        home_current="1.5"
+        if [ "$MODEL" = "F003" ] || [ "$MODEL" = "F001" ] || [ "$MODEL" = "F002" ]; then
+          home_current="0.5"
         fi
 
+        for stepper in stepper_x stepper_y stepper_y1; do
+          if $CONFIG_HELPER --section-exists "tmc2209 $stepper"; then
+            $CONFIG_HELPER --replace-section-entry "tmc2209 $stepper" "current_change_dwell_time" "1.0" || exit $?
+            $CONFIG_HELPER --replace-section-entry "tmc2209 $stepper" "home_current" "$home_current" || exit $?
+          fi
+        done
+        
         # Ender 3 V3 X endstop is only reachable once Z is homed, both are wired NC
         if [ "$MODEL" = "F001" ] || [ "$MODEL" = "F002" ]; then
-          $CONFIG_HELPER --file homing.cfg --replace-section-entry "gcode_macro _HOMING_PARAMS" "variable_homing_current" "0.5" || exit $?
           $CONFIG_HELPER --file homing.cfg --replace-section-entry "gcode_macro _HOMING_PARAMS" "variable_home_z_before_x" "True" || exit $?
           $CONFIG_HELPER --file homing.cfg --replace-section-entry "gcode_macro _HOMING_PARAMS" "variable_check_xz_endstops_clear" "True" || exit $?
         fi
@@ -1012,14 +1018,11 @@ function install_klipper() {
         cp /usr/data/pellcorp/k1/belts_calibration.cfg /usr/data/printer_data/config/ || exit $?
         $CONFIG_HELPER --add-include "belts_calibration.cfg" || exit $?
 
-        # for Ender 5 Max we need to disable sensorless homing, reversing homing order, don't move away and do not repeat homing
-        # but we are still going to use homing override even though the max has physical endstops to make things a bit easier
-        if [ "$MODEL" = "F004" ]; then
-            $CONFIG_HELPER --file homing.cfg --replace-section-entry "gcode_macro _HOMING_PARAMS" "variable_home_y_before_x" "True" || exit $?
-        fi
-
         kinematics=$($CONFIG_HELPER --get-section-entry "printer" "kinematics")
-        if [ "$kinematics" = "corexy" ]; then # by default we want to home twice when using sensorless
+
+        if [ "$kinematics" = "corexy" ]; then
+            $CONFIG_HELPER --file homing.cfg --replace-section-entry "gcode_macro _HOMING_PARAMS" "variable_home_y_before_x" "True" || exit $?
+            # for Ender 5 Max this variable is ignored btw, when we transition to safe z home we can clean this stuff up a bit
             $CONFIG_HELPER --file homing.cfg --replace-section-entry "gcode_macro _HOMING_PARAMS" "variable_repeat_home_xy" "True" || exit $?
         fi
 
