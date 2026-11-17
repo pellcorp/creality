@@ -5,8 +5,6 @@ that did not originally have this board, running SimpleAF on Kalico,
 to home Z by nozzle contact. Proven on k1m (x2000 mainboard `CR4CU220812S11`, SimpleAF `f8dc056`,
 Kalico `v2026.08.00-45`), including real ABS prints, over **both** wiring options below.
 
-For an existing installation using the former names, follow [the migration guide](MIGRATION.md).
-
 The board keeps **Creality's own firmware**. The tested replacement board was
 used with its original firmware; no flash was required. The [load_cell_v23 Kalico module][kalico-module] talks to that firmware
 directly.

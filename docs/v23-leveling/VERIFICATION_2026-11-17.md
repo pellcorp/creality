@@ -30,12 +30,12 @@ identifier and diagnostic-string substitutions.
 
 ## Configuration migration and software checks
 
-The [migration guide](MIGRATION.md) describes the old/new name mapping and
-compatibility alias for the installer switch. The helper preserves custom values,
-macros and saved offsets, backs up modified files, rejects conflicting old/new
-configuration before writing, and is idempotent. Historical logs are excluded.
-The live files were migrated through synchronized git commits; the helper was
-also tested using fixtures on both the workstation and printer.
+A one-time migration helper (`migrate-v23-config.py`) renamed the old/new config
+sections, includes, commands and saved offsets, with backups and conflict
+detection; it was tested with fixtures on both the workstation and printer, then
+removed from the tree afterward since this fork had no other installations left
+to migrate. Historical logs are excluded. The live files were migrated through
+synchronized git commits.
 
 | Check | Result |
 |---|---|

@@ -1626,7 +1626,6 @@ function setup_loadcells() {
 }
 
 function setup_loadcells_zoffset() {
-    migrate_v23_config
     local probe=$1
 
     echo
@@ -1678,19 +1677,11 @@ function setup_loadcells_zoffset() {
     return 1
 }
 
-function migrate_v23_config() {
-    python3 /usr/data/pellcorp/tools/migrate-v23-config.py \
-        --config-dir /usr/data/printer_data/config \
-        --config-dir /usr/data/pellcorp-overrides \
-        --backup-dir /usr/data/pellcorp-backups/v23-name-migration || exit $?
-}
-
 function setup_loadcells_v23() {
     local probe=$1
 
     echo
     echo "INFO: Setting up the V23 leveling board for z-offset ..."
-    migrate_v23_config
 
     cp /usr/data/pellcorp/config/loadcells_v23.cfg /usr/data/printer_data/config/ || exit $?
     $CONFIG_HELPER --file loadcells_v23.cfg --patches "/usr/data/pellcorp/k1/patches/loadcells_v23.cfg.${model}" --quiet || exit $?
@@ -2486,7 +2477,6 @@ fi
       loadcells_zoffset=true
     fi
 
-    migrate_v23_config
     loadcells_v23_specified=false
     loadcells_v23=false
     # same rerun-every-update rule as loadcells_zoffset above

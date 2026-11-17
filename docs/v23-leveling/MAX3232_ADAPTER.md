@@ -1,7 +1,7 @@
 # Inline MAX3232 adapter: the V23 on the mainboard leveling port
 
 Command examples use the current V23 integration names. Dated runs originally
-used the former names; see [the naming migration](MIGRATION.md).
+used the former names (`prtouch_v3`/`PRTOUCH_*`).
 
 One of two supported ways to wire the V23 up — the other, a CH341 USB-UART, is [INSTALL.md](INSTALL.md)
 section 3. A small adapter plugs into the K1 mainboard's leveling

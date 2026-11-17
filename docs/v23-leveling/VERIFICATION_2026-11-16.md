@@ -1,6 +1,6 @@
 # V23 verification summary — 2026-11-16
 
-Historical record: these tests used the former names. See [the naming migration](MIGRATION.md) and the [current verification](VERIFICATION_2026-11-17.md).
+Historical record: these tests used the former names (`prtouch_v3`/`PRTOUCH_*`). See the [current verification](VERIFICATION_2026-11-17.md).
 
 **Sampling fix deployed and retested.** Three one-minute diagnostics and all
 15 repeatability taps completed without sampling errors. Load-cell homing,

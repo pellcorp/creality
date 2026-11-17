@@ -9,7 +9,6 @@ Creality/SimpleAF and Kalico contributions. The code lives in two repositories:
 | Kalico module | [load_cell_v23.py][kalico-module], [host tests][kalico-tests], [configuration reference][kalico-config], [commands][kalico-commands], [status][kalico-status] | `pellcorp/kalico:aug2026` |
 
 The public names are `[load_cell_v23]`, `--loadcells-v23`, and `BED_LOAD_CELL_*`.
-See [migration from the former names](MIGRATION.md).
 
 The feature branches are [gilrim/creality:add-prtouch-v3][creality-branch] and
 [gilrim/kalico:add-prtouch-v3][kalico-branch]. The Kalico source links below pin the
