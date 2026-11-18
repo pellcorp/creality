@@ -1583,7 +1583,7 @@ set -o pipefail # preserve installer failures through tee
     exit 1
   fi
 
-  KLIPPER_FORK=$klipper_fork $BASEDIR/pellcorp/rpi/install-klipper.sh $mode $probe || exit $?
+  $BASEDIR/pellcorp/rpi/install-klipper.sh $mode $probe || exit $?
   if [ $? -ne 0 ]; then
     echo "FATAL: Klipper installation failed - aborting"
     exit 1

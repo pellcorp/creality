@@ -100,7 +100,7 @@ if [ $? -ne 0 ]; then
     if git -C $BASEDIR/klipper/ remote get-url origin | grep -q klipper; then
       current_fork=klipper
     fi
-    if [ "$current_fork" != "$KLIPPER_FORK" ]; then
+    if [ "$current_fork" != "kalico" ]; then
       rm -rf $BASEDIR/klipper
       # we need to rebuild klippy-env for a different fork
       [ -d $BASEDIR/klippy-env ] && rm -rf $BASEDIR/klippy-env
@@ -109,9 +109,9 @@ if [ $? -ne 0 ]; then
 
   if [ ! -d $BASEDIR/klipper/ ]; then
     echo
-    echo "INFO: Installing ${KLIPPER_FORK} ..."
+    echo "INFO: Installing kalico ..."
 
-    git clone https://github.com/pellcorp/${KLIPPER_FORK}-rpi.git $BASEDIR/klipper || exit $?
+    git clone https://github.com/pellcorp/kalico-rpi.git $BASEDIR/klipper || exit $?
 
     # force recreate of the klippy-env if we are switching klipper forks
     if [ -d $BASEDIR/klippy-env ]; then

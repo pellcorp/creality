@@ -1,8 +1,5 @@
 #!/bin/sh
 
-# this is the minimum pellcorp/klipper commit
-KLIPPER_MINIMUM_COMMIT=cbda3771337a62cf6f2eae1d5f96c3aa9609af76
-
 if [ -f /usr/bin/get_sn_mac.sh ]; then
   MODEL=$(/usr/bin/get_sn_mac.sh model)
   if [ "$MODEL" = "Nebula Pad" ]; then
@@ -847,13 +844,9 @@ function install_mainsail() {
     return 0
 }
 
-# note the klipper_fork will usually be 'klipper', just because of how the code works
-# but if --kalico is provided to the installer when klipper_fork will be kalico and we will clone
-# kalico, we don't install kalico unless its a new installation anyway so its fine
 function install_klipper() {
-    local klipper_fork=$1
-    local mode=$2
-    local probe=$3
+    local mode=$1
+    local probe=$2
 
     grep -q "klipper" /usr/data/pellcorp.done
     if [ $? -ne 0 ]; then
@@ -868,73 +861,22 @@ function install_klipper() {
               current_fork=kalico
             fi
           fi
-          if [ "$current_fork" != "$klipper_fork" ]; then
+          if [ "$current_fork" != "kalico" ]; then
             rm -rf /usr/data/klipper
           fi
         fi
 
-        if [ -d /usr/data/klipper/.git ]; then
-            cd /usr/data/klipper/
-            remote_repo=$(git remote get-url origin | awk -F '/' '{print $NF}' | sed 's/.git//g')
-            branch_ref=$(git rev-parse --abbrev-ref HEAD)
-            cd - > /dev/null
-
-            # this old repo is no longer supported
-            if [ "$remote_repo" = "k1-carto-klipper" ]; then
-                echo "INFO: Forcing Klipper repo to be switched from pellcorp/${remote_repo} to pellcorp/${klipper_fork}"
-                rm -rf /usr/data/klipper/
-            fi
-        fi
-
         if [ ! -d /usr/data/klipper/.git ]; then
-            echo "INFO: Installing ${klipper_fork} ..."
-            git clone https://github.com/pellcorp/${klipper_fork}.git /usr/data/klipper || exit $?
+            echo "INFO: Installing kalico ..."
+            git clone https://github.com/pellcorp/kalico.git /usr/data/klipper || exit $?
             echo
 
             [ -d /usr/share/klipper ] && rm -rf /usr/share/klipper
-        else
-            cd /usr/data/klipper/
-            branch_ref=$(git rev-parse --abbrev-ref HEAD)
-            remote_repo=$(git remote get-url origin | awk -F '/' '{print $NF}' | sed 's/.git//g')
-            klipper_status=0
-            cd - > /dev/null
-
-            # force update
-            if [ ! -f /usr/data/klipper/fw/K1/klipper_host_mcu ]; then
-              klipper_status=1
-            fi
-
-            # force switch to jun2025 branch
-            if [ "$branch_ref" = "master" ]; then
-              klipper_status=1
-            fi
-
-            if [ "$remote_repo" = "klipper" ] && [ $klipper_status -ne 0 ]; then
-                echo "INFO: Forcing update of klipper to branch jun2025"
-                update_repo /usr/data/klipper jun2025 || exit $?
-                update_klipper
-            fi
         fi
 
-        cd /usr/data/klipper/
-        branch_ref=$(git rev-parse --abbrev-ref HEAD)
-        if [ "$branch_ref" = "jun2025" ]; then
-          git merge-base --is-ancestor $KLIPPER_MINIMUM_COMMIT HEAD 2> /dev/null
-          if [ $? -ne 0 ]; then
-            echo "INFO: Forcing update of klipper to latest of branch jun2025"
-            update_repo /usr/data/klipper jun2025 || exit $?
-
-            if [ "$mode" = "update" ]; then
-              update_klipper
-            fi
-          fi
-        fi
-        cd - > /dev/null
-
-        echo "INFO: Updating ${klipper_fork} config ..."
+        echo "INFO: Updating kalico config ..."
 
         ln -sf /usr/data/klipper /usr/share/ || exit $?
-
         ln -sf /usr/data/klipper/fw/K1/klipper_host_mcu /usr/bin/klipper_mcu
 
         if [ "$MODEL" = "F003" ] || [ "$MODEL" = "F005" ] || [ "$MODEL" = "NEBULA" ]; then
@@ -1891,8 +1833,6 @@ function set_serial_btteddy() {
 }
 
 function setup_btteddy() {
-    local klipper_fork=$1
-
     grep -q "btteddy-probe" /usr/data/pellcorp.done
     if [ $? -ne 0 ]; then
         echo
@@ -2895,7 +2835,7 @@ fi
     install_mainsail $mode
     install_mainsail=$?
 
-    install_klipper $klipper_fork $mode $probe
+    install_klipper $mode $probe
     install_klipper=$?
 
     install_grumpyscreen=0
@@ -2938,7 +2878,7 @@ fi
         setup_bltouch
         setup_probe_specific=$?
     elif [ "$probe" = "btteddy" ]; then
-        setup_btteddy $klipper_fork
+        setup_btteddy
         setup_probe_specific=$?
     elif [ "$probe" = "eddyng" ]; then
         setup_eddyng
