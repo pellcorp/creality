@@ -911,12 +911,7 @@ function install_klipper() {
         cp /usr/data/pellcorp/config/client.cfg /usr/data/printer_data/config/
         $CONFIG_HELPER --add-include "client.cfg" || exit $?
 
-        # this is just temporary to make things a bit simpler initially for Ender 3 V3
-        if [ -f /usr/data/pellcorp/k1/homing.${model}.cfg ]; then
-          cp /usr/data/pellcorp/k1/homing.${model}.cfg /usr/data/printer_data/config/homing.cfg || exit $?
-        else
-          cp /usr/data/pellcorp/config/homing.cfg /usr/data/printer_data/config/ || exit $?
-        fi
+        cp /usr/data/pellcorp/config/homing.cfg /usr/data/printer_data/config/ || exit $?
         $CONFIG_HELPER --add-include "homing.cfg" || exit $?
 
         x_position_mid=$($CONFIG_HELPER --get-section-entry "stepper_x" "position_max" --divisor 2 --integer)
