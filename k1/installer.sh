@@ -911,14 +911,33 @@ function install_klipper() {
         cp /usr/data/pellcorp/config/client.cfg /usr/data/printer_data/config/
         $CONFIG_HELPER --add-include "client.cfg" || exit $?
 
-        cp /usr/data/pellcorp/config/homing.cfg /usr/data/printer_data/config/ || exit $?
-        $CONFIG_HELPER --add-include "homing.cfg" || exit $?
-
+        kinematics=$($CONFIG_HELPER --get-section-entry "printer" "kinematics")
         x_position_mid=$($CONFIG_HELPER --get-section-entry "stepper_x" "position_max" --divisor 2 --integer)
-        $CONFIG_HELPER --file homing.cfg --replace-section-entry "gcode_macro _HOMING_PARAMS" "variable_home_x" "$x_position_mid" || exit $?
-
         y_position_mid=$($CONFIG_HELPER --get-section-entry "stepper_y" "position_max" --divisor 2 --integer)
+
+        # we are going to configure the homing.cfg even if it does not get included so people can switch back if desired
+        cp /usr/data/pellcorp/config/homing.cfg /usr/data/printer_data/config/ || exit $?
+
+        if [ "$kinematics" = "cartesian" ] || [ "$probe" = "beacon" ]; then
+          $CONFIG_HELPER --patches /usr/data/pellcorp/config/safe_z_home.cfg --quiet || exit $?
+          $CONFIG_HELPER --replace-section-entry "safe_z_home" "home_xy_position" "$x_position_mid,$y_position_mid" || exit $?
+        else
+          $CONFIG_HELPER --add-include "homing.cfg" || exit $?
+        fi
+
+        $CONFIG_HELPER --file homing.cfg --replace-section-entry "gcode_macro _HOMING_PARAMS" "variable_home_x" "$x_position_mid" || exit $?
         $CONFIG_HELPER --file homing.cfg --replace-section-entry "gcode_macro _HOMING_PARAMS" "variable_home_y" "$y_position_mid" || exit $?
+
+        # Ender 3 V3 X endstop is only reachable once Z is homed, both are wired NC
+        if [ "$MODEL" = "F001" ] || [ "$MODEL" = "F002" ]; then
+          $CONFIG_HELPER --file homing.cfg --replace-section-entry "gcode_macro _HOMING_PARAMS" "variable_home_z_before_x" "True" || exit $?
+          $CONFIG_HELPER --file homing.cfg --replace-section-entry "gcode_macro _HOMING_PARAMS" "variable_check_xz_endstops_clear" "True" || exit $?
+        fi
+
+        if [ "$kinematics" = "corexy" ]; then
+            $CONFIG_HELPER --file homing.cfg --replace-section-entry "gcode_macro _HOMING_PARAMS" "variable_home_y_before_x" "True" || exit $?
+            $CONFIG_HELPER --file homing.cfg --replace-section-entry "gcode_macro _HOMING_PARAMS" "variable_repeat_home_xy" "True" || exit $?
+        fi
 
         home_current="1.5"
         if [ "$MODEL" = "F003" ] || [ "$MODEL" = "F001" ] || [ "$MODEL" = "F002" ]; then
@@ -931,12 +950,6 @@ function install_klipper() {
             $CONFIG_HELPER --replace-section-entry "tmc2209 $stepper" "home_current" "$home_current" || exit $?
           fi
         done
-        
-        # Ender 3 V3 X endstop is only reachable once Z is homed, both are wired NC
-        if [ "$MODEL" = "F001" ] || [ "$MODEL" = "F002" ]; then
-          $CONFIG_HELPER --file homing.cfg --replace-section-entry "gcode_macro _HOMING_PARAMS" "variable_home_z_before_x" "True" || exit $?
-          $CONFIG_HELPER --file homing.cfg --replace-section-entry "gcode_macro _HOMING_PARAMS" "variable_check_xz_endstops_clear" "True" || exit $?
-        fi
 
         cp /usr/data/pellcorp/k1/internal_macros.cfg /usr/data/printer_data/config/ || exit $?
         $CONFIG_HELPER --add-include "internal_macros.cfg" || exit $?
@@ -954,14 +967,6 @@ function install_klipper() {
 
         cp /usr/data/pellcorp/k1/belts_calibration.cfg /usr/data/printer_data/config/ || exit $?
         $CONFIG_HELPER --add-include "belts_calibration.cfg" || exit $?
-
-        kinematics=$($CONFIG_HELPER --get-section-entry "printer" "kinematics")
-
-        if [ "$kinematics" = "corexy" ]; then
-            $CONFIG_HELPER --file homing.cfg --replace-section-entry "gcode_macro _HOMING_PARAMS" "variable_home_y_before_x" "True" || exit $?
-            # for Ender 5 Max this variable is ignored btw, when we transition to safe z home we can clean this stuff up a bit
-            $CONFIG_HELPER --file homing.cfg --replace-section-entry "gcode_macro _HOMING_PARAMS" "variable_repeat_home_xy" "True" || exit $?
-        fi
 
         cp /usr/data/pellcorp/config/start_end.cfg /usr/data/printer_data/config/ || exit $?
         $CONFIG_HELPER --add-include "start_end.cfg" || exit $?
@@ -1781,18 +1786,9 @@ function setup_beacon() {
         cp /usr/data/pellcorp/config/beacon.cfg /usr/data/printer_data/config/ || exit $?
         $CONFIG_HELPER --add-include "beacon.cfg" || exit $?
 
-        # for beacon can't use homing override
-        $CONFIG_HELPER --file homing.cfg --remove-section "homing_override"
-
         y_position_mid=$($CONFIG_HELPER --get-section-entry "stepper_y" "position_max" --divisor 2 --integer)
         x_position_mid=$($CONFIG_HELPER --get-section-entry "stepper_x" "position_max" --divisor 2 --integer)
-        $CONFIG_HELPER --file beacon.cfg --replace-section-entry "beacon" "home_xy_position" "$x_position_mid,$y_position_mid" || exit $?
         $CONFIG_HELPER --file beacon.cfg --replace-section-entry "bed_mesh" "zero_reference_position" "$x_position_mid,$y_position_mid" || exit $?
-
-        # for Ender 5 Max need to swap homing order for beacon
-        if [ "$MODEL" = "F004" ]; then
-            $CONFIG_HELPER --file beacon.cfg --replace-section-entry "beacon" "home_y_before_x" "True" || exit $?
-        fi
 
         $CONFIG_HELPER --file beacon_macro.cfg --replace-section-entry "gcode_macro _BEACON_CONTACT_HOME" "variable_stop_start_camera" "True" || exit $?
         $CONFIG_HELPER --file beacon_macro.cfg --replace-section-entry "gcode_macro BED_MESH_CALIBRATE" "variable_stop_start_camera" "True" || exit $?

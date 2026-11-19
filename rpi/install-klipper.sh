@@ -205,15 +205,21 @@ if [ $? -ne 0 ]; then
     $CONFIG_HELPER --file useful_macros.cfg --remove-section "gcode_macro M191"
   fi
 
-  # most stuff only works with corexy and cartesian
   if [ "$kinematics" = "corexz" ] || [ "$kinematics" = "corexy" ] || [ "$kinematics" = "cartesian" ]; then
+    # we are going to configure the homing.cfg even if it does not get included so people can switch back if desired
     cp $BASEDIR/pellcorp/config/homing.cfg $BASEDIR/printer_data/config/ || exit $?
-    $CONFIG_HELPER --add-include "homing.cfg" || exit $?
 
     x_position_mid=$($CONFIG_HELPER --get-section-entry "stepper_x" "position_max" --divisor 2 --integer)
-    $CONFIG_HELPER --file homing.cfg --replace-section-entry "gcode_macro _HOMING_PARAMS" "variable_home_x" "$x_position_mid" || exit $?
-
     y_position_mid=$($CONFIG_HELPER --get-section-entry "stepper_y" "position_max" --divisor 2 --integer)
+
+    if [ "$kinematics" = "cartesian" ] || [ "$probe" = "beacon" ]; then
+      $CONFIG_HELPER --patches $BASEDIR/pellcorp/config/safe_z_home.cfg --quiet || exit $?
+      $CONFIG_HELPER --replace-section-entry "safe_z_home" "home_xy_position" "$x_position_mid,$y_position_mid" || exit $?
+    else
+      $CONFIG_HELPER --add-include "homing.cfg" || exit $?
+    fi
+
+    $CONFIG_HELPER --file homing.cfg --replace-section-entry "gcode_macro _HOMING_PARAMS" "variable_home_x" "$x_position_mid" || exit $?
     $CONFIG_HELPER --file homing.cfg --replace-section-entry "gcode_macro _HOMING_PARAMS" "variable_home_y" "$y_position_mid" || exit $?
 
     # there is an assumption the same stepper driver will be used for stepper x and y
