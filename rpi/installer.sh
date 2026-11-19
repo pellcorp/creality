@@ -701,15 +701,8 @@ function setup_beacon() {
         cp $BASEDIR/pellcorp/config/beacon.cfg $BASEDIR/printer_data/config/ || exit $?
         $CONFIG_HELPER --add-include "beacon.cfg" || exit $?
 
-        # some printers dont even have homing.cfg
-        if [ $BASEDIR/printer_data/config/homing.cfg ]; then
-          # for beacon can't use homing override
-          $CONFIG_HELPER --file homing.cfg --remove-section "homing_override"
-        fi
-
         y_position_mid=$($CONFIG_HELPER --get-section-entry "stepper_y" "position_max" --divisor 2 --integer)
         x_position_mid=$($CONFIG_HELPER --get-section-entry "stepper_x" "position_max" --divisor 2 --integer)
-        $CONFIG_HELPER --file beacon.cfg --replace-section-entry "beacon" "home_xy_position" "$x_position_mid,$y_position_mid" || exit $?
         $CONFIG_HELPER --file beacon.cfg --replace-section-entry "bed_mesh" "zero_reference_position" "$x_position_mid,$y_position_mid" || exit $?
 
         $CONFIG_HELPER --remove-section "beacon" || exit $?
