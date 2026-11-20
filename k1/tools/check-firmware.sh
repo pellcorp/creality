@@ -25,6 +25,11 @@ if [ "$MODEL" = "F001" ] || [ "$MODEL" = "F003" ] || [ "$MODEL" = "F004" ] || [ 
   FW_DIR=/usr/share/klipper/fw/$MODEL
 fi
 
+fw_file_version() {
+  local fw_file=$(ls "$FW_DIR/${1%%-*}"*.bin 2> /dev/null | head -n 1)
+  [ -n "$fw_file" ] && basename "$fw_file" .bin
+}
+
 if [ -f /etc/init.d/S13mcu_update ]; then
     mcu_update_version_file=$(cat /etc/init.d/S13mcu_update | grep VERSION_FILE= | awk -F '=' '{print $2}')
     if [ "$mcu_update_version_file" != "$VERSION_FILE" ]; then
@@ -43,7 +48,7 @@ if [ -f $VERSION_FILE ] && [ -d $FW_DIR ]; then
   firmware_upgrade_required=false
 
   fw_mcu_version=$(cat $VERSION_FILE | grep "mcu_version" | awk -F '=' ' {print $2}')
-  file_mcu_version=$(basename $(ls $FW_DIR/mcu*) .bin 2> /dev/null)
+  file_mcu_version=$(fw_file_version "$fw_mcu_version")
 
   if [ "x$fw_mcu_version" = "x" ] || [ "$fw_mcu_version" != "$file_mcu_version" ]; then
     firmware_upgrade_required=true
@@ -52,7 +57,7 @@ if [ -f $VERSION_FILE ] && [ -d $FW_DIR ]; then
   # The Ender 3 V3 KE does not have a nozzle mcu!
   if [ "$MODEL" != "F005" ]; then
     fw_noz_version=$(cat $VERSION_FILE | grep "noz_version" | awk -F '=' ' {print $2}')
-    file_noz_version=$(basename $(ls $FW_DIR/noz*) .bin 2> /dev/null)
+    file_noz_version=$(fw_file_version "$fw_noz_version")
 
     if [ "x$fw_noz_version" = "x" ] || [ "$fw_noz_version" != "$file_noz_version" ]; then
       firmware_upgrade_required=true
@@ -61,7 +66,7 @@ if [ -f $VERSION_FILE ] && [ -d $FW_DIR ]; then
     # So the CR10SE (F003) has no bed mcu far as I can tell
     if [ "$MODEL" != "F003" ]; then
       fw_bed_version=$(cat $VERSION_FILE | grep "bed_version" | awk -F '=' ' {print $2}')
-      file_bed_version=$(basename $(ls $FW_DIR/bed*) .bin 2> /dev/null)
+      file_bed_version=$(fw_file_version "$fw_bed_version")
 
       # ignore missing firmware for the bed which will occur if someone has removed their bed mcu
       if [ "x$fw_bed_version" != "x" ]; then
