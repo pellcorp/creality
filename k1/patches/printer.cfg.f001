@@ -75,7 +75,6 @@ second_homing_speed: 10
 [stepper_z]
 endstop_pin: probe:z_virtual_endstop
 position_min: -2
-position_max: 255
 homing_retract_dist: 0
 
 [tmc2209 stepper_z]

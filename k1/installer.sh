@@ -1129,9 +1129,11 @@ function setup_probe() {
 
         # because we are using force move with 3mm, as a safety feature we will lower the position max
         # by 3mm ootb to avoid damaging the printer if you do a really big print
-        if [ "$MODEL" != "F001" ] && [ "$MODEL" != "F002" ]; then
+        if [ "$MODEL" != "F001" ]; then
             position_max=$($CONFIG_HELPER --get-section-entry "stepper_z" "position_max" --minus 3 --integer)
             $CONFIG_HELPER --replace-section-entry "stepper_z" "position_max" "$position_max" || exit $?
+        else
+            $CONFIG_HELPER --replace-section-entry "stepper_z" "position_max" "255" || exit $?
         fi
 
         echo "probe" >> /usr/data/pellcorp.done
