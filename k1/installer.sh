@@ -1508,8 +1508,9 @@ function setup_loadcells() {
         echo
         echo "INFO: Setting up loadcells ..."
 
-        $CONFIG_HELPER --replace-section-entry "stepper_z" "homing_retract_dist" "0" || exit $?
+        $CONFIG_HELPER --replace-section-entry "stepper_z" "homing_retract_dist" "3" || exit $?
         $CONFIG_HELPER --replace-section-entry "stepper_z" "homing_speed" "2.0" || exit $?
+        $CONFIG_HELPER --replace-section-entry "stepper_z" "second_homing_speed" "1.0" || exit $?
 
         cp /usr/data/pellcorp/config/loadcells.cfg /usr/data/printer_data/config/ || exit $?
         $CONFIG_HELPER --add-include "loadcells.cfg" || exit $?
