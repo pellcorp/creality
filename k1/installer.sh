@@ -948,6 +948,7 @@ function install_klipper() {
           if $CONFIG_HELPER --section-exists "tmc2209 $stepper"; then
             $CONFIG_HELPER --replace-section-entry "tmc2209 $stepper" "current_change_dwell_time" "1.0" || exit $?
             $CONFIG_HELPER --replace-section-entry "tmc2209 $stepper" "home_current" "$home_current" || exit $?
+            $CONFIG_HELPER --replace-section-entry "$stepper" "homing_retract_dist" "10.0" || exit $?
           fi
         done
 
