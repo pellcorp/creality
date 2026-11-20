@@ -1120,9 +1120,9 @@ function setup_probe() {
         echo
         echo "INFO: Setting up generic probe config ..."
 
-            $CONFIG_HELPER --remove-section "bed_mesh" || exit $?
-            $CONFIG_HELPER --remove-section-entry "stepper_z" "position_endstop" || exit $?
-            $CONFIG_HELPER --replace-section-entry "stepper_z" "endstop_pin" "probe:z_virtual_endstop" || exit $?
+        $CONFIG_HELPER --remove-section "bed_mesh" || exit $?
+        $CONFIG_HELPER --remove-section-entry "stepper_z" "position_endstop" || exit $?
+        $CONFIG_HELPER --replace-section-entry "stepper_z" "endstop_pin" "probe:z_virtual_endstop" || exit $?
 
         cp /usr/data/pellcorp/config/quickstart.cfg /usr/data/printer_data/config/ || exit $?
         $CONFIG_HELPER --add-include "quickstart.cfg" || exit $?
@@ -1505,8 +1505,8 @@ function setup_loadcells() {
         echo
         echo "INFO: Setting up loadcells ..."
 
-          $CONFIG_HELPER --replace-section-entry "stepper_z" "homing_retract_dist" "0" || exit $?
-          $CONFIG_HELPER --replace-section-entry "stepper_z" "homing_speed" "2.0" || exit $?
+        $CONFIG_HELPER --replace-section-entry "stepper_z" "homing_retract_dist" "0" || exit $?
+        $CONFIG_HELPER --replace-section-entry "stepper_z" "homing_speed" "2.0" || exit $?
 
         cp /usr/data/pellcorp/config/loadcells.cfg /usr/data/printer_data/config/ || exit $?
         $CONFIG_HELPER --add-include "loadcells.cfg" || exit $?
