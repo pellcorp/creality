@@ -234,6 +234,7 @@ if [ $? -ne 0 ]; then
         # base printers will predefine the relevant home current so dont override it
         if ! $CONFIG_HELPER --section-entry-exists "$tmc_driver $stepper" "home_current"; then
           $CONFIG_HELPER --replace-section-entry "$tmc_driver $stepper" "home_current" "1.5" || exit $?
+          $CONFIG_HELPER --replace-section-entry "$stepper" "homing_retract_dist" "10.0" || exit $?
         fi
       fi
     done
