@@ -64,13 +64,19 @@ accel_chip_y: adxl345 bed
 accel_chip_x: adxl345 nozzle
 
 [stepper_x]
+endstop_pin: tmc2209_stepper_x:virtual_endstop
 homing_retract_dist: 10
-second_homing_speed: 25
+homing_speed: 30
 
 [stepper_y]
 homing_retract_dist: 5
 second_homing_speed: 10
 
 [stepper_z]
-homing_retract_dist: 10
-second_homing_speed: 5
+endstop_pin: probe:z_virtual_endstop
+position_min: -2
+position_max: 255
+homing_retract_dist: 0
+
+[tmc2209 stepper_z]
+home_current: .5

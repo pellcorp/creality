@@ -918,7 +918,7 @@ function install_klipper() {
         # we are going to configure the homing.cfg even if it does not get included so people can switch back if desired
         cp /usr/data/pellcorp/config/homing.cfg /usr/data/printer_data/config/ || exit $?
 
-        if [ "$kinematics" = "cartesian" ] || [ "$probe" = "beacon" ]; then
+        if [ "$kinematics" = "cartesian" ] || [ "$probe" = "beacon" ] || [ "$MODEL" = "F001" ] || [ "$MODEL" = "F002" ]; then
           $CONFIG_HELPER --patches /usr/data/pellcorp/config/safe_z_home.cfg --quiet || exit $?
           $CONFIG_HELPER --replace-section-entry "safe_z_home" "home_xy_position" "$x_position_mid,$y_position_mid" || exit $?
         else
@@ -927,12 +927,6 @@ function install_klipper() {
 
         $CONFIG_HELPER --file homing.cfg --replace-section-entry "gcode_macro _HOMING_PARAMS" "variable_home_x" "$x_position_mid" || exit $?
         $CONFIG_HELPER --file homing.cfg --replace-section-entry "gcode_macro _HOMING_PARAMS" "variable_home_y" "$y_position_mid" || exit $?
-
-        # Ender 3 V3 X endstop is only reachable once Z is homed, both are wired NC
-        if [ "$MODEL" = "F001" ] || [ "$MODEL" = "F002" ]; then
-          $CONFIG_HELPER --file homing.cfg --replace-section-entry "gcode_macro _HOMING_PARAMS" "variable_home_z_before_x" "True" || exit $?
-          $CONFIG_HELPER --file homing.cfg --replace-section-entry "gcode_macro _HOMING_PARAMS" "variable_check_xz_endstops_clear" "True" || exit $?
-        fi
 
         if [ "$kinematics" = "corexy" ]; then
             $CONFIG_HELPER --file homing.cfg --replace-section-entry "gcode_macro _HOMING_PARAMS" "variable_home_y_before_x" "True" || exit $?
@@ -1126,12 +1120,9 @@ function setup_probe() {
         echo
         echo "INFO: Setting up generic probe config ..."
 
-        # ender 3 v3 keeps its physical z endstop
-        if [ "$MODEL" != "F001" ] && [ "$MODEL" != "F002" ]; then
             $CONFIG_HELPER --remove-section "bed_mesh" || exit $?
             $CONFIG_HELPER --remove-section-entry "stepper_z" "position_endstop" || exit $?
             $CONFIG_HELPER --replace-section-entry "stepper_z" "endstop_pin" "probe:z_virtual_endstop" || exit $?
-        fi
 
         cp /usr/data/pellcorp/config/quickstart.cfg /usr/data/printer_data/config/ || exit $?
         $CONFIG_HELPER --add-include "quickstart.cfg" || exit $?
@@ -1514,11 +1505,8 @@ function setup_loadcells() {
         echo
         echo "INFO: Setting up loadcells ..."
 
-        # don't change homing for ender 3 v3
-        if [ "$model" != "f001" ] && [ "$model" != "f002" ]; then
           $CONFIG_HELPER --replace-section-entry "stepper_z" "homing_retract_dist" "0" || exit $?
           $CONFIG_HELPER --replace-section-entry "stepper_z" "homing_speed" "2.0" || exit $?
-        fi
 
         cp /usr/data/pellcorp/config/loadcells.cfg /usr/data/printer_data/config/ || exit $?
         $CONFIG_HELPER --add-include "loadcells.cfg" || exit $?
