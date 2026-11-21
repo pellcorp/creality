@@ -932,6 +932,10 @@ function install_klipper() {
         if [ "$MODEL" = "F001" ] || [ "$MODEL" = "F002" ]; then
           $CONFIG_HELPER --file homing.cfg --replace-section-entry "gcode_macro _HOMING_PARAMS" "variable_home_z_before_x" "True" || exit $?
           $CONFIG_HELPER --file homing.cfg --replace-section-entry "gcode_macro _HOMING_PARAMS" "variable_check_xz_endstops_clear" "True" || exit $?
+          $CONFIG_HELPER --replace-section-entry "stepper_x" "endstop_pin" "tmc2209_stepper_x:virtual_endstop" || exit $?
+          $CONFIG_HELPER --replace-section-entry "stepper_x" "homing_speed" "30" || exit $?
+          $CONFIG_HELPER --replace-section-entry "stepper_z" "position_min" "-2" || exit $?
+          $CONFIG_HELPER --replace-section-entry "tmc2209 stepper_z" "home_current" "0.5" || exit $?
         fi
 
         if [ "$kinematics" = "corexy" ]; then
