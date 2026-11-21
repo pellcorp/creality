@@ -928,14 +928,27 @@ function install_klipper() {
         $CONFIG_HELPER --file homing.cfg --replace-section-entry "gcode_macro _HOMING_PARAMS" "variable_home_x" "$x_position_mid" || exit $?
         $CONFIG_HELPER --file homing.cfg --replace-section-entry "gcode_macro _HOMING_PARAMS" "variable_home_y" "$y_position_mid" || exit $?
 
-        # Ender 3 V3 X endstop is only reachable once Z is homed, both are wired NC
         if [ "$MODEL" = "F001" ] || [ "$MODEL" = "F002" ]; then
+          # these two are legacy stuff in case we need to switch back to homing.cfg
+          # Ender 3 V3 X endstop is only reachable once Z is homed, both are wired NC
           $CONFIG_HELPER --file homing.cfg --replace-section-entry "gcode_macro _HOMING_PARAMS" "variable_home_z_before_x" "True" || exit $?
           $CONFIG_HELPER --file homing.cfg --replace-section-entry "gcode_macro _HOMING_PARAMS" "variable_check_xz_endstops_clear" "True" || exit $?
-          $CONFIG_HELPER --replace-section-entry "stepper_x" "endstop_pin" "tmc2209_stepper_x:virtual_endstop" || exit $?
-          $CONFIG_HELPER --replace-section-entry "stepper_x" "homing_speed" "30" || exit $?
-          $CONFIG_HELPER --replace-section-entry "stepper_z" "position_min" "-2" || exit $?
+
           $CONFIG_HELPER --replace-section-entry "tmc2209 stepper_z" "home_current" "0.5" || exit $?
+          $CONFIG_HELPER --replace-section-entry "stepper_z" "endstop_pin" "probe:z_virtual_endstop" || exit $?
+          $CONFIG_HELPER --replace-section-entry "stepper_z" "position_min" "-2" || exit $?
+          $CONFIG_HELPER --replace-section-entry "stepper_z" "homing_retract_dist" "10" || exit $?
+          $CONFIG_HELPER --replace-section-entry "stepper_z" "second_homing_speed" "5" || exit $?
+
+          $CONFIG_HELPER --replace-section-entry "stepper_x" "homing_speed" "30" || exit $?
+          $CONFIG_HELPER --replace-section-entry "stepper_x" "endstop_pin" "tmc2209_stepper_x:virtual_endstop" || exit $?
+          $CONFIG_HELPER --replace-section-entry "stepper_x" "homing_retract_dist" "10" || exit $?
+          $CONFIG_HELPER --replace-section-entry "stepper_x" "second_homing_speed" "25" || exit $?
+          
+          $CONFIG_HELPER --replace-section-entry "stepper_y" "homing_retract_dist" "5" || exit $?
+          $CONFIG_HELPER --replace-section-entry "stepper_y" "second_homing_speed" "10" || exit $?
+
+
         fi
 
         if [ "$kinematics" = "corexy" ]; then
