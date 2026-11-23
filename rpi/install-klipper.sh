@@ -212,13 +212,10 @@ if [ $? -ne 0 ]; then
     x_position_mid=$($CONFIG_HELPER --get-section-entry "stepper_x" "position_max" --divisor 2 --integer)
     y_position_mid=$($CONFIG_HELPER --get-section-entry "stepper_y" "position_max" --divisor 2 --integer)
 
-    if [ "$kinematics" = "cartesian" ] || [ "$probe" = "beacon" ]; then
-      $CONFIG_HELPER --patches $BASEDIR/pellcorp/config/safe_z_home.cfg --quiet || exit $?
-      $CONFIG_HELPER --replace-section-entry "safe_z_home" "home_xy_position" "$x_position_mid,$y_position_mid" || exit $?
-    else
-      $CONFIG_HELPER --add-include "homing.cfg" || exit $?
-    fi
+    $CONFIG_HELPER --patches $BASEDIR/pellcorp/config/safe_z_home.cfg --quiet || exit $?
+    $CONFIG_HELPER --replace-section-entry "safe_z_home" "home_xy_position" "$x_position_mid,$y_position_mid" || exit $?
 
+    # we leave homing.cfg configured in case people want to switch back
     $CONFIG_HELPER --file homing.cfg --replace-section-entry "gcode_macro _HOMING_PARAMS" "variable_home_x" "$x_position_mid" || exit $?
     $CONFIG_HELPER --file homing.cfg --replace-section-entry "gcode_macro _HOMING_PARAMS" "variable_home_y" "$y_position_mid" || exit $?
 

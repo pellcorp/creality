@@ -918,13 +918,14 @@ function install_klipper() {
         # we are going to configure the homing.cfg even if it does not get included so people can switch back if desired
         cp /usr/data/pellcorp/config/homing.cfg /usr/data/printer_data/config/ || exit $?
 
-        if [ "$kinematics" = "cartesian" ] || [ "$probe" = "beacon" ] || [ "$probe" = "bltouch" ] || [ "$probe" = "microprobe" ] || [ "$probe" = "btteddy" ] || [ "$probe" = "eddyng" ] || [ "$probe" = "loadcells" ] || [ "$MODEL" = "F001" ] || [ "$MODEL" = "F002" ] || [ "$MODEL" = "F003" ] || [ "$MODEL" = "F004" ]; then
+        if [ "$probe" != "klicky" ]; then
           $CONFIG_HELPER --patches /usr/data/pellcorp/config/safe_z_home.cfg --quiet || exit $?
           $CONFIG_HELPER --replace-section-entry "safe_z_home" "home_xy_position" "$x_position_mid,$y_position_mid" || exit $?
         else
           $CONFIG_HELPER --add-include "homing.cfg" || exit $?
         fi
 
+        # we leave homing.cfg configured in case people want to switch back
         $CONFIG_HELPER --file homing.cfg --replace-section-entry "gcode_macro _HOMING_PARAMS" "variable_home_x" "$x_position_mid" || exit $?
         $CONFIG_HELPER --file homing.cfg --replace-section-entry "gcode_macro _HOMING_PARAMS" "variable_home_y" "$y_position_mid" || exit $?
 
@@ -947,8 +948,6 @@ function install_klipper() {
           
           $CONFIG_HELPER --replace-section-entry "stepper_y" "homing_retract_dist" "5" || exit $?
           $CONFIG_HELPER --replace-section-entry "stepper_y" "second_homing_speed" "10" || exit $?
-
-
         fi
 
         if [ "$kinematics" = "corexy" ]; then
