@@ -962,9 +962,11 @@ function install_klipper() {
 
         for stepper in stepper_x stepper_y stepper_y1; do
           if $CONFIG_HELPER --section-exists "tmc2209 $stepper"; then
-            $CONFIG_HELPER --replace-section-entry "tmc2209 $stepper" "current_change_dwell_time" "1.0" || exit $?
-            $CONFIG_HELPER --replace-section-entry "tmc2209 $stepper" "home_current" "$home_current" || exit $?
-            $CONFIG_HELPER --replace-section-entry "$stepper" "homing_retract_dist" "10.0" || exit $?
+            if $CONFIG_HELPER --section-entry-contains "$stepper" "endstop_pin" "tmc2209_${stepper}:virtual_endstop"; then
+              $CONFIG_HELPER --replace-section-entry "tmc2209 $stepper" "current_change_dwell_time" "1.0" || exit $?
+              $CONFIG_HELPER --replace-section-entry "tmc2209 $stepper" "home_current" "$home_current" || exit $?
+              $CONFIG_HELPER --replace-section-entry "$stepper" "homing_retract_dist" "10.0" || exit $?
+            fi
           fi
         done
 
