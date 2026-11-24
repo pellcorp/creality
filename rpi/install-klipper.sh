@@ -227,11 +227,13 @@ if [ $? -ne 0 ]; then
 
     for stepper in stepper_x stepper_y; do
       if $CONFIG_HELPER --section-exists "$tmc_driver $stepper"; then
-        $CONFIG_HELPER --replace-section-entry "$tmc_driver $stepper" "current_change_dwell_time" "1.0" || exit $?
-        # base printers will predefine the relevant home current so dont override it
-        if ! $CONFIG_HELPER --section-entry-exists "$tmc_driver $stepper" "home_current"; then
-          $CONFIG_HELPER --replace-section-entry "$tmc_driver $stepper" "home_current" "1.5" || exit $?
-          $CONFIG_HELPER --replace-section-entry "$stepper" "homing_retract_dist" "10.0" || exit $?
+        if $CONFIG_HELPER --section-entry-contains "$stepper" "endstop_pin" "${tmc_driver}_${stepper}:virtual_endstop"; then
+          $CONFIG_HELPER --replace-section-entry "$tmc_driver $stepper" "current_change_dwell_time" "1.0" || exit $?
+          # base printers will predefine the relevant home current so dont override it
+          if ! $CONFIG_HELPER --section-entry-exists "$tmc_driver $stepper" "home_current"; then
+            $CONFIG_HELPER --replace-section-entry "$tmc_driver $stepper" "home_current" "1.5" || exit $?
+            $CONFIG_HELPER --replace-section-entry "$stepper" "homing_retract_dist" "10.0" || exit $?
+          fi
         fi
       fi
     done
