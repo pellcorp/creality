@@ -97,41 +97,46 @@ apply_overrides() {
                         $CONFIG_HELPER --file $file --overrides $overrides_dir/$file --exclude-sections probe,bltouch || exit $?
                     else
                       if [ "$file" = "homing.cfg" ]; then
-                        # we are moving the variable_homing_current to the printer.cfg
-                        override_home_current=$($CONFIG_HELPER --file $BASEDIR/pellcorp-overrides/homing.cfg --get-section-entry "gcode_macro _HOMING_PARAMS" "variable_homing_current")
-                        if [ -n "$override_home_current" ]; then
-                          tmc_driver=$($CONFIG_HELPER --list-sections tmc% | grep stepper_x | awk -F ' ' '{print $1}')
-                          if [ -n "$tmc_driver" ]; then
+                        tmc_driver=$($CONFIG_HELPER --list-sections tmc% | grep stepper_x | awk -F ' ' '{print $1}')
+                        if [ -n "$tmc_driver" ]; then
+                          override_home_current=$($CONFIG_HELPER --file $BASEDIR/pellcorp-overrides/homing.cfg --get-section-entry "gcode_macro _HOMING_PARAMS" "variable_homing_current")
+                          if [ -n "$override_home_current" ]; then
                             echo "WARN: Migrating homing.cfg homing current to printer.cfg ..."
                             for stepper in stepper_x stepper_y stepper_y1; do
                               if $CONFIG_HELPER --section-exists "$tmc_driver $stepper"; then
-                                $CONFIG_HELPER --replace-section-entry "$tmc_driver $stepper" "home_current" "$override_home_current" || exit $?
+                                if $CONFIG_HELPER --section-entry-contains "$stepper" "endstop_pin" "${tmc_driver}_${stepper}:virtual_endstop"; then
+                                  $CONFIG_HELPER --replace-section-entry "$tmc_driver $stepper" "home_current" "$override_home_current" || exit $?
+                                fi
                               fi
                             done
                           fi
-                        fi
 
-                        x_homing_retract_dist=$($CONFIG_HELPER --file $BASEDIR/pellcorp-overrides/homing.cfg --get-section-entry "gcode_macro _HOMING_PARAMS" "variable_homing_move_away_x")
-                        if [ -n "$x_homing_retract_dist" ]; then
-                          if $CONFIG_HELPER --section-exists "stepper_x"; then
-                            current_homing_retract_dist=$($CONFIG_HELPER --get-section-entry "stepper_x" "homing_retract_dist" --default-value "0" --integer)
-                            if [ $current_homing_retract_dist -lt $x_homing_retract_dist ]; then
-                               echo "WARN: Migrating homing.cfg homing retract distance for stepper_x to printer.cfg ..."
-                               $CONFIG_HELPER --replace-section-entry "stepper_x" "homing_retract_dist" "$x_homing_retract_dist" || exit $?
-                            fi
-                          fi
-                        fi
-                        y_homing_retract_dist=$($CONFIG_HELPER --file $BASEDIR/pellcorp-overrides/homing.cfg --get-section-entry "gcode_macro _HOMING_PARAMS" "variable_homing_move_away_y")
-                        if [ -n "$y_homing_retract_dist" ]; then
-                          for stepper in stepper_y stepper_y1; do
-                            if $CONFIG_HELPER --section-exists "$stepper"; then
-                              current_homing_retract_dist=$($CONFIG_HELPER --get-section-entry "$stepper" "homing_retract_dist" --default-value "0" --integer)
-                              if [ $current_homing_retract_dist -lt $y_homing_retract_dist ]; then
-                                echo "WARN: Migrating homing.cfg homing retract distance for $stepper to printer.cfg ..."
-                                $CONFIG_HELPER --replace-section-entry "$stepper" "homing_retract_dist" "$y_homing_retract_dist" || exit $?
+                          x_homing_retract_dist=$($CONFIG_HELPER --file $BASEDIR/pellcorp-overrides/homing.cfg --get-section-entry "gcode_macro _HOMING_PARAMS" "variable_homing_move_away_x")
+                          if [ -n "$x_homing_retract_dist" ]; then
+                            if $CONFIG_HELPER --section-exists "stepper_x"; then
+                              if $CONFIG_HELPER --section-entry-contains "stepper_x" "endstop_pin" "${tmc_driver}_stepper_x:virtual_endstop"; then
+                                current_homing_retract_dist=$($CONFIG_HELPER --get-section-entry "stepper_x" "homing_retract_dist" --default-value "0" --integer)
+                                if [ $current_homing_retract_dist -lt $x_homing_retract_dist ]; then
+                                   echo "WARN: Migrating homing.cfg homing retract distance for stepper_x to printer.cfg ..."
+                                   $CONFIG_HELPER --replace-section-entry "stepper_x" "homing_retract_dist" "$x_homing_retract_dist" || exit $?
+                                fi
                               fi
                             fi
-                          done
+                          fi
+                          y_homing_retract_dist=$($CONFIG_HELPER --file $BASEDIR/pellcorp-overrides/homing.cfg --get-section-entry "gcode_macro _HOMING_PARAMS" "variable_homing_move_away_y")
+                          if [ -n "$y_homing_retract_dist" ]; then
+                            for stepper in stepper_y stepper_y1; do
+                              if $CONFIG_HELPER --section-exists "$stepper"; then
+                                if $CONFIG_HELPER --section-entry-contains "$stepper" "endstop_pin" "${tmc_driver}_${stepper}:virtual_endstop"; then
+                                  current_homing_retract_dist=$($CONFIG_HELPER --get-section-entry "stepper_y" "homing_retract_dist" --default-value "0" --integer)
+                                  if [ $current_homing_retract_dist -lt $y_homing_retract_dist ]; then
+                                    echo "WARN: Migrating homing.cfg homing retract distance for $stepper to printer.cfg ..."
+                                    $CONFIG_HELPER --replace-section-entry "$stepper" "homing_retract_dist" "$y_homing_retract_dist" || exit $?
+                                  fi
+                                fi
+                              fi
+                            done
+                          fi
                         fi
                       fi
                       $CONFIG_HELPER --file $file --overrides $overrides_dir/$file || exit $?
