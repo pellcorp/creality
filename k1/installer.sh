@@ -918,7 +918,7 @@ function install_klipper() {
         # we are going to configure the homing.cfg even if it does not get included so people can switch back if desired
         cp /usr/data/pellcorp/config/homing.cfg /usr/data/printer_data/config/ || exit $?
 
-        if [ "$probe" != "klicky" ]; then
+        if [ "$probe" != "klicky" ] && [ "$MODEL" != "F004" ]; then
           $CONFIG_HELPER --patches /usr/data/pellcorp/config/safe_z_home.cfg --quiet || exit $?
           $CONFIG_HELPER --replace-section-entry "safe_z_home" "home_xy_position" "$x_position_mid,$y_position_mid" || exit $?
         else
