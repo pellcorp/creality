@@ -21,26 +21,6 @@ start_server() {
     # display black transition image to stop the corrupt image being shown
     cmd_jpeg_display /usr/data/pellcorp/k1/black.jpg &
 
-    HIDE_SPOOLMAN=true
-    if grep -q "^\[include spoolman.conf\]" /usr/data/printer_data/config/moonraker.conf; then
-      HIDE_SPOOLMAN=false
-    fi
-
-    if ! grep -q "hide_spoolman: $HIDE_SPOOLMAN" /usr/data/printer_data/config/grumpyscreen.ini; then
-      $CONFIG_HELPER --file grumpyscreen.ini --replace-section-entry "ui" "hide_spoolman" $HIDE_SPOOLMAN
-    fi
-
-    HIDE_MMU=true
-    if grep -q "^\[update_manager afc-software\]" /usr/data/printer_data/config/moonraker.conf; then
-      HIDE_MMU=false
-    fi
-    if grep -q "^\[update_manager happy-hare\]" /usr/data/printer_data/config/moonraker.conf; then
-      HIDE_MMU=false
-    fi
-    if ! grep -q "hide_mmu: $HIDE_MMU" /usr/data/printer_data/config/grumpyscreen.ini; then
-      $CONFIG_HELPER --file grumpyscreen.ini --replace-section-entry "ui" "hide_mmu" $HIDE_MMU
-    fi
-
     export HOME=/root
     sync && echo 3 > /proc/sys/vm/drop_caches
     mkdir -p $RC_DIR
