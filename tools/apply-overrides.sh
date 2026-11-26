@@ -64,7 +64,17 @@ apply_overrides() {
                 echo "INFO: Restoring $BASEDIR/printer_data/$file ..."
                 cp $overrides_dir/$file $BASEDIR/printer_data/
             elif [ "$file" = "grumpyscreen.ini" ]; then
-                echo "INFO: Restoring $BASEDIR/printer_data/$file ..."
+                echo "INFO: Restoring $BASEDIR/printer_data/config/$file ..."
+
+                # delete a bunch of stuff we no longer support in grumpyscreen.ini
+                sed -i '/# if you do not have MMU you can hide the MMU button/d' $BASEDIR/pellcorp-overrides/grumpyscreen.ini
+                sed -i '/hide_mmu.*/d' $BASEDIR/pellcorp-overrides/grumpyscreen.ini
+                sed -i '/# if you do not have spoolman you can hide the spoolman button/d' $BASEDIR/pellcorp-overrides/grumpyscreen.ini
+                sed -i '/hide_spoolman.*/d' $BASEDIR/pellcorp-overrides/grumpyscreen.ini
+
+                sed -i '/# afc = .*/d' $BASEDIR/pellcorp-overrides/grumpyscreen.ini
+                sed -i '/# none = no MMU.*/d' $BASEDIR/pellcorp-overrides/grumpyscreen.ini
+                sed -i '/backend:.*/d' $BASEDIR/pellcorp-overrides/grumpyscreen.ini
 
                 # no longer support configuring the invert z icon
                 sed -i '/invert_z_icon/d' $BASEDIR/pellcorp-overrides/grumpyscreen.ini
