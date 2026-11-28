@@ -4,7 +4,7 @@
 # https://github.com/pyscaffold/configupdater
 #
 
-import optparse, os, sys
+import optparse, os, shutil, sys
 import os.path
 from configupdater import ConfigUpdater
 from configupdater.block import Comment, Space
@@ -13,6 +13,26 @@ if os.path.isdir("/usr/data/printer_data/config"):
     PRINTER_CONFIG_DIR = "/usr/data/printer_data/config"
 else:
     PRINTER_CONFIG_DIR = f"{os.environ['HOME']}/printer_data/config"
+
+# Write through a temp file in the same directory and rename it over the target, so a failure or a power loss
+# while writing can never leave a truncated printer.cfg behind. Always LF, whatever the line endings the file
+# was read with (reading translates CRLF, which a printer.cfg saved by a Windows editor has).
+def _write_atomically(path, write):
+    target = os.path.realpath(path)  # write through a symlink instead of replacing it
+    temp_file = f"{target}.tmp"
+    try:
+        with open(temp_file, 'w', newline='\n') as file:
+            write(file)
+            file.flush()
+            os.fsync(file.fileno())
+        if os.path.exists(target):
+            shutil.copymode(target, temp_file)
+        os.replace(temp_file, target)
+    except BaseException:
+        if os.path.exists(temp_file):
+            os.remove(temp_file)
+        raise
+
 
 def remove_section_value(updater, section_name, key):
     if updater.has_section(section_name):
@@ -475,12 +495,11 @@ def main():
             with open(options.output, 'w') as file:
                 updater.write(file)
         else:
-            with open(config_file, 'w') as file:
-                if options.overrides and not options.quiet:
-                    print(f"Applied overrides to {config_file}")
-                elif options.patches and not options.quiet:
-                    print(f"Applied mount overrides to {config_file}")
-                updater.write(file)
+            if options.overrides and not options.quiet:
+                print(f"Applied overrides to {config_file}")
+            elif options.patches and not options.quiet:
+                print(f"Applied mount overrides to {config_file}")
+            _write_atomically(config_file, updater.write)
     elif not read_only and options.output:
         with open(options.output, 'w') as file:
             updater.write(file)

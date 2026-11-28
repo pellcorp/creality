@@ -11,15 +11,25 @@ WORKERS=1
 BUFFERS=1
 RESOLUTION="1280x720"
 
+# prints the value of a key in webcam.ini, or the default ($2) if the key is missing or blank
+ini_value() {
+  value=$(grep "^$1[[:space:]]*=" "$CONFIG_FILE" | head -n 1 | cut -d '=' -f 2- | tr -d '[:space:]')
+  if [ -n "$value" ]; then
+    echo "$value"
+  else
+    echo "$2"
+  fi
+}
+
 start() {
   # allow configuration via a webcam.ini file
-  if [ -f $CONFIG_FILE ]; then
-    FRAMES_PER_SECOND=$(cat $CONFIG_FILE | grep frames_per_second | awk -F '=' '{print $2}' | tr -d '[:space:]')
-    WORKERS=$(cat $CONFIG_FILE | grep workers | awk -F '=' '{print $2}' | tr -d '[:space:]')
-    BUFFERS=$(cat $CONFIG_FILE | grep buffers | awk -F '=' '{print $2}' | tr -d '[:space:]')
-    RESOLUTION=$(cat $CONFIG_FILE | grep resolution | awk -F '=' '{print $2}' | tr -d '[:space:]')
-    FLIP_VERTICAL=$(cat $CONFIG_FILE | grep flip_vertical | awk -F '=' '{print $2}' | tr -d '[:space:]')
-    DISABLE_NEBULA_IRLIGHT=$(cat $CONFIG_FILE | grep disable_nebula_irlight | awk -F '=' '{print $2}' | tr -d '[:space:]')
+  if [ -f "$CONFIG_FILE" ]; then
+    FRAMES_PER_SECOND=$(ini_value frames_per_second "$FRAMES_PER_SECOND")
+    WORKERS=$(ini_value workers "$WORKERS")
+    BUFFERS=$(ini_value buffers "$BUFFERS")
+    RESOLUTION=$(ini_value resolution "$RESOLUTION")
+    FLIP_VERTICAL=$(ini_value flip_vertical "false")
+    DISABLE_NEBULA_IRLIGHT=$(ini_value disable_nebula_irlight "false")
   fi
 
   V4L_DEVICE=$(v4l2-ctl --list-devices|grep -A1 usb|sed 's/^[[:space:]]*//g'|grep '^/dev' | head -1)
@@ -29,13 +39,13 @@ start() {
   fi
 
   if [ "$DISABLE_NEBULA_IRLIGHT" = "true" ]; then
-    /usr/data/pellcorp/k1/tools/cam_util.py off $V4L_DEVICE > /dev/null
+    /usr/data/pellcorp/k1/tools/cam_util.py off "$V4L_DEVICE" > /dev/null
   fi
 
   # re-apply camera controls from the webcam.ini [controls] section, one at a time so a rejected
   # control does not stop the rest, auto controls first so manual values that depend on them are accepted
-  if [ -f $CONFIG_FILE ]; then
-    controls=$($CONFIG_HELPER --file $CONFIG_FILE --section-entries controls 2> /dev/null | tr -d ' \t' | tr '\n' ' ')
+  if [ -f "$CONFIG_FILE" ]; then
+    controls=$($CONFIG_HELPER --file "$CONFIG_FILE" --section-entries controls 2> /dev/null | tr -d ' \t' | tr '\n' ' ')
     for pass in auto manual; do
       for control in $controls; do
         case "${control%%=*}" in
@@ -43,7 +53,7 @@ start() {
           *) [ "$pass" = "manual" ] || continue ;;
         esac
         if [ -n "${control#*=}" ]; then
-          v4l2-ctl -d $V4L_DEVICE --set-ctrl "$control" > /dev/null 2>&1
+          v4l2-ctl -d "$V4L_DEVICE" --set-ctrl "$control" > /dev/null 2>&1
         fi
       done
     done
@@ -53,7 +63,7 @@ start() {
   if [ "$FLIP_VERTICAL" = "true" ]; then
     flip_vertical_arg="--flip-vertical=1"
   fi
-  start-stop-daemon -S -b -m -p $PID_FILE --exec /usr/data/ustreamer/ustreamer -- -n -r $RESOLUTION -c HW -m MJPEG -b $BUFFERS -w $WORKERS -f $FRAMES_PER_SECOND -l -d $V4L_DEVICE --host=0.0.0.0 --allow-origin=* --device-timeout 15 $flip_vertical_arg
+  start-stop-daemon -S -b -m -p "$PID_FILE" --exec /usr/data/ustreamer/ustreamer -- -n -r "$RESOLUTION" -c HW -m MJPEG -b "$BUFFERS" -w "$WORKERS" -f "$FRAMES_PER_SECOND" -l -d "$V4L_DEVICE" --host=0.0.0.0 '--allow-origin=*' --device-timeout 15 $flip_vertical_arg
 }
 
 stop() {
@@ -62,11 +72,16 @@ stop() {
   # actually wait for the service to stop
   service_pid="$(cat $PID_FILE 2> /dev/null)"
   if [ -n "$service_pid" ]; then
-        while true; do
-              if [ ! -d /proc/"$service_pid" ] ; then
-                    break
-              fi
-        done
+    # wait up to 30 seconds for a graceful stop, then kill -9
+    wait_count=0
+    while [ -d "/proc/$service_pid" ] && [ "$wait_count" -lt 150 ]; do
+      sleep 0.2
+      wait_count=$((wait_count + 1))
+    done
+    if [ -d "/proc/$service_pid" ]; then
+      kill -9 "$service_pid" 2> /dev/null
+    fi
+    rm -f "$PID_FILE"
   fi
 }
 

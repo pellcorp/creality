@@ -21,6 +21,11 @@ start_server() {
     # display black transition image to stop the corrupt image being shown
     cmd_jpeg_display /usr/data/pellcorp/k1/black.jpg &
 
+    # rotate the log at start once it passes 1 MB, keeping a single .old copy
+    if [ -f "$GUPPYSCREEN_LOG" ] && [ "$(wc -c < "$GUPPYSCREEN_LOG")" -gt 1048576 ]; then
+        mv -f "$GUPPYSCREEN_LOG" "$GUPPYSCREEN_LOG.old"
+    fi
+
     export HOME=/root
     sync && echo 3 > /proc/sys/vm/drop_caches
     mkdir -p $RC_DIR
@@ -53,11 +58,17 @@ case "$1" in
         # this allows a graceful restart of service by actually waiting for it to stop first
         service_pid="$(cat $PID_FILE 2> /dev/null)"
         if [ -n "$service_pid" ]; then
-            while true; do
-                    if [ ! -d /proc/"$service_pid" ] ; then
-                        break
-                    fi
-            done
+          # wait up to 30 seconds for a graceful stop, then kill -9
+          wait_count=0
+          while [ -d "/proc/$service_pid" ] && [ "$wait_count" -lt 150 ]; do
+            sleep 0.2
+            wait_count=$((wait_count + 1))
+          done
+          if [ -d "/proc/$service_pid" ]; then
+            kill -9 "$service_pid" 2> /dev/null
+            killall -9 grumpyscreen 2> /dev/null
+          fi
+          rm -f "$PID_FILE"
         fi
         start_server
         ;;

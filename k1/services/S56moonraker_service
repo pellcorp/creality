@@ -8,34 +8,41 @@ PRINTER_DATA_DIR=$USER_DATA/printer_data
 PRINTER_CONFIG_DIR=$PRINTER_DATA_DIR/config
 PRINTER_LOGS_DIR=$PRINTER_DATA_DIR/logs
 PID_FILE=/var/run/moonraker.pid
+MOONRAKER_TMP_DIR=/usr/data/tmp/moonraker
 
 start() {
   [ -d $PRINTER_DATA_DIR ] || mkdir -p $PRINTER_DATA_DIR
   [ -d $PRINTER_CONFIG_DIR ] || mkdir -p $PRINTER_CONFIG_DIR
   [ -d $PRINTER_LOGS_DIR ] || mkdir -p $PRINTER_LOGS_DIR
   
-  rm -rf /usr/data/tmp; mkdir -p /usr/data/tmp
-  TMPDIR=/usr/data/tmp HOME=/root start-stop-daemon -S -q -b -m -p $PID_FILE \
+  # /usr/data/tmp is shared with klippy, so only ever clean moonraker's own sub directory
+  rm -rf "$MOONRAKER_TMP_DIR"; mkdir -p "$MOONRAKER_TMP_DIR"
+  TMPDIR="$MOONRAKER_TMP_DIR" HOME=/root start-stop-daemon -S -q -b -m -p $PID_FILE \
     --exec $PROG -- $PY_SCRIPT -d $PRINTER_DATA_DIR
 }
 
 stop() {
-  start-stop-daemon -K -q -p $PID_FILE > /dev/null 2>&1
+  start-stop-daemon -K -q -p "$PID_FILE" > /dev/null 2>&1
+
+  # wait for moonraker to actually stop, so its tmp dir is not removed from underneath it
+  moonraker_pid="$(cat "$PID_FILE" 2> /dev/null)"
+  if [ -n "$moonraker_pid" ]; then
+    # wait up to 30 seconds for a graceful stop, then kill -9
+    wait_count=0
+    while [ -d "/proc/$moonraker_pid" ] && [ "$wait_count" -lt 150 ]; do
+      sleep 0.2
+      wait_count=$((wait_count + 1))
+    done
+    if [ -d "/proc/$moonraker_pid" ]; then
+      kill -9 "$moonraker_pid" 2> /dev/null
+    fi
+    rm -f "$PID_FILE"
+  fi
+  rm -rf "$MOONRAKER_TMP_DIR"
 }
 
 restart() {
   stop
-
-  # this allows a graceful restart of moonraker by actually waiting for it to stop first
-  moonraker_pid="$(cat $PID_FILE 2> /dev/null)"
-  if [ -n "$moonraker_pid" ]; then
-    while true; do
-      if [ ! -d /proc/"$moonraker_pid" ] ; then
-        break
-      fi
-    done
-  fi
-
   start
 }
 

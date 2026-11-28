@@ -62,12 +62,12 @@ setup_git_repo() {
 override_file() {
     local file=$1
 
-    if [ -L $BASEDIR/printer_data/config/$file ]; then
+    if [ -L "$BASEDIR/printer_data/config/$file" ]; then
         return 0
     fi
 
-    overrides_file="$BASEDIR/pellcorp-overrides/$file"
-    if [ -f $BASEDIR/pellcorp/config/$file ]; then
+    overrides_file="$STAGING/$file"
+    if [ -f "$BASEDIR/pellcorp/config/$file" ]; then
         original_file="$BASEDIR/pellcorp/config/$file"
     else
         original_file="$BASEDIR/pellcorp/${CONFIG_TYPE}/$file"
@@ -88,19 +88,19 @@ override_file() {
         return 0
     elif [ "$file" = "grumpyscreen.ini" ]; then
         # if this is the new overrides file then we can back it up otherwise ignore it
-        grep -q "guppy_update_cmd" $BASEDIR/printer_data/config/$file
+        grep -q "guppy_update_cmd" "$BASEDIR/printer_data/config/$file"
         if [ $? -ne 0 ]; then
           echo "INFO: Backing up $BASEDIR/printer_data/config/$file ..."
-          cp $BASEDIR/printer_data/config/$file $BASEDIR/pellcorp-overrides/
+          cp "$BASEDIR/printer_data/config/$file" "$STAGING/" || exit $?
           return 0
         else
           echo "INFO: Skipping $BASEDIR/printer_data/config/$file"
           return 0
         fi
     elif [ ! -f "$BASEDIR/pellcorp/config/$file" ] && [ ! -f "$BASEDIR/pellcorp/${CONFIG_TYPE}/$file" ]; then
-        if ! echo $file | grep -qE "printer([0-9]+).cfg"; then
+        if ! echo "$file" | grep -qE "printer([0-9]+).cfg"; then
             echo "INFO: Backing up $BASEDIR/printer_data/config/$file ..."
-            cp $BASEDIR/printer_data/config/$file $BASEDIR/pellcorp-overrides/
+            cp "$BASEDIR/printer_data/config/$file" "$STAGING/" || exit $?
             return 0
         else
             return 0
@@ -111,18 +111,18 @@ override_file() {
       $CONFIG_OVERRIDES --original "$original_file" --updated "$updated_file" --overrides "$overrides_file" --exclude-sections bltouch,probe || exit $?
 
       # the printer.cfg will always be done last so if there is already a overrides file for bltouch or microprobe we don't need to do it again
-      if [ -f $BASEDIR/printer_data/config/bltouch-${model}.cfg ] && [ ! -f $BASEDIR/printer_data/config/bltouch.cfg ] && [ ! -f $BASEDIR/pellcorp-overrides/bltouch.cfg ]; then
-        overrides_file="$BASEDIR/pellcorp-overrides/bltouch.cfg"
+      if [ -f $BASEDIR/printer_data/config/bltouch-${model}.cfg ] && [ ! -f $BASEDIR/printer_data/config/bltouch.cfg ] && [ ! -f $STAGING/bltouch.cfg ]; then
+        overrides_file="$STAGING/bltouch.cfg"
         $CONFIG_OVERRIDES --original "$original_file" --updated "$updated_file" --overrides "$overrides_file" --include-sections bltouch || exit $?
-      elif [ -f $BASEDIR/printer_data/config/microprobe-${model}.cfg ] && [ ! -f $BASEDIR/printer_data/config/microprobe.cfg ] && [ ! -f $BASEDIR/pellcorp-overrides/microprobe.cfg ]; then
-          overrides_file="$BASEDIR/pellcorp-overrides/microprobe.cfg"
+      elif [ -f $BASEDIR/printer_data/config/microprobe-${model}.cfg ] && [ ! -f $BASEDIR/printer_data/config/microprobe.cfg ] && [ ! -f $STAGING/microprobe.cfg ]; then
+          overrides_file="$STAGING/microprobe.cfg"
           $CONFIG_OVERRIDES --original "$original_file" --updated "$updated_file" --overrides "$overrides_file" --include-sections probe || exit $?
       fi
     elif [ "$file" = "moonraker.asvc" ]; then
       # thanks gemini for this magic incantation
       additions=$(awk 'NR==FNR {a[$0]=1; next} !a[$0]' "$original_file" "$updated_file")
       if [ -n "$additions" ]; then
-        echo "INFO: Saving moonraker.asvc additions to $BASEDIR/pellcorp-overrides/moonraker.asvc"
+        echo "INFO: Saving moonraker.asvc additions to $STAGING/moonraker.asvc"
         printf "%s\n" "$additions" > $overrides_file
       fi
     else
@@ -130,47 +130,50 @@ override_file() {
 
       # special handling if migrating back to nginx for webcam, this only happens when we run the tool before completing the
       # first update after migrating cos the /usr/data/pellcorp.ipaddress will be removed!
-      if [ "$file" = "webcam.conf" ] && [ -f $BASEDIR/pellcorp-overrides/webcam.conf ] && [ -f /usr/data/pellcorp.ipaddress ]; then
+      if [ "$file" = "webcam.conf" ] && [ -f $STAGING/webcam.conf ] && [ -f /usr/data/pellcorp.ipaddress ]; then
         PREVIOUS_IP_ADDRESS=$(cat /usr/data/pellcorp.ipaddress 2> /dev/null)
         # in this case it was previously derived by the ipaddress service so clean them out so we can safely go back to nginx
         # however if someone has enabled the skip action, this means they are managing the webcam.conf themselves and we need
         # to retain their custom configuration
         if [ "$PREVIOUS_IP_ADDRESS" != "skip" ]; then
-          sed -i '/stream_url/d' $BASEDIR/pellcorp-overrides/webcam.conf
-          sed -i '/snapshot_url/d' $BASEDIR/pellcorp-overrides/webcam.conf
+          sed -i '/stream_url/d' $STAGING/webcam.conf
+          sed -i '/snapshot_url/d' $STAGING/webcam.conf
         fi
       fi
     fi
 
     # we renamed the SENSORLESS_PARAMS to hide it
-    if [ -f $BASEDIR/pellcorp-overrides/sensorless.cfg ]; then
+    if [ -f $STAGING/sensorless.cfg ]; then
       # so this is for ancient
-      sed -i 's/gcode_macro SENSORLESS_PARAMS/gcode_macro _SENSORLESS_PARAMS/g' $BASEDIR/pellcorp-overrides/sensorless.cfg
+      sed -i 's/gcode_macro SENSORLESS_PARAMS/gcode_macro _SENSORLESS_PARAMS/g' $STAGING/sensorless.cfg
       # this caters for recent change
-      sed -i 's/gcode_macro _SENSORLESS_PARAMS/gcode_macro _HOMING_PARAMS/g' $BASEDIR/pellcorp-overrides/sensorless.cfg
-    elif [ -f $BASEDIR/pellcorp-overrides/homing_override.cfg ]; then
+      sed -i 's/gcode_macro _SENSORLESS_PARAMS/gcode_macro _HOMING_PARAMS/g' $STAGING/sensorless.cfg
+    elif [ -f $STAGING/homing_override.cfg ]; then
       # this is for rpi only
-      sed -i 's/gcode_macro _SENSORLESS_PARAMS/gcode_macro _HOMING_PARAMS/g' $BASEDIR/pellcorp-overrides/homing_override.cfg
-    elif [ -f $BASEDIR/pellcorp-overrides/KAMP_Settings.cfg ]; then
+      sed -i 's/gcode_macro _SENSORLESS_PARAMS/gcode_macro _HOMING_PARAMS/g' $STAGING/homing_override.cfg
+    elif [ -f $STAGING/KAMP_Settings.cfg ]; then
       # remove any overrides for these values which do not apply to Smart Park and Line Purge
-      sed -i '/variable_verbose_enable/d' $BASEDIR/pellcorp-overrides/KAMP_Settings.cfg
-      sed -i '/variable_mesh_margin/d' $BASEDIR/pellcorp-overrides/KAMP_Settings.cfg
-      sed -i '/variable_fuzz_amount/d' $BASEDIR/pellcorp-overrides/KAMP_Settings.cfg
-      sed -i '/variable_probe_dock_enable/d' $BASEDIR/pellcorp-overrides/KAMP_Settings.cfg
-      sed -i '/variable_attach_macro/d' $BASEDIR/pellcorp-overrides/KAMP_Settings.cfg
-      sed -i '/variable_detach_macro/d' $BASEDIR/pellcorp-overrides/KAMP_Settings.cfg
+      sed -i '/variable_verbose_enable/d' $STAGING/KAMP_Settings.cfg
+      sed -i '/variable_mesh_margin/d' $STAGING/KAMP_Settings.cfg
+      sed -i '/variable_fuzz_amount/d' $STAGING/KAMP_Settings.cfg
+      sed -i '/variable_probe_dock_enable/d' $STAGING/KAMP_Settings.cfg
+      sed -i '/variable_attach_macro/d' $STAGING/KAMP_Settings.cfg
+      sed -i '/variable_detach_macro/d' $STAGING/KAMP_Settings.cfg
     fi
 
     if [ "$file" = "printer.cfg" ]; then
       saves=false
+      # a printer.cfg saved by a Windows editor has CRLF line endings, which read -r keeps on every line
+      cr=$(printf '\r')
       while IFS= read -r line; do
+        line="${line%"$cr"}"
         if [ "$line" = "#*# <---------------------- SAVE_CONFIG ---------------------->" ]; then
           saves=true
-          echo "" > $BASEDIR/pellcorp-overrides/printer.cfg.save_config
-          echo "INFO: Saving save config state to $BASEDIR/pellcorp-overrides/printer.cfg.save_config"
+          echo "" > $STAGING/printer.cfg.save_config
+          echo "INFO: Saving save config state to $STAGING/printer.cfg.save_config"
         fi
         if [ "$saves" = "true" ]; then
-          echo "$line" >> $BASEDIR/pellcorp-overrides/printer.cfg.save_config
+          echo "$line" >> $STAGING/printer.cfg.save_config
         fi
       done < "$updated_file"
     fi
@@ -233,48 +236,42 @@ else
       exit 1
   fi
 
-  mkdir -p $BASEDIR/pellcorp-overrides
-
-  rm $BASEDIR/pellcorp-overrides/*.cfg 2> /dev/null
-  rm $BASEDIR/pellcorp-overrides/*.ini 2> /dev/null
-  rm $BASEDIR/pellcorp-overrides/*.conf 2> /dev/null
-  rm $BASEDIR/pellcorp-overrides/*.json 2> /dev/null
-  if [ -f $BASEDIR/pellcorp-overrides/moonraker.asvc ]; then
-    rm $BASEDIR/pellcorp-overrides/moonraker.asvc
-  fi
-  if [ -f $BASEDIR/pellcorp-overrides/printer.cfg.save_config ]; then
-    rm $BASEDIR/pellcorp-overrides/printer.cfg.save_config
-  fi
-  if [ -f $BASEDIR/pellcorp-overrides/moonraker.secrets ]; then
-    rm $BASEDIR/pellcorp-overrides/moonraker.secrets
-  fi
+  # Everything is generated into a staging directory first. The previous overrides are only replaced once every
+  # step has succeeded, a failure anywhere leaves them as they were (the trap removes the staging directory).
+  OVERRIDES="$BASEDIR/pellcorp-overrides"
+  STAGING="$BASEDIR/pellcorp-overrides.staging.$$"
+  rm -rf "$STAGING" "$STAGING.list"
+  mkdir -p "$STAGING" || exit $?
+  trap 'rm -rf "$STAGING" "$STAGING.list"' EXIT
 
   # special case for moonraker.secrets
   if [ -f $BASEDIR/printer_data/moonraker.secrets ] && [ -f $BASEDIR/pellcorp/config/moonraker.secrets ]; then
       diff $BASEDIR/printer_data/moonraker.secrets $BASEDIR/pellcorp/config/moonraker.secrets > /dev/null
       if [ $? -ne 0 ]; then
           echo "INFO: Backing up $BASEDIR/printer_data/moonraker.secrets..."
-          cp $BASEDIR/printer_data/moonraker.secrets $BASEDIR/pellcorp-overrides/
+          cp $BASEDIR/printer_data/moonraker.secrets "$STAGING/" || exit $?
       fi
   fi
 
   if [ -f $BASEDIR/guppyscreen/calibration.json ]; then
-    echo "INFO: Saving grumpyscreen calibration.json to $BASEDIR/pellcorp-overrides/calibration.json"
-    cp $BASEDIR/guppyscreen/calibration.json $BASEDIR/pellcorp-overrides/
+    echo "INFO: Saving grumpyscreen calibration.json to $OVERRIDES/calibration.json"
+    cp $BASEDIR/guppyscreen/calibration.json "$STAGING/" || exit $?
     sync
   elif [ -f $BASEDIR/grumpyscreen/calibration.json ]; then
-    echo "INFO: Saving grumpyscreen calibration.json to $BASEDIR/pellcorp-overrides/calibration.json"
-    cp $BASEDIR/grumpyscreen/calibration.json $BASEDIR/pellcorp-overrides/
+    echo "INFO: Saving grumpyscreen calibration.json to $OVERRIDES/calibration.json"
+    cp $BASEDIR/grumpyscreen/calibration.json "$STAGING/" || exit $?
     sync
   fi
 
-  files=$(find $BASEDIR/printer_data/config/ -maxdepth 1 ! -name 'printer-*.cfg' -a ! -name ".printer.cfg" -a -name "*.cfg" -o -name "*.conf" -o -name "*.ini")
-  for file in $files; do
-    file=$(basename $file)
+  # read the list line by line (not word split) so file names with spaces survive, the loop runs in this shell
+  # (not a pipeline) so an exit in override_file really stops the script
+  find "$BASEDIR/printer_data/config/" -maxdepth 1 ! -name 'printer-*.cfg' -a ! -name ".printer.cfg" -a -name "*.cfg" -o -name "*.conf" -o -name "*.ini" > "$STAGING.list" || exit $?
+  while IFS= read -r config_path; do
+    file=$(basename "$config_path")
     if [ "$file" != "printer.cfg" ]; then
-      override_file $file
+      override_file "$file"
     fi
-  done
+  done < "$STAGING.list"
 
   # we want the printer.cfg to be done last
   override_file printer.cfg
@@ -283,6 +280,14 @@ else
     # this is a special case
     override_file moonraker.asvc
   fi
+
+  # every step worked: replace the previous generated overrides (config.info, README, .git etc stay)
+  mkdir -p "$OVERRIDES" || exit $?
+  rm -f "$OVERRIDES"/*.cfg "$OVERRIDES"/*.ini "$OVERRIDES"/*.conf "$OVERRIDES"/*.json "$OVERRIDES"/moonraker.asvc "$OVERRIDES"/printer.cfg.save_config "$OVERRIDES"/moonraker.secrets
+  for generated in "$STAGING"/*; do
+    [ -e "$generated" ] || continue
+    mv -f "$generated" "$OVERRIDES/" || exit $?
+  done
 fi
 
 cd $BASEDIR/pellcorp-overrides
