@@ -21,6 +21,11 @@ start_server() {
     # display black transition image to stop the corrupt image being shown
     cmd_jpeg_display /usr/data/pellcorp/k1/black.jpg &
 
+    # rotate the log at start once it passes 1 MB, keeping a single .old copy
+    if [ -f "$GUPPYSCREEN_LOG" ] && [ "$(wc -c < "$GUPPYSCREEN_LOG")" -gt 1048576 ]; then
+        mv -f "$GUPPYSCREEN_LOG" "$GUPPYSCREEN_LOG.old"
+    fi
+
     export HOME=/root
     sync && echo 3 > /proc/sys/vm/drop_caches
     mkdir -p $RC_DIR
