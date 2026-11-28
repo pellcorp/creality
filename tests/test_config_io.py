@@ -134,7 +134,7 @@ class SaveConfigSnapshotTest(TempDirTest):
         overrides.mkdir()
         updated = self.tmp / "printer.cfg"
         updated.write_bytes(config.encode())
-        script = f"BASEDIR='{self.tmp.as_posix()}'\nupdated_file='{updated.as_posix()}'\n" + self.snapshot_loop()
+        script = f"STAGING='{overrides.as_posix()}'\nupdated_file='{updated.as_posix()}'\n" + self.snapshot_loop()
         subprocess.run(["sh", "-c", script], check=True, stdout=subprocess.DEVNULL)
         saved = overrides / "printer.cfg.save_config"
         return saved.read_bytes().decode() if saved.exists() else None
@@ -148,6 +148,65 @@ class SaveConfigSnapshotTest(TempDirTest):
 
     def test_file_without_save_config_makes_no_snapshot(self):
         self.assertIsNone(self.snapshot(PRINTER_CFG))
+
+
+@unittest.skipUnless(os.name == "posix" and shutil.which("sh"), "runs the real script under a posix sh")
+class OverridesStagingTest(TempDirTest):
+    """tools/config-overrides.sh regenerates ~/pellcorp-overrides via a staging directory."""
+
+    def setUp(self):
+        super().setUp()
+        home = self.home = self.tmp / "home"
+        for directory in ("pellcorp/tools", "pellcorp-backups", "printer_data/config", "pellcorp-overrides", "bin"):
+            (home / directory).mkdir(parents=True)
+        tools = REPOSITORY_ROOT / "tools"
+        shutil.copy(tools / "config-overrides.py", home / "pellcorp/tools")
+        (home / "pellcorp/tools/config-overrides.py").chmod(0o755)
+        shutil.copy(CONFIG_OVERRIDES_SH, home / "pellcorp/tools")
+        # the script runs config-overrides.py through its python3 shebang: point that at this interpreter
+        python3 = home / "bin/python3"
+        python3.write_text(f'#!/bin/sh\nexec "{sys.executable}" "$@"\n')
+        python3.chmod(0o755)
+        (home / "pellcorp.done").write_text("probe\nprobe\n")
+        (home / "pellcorp-backups/printer.cfg").write_text(PRINTER_CFG)
+        (home / "printer_data/config/printer.cfg").write_text(PRINTER_CFG.replace("max_velocity: 800", "max_velocity: 500"))
+        # what the previous run produced
+        (home / "pellcorp-overrides/stale.cfg").write_text("[old]\nkey: 1\n")
+        (home / "pellcorp-overrides/config.info").write_text("printer=k1\n")
+
+    def run_script(self):
+        env = dict(os.environ, HOME=str(self.home), PATH=f"{self.home / 'bin'}:{os.environ['PATH']}")
+        return subprocess.run(
+            ["sh", str(self.home / "pellcorp/tools/config-overrides.sh")],
+            env=env, capture_output=True, text=True,
+        )
+
+    def overrides(self):
+        return sorted(p.name for p in (self.home / "pellcorp-overrides").iterdir())
+
+    def leftovers(self):
+        return sorted(p.name for p in self.home.iterdir() if "staging" in p.name)
+
+    def test_success_replaces_generated_files_and_keeps_the_others(self):
+        (self.home / "printer_data/config/my macros.cfg").write_text("[gcode_macro MINE]\ngcode: M117 hi\n")
+
+        result = self.run_script()
+
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertEqual(self.overrides(), ["config.info", "my macros.cfg", "printer.cfg"])
+        self.assertIn("max_velocity: 500", (self.home / "pellcorp-overrides/printer.cfg").read_text())
+        self.assertEqual(self.leftovers(), [])
+
+    def test_failure_keeps_the_previous_overrides(self):
+        (self.home / "pellcorp-backups/bad.cfg").write_text("[ok]\nkey: 1\n")
+        (self.home / "printer_data/config/bad.cfg").write_text("this has no section header\n")
+
+        result = self.run_script()
+
+        self.assertNotEqual(result.returncode, 0)
+        self.assertEqual(self.overrides(), ["config.info", "stale.cfg"])
+        self.assertEqual((self.home / "pellcorp-overrides/stale.cfg").read_text(), "[old]\nkey: 1\n")
+        self.assertEqual(self.leftovers(), [])
 
 
 if __name__ == "__main__":
