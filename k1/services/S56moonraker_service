@@ -31,11 +31,16 @@ restart() {
   # this allows a graceful restart of moonraker by actually waiting for it to stop first
   moonraker_pid="$(cat $PID_FILE 2> /dev/null)"
   if [ -n "$moonraker_pid" ]; then
-    while true; do
-      if [ ! -d /proc/"$moonraker_pid" ] ; then
-        break
-      fi
+    # wait up to 30 seconds for a graceful stop, then kill -9
+    wait_count=0
+    while [ -d "/proc/$moonraker_pid" ] && [ "$wait_count" -lt 150 ]; do
+      sleep 0.2
+      wait_count=$((wait_count + 1))
     done
+    if [ -d "/proc/$moonraker_pid" ]; then
+      kill -9 "$moonraker_pid" 2> /dev/null
+    fi
+    rm -f $PID_FILE
   fi
 
   start

@@ -20,11 +20,16 @@ case "$1" in
 	# this allows a graceful restart of service by actually waiting for it to stop first
 	service_pid="$(cat $PID_FILE 2> /dev/null)"
 	if [ -n "$service_pid" ]; then
-		while true; do
-				if [ ! -d /proc/"$service_pid" ] ; then
-					break
-				fi
-		done
+	  # wait up to 30 seconds for a graceful stop, then kill -9
+	  wait_count=0
+	  while [ -d "/proc/$service_pid" ] && [ "$wait_count" -lt 150 ]; do
+	    sleep 0.2
+	    wait_count=$((wait_count + 1))
+	  done
+	  if [ -d "/proc/$service_pid" ]; then
+	    kill -9 "$service_pid" 2> /dev/null
+	  fi
+	  rm -f $PID_FILE
 	fi
 	"$0" start
 	;;
