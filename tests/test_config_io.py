@@ -209,5 +209,55 @@ class OverridesStagingTest(TempDirTest):
         self.assertEqual(self.leftovers(), [])
 
 
+class SaveConfigHelperTest(TempDirTest):
+    """tools/save-config-helper.py edits only the SAVE_CONFIG block of printer.cfg."""
+
+    BEFORE = "[include loadcells.cfg]\n\n[printer]\nkinematics: corexy\n\n"
+    BLOCK = (
+        "#*# <---------------------- SAVE_CONFIG ---------------------->\n"
+        "#*# DO NOT EDIT THIS BLOCK OR BELOW. The contents are auto-generated.\n"
+        "#*#\n"
+        "#*# [bed_mesh default]\n"
+        "#*# version = 1\n"
+        "#*#\n"
+        "#*# [extruder]\n"
+        "#*# control = mpc\n"
+    )
+
+    def run_helper(self, config, *sections, crlf=False):
+        path = self.tmp / "printer.cfg"
+        path.write_bytes((config.replace("\n", "\r\n") if crlf else config).encode())
+        result = subprocess.run(
+            [sys.executable, "-I", str(REPOSITORY_ROOT / "tools" / "save-config-helper.py"),
+             "--file", path.as_posix(), "--remove-section", *sections],
+            env=dict(os.environ, HOME=str(self.tmp)), capture_output=True, text=True,
+        )
+        return result, path.read_bytes().decode()
+
+    def test_removes_a_wildcard_section_and_keeps_the_rest_of_a_crlf_file(self):
+        result, text = self.run_helper(self.BEFORE + self.BLOCK, "bed_mesh*", crlf=True)
+
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertNotIn("bed_mesh", text)
+        self.assertNotIn("\r", text)
+        self.assertTrue(text.startswith(self.BEFORE))
+        self.assertIn("#*# [extruder]\n#*# control = mpc\n", text)
+        self.assertIn("SAVE_CONFIG", text)
+
+    def test_removing_every_section_drops_the_save_config_header(self):
+        result, text = self.run_helper(self.BEFORE + self.BLOCK, "bed_mesh*", "extruder")
+
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertNotIn("SAVE_CONFIG", text)
+        self.assertNotIn("#*#", text)
+        self.assertTrue(text.startswith(self.BEFORE))
+
+    def test_missing_section_leaves_the_file_byte_for_byte(self):
+        result, text = self.run_helper(self.BEFORE + self.BLOCK, "scanner*", crlf=True)
+
+        self.assertEqual(result.returncode, 1)
+        self.assertEqual(text, (self.BEFORE + self.BLOCK).replace("\n", "\r\n"))
+
+
 if __name__ == "__main__":
     unittest.main()

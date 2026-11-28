@@ -83,7 +83,7 @@ class SaveConfigHelper:
     def save(self):
         # Atomic-ish save: write to temp, then replace
         temp_file = self.file_path + ".tmp"
-        with open(temp_file, 'w') as f:
+        with open(temp_file, 'w', newline='\n') as f:
             f.writelines(self.before)
             f.writelines(self.lines)
         os.replace(temp_file, self.file_path)
