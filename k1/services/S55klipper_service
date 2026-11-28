@@ -37,7 +37,7 @@ stop() {
         if [ -d "/proc/$service_pid" ]; then
           kill -9 "$service_pid" 2> /dev/null
         fi
-        rm -f $PID_FILE
+        rm -f "$PID_FILE"
       fi
 }
 

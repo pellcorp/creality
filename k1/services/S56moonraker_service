@@ -22,14 +22,10 @@ start() {
 }
 
 stop() {
-  start-stop-daemon -K -q -p $PID_FILE > /dev/null 2>&1
-}
+  start-stop-daemon -K -q -p "$PID_FILE" > /dev/null 2>&1
 
-restart() {
-  stop
-
-  # this allows a graceful restart of moonraker by actually waiting for it to stop first
-  moonraker_pid="$(cat $PID_FILE 2> /dev/null)"
+  # wait for moonraker to actually stop, so its tmp dir is not removed from underneath it
+  moonraker_pid="$(cat "$PID_FILE" 2> /dev/null)"
   if [ -n "$moonraker_pid" ]; then
     # wait up to 30 seconds for a graceful stop, then kill -9
     wait_count=0
@@ -40,9 +36,13 @@ restart() {
     if [ -d "/proc/$moonraker_pid" ]; then
       kill -9 "$moonraker_pid" 2> /dev/null
     fi
-    rm -f $PID_FILE
+    rm -f "$PID_FILE"
   fi
+  rm -rf "$MOONRAKER_TMP_DIR"
+}
 
+restart() {
+  stop
   start
 }
 

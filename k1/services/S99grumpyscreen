@@ -63,7 +63,7 @@ case "$1" in
             kill -9 "$service_pid" 2> /dev/null
             killall -9 grumpyscreen 2> /dev/null
           fi
-          rm -f $PID_FILE
+          rm -f "$PID_FILE"
         fi
         start_server
         ;;
