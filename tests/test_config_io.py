@@ -1,0 +1,120 @@
+import importlib.util
+import os
+import shutil
+import subprocess
+import sys
+import tempfile
+import unittest
+from pathlib import Path
+
+
+REPOSITORY_ROOT = Path(__file__).parents[1]
+CONFIG_HELPER_PATH = REPOSITORY_ROOT / "tools" / "config-helper.py"
+SPEC = importlib.util.spec_from_file_location("config_helper", CONFIG_HELPER_PATH)
+config_helper = importlib.util.module_from_spec(SPEC)
+SPEC.loader.exec_module(config_helper)
+
+SAVE_CONFIG_BLOCK = (
+    "#*# <---------------------- SAVE_CONFIG ---------------------->\n"
+    "#*# DO NOT EDIT THIS BLOCK OR BELOW. The contents are auto-generated.\n"
+    "#*#\n"
+    "#*# [bed_mesh default]\n"
+    "#*# version = 1\n"
+    "#*# points =\n"
+    "#*# \t  0.010000, 0.020000\n"
+)
+PRINTER_CFG = (
+    "[printer]\n"
+    "kinematics: corexy\n"
+    "max_velocity: 800\n"
+    "\n"
+    "[stepper_x]\n"
+    "microsteps: 32\n"
+    "\n"
+)
+
+
+class TempDirTest(unittest.TestCase):
+    def setUp(self):
+        self.tmp = Path(tempfile.mkdtemp())
+        self.addCleanup(shutil.rmtree, self.tmp, ignore_errors=True)
+
+
+class CrlfConfigHelperTest(TempDirTest):
+    """A printer.cfg saved by a Windows editor has CRLF line endings."""
+
+    def run_helper(self, config, *args):
+        path = self.tmp / "printer.cfg"
+        path.write_bytes(config.replace("\n", "\r\n").encode())
+        env = dict(os.environ, HOME=str(self.tmp))
+        subprocess.run(
+            [sys.executable, "-I", str(CONFIG_HELPER_PATH), "--file", path.as_posix(), *args],
+            check=True,
+            env=env,
+        )
+        return path.read_bytes().decode()
+
+    def test_crlf_file_keeps_save_config_block_and_is_edited(self):
+        result = self.run_helper(
+            PRINTER_CFG + SAVE_CONFIG_BLOCK,
+            "--replace-section-entry", "printer", "max_velocity", "500",
+        )
+
+        self.assertIn("max_velocity: 500", result)
+        self.assertNotIn("\r", result)
+        # the SAVE_CONFIG block is still there, complete and last
+        self.assertTrue(result.endswith(SAVE_CONFIG_BLOCK), result)
+
+    def test_crlf_file_gets_new_section_before_save_config(self):
+        result = self.run_helper(
+            PRINTER_CFG + SAVE_CONFIG_BLOCK,
+            "--add-section", "load_cell_probe",
+        )
+
+        self.assertLess(result.index("[load_cell_probe]"), result.index("SAVE_CONFIG"))
+        self.assertTrue(result.endswith(SAVE_CONFIG_BLOCK), result)
+
+
+class AtomicWriteTest(TempDirTest):
+    def test_failed_write_leaves_original_untouched(self):
+        path = self.tmp / "printer.cfg"
+        path.write_text(PRINTER_CFG + SAVE_CONFIG_BLOCK)
+
+        def failing_write(file):
+            file.write("[printer]\nhalf a fi")
+            raise RuntimeError("disk full")
+
+        with self.assertRaises(RuntimeError):
+            config_helper._write_atomically(str(path), failing_write)
+
+        self.assertEqual(path.read_text(), PRINTER_CFG + SAVE_CONFIG_BLOCK)
+        self.assertEqual(sorted(p.name for p in self.tmp.iterdir()), ["printer.cfg"])
+
+    def test_successful_write_replaces_file_and_leaves_no_temp(self):
+        path = self.tmp / "printer.cfg"
+        path.write_text("old\n")
+        path.chmod(0o640)
+
+        config_helper._write_atomically(str(path), lambda file: file.write("new\n"))
+
+        self.assertEqual(path.read_text(), "new\n")
+        self.assertEqual(sorted(p.name for p in self.tmp.iterdir()), ["printer.cfg"])
+        if os.name == "posix":
+            self.assertEqual(path.stat().st_mode & 0o777, 0o640)
+
+    def test_symlink_is_written_through_not_replaced(self):
+        if os.name != "posix":
+            self.skipTest("symlinks need posix")
+        real = self.tmp / "real.cfg"
+        real.write_text("old\n")
+        link = self.tmp / "printer.cfg"
+        link.symlink_to(real)
+
+        config_helper._write_atomically(str(link), lambda file: file.write("new\n"))
+
+        self.assertTrue(link.is_symlink())
+        self.assertEqual(real.read_text(), "new\n")
+
+
+if __name__ == "__main__":
+    unittest.main()
