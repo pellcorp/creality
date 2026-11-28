@@ -163,7 +163,10 @@ override_file() {
 
     if [ "$file" = "printer.cfg" ]; then
       saves=false
+      # a printer.cfg saved by a Windows editor has CRLF line endings, which read -r keeps on every line
+      cr=$(printf '\r')
       while IFS= read -r line; do
+        line="${line%"$cr"}"
         if [ "$line" = "#*# <---------------------- SAVE_CONFIG ---------------------->" ]; then
           saves=true
           echo "" > $BASEDIR/pellcorp-overrides/printer.cfg.save_config

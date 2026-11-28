@@ -1,5 +1,6 @@
 import importlib.util
 import os
+import re
 import shutil
 import subprocess
 import sys
@@ -10,6 +11,7 @@ from pathlib import Path
 
 REPOSITORY_ROOT = Path(__file__).parents[1]
 CONFIG_HELPER_PATH = REPOSITORY_ROOT / "tools" / "config-helper.py"
+CONFIG_OVERRIDES_SH = REPOSITORY_ROOT / "tools" / "config-overrides.sh"
 SPEC = importlib.util.spec_from_file_location("config_helper", CONFIG_HELPER_PATH)
 config_helper = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(config_helper)
@@ -114,6 +116,38 @@ class AtomicWriteTest(TempDirTest):
 
         self.assertTrue(link.is_symlink())
         self.assertEqual(real.read_text(), "new\n")
+
+
+@unittest.skipUnless(shutil.which("sh"), "needs a posix sh")
+class SaveConfigSnapshotTest(TempDirTest):
+    """The loop in config-overrides.sh that copies the SAVE_CONFIG block of printer.cfg."""
+
+    @staticmethod
+    def snapshot_loop():
+        script = CONFIG_OVERRIDES_SH.read_text()
+        match = re.search(r"^( *)saves=false\n.*?done < \"\$updated_file\"\n", script, re.S | re.M)
+        assert match, "snapshot loop not found in config-overrides.sh"
+        return match.group(0)
+
+    def snapshot(self, config):
+        overrides = self.tmp / "pellcorp-overrides"
+        overrides.mkdir()
+        updated = self.tmp / "printer.cfg"
+        updated.write_bytes(config.encode())
+        script = f"BASEDIR='{self.tmp.as_posix()}'\nupdated_file='{updated.as_posix()}'\n" + self.snapshot_loop()
+        subprocess.run(["sh", "-c", script], check=True, stdout=subprocess.DEVNULL)
+        saved = overrides / "printer.cfg.save_config"
+        return saved.read_bytes().decode() if saved.exists() else None
+
+    def test_lf_file_snapshot(self):
+        self.assertEqual(self.snapshot(PRINTER_CFG + SAVE_CONFIG_BLOCK), "\n" + SAVE_CONFIG_BLOCK)
+
+    def test_crlf_file_snapshot_is_found_and_has_lf_endings(self):
+        crlf = (PRINTER_CFG + SAVE_CONFIG_BLOCK).replace("\n", "\r\n")
+        self.assertEqual(self.snapshot(crlf), "\n" + SAVE_CONFIG_BLOCK)
+
+    def test_file_without_save_config_makes_no_snapshot(self):
+        self.assertIsNone(self.snapshot(PRINTER_CFG))
 
 
 if __name__ == "__main__":
