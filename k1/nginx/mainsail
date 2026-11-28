@@ -3,7 +3,7 @@ server {
     #listen 80 default_server;
 
     access_log off;
-    error_log off;
+    error_log /dev/null crit;
 
     # web_path from fluidd static files
     root /usr/data/mainsail;
